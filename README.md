@@ -1,9 +1,9 @@
-# goproxy
+#goproxy
 快速使用:  
 提示:所有操作需要root权限.  
 
 0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.  
-# wget https://github.com/snail007/goproxy/blob/master/install_auto.sh -O - | sh  
+#wget https://github.com/snail007/goproxy/blob/master/install_auto.sh -O - | sh  
 
   
 
@@ -12,18 +12,18 @@
 下载地址:https://github.com/reddec/monexec/releases   
 比如下载到/root/proxy/  
 执行:  
-# mkdir /root/proxy/  
-# cd /root/proxy/  
-# wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz   
+#mkdir /root/proxy/  
+#cd /root/proxy/  
+#wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz   
 2.下载proxy  
 下载地址:https://github.com/snail007/goproxy/releases
-# cd /root/proxy/  
-# wget https://github.com/snail007/goproxy/blob/master/release-2.0/proxy-linux-amd64.tar.gz  
+#cd /root/proxy/  
+#wget https://github.com/snail007/goproxy/blob/master/release-2.0/proxy-linux-amd64.tar.gz  
 3.下载自动安装脚本
-# cd /root/proxy/
-# wget https://github.com/snail007/goproxy/blob/master/install.sh 
-# chmod +x install.sh
-# ./install.sh
+#cd /root/proxy/
+#wget https://github.com/snail007/goproxy/blob/master/install.sh 
+#chmod +x install.sh
+#./install.sh
 
 
 进一步了解：  
