@@ -18,10 +18,10 @@
 2.下载proxy  
 下载地址:https://github.com/snail007/goproxy/releases
 #cd /root/proxy/  
-#wget https://github.com/snail007/goproxy/blob/master/release-2.0/proxy-linux-amd64.tar.gz  
+#wget https://github.com/snail007/goproxy/releases/download/v2.0/proxy-linux-amd64.tar.gz  
 3.下载自动安装脚本
 #cd /root/proxy/
-#wget https://github.com/snail007/goproxy/blob/master/install.sh 
+#wget https://github.com/snail007/goproxy/blob/master/install.sh  
 #chmod +x install.sh
 #./install.sh
 
