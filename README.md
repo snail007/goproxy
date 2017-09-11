@@ -1,11 +1,9 @@
-#goproxy
-快速使用:  
+# goproxy
+# 快速使用:  
 提示:所有操作需要root权限.  
 
 0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.  
 #wget https://github.com/snail007/goproxy/blob/master/install_auto.sh -O - | sh  
-
-  
 
 如果你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
 1.登录你的VPS,下载守护进程monexec,选择合适你的版本,vps一般选择"linux_amd64.tar.gz"的即可.     
@@ -25,8 +23,7 @@
 #chmod +x install.sh
 #./install.sh
 
-
-进一步了解：  
+# 进一步了解：  
 1、作为普通一级代理。
 默认监听0.0.0.0:33080端口，可以使用-p修改端口，-i修改绑定ip。  
 默认情况  
