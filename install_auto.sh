@@ -27,6 +27,7 @@ if [ ! -e /etc/proxy/proxy.crt ]; then
     cd /etc/proxy/
     proxy keygen >/dev/null 2>&1 
 fi
+cd ..
 rm -rf /tmp/proxy
 echo "install done"
 proxyd
