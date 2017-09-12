@@ -30,6 +30,6 @@ if [ ! -e /etc/proxy/direct ]; then
     cd /etc/proxy/
     cp direct /etc/proxy/
 fii
-
+rm -rf /tmp/proxy
 echo "install done"
 proxyd
