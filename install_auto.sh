@@ -1,7 +1,8 @@
 #!/bin/bash
-
-rm -rf /tmp/proxy
-mkdir /tmp/proxy
+set -e
+if [ -e /tmp/proxy ]; then
+    rm -rf /tmp/proxy
+fi
 cd /tmp/proxy
 wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz
 wget https://github.com/snail007/goproxy/releases/download/v2.0/proxy-linux-amd64.tar.gz
