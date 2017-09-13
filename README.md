@@ -1,6 +1,7 @@
 # goproxy
+[![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]()
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/)
-[![download_all](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
+[![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
 [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
 
 # 30秒简介
