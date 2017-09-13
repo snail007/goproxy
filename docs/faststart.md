@@ -23,7 +23,7 @@ Windows部分  
 我的是d：盘  
 6.修改windows下的proxy.toml  vps服务ip和上面设置的端口哦  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/image007.png?raw=true"/>  
-然后运行proxy.exe即刻  
+然后运行proxy.exe即可.  
 这时候浏览器代理服务器就是127.0.0.1:9501啦,完毕!  
 
 要隐藏windows命令用工具下载RunHiddenConsole.exe 写个bat文件都放proxy目录下就行
