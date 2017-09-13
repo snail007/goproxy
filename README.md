@@ -1,5 +1,5 @@
 # goproxy
-[![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/snail007/goproxy) [![license](https://camo.githubusercontent.com/b822c45ff6645d58743d42cf25a2459e5fabf6ae/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f7265646465632f6d6f6e657865632e737667)](http://github.com/snail007/goproxy)
+[![Travis](https://img.shields.io/travis/rust-lang/rust.svg?style=plastic)]()
 
 
 # 30秒简介
