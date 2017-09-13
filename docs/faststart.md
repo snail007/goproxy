@@ -2,7 +2,7 @@
 Linux 部分  
 1.Putty工具（或其他工具）  
 root登入  
-2.下载批量命令文件install_auto.sh（64位的话直接执行这个命令即可）  
+2.下载批量命令文件install_auto.sh（64位的话直接执行这个命令即可）    
 #curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 注意  
 这里的install_auto.sh 源码可以下载修改proxy版本,保存后执行.  
