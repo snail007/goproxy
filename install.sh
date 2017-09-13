@@ -1,13 +1,18 @@
 #!/bin/bash
+set -e
+if [ -e /tmp/proxy ]; then
+    rm -rf /tmp/proxy
+fi
+mkdir /tmp/proxy
+cd /tmp/proxy
 # install monexec
-tar zxvf monexec_*.tar.gz
-cd  monexec_*
+tar zxvf monexec_0.1.1_linux_amd64.tar.gz
+cd  monexec_0.1.1_linux_amd64
 cp monexec /usr/bin/
 chmod +x /usr/bin/monexec
-
+cd ..
 # #install proxy
-tar zxvf proxy-*.tar.gz
-cd  proxy-*
+tar zxvf proxy-linux-amd64.tar.gz
 cp proxy /usr/bin/
 cp proxyd /usr/bin/
 chmod +x /usr/bin/proxy
@@ -21,16 +26,6 @@ if [ ! -e /etc/proxy/proxy.crt ]; then
     cd /etc/proxy/
     proxy keygen >/dev/null 2>&1 
 fi
-
-if [ ! -e /etc/proxy/blocked ]; then
-    cd /etc/proxy/
-    cp blocked /etc/proxy/
-fi
-
-if [ ! -e /etc/proxy/direct ]; then
-    cd /etc/proxy/
-    cp direct /etc/proxy/
-fii
-
+rm -rf /tmp/proxy
 echo "install done"
 proxyd
