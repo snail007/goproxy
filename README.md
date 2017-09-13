@@ -1,4 +1,6 @@
 # goproxy
+[![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/snail007/goproxy)
+
 # 30秒简介
 proxy是golang实现的高性能http,https,websocket,tcp代理服务器.程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.如果程序不是一级代理,而且上级代理也是本程序,那么可以加密和上级代理之间的通讯,采用底层tls高强度加密,安全无特征.代理时会自动判断访问的网站是否屏蔽,如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽,为了加速访问,代理会直接访问网站,不使用上级代理.  
 [图文教程](docs/faststart.md)
