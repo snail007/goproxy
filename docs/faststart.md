@@ -1,1 +1,1 @@
-<img src="http://github.com/snail007/goproxy/raw/master/docs/images/image001.jpg"/>
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/image001.png?raw=true"/>
