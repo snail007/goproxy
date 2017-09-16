@@ -28,7 +28,7 @@ proxy是golang实现的高性能http,https,websocket,tcp代理服务器.程序�
 #wget https://github.com/snail007/goproxy/releases/download/v2.0/proxy-linux-amd64.tar.gz    
 3.下载自动安装脚本   
 #cd /root/proxy/   
-#wget https://github.com/snail007/goproxy/blob/master/install.sh  
+#wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 #chmod +x install.sh   
 #./install.sh   
 
