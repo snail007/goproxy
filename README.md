@@ -98,7 +98,7 @@ chmod +x install.sh
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：18080，    
 然后程序即可通过加密通道通过vps上网。 
 ### License 
-Proxy is licensed under GUN-v2 license.
+Proxy is licensed under GPLv3 license.
 ### Contact 
 QQ交流群:189618940
 
