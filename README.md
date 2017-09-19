@@ -9,7 +9,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp代理服务器.
 **2.作为二级代理,使用本地端口8090,假设上级http代理是`22.22.22.22:8080`**  
 `./proxy -P "22.22.22.22:8080" -p 8090`  
 **3.生成加密通讯需要的证书和密钥**  
-在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.
+在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.   
 `./proxy keygen`   
 会在当前目录下面生成一个证书文件proxy.crt和key文件proxy.key。  
 **4.一级和二级代理加密通讯.**  
