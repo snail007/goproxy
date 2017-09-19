@@ -1,0 +1,72 @@
+
+#####################################
+##############parent#################
+#####################################
+#parent proxy address,such as: 223.78.2.33:8090
+parent=""
+
+#parent proxy is tls
+parent-tls=false
+
+#tcp timeout milliseconds when connect to real server or parent proxy
+tcp-timeout=2000
+
+#conn pool size , which connect to parent proxy
+pool-size=50
+
+#always use parent proxy
+always=false
+
+#####################################
+##############local##################
+#####################################
+
+#local ip to bind
+ip="0.0.0.0"
+
+#local port to listen
+port=33080
+
+#local proxy is tls
+local-tls=false
+
+#####################################
+################tls##################
+#####################################
+
+#cert file for tls
+cert="proxy.crt"
+
+#key file for tls
+key="proxy.key"
+
+#####################################
+################protocol#############
+#####################################
+
+#proxy on tcp
+tcp=false
+
+#####################################
+################check################
+#####################################
+
+#chekc domain blocked , http request timeout milliseconds when connect to host
+check-timeout=3000
+
+#check domain if blocked every interval seconds
+check-interval=10
+
+#check if proxy is okay every interval seconds 
+#this is very helpful to proxy fix pool status , zero means:no check
+check-proxy-interval=3
+
+#blocked domain file , one domain each line
+#google.com means (*.)*.google.com
+blocked="blocked"
+
+#direct domain file , one domain each line
+#qq.com means (*.)*.qq.com
+direct="direct"
+
+ 

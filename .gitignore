@@ -1,0 +1,6 @@
+proxy
+*.exe
+*.exe~
+release-*
+proxy.crt
+proxy.key
