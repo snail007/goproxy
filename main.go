@@ -220,7 +220,7 @@ func LocalTCPServer(sc *ServerChannel) {
 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("http proxy decode error , ERR:%s", err)
+				log.Printf("tcp decode error , ERR:%s", err)
 			}
 			return
 		}
@@ -233,7 +233,7 @@ func LocalTLSServer(sc *ServerChannel) {
 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("http proxy decode error , ERR:%s", err)
+				log.Printf("tls decode error , ERR:%s", err)
 			}
 			return
 		}
