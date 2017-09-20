@@ -1,5 +1,5 @@
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>    
-Proxy是golang实现的高性能http,https,websocket,tcp代理服务器. 
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>      
+Proxy是golang实现的高性能http,https,websocket,tcp代理服务器.   
 <hr/>
 
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
@@ -98,6 +98,8 @@ chmod +x install.sh
 `./proxy.exe -X -P "115.34.9.63:58080" -c "proxy.crt" -k "proxy.key"  -p 18080`     
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：18080，    
 然后程序即可通过加密通道通过vps上网。 
+### TODO
+- UDP Over TCP,通过tcp代理udp协议.  
 ### License 
 Proxy is licensed under GPLv3 license.
 ### Contact 
