@@ -211,7 +211,9 @@ func CheckTCPDeocder(inConn *net.Conn) (useProxy bool, address string, req *HTTP
 	} else {
 		address = cfg.GetString("parent")
 	}
-
+	if cfg.GetBool("always") {
+		useProxy = true
+	}
 	return
 }
 func LocalTCPServer(sc *ServerChannel) {
@@ -270,7 +272,7 @@ func TCPOutBridge(inConn *net.Conn, userProxy bool, address string, req *HTTPReq
 	}
 	inAddr := (*inConn).RemoteAddr().String()
 	outAddr := outConn.RemoteAddr().String()
-	//log.Printf("%s use proxy %v",address, userProxy)
+	log.Printf("%s use proxy %v", address, userProxy)
 
 	if req != nil {
 		if req.IsHTTPS() && !userProxy {
