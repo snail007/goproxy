@@ -208,8 +208,10 @@ func CheckTCPDeocder(inConn *net.Conn) (useProxy bool, address string, req *HTTP
 	} else {
 		address = cfg.GetString("parent")
 	}
-	if cfg.GetBool("always") {
-		useProxy = true
+	if address == "" {
+		useProxy = false
+	} else if cfg.GetBool("always") {
+		useProxy =  true
 	}
 	return
 }
