@@ -202,9 +202,6 @@ func CheckTCPDeocder(inConn *net.Conn) (useProxy bool, address string, req *HTTP
 	if cfg.GetBool("local-http") {
 		useProxy, req, err = HTTPProxyDecoder(inConn)
 		if err != nil {
-			if err != io.EOF {
-				log.Printf("http proxy decode error , ERR:%s", err)
-			}
 			return
 		}
 		address = req.Host
@@ -220,7 +217,9 @@ func LocalTCPServer(sc *ServerChannel) {
 	(*sc).ListenTCP(func(inConn net.Conn) {
 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
 		if err != nil {
-			log.Printf("%s", err)
+			if err != io.EOF {
+				log.Printf("http proxy decode error , ERR:%s", err)
+			}
 			return
 		}
 		TCPOutBridge(&inConn, userProxy, address, req)
@@ -228,19 +227,12 @@ func LocalTCPServer(sc *ServerChannel) {
 }
 
 func LocalTLSServer(sc *ServerChannel) {
-	certBytes, err := ioutil.ReadFile(cfg.GetString("cert"))
-	if err != nil {
-		log.Fatalf("err : %s", err)
-		return
-	}
-	keyBytes, err := ioutil.ReadFile(cfg.GetString("key"))
-	if err != nil {
-		log.Fatalf("err : %s", err)
-		return
-	}
 	(*sc).ListenTls(certBytes, keyBytes, func(inConn net.Conn) {
 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
 		if err != nil {
+			if err != io.EOF {
+				log.Printf("http proxy decode error , ERR:%s", err)
+			}
 			return
 		}
 		TCPOutBridge(&inConn, userProxy, address, req)
