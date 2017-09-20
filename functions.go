@@ -10,9 +10,11 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -186,6 +188,7 @@ func HTTPGet(URL string, timeout int) (err error) {
 }
 
 func initOutPool(isTLS bool, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) {
+	var err error
 	outPool, err = NewConnPool(poolConfig{
 		IsActive: func(conn interface{}) bool { return true },
 		Release: func(conn interface{}) {
@@ -241,57 +244,66 @@ func initPoolDeamon(isTLS bool, certBytes, keyBytes []byte, address string, time
 		}
 	}()
 }
-func getURL(header []byte, host string) (URL string, err error) {
-	if !strings.HasPrefix(host, "/") {
-		return host, nil
+func IsBasicAuth() bool {
+	return cfg.GetString("auth-file") != "" || len(cfg.GetStringSlice("auth")) > 0
+}
+func InitBasicAuth() (err error) {
+	basicAuth = NewBasicAuth()
+	if cfg.GetString("auth-file") != "" {
+		n, err := basicAuth.AddFromFile(cfg.GetString("auth-file"))
+		if err != nil {
+			return fmt.Errorf("auth-file ERR:%s", err)
+		}
+		log.Printf("auth data added from file %d , total:%d", n, basicAuth.Total())
 	}
-	_host, err := getHeader("host", header)
+	if len(cfg.GetStringSlice("auth")) > 0 {
+		n := basicAuth.Add(cfg.GetStringSlice("auth"))
+		log.Printf("auth data added %d, total:%d", n, basicAuth.Total())
+	}
+	return
+}
+func clean() {
+	//block main()
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan,
+		os.Interrupt,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		for _ = range signalChan {
+			if outPool != nil {
+				fmt.Println("\nReceived an interrupt, stopping services...")
+				outPool.ReleaseAll()
+				//time.Sleep(time.Second * 10)
+				// fmt.Println("done")
+			}
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
+}
+func HTTPProxyDecoder(inConn *net.Conn) (useProxy bool, request *HTTPRequest, err error) {
+	var req HTTPRequest
+	req, err = NewHTTPRequest(inConn, 4096)
 	if err != nil {
+		//log.Printf("NewHTTPRequest ERR:%s", err)
 		return
 	}
-	URL = fmt.Sprintf("http://%s%s", _host, host)
+	useProxy = false
+	if checker.data != nil {
+		useProxy, _, _ = checker.IsBlocked(req.Host)
+	}
+	request = &req
 	return
-}
-func getHeader(key string, headData []byte) (val string, err error) {
-	key = strings.ToUpper(key)
-	lines := strings.Split(string(headData), "\r\n")
-	for _, line := range lines {
-		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
-		if len(line) == 2 {
-			k := strings.ToUpper(strings.Trim(line[0], " "))
-			v := strings.Trim(line[1], " ")
-			if key == k {
-				val = v
-				return
-			}
-		}
-	}
-	err = fmt.Errorf("can not find HOST header")
-	return
-}
-func hostIsNoPort(host string) bool {
-	//host: [dd:dafds:fsd:dasd:2.2.23.3] or 2.2.23.3 or [dd:dafds:fsd:dasd:2.2.23.3]:2323 or 2.2.23.3:1234
-	if strings.HasPrefix(host, "[") {
-		return strings.HasSuffix(host, "]")
-	}
-	return strings.Index(host, ":") == -1
-}
-func fixHost(host string) string {
-	if !strings.HasPrefix(host, "[") && len(strings.Split(host, ":")) > 2 {
-		if strings.HasSuffix(host, ":80") {
-			return fmt.Sprintf("[%s]:80", host[:strings.LastIndex(host, ":")])
-		}
-		if strings.HasSuffix(host, ":443") {
-			return fmt.Sprintf("[%s]:443", host[:strings.LastIndex(host, ":")])
-		}
-	}
-	return host
 }
 
-type sockaddr struct {
-	family uint16
-	data   [14]byte
-}
+// type sockaddr struct {
+// 	family uint16
+// 	data   [14]byte
+// }
 
 // const SO_ORIGINAL_DST = 80
 

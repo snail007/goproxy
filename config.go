@@ -23,8 +23,12 @@ func initConfig() (err error) {
 
 	pflag.BoolP("parent-tls", "X", false, "parent proxy is tls")
 	pflag.BoolP("local-tls", "x", false, "local proxy is tls")
+	pflag.BoolP("parent-tcp", "W", false, "parent proxy is tcp")
+	pflag.BoolP("local-tcp", "w", true, "local proxy is tcp")
+	pflag.BoolP("parent-udp", "U", false, "parent is udp")
+	pflag.BoolP("local-udp", "u", false, "local proxy is udp")
 	version := pflag.BoolP("version", "v", false, "show version")
-	pflag.BoolP("tcp", "C", false, "proxy on tcp")
+	pflag.BoolP("local-http", "z", false, "proxy on http")
 	pflag.Bool("always", false, "always use parent proxy")
 
 	pflag.Int("check-proxy-interval", 3, "check if proxy is okay every interval seconds")
@@ -47,7 +51,11 @@ func initConfig() (err error) {
 
 	cfg.BindPFlag("parent-tls", pflag.Lookup("parent-tls"))
 	cfg.BindPFlag("local-tls", pflag.Lookup("local-tls"))
-	cfg.BindPFlag("tcp", pflag.Lookup("tcp"))
+	cfg.BindPFlag("parent-udp", pflag.Lookup("parent-udp"))
+	cfg.BindPFlag("local-udp", pflag.Lookup("local-udp"))
+	cfg.BindPFlag("parent-tcp", pflag.Lookup("parent-tcp"))
+	cfg.BindPFlag("local-tcp", pflag.Lookup("local-tcp"))
+	cfg.BindPFlag("local-http", pflag.Lookup("local-http"))
 	cfg.BindPFlag("always", pflag.Lookup("always"))
 	cfg.BindPFlag("check-proxy-interval", pflag.Lookup("check-proxy-interval"))
 	cfg.BindPFlag("port", pflag.Lookup("port"))
