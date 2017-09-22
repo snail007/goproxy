@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"crypto/tls"
@@ -10,11 +10,11 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
+	"os/exec"
+
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -187,117 +187,72 @@ func HTTPGet(URL string, timeout int) (err error) {
 	return
 }
 
-func initOutPool(isTLS bool, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) {
-	var err error
-	outPool, err = NewConnPool(poolConfig{
-		IsActive: func(conn interface{}) bool { return true },
-		Release: func(conn interface{}) {
-			if conn != nil {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-				// log.Println("conn released")
-			}
-		},
-		InitialCap: InitialCap,
-		MaxCap:     MaxCap,
-		Factory: func() (conn interface{}, err error) {
-			conn, err = getConn(isTLS, certBytes, keyBytes, address, timeout)
-			return
-		},
-	})
+func CloseConn(conn *net.Conn) {
+	if *conn != nil {
+		(*conn).SetDeadline(time.Now().Add(time.Millisecond))
+		(*conn).Close()
+	}
+}
+func Keygen() (err error) {
+	cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("init conn pool fail ,%s", err)
-	} else {
-		log.Printf("init conn pool success")
-		initPoolDeamon(isTLS, certBytes, keyBytes, address, timeout)
-	}
-}
-func getConn(isTLS bool, certBytes, keyBytes []byte, address string, timeout int) (conn interface{}, err error) {
-	if isTLS {
-		var _conn tls.Conn
-		_conn, err = TlsConnectHost(address, timeout, certBytes, keyBytes)
-		if err == nil {
-			conn = net.Conn(&_conn)
-		}
-	} else {
-		conn, err = ConnectHost(address, timeout)
-	}
-	return
-}
-func initPoolDeamon(isTLS bool, certBytes, keyBytes []byte, address string, timeout int) {
-	go func() {
-		dur := cfg.GetInt("check-proxy-interval")
-		if dur <= 0 {
-			return
-		}
-		log.Printf("pool deamon started")
-		for {
-			time.Sleep(time.Second * time.Duration(dur))
-			conn, err := getConn(isTLS, certBytes, keyBytes, address, timeout)
-			if err != nil {
-				log.Printf("pool deamon err %s , release pool", err)
-				outPool.ReleaseAll()
-			} else {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-			}
-		}
-	}()
-}
-func IsBasicAuth() bool {
-	return cfg.GetString("auth-file") != "" || len(cfg.GetStringSlice("auth")) > 0
-}
-func InitBasicAuth() (err error) {
-	basicAuth = NewBasicAuth()
-	if cfg.GetString("auth-file") != "" {
-		n, err := basicAuth.AddFromFile(cfg.GetString("auth-file"))
-		if err != nil {
-			return fmt.Errorf("auth-file ERR:%s", err)
-		}
-		log.Printf("auth data added from file %d , total:%d", n, basicAuth.Total())
-	}
-	if len(cfg.GetStringSlice("auth")) > 0 {
-		n := basicAuth.Add(cfg.GetStringSlice("auth"))
-		log.Printf("auth data added %d, total:%d", n, basicAuth.Total())
-	}
-	return
-}
-func clean() {
-	//block main()
-	signalChan := make(chan os.Signal, 1)
-	cleanupDone := make(chan bool)
-	signal.Notify(signalChan,
-		os.Interrupt,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-	go func() {
-		for _ = range signalChan {
-			if outPool != nil {
-				fmt.Println("\nReceived an interrupt, stopping services...")
-				outPool.ReleaseAll()
-				//time.Sleep(time.Second * 10)
-				// fmt.Println("done")
-			}
-			cleanupDone <- true
-		}
-	}()
-	<-cleanupDone
-}
-func HTTPProxyDecoder(inConn *net.Conn) (useProxy bool, request *HTTPRequest, err error) {
-	var req HTTPRequest
-	req, err = NewHTTPRequest(inConn, 4096)
-	if err != nil {
-		//log.Printf("NewHTTPRequest ERR:%s", err)
+		log.Printf("err:%s", err)
 		return
 	}
-	useProxy = false
-	if checker.data != nil {
-		useProxy, _, _ = checker.IsBlocked(req.Host)
+	fmt.Println(string(out))
+	cmd = exec.Command("sh", "-c", `openssl req -new -key proxy.key -x509 -days 3650 -out proxy.crt -subj /C=CN/ST=BJ/O="Localhost Ltd"/CN=proxy`)
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("err:%s", err)
+		return
 	}
-	request = &req
+	fmt.Println(string(out))
 	return
+}
+func GetAllInterfaceAddr() ([]net.IP, error) {
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	addresses := []net.IP{}
+	for _, iface := range ifaces {
+
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		// if iface.Flags&net.FlagLoopback != 0 {
+		// 	continue // loopback interface
+		// }
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			// if ip == nil || ip.IsLoopback() {
+			// 	continue
+			// }
+			ip = ip.To4()
+			if ip == nil {
+				continue // not an ipv4 address
+			}
+			addresses = append(addresses, ip)
+		}
+	}
+	if len(addresses) == 0 {
+		return nil, fmt.Errorf("no address Found, net.InterfaceAddrs: %v", addresses)
+	}
+	//only need first
+	return addresses, nil
 }
 
 // type sockaddr struct {

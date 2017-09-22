@@ -2,290 +2,313 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net"
-	"os/exec"
-	"runtime/debug"
-	"time"
+	"os"
+	"os/signal"
+	"proxy/services"
+	"syscall"
 )
 
 const APP_VERSION = "2.2"
 
-var (
-	checker   Checker
-	certBytes []byte
-	keyBytes  []byte
-	outPool   ConnPool
-	basicAuth BasicAuth
-)
+// var (
+// 	checker   Checker
+// 	certBytes []byte
+// 	keyBytes  []byte
+// 	outPool   ConnPool
+// 	basicAuth BasicAuth
+// )
 
 func init() {
+
+	// return
+	// //Init
+	// err = Init()
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// isLocalHTTP := cfg.GetBool("local-http")
+	// isTLS := cfg.GetBool("local-tls") || cfg.GetBool("parent-tls")
+	// isTCP := isLocalHTTP || isTLS || cfg.GetBool("local-tcp") || cfg.GetBool("parent-tcp")
+
+	// //InitTCP
+	// if isTCP {
+	// 	err = InitTCP()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitTLS
+	// if isTLS {
+	// 	err = InitTLS()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitUDP
+	// if cfg.GetBool("local-udp") || cfg.GetBool("parent-udp") {
+	// 	err = InitUDP()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitLocal
+	// err = InitLocal()
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitLocalTCP
+	// if cfg.GetBool("local-tcp") || cfg.GetBool("local-tls") || isLocalHTTP {
+	// 	err = InitLocalTCP()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitLocalTLS
+	// if cfg.GetBool("local-tls") {
+	// 	err = InitLocalTLS()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitLocalHTTP
+	// if isLocalHTTP {
+	// 	err = InitLocalHTTP()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitLocalUDP
+	// if cfg.GetBool("local-udp") {
+	// 	err = InitLocalUDP()
+	// }
+	// if err != nil {
+	// 	log.Fatalf("err : %s", err)
+	// }
+	// //InitParent
+	// if cfg.GetString("parent") != "" {
+	// 	err = InitParent()
+	// 	if err != nil {
+	// 		log.Fatalf("err : %s", err)
+	// 	}
+	// 	//InitParentTCP
+	// 	if cfg.GetBool("parent-tcp") || cfg.GetBool("parent-tls") {
+	// 		err = InitParentTCP()
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatalf("err : %s", err)
+	// 	}
+	// 	//InitParentTLS
+	// 	if cfg.GetBool("parent-tls") {
+	// 		err = InitParentTLS()
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatalf("err : %s", err)
+	// 	}
+	// 	//InitParentUDP
+	// 	if cfg.GetBool("parent-udp") {
+	// 		err = InitParentUDP()
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatalf("err : %s", err)
+	// 	}
+	// }
+}
+func main() {
 	err := initConfig()
 	if err != nil {
 		log.Fatalf("err : %s", err)
 	}
-	//Init
-	err = Init()
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	isLocalHTTP := cfg.GetBool("local-http")
-	isTLS := cfg.GetBool("local-tls") || cfg.GetBool("parent-tls")
-	isTCP := isLocalHTTP || isTLS || cfg.GetBool("local-tcp") || cfg.GetBool("parent-tcp")
-
-	//InitTCP
-	if isTCP {
-		err = InitTCP()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitTLS
-	if isTLS {
-		err = InitTLS()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitUDP
-	if cfg.GetBool("local-udp") || cfg.GetBool("parent-udp") {
-		err = InitUDP()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitLocal
-	err = InitLocal()
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitLocalTCP
-	if cfg.GetBool("local-tcp") || cfg.GetBool("local-tls") || isLocalHTTP {
-		err = InitLocalTCP()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitLocalTLS
-	if cfg.GetBool("local-tls") {
-		err = InitLocalTLS()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitLocalHTTP
-	if isLocalHTTP {
-		err = InitLocalHTTP()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitLocalUDP
-	if cfg.GetBool("local-udp") {
-		err = InitLocalUDP()
-	}
-	if err != nil {
-		log.Fatalf("err : %s", err)
-	}
-	//InitParent
-	if cfg.GetString("parent") != "" {
-		err = InitParent()
-		if err != nil {
-			log.Fatalf("err : %s", err)
-		}
-		//InitParentTCP
-		if cfg.GetBool("parent-tcp") || cfg.GetBool("parent-tls") {
-			err = InitParentTCP()
-		}
-		if err != nil {
-			log.Fatalf("err : %s", err)
-		}
-		//InitParentTLS
-		if cfg.GetBool("parent-tls") {
-			err = InitParentTLS()
-		}
-		if err != nil {
-			log.Fatalf("err : %s", err)
-		}
-		//InitParentUDP
-		if cfg.GetBool("parent-udp") {
-			err = InitParentUDP()
-		}
-		if err != nil {
-			log.Fatalf("err : %s", err)
-		}
-	}
+	Clean(&service.S)
 }
-func Init() (err error) {
-	return
-}
-func InitTCP() (err error) {
-	return
-}
-func InitTLS() (err error) {
-	certBytes, err = ioutil.ReadFile(cfg.GetString("cert"))
-	if err != nil {
-		log.Printf("err : %s", err)
-		return
-	}
-	keyBytes, err = ioutil.ReadFile(cfg.GetString("key"))
-	if err != nil {
-		log.Printf("err : %s", err)
-		return
-	}
-	return
-}
-func InitUDP() (err error) {
-	return
-}
-func InitLocal() (err error) {
-	return
-}
-func InitLocalTCP() (err error) {
-	return
-}
-func InitLocalTLS() (err error) {
-
-	return
-}
-func InitLocalHTTP() (err error) {
-	err = InitBasicAuth()
-	if err != nil {
-		return
-	}
-	return
-}
-
-func InitLocalUDP() (err error) {
-	return
-}
-func InitParent() (err error) {
-	initOutPool(cfg.GetBool("parent-tls"), certBytes, keyBytes, cfg.GetString("parent"), cfg.GetInt("tcp-timeout"), cfg.GetInt("pool-size"), cfg.GetInt("pool-size")*2)
-	checker = NewChecker(cfg.GetInt("check-timeout"), int64(cfg.GetInt("check-interval")), cfg.GetString("blocked"), cfg.GetString("direct"))
-	log.Printf("use parent proxy : %s, udp : %v, tcp : %v, tls: %v", cfg.GetString("parent"), cfg.GetBool("parent-udp"), cfg.GetBool("parent-tcp"), cfg.GetBool("parent-tls"))
-	return
-}
-func InitParentTCP() (err error) {
-	return
-}
-func InitParentTLS() (err error) {
-	return
-}
-func InitParentUDP() (err error) {
-	return
-}
-func main() {
-	//catch panic error
-	defer func() {
-		e := recover()
-		if e != nil {
-			log.Printf("err : %s,\ntrace:%s", e, string(debug.Stack()))
+func Clean(s *services.Service) {
+	//block main()
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan,
+		os.Interrupt,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		for _ = range signalChan {
+			fmt.Println("\nReceived an interrupt, stopping services...")
+			(*s).Clean()
+			cleanupDone <- true
 		}
 	}()
-
-	sc := NewServerChannel(cfg.GetString("ip"), cfg.GetInt("port"))
-	if cfg.GetBool("local-tls") {
-		LocalTLSServer(&sc)
-	} else if cfg.GetBool("local-tcp") {
-		LocalTCPServer(&sc)
-	} else if cfg.GetBool("local-udp") {
-		LocalUDPServer(&sc)
-	}
-	log.Printf("proxy on %s , udp: %v, tcp: %v, tls: %v ,http: %v", (*sc.Listener).Addr(), cfg.GetBool("local-udp"), cfg.GetBool("local-tcp"), cfg.GetBool("local-tls"), cfg.GetBool("local-http"))
-
-	clean()
+	<-cleanupDone
 }
 
-func CheckTCPDeocder(inConn *net.Conn) (useProxy bool, address string, req *HTTPRequest, err error) {
-	if cfg.GetBool("local-http") {
-		useProxy, req, err = HTTPProxyDecoder(inConn)
-		if err != nil {
-			return
-		}
-		address = req.Host
-	} else {
-		address = cfg.GetString("parent")
-	}
-	if address == "" {
-		useProxy = false
-	} else if cfg.GetBool("always") {
-		useProxy =  true
-	}
-	return
-}
-func LocalTCPServer(sc *ServerChannel) {
-	(*sc).ListenTCP(func(inConn net.Conn) {
-		userProxy, address, req, err := CheckTCPDeocder(&inConn)
-		if err != nil {
-			if err != io.EOF {
-				log.Printf("tcp decode error , ERR:%s", err)
-			}
-			return
-		}
-		TCPOutBridge(&inConn, userProxy, address, req)
-	})
-}
+// func Init() (err error) {
+// 	return
+// }
+// func InitTCP() (err error) {
+// 	return
+// }
+// func InitTLS() (err error) {
+// 	certBytes, err = ioutil.ReadFile(cfg.GetString("cert"))
+// 	if err != nil {
+// 		log.Printf("err : %s", err)
+// 		return
+// 	}
+// 	keyBytes, err = ioutil.ReadFile(cfg.GetString("key"))
+// 	if err != nil {
+// 		log.Printf("err : %s", err)
+// 		return
+// 	}
+// 	return
+// }
+// func InitUDP() (err error) {
+// 	return
+// }
+// func InitLocal() (err error) {
+// 	return
+// }
+// func InitLocalTCP() (err error) {
+// 	return
+// }
+// func InitLocalTLS() (err error) {
 
-func LocalTLSServer(sc *ServerChannel) {
-	(*sc).ListenTls(certBytes, keyBytes, func(inConn net.Conn) {
-		userProxy, address, req, err := CheckTCPDeocder(&inConn)
-		if err != nil {
-			if err != io.EOF {
-				log.Printf("tls decode error , ERR:%s", err)
-			}
-			return
-		}
-		TCPOutBridge(&inConn, userProxy, address, req)
-	})
-}
+// 	return
+// }
+// func InitLocalHTTP() (err error) {
+// 	err = InitBasicAuth()
+// 	if err != nil {
+// 		return
+// 	}
+// 	return
+// }
 
-func LocalUDPServer(sc *ServerChannel) {
-	(*sc).ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
+// func InitLocalUDP() (err error) {
+// 	return
+// }
+// func InitParent() (err error) {
+// 	initOutPool(cfg.GetBool("parent-tls"), certBytes, keyBytes, cfg.GetString("parent"), cfg.GetInt("tcp-timeout"), cfg.GetInt("pool-size"), cfg.GetInt("pool-size")*2)
+// 	checker = NewChecker(cfg.GetInt("check-timeout"), int64(cfg.GetInt("check-interval")), cfg.GetString("blocked"), cfg.GetString("direct"))
+// 	log.Printf("use parent proxy : %s, udp : %v, tcp : %v, tls: %v", cfg.GetString("parent"), cfg.GetBool("parent-udp"), cfg.GetBool("parent-tcp"), cfg.GetBool("parent-tls"))
+// 	return
+// }
+// func InitParentTCP() (err error) {
+// 	return
+// }
+// func InitParentTLS() (err error) {
+// 	return
+// }
+// func InitParentUDP() (err error) {
+// 	return
+// }
+// func main() {
+// 	//catch panic error
+// 	defer func() {
+// 		e := recover()
+// 		if e != nil {
+// 			log.Printf("err : %s,\ntrace:%s", e, string(debug.Stack()))
+// 		}
+// 	}()
+// 	return
+// 	sc := NewServerChannel(cfg.GetString("ip"), cfg.GetInt("port"))
+// 	if cfg.GetBool("local-tls") {
+// 		LocalTLSServer(&sc)
+// 	} else if cfg.GetBool("local-tcp") {
+// 		LocalTCPServer(&sc)
+// 	} else if cfg.GetBool("local-udp") {
+// 		LocalUDPServer(&sc)
+// 	}
+// 	log.Printf("proxy on %s , udp: %v, tcp: %v, tls: %v ,http: %v", (*sc.Listener).Addr(), cfg.GetBool("local-udp"), cfg.GetBool("local-tcp"), cfg.GetBool("local-tls"), cfg.GetBool("local-http"))
 
-	})
-}
+// 	clean()
+// }
 
-func TCPOutBridge(inConn *net.Conn, userProxy bool, address string, req *HTTPRequest) {
-	var outConn net.Conn
-	var _outConn interface{}
-	var err error
-	if userProxy {
-		_outConn, err = outPool.Get()
-		if err == nil {
-			outConn = _outConn.(net.Conn)
-		}
-	} else {
-		outConn, err = ConnectHost(address, cfg.GetInt("tcp-timeout"))
-	}
-	if err != nil {
-		log.Printf("connect to %s , err:%s", address, err)
-		closeConn(inConn)
-		return
-	}
-	inAddr := (*inConn).RemoteAddr().String()
-	outAddr := outConn.RemoteAddr().String()
-	log.Printf("%s use proxy %v", address, userProxy)
+// func CheckTCPDeocder(inConn *net.Conn) (useProxy bool, address string, req *HTTPRequest, err error) {
+// 	if cfg.GetBool("local-http") {
+// 		useProxy, req, err = HTTPProxyDecoder(inConn)
+// 		if err != nil {
+// 			return
+// 		}
+// 		address = req.Host
+// 	} else {
+// 		address = cfg.GetString("parent")
+// 	}
+// 	if address == "" {
+// 		useProxy = false
+// 	} else if cfg.GetBool("always") {
+// 		useProxy = true
+// 	}
+// 	return
+// }
+// func LocalTCPServer(sc *ServerChannel) {
+// 	(*sc).ListenTCP(func(inConn net.Conn) {
+// 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
+// 		if err != nil {
+// 			if err != io.EOF {
+// 				log.Printf("tcp decode error , ERR:%s", err)
+// 			}
+// 			return
+// 		}
+// 		TCPOutBridge(&inConn, userProxy, address, req)
+// 	})
+// }
 
-	if req != nil {
-		if req.IsHTTPS() && !userProxy {
-			req.HTTPSReply()
-		} else {
-			outConn.Write(req.headBuf)
-		}
-	}
+// func LocalTLSServer(sc *ServerChannel) {
+// 	(*sc).ListenTls(certBytes, keyBytes, func(inConn net.Conn) {
+// 		userProxy, address, req, err := CheckTCPDeocder(&inConn)
+// 		if err != nil {
+// 			if err != io.EOF {
+// 				log.Printf("tls decode error , ERR:%s", err)
+// 			}
+// 			return
+// 		}
+// 		TCPOutBridge(&inConn, userProxy, address, req)
+// 	})
+// }
 
-	IoBind(*inConn, outConn, func(err error) {
-		log.Printf("conn %s - %s [%s] released", inAddr, outAddr, address)
-		closeConn(inConn)
-		closeConn(&outConn)
-	}, func(n int, d bool) {}, 0)
-	log.Printf("conn %s - %s [%s] connected", inAddr, outAddr, address)
-}
-func UDPOutBridge() {
+// func LocalUDPServer(sc *ServerChannel) {
+// 	(*sc).ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 
-}
+// 	})
+// }
+
+// func TCPOutBridge(inConn *net.Conn, userProxy bool, address string, req *HTTPRequest) {
+// 	var outConn net.Conn
+// 	var _outConn interface{}
+// 	var err error
+// 	if userProxy {
+// 		_outConn, err = outPool.Get()
+// 		if err == nil {
+// 			outConn = _outConn.(net.Conn)
+// 		}
+// 	} else {
+// 		outConn, err = ConnectHost(address, cfg.GetInt("tcp-timeout"))
+// 	}
+// 	if err != nil {
+// 		log.Printf("connect to %s , err:%s", address, err)
+// 		closeConn(inConn)
+// 		return
+// 	}
+// 	inAddr := (*inConn).RemoteAddr().String()
+// 	outAddr := outConn.RemoteAddr().String()
+// 	log.Printf("%s use proxy %v", address, userProxy)
+
+// 	if req != nil {
+// 		if req.IsHTTPS() && !userProxy {
+// 			req.HTTPSReply()
+// 		} else {
+// 			outConn.Write(req.headBuf)
+// 		}
+// 	}
+
+// 	IoBind(*inConn, outConn, func(err error) {
+// 		log.Printf("conn %s - %s [%s] released", inAddr, outAddr, address)
+// 		closeConn(inConn)
+// 		closeConn(&outConn)
+// 	}, func(n int, d bool) {}, 0)
+// 	log.Printf("conn %s - %s [%s] connected", inAddr, outAddr, address)
+// }
+// func UDPOutBridge() {
+
+// }
 
 // func DoUDP() {
 // 	if cfg.GetBool("local-udp") {
@@ -583,26 +606,3 @@ func UDPOutBridge() {
 // 	}, func(n int, d bool) {}, 0)
 // 	log.Printf("conn %s - %s [%s] connected", inAddr, outAddr, address)
 // }
-func closeConn(conn *net.Conn) {
-	if *conn != nil {
-		(*conn).SetDeadline(time.Now().Add(time.Millisecond))
-		(*conn).Close()
-	}
-}
-func keygen() (err error) {
-	cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("err:%s", err)
-		return
-	}
-	fmt.Println(string(out))
-	cmd = exec.Command("sh", "-c", `openssl req -new -key proxy.key -x509 -days 3650 -out proxy.crt -subj /C=CN/ST=BJ/O="Localhost Ltd"/CN=proxy`)
-	out, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("err:%s", err)
-		return
-	}
-	fmt.Println(string(out))
-	return
-}

@@ -1,7 +1,8 @@
-package main
+package utils
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -223,15 +224,17 @@ func (ba *BasicAuth) Total() (n int) {
 }
 
 type HTTPRequest struct {
-	headBuf   []byte
-	conn      *net.Conn
-	Host      string
-	Method    string
-	URL       string
-	hostOrURL string
+	HeadBuf     []byte
+	conn        *net.Conn
+	Host        string
+	Method      string
+	URL         string
+	hostOrURL   string
+	isBasicAuth bool
+	basicAuth   *BasicAuth
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
 	len := 0
 	req = HTTPRequest{
@@ -242,23 +245,25 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int) (req HTTPRequest, err error) 
 		if err != io.EOF {
 			err = fmt.Errorf("http decoder read err:%s", err)
 		}
-		closeConn(inConn)
+		CloseConn(inConn)
 		return
 	}
-	req.headBuf = buf[:len]
-	index := bytes.IndexByte(req.headBuf, '\n')
+	req.HeadBuf = buf[:len]
+	index := bytes.IndexByte(req.HeadBuf, '\n')
 	if index == -1 {
-		err = fmt.Errorf("http decoder data line err:%s", string(req.headBuf)[:50])
-		closeConn(inConn)
+		err = fmt.Errorf("http decoder data line err:%s", string(req.HeadBuf)[:50])
+		CloseConn(inConn)
 		return
 	}
-	fmt.Sscanf(string(req.headBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
+	fmt.Sscanf(string(req.HeadBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
 	if req.Method == "" || req.hostOrURL == "" {
-		err = fmt.Errorf("http decoder data err:%s", string(req.headBuf)[:50])
-		closeConn(inConn)
+		err = fmt.Errorf("http decoder data err:%s", string(req.HeadBuf)[:50])
+		CloseConn(inConn)
 		return
 	}
 	req.Method = strings.ToUpper(req.Method)
+	req.isBasicAuth = isBasicAuth
+	req.basicAuth = basicAuth
 	log.Printf("%s:%s", req.Method, req.hostOrURL)
 
 	if req.IsHTTPS() {
@@ -269,7 +274,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int) (req HTTPRequest, err error) 
 	return
 }
 func (req *HTTPRequest) HTTP() (err error) {
-	if IsBasicAuth() {
+	if req.isBasicAuth {
 		err = req.BasicAuth()
 		if err != nil {
 			return
@@ -303,27 +308,27 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	authorization, err := req.getHeader("Authorization")
 	if err != nil {
 		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
-		closeConn(req.conn)
+		CloseConn(req.conn)
 		return
 	}
 	//log.Printf("Authorization:%s", authorization)
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
 		err = fmt.Errorf("authorization data error,ERR:%s", authorization)
-		closeConn(req.conn)
+		CloseConn(req.conn)
 		return
 	}
 	user, err := base64.StdEncoding.DecodeString(basic[1])
 	if err != nil {
 		err = fmt.Errorf("authorization data parse error,ERR:%s", err)
-		closeConn(req.conn)
+		CloseConn(req.conn)
 		return
 	}
-	authOk := basicAuth.Check(string(user))
+	authOk := (*req.basicAuth).Check(string(user))
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
 		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")
-		closeConn(req.conn)
+		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
 	}
@@ -342,7 +347,7 @@ func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
 }
 func (req *HTTPRequest) getHeader(key string) (val string, err error) {
 	key = strings.ToUpper(key)
-	lines := strings.Split(string(req.headBuf), "\r\n")
+	lines := strings.Split(string(req.HeadBuf), "\r\n")
 	for _, line := range lines {
 		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
 		if len(line) == 2 {
@@ -357,6 +362,7 @@ func (req *HTTPRequest) getHeader(key string) (val string, err error) {
 	err = fmt.Errorf("can not find HOST header")
 	return
 }
+
 func (req *HTTPRequest) addPortIfNot() (newHost string) {
 	//newHost = req.Host
 	port := "80"
@@ -371,14 +377,83 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 	return
 }
 
-// func (req *HTTPRequest) fixHost(host string) string {
-// 	if !strings.HasPrefix(host, "[") && len(strings.Split(host, ":")) > 2 {
-// 		if strings.HasSuffix(host, ":80") {
-// 			return fmt.Sprintf("[%s]:80", host[:strings.LastIndex(host, ":")])
-// 		}
-// 		if strings.HasSuffix(host, ":443") {
-// 			return fmt.Sprintf("[%s]:443", host[:strings.LastIndex(host, ":")])
-// 		}
-// 	}
-// 	return host
-// }
+type OutPool struct {
+	Pool      ConnPool
+	dur       int
+	isTLS     bool
+	certBytes []byte
+	keyBytes  []byte
+	address   string
+	timeout   int
+}
+
+func NewOutPool(dur int, isTLS bool, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
+	op = OutPool{
+		dur:       dur,
+		isTLS:     isTLS,
+		certBytes: certBytes,
+		keyBytes:  keyBytes,
+		address:   address,
+		timeout:   timeout,
+	}
+	var err error
+	op.Pool, err = NewConnPool(poolConfig{
+		IsActive: func(conn interface{}) bool { return true },
+		Release: func(conn interface{}) {
+			if conn != nil {
+				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
+				conn.(net.Conn).Close()
+				// log.Println("conn released")
+			}
+		},
+		InitialCap: InitialCap,
+		MaxCap:     MaxCap,
+		Factory: func() (conn interface{}, err error) {
+			conn, err = op.getConn()
+			return
+		},
+	})
+	if err != nil {
+		log.Fatalf("init conn pool fail ,%s", err)
+	} else {
+		if InitialCap > 0 {
+			log.Printf("init conn pool success")
+			op.initPoolDeamon()
+		} else {
+			log.Printf("conn pool closed")
+		}
+	}
+	return
+}
+func (op *OutPool) getConn() (conn interface{}, err error) {
+	if op.isTLS {
+		var _conn tls.Conn
+		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else {
+		conn, err = ConnectHost(op.address, op.timeout)
+	}
+	return
+}
+
+func (op *OutPool) initPoolDeamon() {
+	go func() {
+		if op.dur <= 0 {
+			return
+		}
+		log.Printf("pool deamon started")
+		for {
+			time.Sleep(time.Second * time.Duration(op.dur))
+			conn, err := op.getConn()
+			if err != nil {
+				log.Printf("pool deamon err %s , release pool", err)
+				op.Pool.ReleaseAll()
+			} else {
+				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
+				conn.(net.Conn).Close()
+			}
+		}
+	}()
+}

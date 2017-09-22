@@ -1,111 +1,89 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"strings"
+	"proxy/services"
+	"proxy/utils"
 
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	cfg = viper.New()
+	app     *kingpin.Application
+	service services.ServiceItem
 )
 
 func initConfig() (err error) {
-	//define command line args
+	args := services.Args{}
+	//define  args
+	tcpArgs := services.TCPArgs{}
+	httpArgs := services.HTTPArgs{}
+	tlsArgs := services.TLSArgs{}
+	udpArgs := services.UDPArgs{}
 
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	configFile := pflag.StringP("config", "c", "", "config file path")
+	//build srvice args
+	app = kingpin.New("proxy", "happy with proxy")
+	app.Author("snail").Version(APP_VERSION)
+	args.Parent = app.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	args.Local = app.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
+	keyTLS := app.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	args.PoolSize = app.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Default("50").Int()
+	args.CheckParentInterval = app.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Default("3").Int()
 
-	pflag.BoolP("parent-tls", "X", false, "parent proxy is tls")
-	pflag.BoolP("local-tls", "x", false, "local proxy is tls")
-	pflag.BoolP("parent-tcp", "W", false, "parent proxy is tcp")
-	pflag.BoolP("local-tcp", "w", true, "local proxy is tcp")
-	pflag.BoolP("parent-udp", "U", false, "parent is udp")
-	pflag.BoolP("local-udp", "u", false, "local proxy is udp")
-	version := pflag.BoolP("version", "v", false, "show version")
-	pflag.BoolP("local-http", "z", false, "proxy on http")
-	pflag.Bool("always", false, "always use parent proxy")
+	//########http#########
+	http := app.Command("http", "proxy on http mode")
+	httpArgs.LocalType = http.Flag("local-type", "parent protocol type <tls|tcp>").Default("tcp").Short('t').Enum("tls", "tcp")
+	httpArgs.ParentType = http.Flag("parent-type", "parent protocol type <tls|tcp>").Short('T').Enum("tls", "tcp")
+	httpArgs.Always = http.Flag("always", "always use parent proxy").Default("false").Bool()
+	httpArgs.Timeout = http.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
+	httpArgs.HTTPTimeout = http.Flag("http-timeout", "check domain if blocked , http request timeout milliseconds when connect to host").Default("3000").Int()
+	httpArgs.Interval = http.Flag("interval", "check domain if blocked every interval seconds").Default("10").Int()
+	httpArgs.Blocked = http.Flag("blocked", "blocked domain file , one domain each line").Default("blocked").Short('b').String()
+	httpArgs.Direct = http.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
+	httpArgs.AuthFile = http.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
+	httpArgs.Auth = http.Flag("auth", "http basic auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
 
-	pflag.Int("check-proxy-interval", 3, "check if proxy is okay every interval seconds")
-	pflag.IntP("port", "p", 33080, "local port to listen")
-	pflag.IntP("check-timeout", "t", 3000, "chekc domain blocked , http request timeout milliseconds when connect to host")
-	pflag.IntP("tcp-timeout", "T", 2000, "tcp timeout milliseconds when connect to real server or parent proxy")
-	pflag.IntP("check-interval", "I", 10, "check domain if blocked every interval seconds")
-	pflag.IntP("pool-size", "s", 50, "conn pool size , which connect to parent proxy, zero: means turn off pool")
+	//########tcp#########
+	tcp := app.Command("tcp", "proxy on tcp mode")
+	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
+	tcpArgs.ParentType = tcp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
 
-	pflag.StringP("parent", "P", "", "parent proxy address")
-	pflag.StringP("ip", "i", "0.0.0.0", "local ip to bind")
-	pflag.StringP("cert", "f", "proxy.crt", "cert file for tls")
-	pflag.StringP("key", "k", "proxy.key", "key file for tls")
-	pflag.StringP("blocked", "b", "blocked", "blocked domain file , one domain each line")
-	pflag.StringP("direct", "d", "direct", "direct domain file , one domain each line")
-	pflag.StringP("auth-file", "F", "", "http basic auth file,\"username:password\" each line in file")
-	pflag.StringSliceP("auth", "a", []string{}, "http basic auth username and password,such as: \"user1:pass1,user2:pass2\"")
+	//########tls#########
+	tls := app.Command("tls", "proxy on tls mode")
+	tlsArgs.Timeout = tls.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
+	tlsArgs.ParentType = tls.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
 
-	pflag.Parse()
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	cfg.BindPFlag("parent-tls", pflag.Lookup("parent-tls"))
-	cfg.BindPFlag("local-tls", pflag.Lookup("local-tls"))
-	cfg.BindPFlag("parent-udp", pflag.Lookup("parent-udp"))
-	cfg.BindPFlag("local-udp", pflag.Lookup("local-udp"))
-	cfg.BindPFlag("parent-tcp", pflag.Lookup("parent-tcp"))
-	cfg.BindPFlag("local-tcp", pflag.Lookup("local-tcp"))
-	cfg.BindPFlag("local-http", pflag.Lookup("local-http"))
-	cfg.BindPFlag("always", pflag.Lookup("always"))
-	cfg.BindPFlag("check-proxy-interval", pflag.Lookup("check-proxy-interval"))
-	cfg.BindPFlag("port", pflag.Lookup("port"))
-	cfg.BindPFlag("check-timeout", pflag.Lookup("check-timeout"))
-	cfg.BindPFlag("tcp-timeout", pflag.Lookup("tcp-timeout"))
-	cfg.BindPFlag("check-interval", pflag.Lookup("check-interval"))
-	cfg.BindPFlag("pool-size", pflag.Lookup("pool-size"))
-	cfg.BindPFlag("parent", pflag.Lookup("parent"))
-	cfg.BindPFlag("ip", pflag.Lookup("ip"))
-	cfg.BindPFlag("cert", pflag.Lookup("cert"))
-	cfg.BindPFlag("key", pflag.Lookup("key"))
-	cfg.BindPFlag("blocked", pflag.Lookup("blocked"))
-	cfg.BindPFlag("direct", pflag.Lookup("direct"))
-	cfg.BindPFlag("auth", pflag.Lookup("auth"))
-	cfg.BindPFlag("auth-file", pflag.Lookup("auth-file"))
-
-	//version
-	if *version {
-		fmt.Printf("proxy v%s\n", APP_VERSION)
-		os.Exit(0)
+	if *certTLS != "" && *keyTLS != "" {
+		args.CertBytes, args.KeyBytes = tlsBytes(*certTLS, *keyTLS)
 	}
+	httpArgs.Args = args
+	tcpArgs.Args = args
+	tlsArgs.Args = args
+	udpArgs.Args = args
 
 	//keygen
-	if len(pflag.Args()) > 0 {
-		if pflag.Arg(0) == "keygen" {
-			keygen()
+	if len(os.Args) > 1 {
+		if os.Args[1] == "keygen" {
+			utils.Keygen()
 			os.Exit(0)
 		}
 	}
-
-	poster()
-
-	if *configFile != "" {
-		cfg.SetConfigFile(*configFile)
-	} else {
-		cfg.SetConfigName("proxy")
-		cfg.AddConfigPath("/etc/proxy/")
-		cfg.AddConfigPath("$HOME/.proxy")
-		cfg.AddConfigPath(".proxy")
-		cfg.AddConfigPath(".")
+	//regist services and run service
+	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
+	services.Regist("http", services.NewHTTP(), httpArgs)
+	services.Regist("tcp", services.NewTCP(), tcpArgs)
+	services.Regist("tls", services.NewTLS(), tlsArgs)
+	services.Regist("udp", services.NewUDP(), udpArgs)
+	service, err = services.Run(serviceName)
+	if err != nil {
+		log.Fatalf("run service [%s] fail, ERR:%s", service, err)
 	}
-
-	err = cfg.ReadInConfig()
-	file := cfg.ConfigFileUsed()
-	if err != nil && !strings.Contains(err.Error(), "Not") {
-		log.Fatalf("parse config fail, ERR:%s", err)
-	} else if file != "" {
-		log.Printf("use config file : %s", file)
-	}
-	err = nil
 	return
 }
 
@@ -120,4 +98,17 @@ func poster() {
 		##        ##     ##  #######  ##     ##    ##    
 		
 		v%s`+" by snail , blog : http://www.host900.com/\n\n", APP_VERSION)
+}
+func tlsBytes(cert, key string) (certBytes, keyBytes []byte) {
+	certBytes, err := ioutil.ReadFile(cert)
+	if err != nil {
+		log.Fatalf("err : %s", err)
+		return
+	}
+	keyBytes, err = ioutil.ReadFile(key)
+	if err != nil {
+		log.Fatalf("err : %s", err)
+		return
+	}
+	return
 }

@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -60,7 +60,8 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes []byte, fn func(conn net.
 }
 
 func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", sc.ip, sc.port))
+	var l net.Listener
+	l, err = net.Listen("tcp", fmt.Sprintf("%s:%d", sc.ip, sc.port))
 	if err == nil {
 		sc.Listener = &l
 		go func() {
