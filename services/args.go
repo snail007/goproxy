@@ -18,6 +18,10 @@ type Args struct {
 	PoolSize            *int
 	CheckParentInterval *int
 }
+type TunnelArgs struct {
+	Args
+	Timeout *int
+}
 type TCPArgs struct {
 	Args
 	Timeout    *int

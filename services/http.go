@@ -27,7 +27,9 @@ func NewHTTP() Service {
 }
 func (s *HTTP) InitService() {
 	s.InitBasicAuth()
-	s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
+	if *s.cfg.Parent != "" {
+		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
+	}
 }
 func (s *HTTP) StopService() {
 	if s.outPool.Pool != nil {
@@ -76,17 +78,18 @@ func (s *HTTP) callback(inConn net.Conn) {
 		return
 	}
 	address := req.Host
-	if req.IsHTTPS() {
-		s.checker.Add(address, true, req.Method, "", nil)
-	} else {
-		s.checker.Add(address, false, req.Method, req.URL, req.HeadBuf)
-	}
+
 	useProxy := true
 	if *s.cfg.Parent == "" {
 		useProxy = false
 	} else if *s.cfg.Always {
 		useProxy = true
 	} else {
+		if req.IsHTTPS() {
+			s.checker.Add(address, true, req.Method, "", nil)
+		} else {
+			s.checker.Add(address, false, req.Method, req.URL, req.HeadBuf)
+		}
 		//var n, m uint
 		useProxy, _, _ = s.checker.IsBlocked(req.Host)
 		//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)

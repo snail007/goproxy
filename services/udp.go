@@ -101,7 +101,11 @@ func (s *UDP) GetConn(connKey string) (conn net.Conn, isNew bool, err error) {
 func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err error) {
 	numLocal := crc32.ChecksumIEEE([]byte(localAddr.String()))
 	numSrc := crc32.ChecksumIEEE([]byte(srcAddr.String()))
-	connKey := uint64((numLocal/10)*10 + numSrc%10)
+	mod := uint32(*s.cfg.PoolSize)
+	if mod == 0 {
+		mod = 10
+	}
+	connKey := uint64((numLocal/10)*10 + numSrc%mod)
 	conn, isNew, err := s.GetConn(fmt.Sprintf("%d", connKey))
 	if err != nil {
 		log.Printf("upd get conn to %s parent %s fail, ERR:%s", *s.cfg.ParentType, *s.cfg.Parent, err)

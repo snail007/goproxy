@@ -21,7 +21,7 @@ func initConfig() (err error) {
 	//define  args
 	tcpArgs := services.TCPArgs{}
 	httpArgs := services.HTTPArgs{}
-	// tlsArgs := services.TLSArgs{}
+	tunnelArgs := services.TunnelArgs{}
 	udpArgs := services.UDPArgs{}
 
 	//build srvice args
@@ -56,6 +56,9 @@ func initConfig() (err error) {
 	udp := app.Command("udp", "proxy on udp mode")
 	udpArgs.Timeout = udp.Flag("timeout", "tcp timeout milliseconds when connect to parent proxy").Short('t').Default("2000").Int()
 	udpArgs.ParentType = udp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
+	//########tunnel#########
+	tunnel := app.Command("tcp", "proxy on tunnel mode")
+	tunnelArgs.Timeout = tunnel.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -74,11 +77,13 @@ func initConfig() (err error) {
 			os.Exit(0)
 		}
 	}
+	poster()
 	//regist services and run service
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	services.Regist("http", services.NewHTTP(), httpArgs)
 	services.Regist("tcp", services.NewTCP(), tcpArgs)
 	services.Regist("udp", services.NewUDP(), udpArgs)
+	services.Regist("tunnel", services.NewTunnel(), tunnelArgs)
 	service, err = services.Run(serviceName)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", service, err)
