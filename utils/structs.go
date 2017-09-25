@@ -113,14 +113,17 @@ func (c *Checker) isNeedCheck(item CheckerItem) bool {
 }
 func (c *Checker) IsBlocked(address string) (blocked bool, failN, successN uint) {
 	if c.domainIsInMap(address, true) {
+		//log.Printf("%s in blocked ? true", address)
 		return true, 0, 0
 	}
 	if c.domainIsInMap(address, false) {
+		//log.Printf("%s in direct ? true", address)
 		return false, 0, 0
 	}
 
 	_item, ok := c.data.Get(address)
 	if !ok {
+		//log.Printf("%s not in map, blocked true", address)
 		return true, 0, 0
 	}
 	item := _item.(CheckerItem)
