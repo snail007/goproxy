@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"proxy/utils"
@@ -61,39 +62,39 @@ func (s *HTTP) Clean() {
 	s.StopService()
 }
 func (s *HTTP) callback(inConn net.Conn) {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
-			}
-		}()
-		req, err := utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
-		if err != nil {
-			log.Printf("decoder error , form %s, ERR:%s", err, inConn.RemoteAddr())
-			utils.CloseConn(&inConn)
-			return
-		}
-		address := req.Host
-		useProxy := true
-		if *s.cfg.Parent == "" {
-			useProxy = false
-		} else if *s.cfg.Always {
-			useProxy = true
-		} else {
-			useProxy, _, _ = s.checker.IsBlocked(req.Host)
-		}
-		log.Printf("use proxy : %v, %s", useProxy, address)
-		//os.Exit(0)
-		err = s.OutToTCP(useProxy, address, &inConn, &req)
-		if err != nil {
-			if *s.cfg.Parent == "" {
-				log.Printf("connect to %s fail, ERR:%s", address, err)
-			} else {
-				log.Printf("connect to %s parent %s fail", *s.cfg.ParentType, *s.cfg.Parent)
-			}
-			utils.CloseConn(&inConn)
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 		}
 	}()
+	req, err := utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
+	if err != nil {
+		if err != io.EOF {
+			log.Printf("decoder error , form %s, ERR:%s", err, inConn.RemoteAddr())
+		}
+		utils.CloseConn(&inConn)
+		return
+	}
+	address := req.Host
+	useProxy := true
+	if *s.cfg.Parent == "" {
+		useProxy = false
+	} else if *s.cfg.Always {
+		useProxy = true
+	} else {
+		useProxy, _, _ = s.checker.IsBlocked(req.Host)
+	}
+	log.Printf("use proxy : %v, %s", useProxy, address)
+	//os.Exit(0)
+	err = s.OutToTCP(useProxy, address, &inConn, &req)
+	if err != nil {
+		if *s.cfg.Parent == "" {
+			log.Printf("connect to %s fail, ERR:%s", address, err)
+		} else {
+			log.Printf("connect to %s parent %s fail", *s.cfg.ParentType, *s.cfg.Parent)
+		}
+		utils.CloseConn(&inConn)
+	}
 }
 func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (err error) {
 	inAddr := (*inConn).RemoteAddr().String()

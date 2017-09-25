@@ -22,12 +22,9 @@ type TCPArgs struct {
 	Args
 	Timeout    *int
 	ParentType *string
+	IsTLS      *bool
 }
-type TLSArgs struct {
-	Args
-	Timeout    *int
-	ParentType *string
-}
+
 type HTTPArgs struct {
 	Args
 	Always      *bool
@@ -43,4 +40,13 @@ type HTTPArgs struct {
 }
 type UDPArgs struct {
 	Args
+	ParentType *string
+	Timeout    *int
+}
+
+func (a *TCPArgs) Protocol() string {
+	if *a.IsTLS {
+		return "tls"
+	}
+	return "tcp"
 }

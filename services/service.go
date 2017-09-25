@@ -16,16 +16,16 @@ type ServiceItem struct {
 	Name string
 }
 
-var servicesMap = map[string]ServiceItem{}
+var servicesMap = map[string]*ServiceItem{}
 
 func Regist(name string, s Service, args interface{}) {
-	servicesMap[name] = ServiceItem{
+	servicesMap[name] = &ServiceItem{
 		S:    s,
 		Args: args,
 		Name: name,
 	}
 }
-func Run(name string) (service ServiceItem, err error) {
+func Run(name string) (service *ServiceItem, err error) {
 	service, ok := servicesMap[name]
 	if ok {
 		go func() {

@@ -13,7 +13,7 @@ import (
 
 var (
 	app     *kingpin.Application
-	service services.ServiceItem
+	service *services.ServiceItem
 )
 
 func initConfig() (err error) {
@@ -21,7 +21,7 @@ func initConfig() (err error) {
 	//define  args
 	tcpArgs := services.TCPArgs{}
 	httpArgs := services.HTTPArgs{}
-	tlsArgs := services.TLSArgs{}
+	// tlsArgs := services.TLSArgs{}
 	udpArgs := services.UDPArgs{}
 
 	//build srvice args
@@ -31,8 +31,8 @@ func initConfig() (err error) {
 	args.Local = app.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	keyTLS := app.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
-	args.PoolSize = app.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Default("50").Int()
-	args.CheckParentInterval = app.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Default("3").Int()
+	args.PoolSize = app.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Short('L').Default("50").Int()
+	args.CheckParentInterval = app.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
@@ -49,13 +49,13 @@ func initConfig() (err error) {
 
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
-	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
+	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('t').Default("2000").Int()
 	tcpArgs.ParentType = tcp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
-
-	//########tls#########
-	tls := app.Command("tls", "proxy on tls mode")
-	tlsArgs.Timeout = tls.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
-	tlsArgs.ParentType = tls.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
+	tcpArgs.IsTLS = tcp.Flag("tls", "proxy on tls mode").Default("false").Bool()
+	//########udp#########
+	udp := app.Command("udp", "proxy on udp mode")
+	udpArgs.Timeout = udp.Flag("timeout", "tcp timeout milliseconds when connect to parent proxy").Short('t').Default("2000").Int()
+	udpArgs.ParentType = udp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -64,7 +64,7 @@ func initConfig() (err error) {
 	}
 	httpArgs.Args = args
 	tcpArgs.Args = args
-	tlsArgs.Args = args
+	// tlsArgs.Args = args
 	udpArgs.Args = args
 
 	//keygen
@@ -78,7 +78,6 @@ func initConfig() (err error) {
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	services.Regist("http", services.NewHTTP(), httpArgs)
 	services.Regist("tcp", services.NewTCP(), tcpArgs)
-	services.Regist("tls", services.NewTLS(), tlsArgs)
 	services.Regist("udp", services.NewUDP(), udpArgs)
 	service, err = services.Run(serviceName)
 	if err != nil {
