@@ -202,8 +202,8 @@ VPS(IP:22.22.22.33)执行:
 
 ### 4.反向代理(内网穿透)  
 **4.1、原理说明**  
-内网穿透,由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.
-当用户访问server端,流程是:
+内网穿透,由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.  
+当用户访问server端,流程是:  
 1. server主动和bridge端建立连接；
 1. 然后bridge端通知client端连接bridge端,并连接内网目标端口;
 1. 然后绑定client端到bridge端和client端到内网端口的连接；
