@@ -220,13 +220,12 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-`./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-  
-`./proxy tserver -p ":28080" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -p ":28080" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
   
 1. 在公司机器A上面执行  
-`./proxy tclient -p "127.0.0.1:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-  
+    `./proxy tclient -p "127.0.0.1:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+
 1. 完成  
   
 **4.3、UDP普通用法**  
@@ -239,13 +238,12 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-`./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-  
-`./proxy tserver --udp -p ":53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
-  
+    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver --udp -p ":53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+
 1. 在公司机器A上面执行  
-`./proxy tclient --udp -p "127.0.0.1:53" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-  
+    `./proxy tclient --udp -p "127.0.0.1:53" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+
 1. 完成  
   
 **4.4、高级用法一**  
@@ -259,13 +257,13 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-`./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
   
 1. 在公司机器A上面执行  
-`./proxy tclient -p "127.0.0.1:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy tclient -p "127.0.0.1:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
 1. 在家里电脑上执行  
-`./proxy tserver -p ":28080" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -p ":28080" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
 1. 完成  
   
@@ -284,17 +282,14 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-`./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-  
-`./proxy tserver -p ":28080" --k web -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
-  
-`./proxy tserver -p ":29090" --k ftp -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
-  
+    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -p ":28080" --k web -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -p ":29090" --k ftp -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+
 1. 在公司机器A上面执行  
-`./proxy tclient -p "127.0.0.1:80" --k web -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-  
-`./proxy tclient -p "127.0.0.1:21" --k ftp -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-  
+    `./proxy tclient -p "127.0.0.1:80" --k web -P "22.22.22.22:33080" -C proxy.crt -K proxy.key` 
+    `./proxy tclient -p "127.0.0.1:21" --k ftp -P "22.22.22.22:33080" -C proxy.crt -K proxy.key` 
+
 1. 完成  
   
 **3.6.查看帮助**  
