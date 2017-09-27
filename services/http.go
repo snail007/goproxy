@@ -139,7 +139,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	} else {
 		outConn.Write(req.HeadBuf)
 	}
-	utils.IoBind((*inConn), outConn, func(err error) {
+	utils.IoBind((*inConn), outConn, func(isSrcErr bool, err error) {
 		log.Printf("conn %s - %s - %s -%s released [%s]", inAddr, inLocalAddr, outLocalAddr, outAddr, req.Host)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
