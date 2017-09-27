@@ -175,7 +175,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 									log.Printf("parse revecived udp packet fail, err: %s", err)
 									continue
 								}
-								log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
+								//log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
 								_srcAddr := strings.Split(srcAddrFromConn, ":")
 								if len(_srcAddr) != 2 {
 									log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
@@ -188,7 +188,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 									log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
 									continue
 								}
-								log.Printf("udp response to local %s success", srcAddrFromConn)
+								//log.Printf("udp response to local %s success", srcAddrFromConn)
 							}
 						}(outConn)
 						break
@@ -203,7 +203,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 				log.Printf("write udp packet to %s fail ,flush err:%s", *s.cfg.Parent, err)
 				goto RETRY
 			}
-			log.Printf("write packet %v", *item.packet)
+			//log.Printf("write packet %v", *item.packet)
 		}
 	}()
 }

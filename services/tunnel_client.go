@@ -128,7 +128,7 @@ func (s *TunnelClient) ServeUDP() {
 				utils.CloseConn(&inConn)
 				break
 			}
-			log.Printf("udp packet revecived:%s,%v", srcAddr, body)
+			//log.Printf("udp packet revecived:%s,%v", srcAddr, body)
 			go s.processUDPPacket(&inConn, srcAddr, body)
 		}
 	}
@@ -152,7 +152,7 @@ func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr string, body [
 		log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
 		return
 	}
-	//log.Debugf("send udp packet to %s success", dstAddr.String())
+	//log.Printf("send udp packet to %s success", dstAddr.String())
 	buf := make([]byte, 512)
 	len, _, err := conn.ReadFromUDP(buf)
 	if err != nil {
@@ -160,14 +160,14 @@ func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr string, body [
 		return
 	}
 	respBody := buf[0:len]
-	//log.Debugf("revecived udp packet from %s , %v", dstAddr.String(), respBody)
+	//log.Printf("revecived udp packet from %s , %v", dstAddr.String(), respBody)
 	_, err = (*inConn).Write(utils.UDPPacket(srcAddr, respBody))
 	if err != nil {
 		log.Printf("send udp response fail ,ERR:%s", err)
 		utils.CloseConn(inConn)
 		return
 	}
-	log.Printf("send udp response success ,from:%s", dstAddr.String())
+	//log.Printf("send udp response success ,from:%s", dstAddr.String())
 }
 func (s *TunnelClient) ServeConn() {
 	var inConn, outConn net.Conn
