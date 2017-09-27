@@ -1,6 +1,8 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支持正向代理和反响代理(即:内网穿透).  
-<hr/>  
+Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支持正向代理和反响代理(即:内网穿透). 
+
+---  
+
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
  
 ### 0.生成加密通讯需要的证书文件  
