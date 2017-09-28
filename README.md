@@ -114,7 +114,7 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
   
 **1.7.查看帮助**  
 `./proxy help http`  
-[图文教程](docs/faststart_v3.md)  
+
   
 ### 2.TCP代理  
   
