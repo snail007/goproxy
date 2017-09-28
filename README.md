@@ -65,7 +65,7 @@ chmod +x install.sh
 http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,当然可以选择不加密通信通讯,本教程所有和上级通讯都采用加密,需要证书文件.  
 在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.  
 `./proxy keygen`  
-默认会使用程序相同目录下面的证书文件proxy.crt和key文件proxy.key。  
+默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
   
 ### 1.HTTP代理  
 **1.1.普通HTTP代理**  
