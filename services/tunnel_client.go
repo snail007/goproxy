@@ -202,6 +202,7 @@ func (s *TunnelClient) ServeConn() {
 	if err != nil {
 		utils.CloseConn(&inConn)
 		utils.CloseConn(&outConn)
+		log.Printf("build connection error, err: %s", err)
 		return
 	}
 

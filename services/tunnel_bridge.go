@@ -156,6 +156,9 @@ func (s *TunnelBridge) ChnDeamon(item *BridgeItem) {
 				}
 				if err != nil {
 					log.Printf("%s client control conn write signal fail, err: %s, retrying...", item.Key, err)
+					utils.CloseConn(Item.ClientControl)
+					*Item.ClientControl = nil
+					Item.ClientControl = nil
 					time.Sleep(time.Second * 3)
 					continue
 				} else {
