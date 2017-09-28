@@ -17,6 +17,13 @@ var (
 )
 
 func initConfig() (err error) {
+	//keygen
+	if len(os.Args) > 1 {
+		if os.Args[1] == "keygen" {
+			utils.Keygen()
+			os.Exit(0)
+		}
+	}
 	args := services.Args{}
 	//define  args
 	tcpArgs := services.TCPArgs{}
@@ -94,13 +101,6 @@ func initConfig() (err error) {
 	tunnelClientArgs.Args = args
 	tunnelServerArgs.Args = args
 
-	//keygen
-	if len(os.Args) > 1 {
-		if os.Args[1] == "keygen" {
-			utils.Keygen()
-			os.Exit(0)
-		}
-	}
 	poster()
 	//regist services and run service
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
