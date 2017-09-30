@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支持正向代理和反响代理(即:内网穿透).  
+Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支持正向代理和内网穿透.  
   
 ---  
   
@@ -12,7 +12,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - 域名黑白名单，更加自由的控制网站的访问方式。  
 - 跨平台性,无论你是widows,linux,还是mac,甚至是树莓派,都可以很好的运行proxy.  
 - 多协议支持,支持HTTP,TCP,UDP,Websocket代理.  
-- 支持反向代理也就是"内网穿透",协议支持TCP和UDP.  
+- 支持内网穿透,协议支持TCP和UDP.  
   
 ### Why need these?  
 - 当由于安全因素或者限制,我们不能顺畅的访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道,顺畅的访问我们的服务.  
@@ -20,7 +20,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - 远程访问内网机器.  
 - 和小伙伴一起玩局域网游戏.  
 - 以前只能在局域网玩的,现在可以在任何地方玩.  
-- ...  
+- 替代圣剑内网通，显IP内网通，花生壳之类的工具.
+- ...  
   
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -202,7 +203,7 @@ VPS(IP:22.22.22.33)执行:
 **3.6.查看帮助**  
 `./proxy help udp`  
   
-### 4.反向代理(内网穿透)  
+### 4.内网穿透  
 **4.1、原理说明**  
 内网穿透,由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.  
 当用户访问server端,流程是:  
@@ -216,7 +217,8 @@ VPS(IP:22.22.22.33)执行:
 背景:  
 - 公司机器A提供了web服务80端口  
 - 有VPS一个,公网IP:22.22.22.22  
-  
+- 本用法典型案例就是微信接口本地开发    
+
 需求:  
 在家里能够通过访问VPS的28080端口访问到公司机器A的80端口  
   
