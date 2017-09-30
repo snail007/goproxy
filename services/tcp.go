@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -108,7 +109,7 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	log.Printf("conn created , remote : %s ", (*inConn).RemoteAddr())
 	for {
-		srcAddr, body, err := utils.ReadUDPPacket(inConn)
+		srcAddr, body, err := utils.ReadUDPPacket(bufio.NewReader(*inConn))
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			//log.Printf("connection %s released", srcAddr)
 			utils.CloseConn(inConn)

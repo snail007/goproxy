@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -459,4 +461,130 @@ func (op *OutPool) initPoolDeamon() {
 			}
 		}
 	}()
+}
+
+type HeartbeatData struct {
+	Data  []byte
+	N     int
+	Error error
+}
+type HeartbeatReadWriter struct {
+	conn       *net.Conn
+	rchn       chan HeartbeatData
+	l          *sync.Mutex
+	dur        int
+	errHandler func(err error, hb *HeartbeatReadWriter)
+	once       *sync.Once
+}
+
+func NewHeartbeatReadWriter(conn *net.Conn, dur int, fn func(err error, hb *HeartbeatReadWriter)) (hrw HeartbeatReadWriter) {
+	hrw = HeartbeatReadWriter{
+		conn:       conn,
+		l:          &sync.Mutex{},
+		dur:        dur,
+		rchn:       make(chan HeartbeatData, 10000),
+		errHandler: fn,
+		once:       &sync.Once{},
+	}
+	hrw.heartbeat()
+	hrw.reader()
+	return
+}
+
+func (rw *HeartbeatReadWriter) Close() {
+	CloseConn(rw.conn)
+}
+func (rw *HeartbeatReadWriter) reader() {
+	go func() {
+		//log.Printf("heartbeat read started")
+		for {
+			n, data, err := rw.read()
+			log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
+			if n >= 0 {
+				rw.rchn <- HeartbeatData{
+					Data:  data,
+					Error: err,
+					N:     n,
+				}
+			}
+			if err != nil {
+				break
+			}
+		}
+		//log.Printf("heartbeat read exited")
+	}()
+}
+func (rw *HeartbeatReadWriter) read() (n int, data []byte, err error) {
+	defer func() {
+		if err != nil {
+			rw.once.Do(func() {
+				rw.errHandler(err, rw)
+			})
+		}
+	}()
+	var typ uint8
+	err = binary.Read((*rw.conn), binary.LittleEndian, &typ)
+	if err != nil {
+		return
+	}
+	if typ == 0 {
+		// log.Printf("heartbeat revecived")
+		n = -1
+		return
+	}
+	var dataLength uint32
+	binary.Read((*rw.conn), binary.LittleEndian, &dataLength)
+	data = make([]byte, dataLength)
+	// log.Printf("dataLength:%d , data:%s", dataLength, string(data))
+	n, err = (*rw.conn).Read(data)
+	//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
+	if err != nil {
+		return
+	}
+	return
+}
+func (rw *HeartbeatReadWriter) heartbeat() {
+	go func() {
+		//log.Printf("heartbeat started")
+		for {
+			if rw.conn == nil || *rw.conn == nil {
+				//log.Printf("heartbeat err: conn nil")
+				break
+			}
+			rw.l.Lock()
+			_, err := (*rw.conn).Write([]byte{0})
+			rw.l.Unlock()
+			if err != nil {
+				if rw.errHandler != nil {
+					//log.Printf("heartbeat err: %s", err)
+					rw.once.Do(func() {
+						rw.errHandler(err, rw)
+					})
+					break
+				}
+			} else {
+				// log.Printf("heartbeat send ok")
+			}
+			time.Sleep(time.Second * time.Duration(rw.dur))
+		}
+		//log.Printf("heartbeat exited")
+	}()
+}
+func (rw *HeartbeatReadWriter) Read(p []byte) (n int, err error) {
+	item := <-rw.rchn
+	//log.Println(item)
+	if item.N > 0 {
+		copy(p, item.Data)
+	}
+	return item.N, item.Error
+}
+func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
+	defer rw.l.Unlock()
+	rw.l.Lock()
+	pkg := new(bytes.Buffer)
+	binary.Write(pkg, binary.LittleEndian, uint8(1))
+	binary.Write(pkg, binary.LittleEndian, uint32(len(p)))
+	binary.Write(pkg, binary.LittleEndian, p)
+	n, err = (*rw.conn).Write(pkg.Bytes())
+	return
 }

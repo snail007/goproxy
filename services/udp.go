@@ -120,7 +120,7 @@ func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err erro
 			}()
 			log.Printf("conn %d created , local: %s", connKey, srcAddr.String())
 			for {
-				srcAddrFromConn, body, err := utils.ReadUDPPacket(&conn)
+				srcAddrFromConn, body, err := utils.ReadUDPPacket(bufio.NewReader(conn))
 				if err == io.EOF || err == io.ErrUnexpectedEOF {
 					//log.Printf("connection %d released", connKey)
 					s.p.Remove(fmt.Sprintf("%d", connKey))

@@ -43,6 +43,9 @@ func (s *TunnelServer) Check() {
 	} else {
 		log.Fatalf("parent required")
 	}
+	if *s.cfg.Remote == "" {
+		log.Fatalf("remote required")
+	}
 	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
 		log.Fatalf("cert and key file required")
 	}
@@ -78,7 +81,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			}()
 			var outConn net.Conn
 			for {
-				outConn, err = s.GetOutConn()
+				outConn, err = s.GetOutConn("")
 				if err != nil {
 					utils.CloseConn(&outConn)
 					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
@@ -88,7 +91,6 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-
 			utils.IoBind(inConn, outConn, func(isSrcErr bool, err error) {
 				utils.CloseConn(&outConn)
 				utils.CloseConn(&inConn)
@@ -107,7 +109,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 func (s *TunnelServer) Clean() {
 	s.StopService()
 }
-func (s *TunnelServer) GetOutConn() (outConn net.Conn, err error) {
+func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		log.Printf("connection err: %s", err)
@@ -115,10 +117,24 @@ func (s *TunnelServer) GetOutConn() (outConn net.Conn, err error) {
 	}
 	keyBytes := []byte(*s.cfg.Key)
 	keyLength := uint16(len(keyBytes))
+	IDBytes := []byte(utils.NewUniqueID().String())
+	if id != "" {
+		IDBytes = []byte(id)
+	}
+	IDLength := uint16(len(IDBytes))
+	remoteAddr := []byte("tcp:" + *s.cfg.Remote)
+	if *s.cfg.IsUDP {
+		remoteAddr = []byte("udp:" + *s.cfg.Remote)
+	}
+	remoteAddrLength := uint16(len(remoteAddr))
 	pkg := new(bytes.Buffer)
 	binary.Write(pkg, binary.LittleEndian, CONN_SERVER)
 	binary.Write(pkg, binary.LittleEndian, keyLength)
 	binary.Write(pkg, binary.LittleEndian, keyBytes)
+	binary.Write(pkg, binary.LittleEndian, IDLength)
+	binary.Write(pkg, binary.LittleEndian, IDBytes)
+	binary.Write(pkg, binary.LittleEndian, remoteAddrLength)
+	binary.Write(pkg, binary.LittleEndian, remoteAddr)
 	_, err = outConn.Write(pkg.Bytes())
 	if err != nil {
 		log.Printf("write connection data err: %s ,retrying...", err)
@@ -151,7 +167,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 		RETRY:
 			if outConn == nil {
 				for {
-					outConn, err = s.GetOutConn()
+					outConn, err = s.GetOutConn("")
 					if err != nil {
 						cmdChn <- true
 						outConn = nil
@@ -166,7 +182,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 								outConn.Close()
 							}()
 							for {
-								srcAddrFromConn, body, err := utils.ReadUDPPacket(&outConn)
+								srcAddrFromConn, body, err := utils.ReadUDPPacket(bufio.NewReader(outConn))
 								if err == io.EOF || err == io.ErrUnexpectedEOF {
 									log.Printf("udp connection deamon exited, %s -> %s", outConn.LocalAddr(), outConn.RemoteAddr())
 									break
@@ -195,14 +211,17 @@ func (s *TunnelServer) UDPConnDeamon() {
 					}
 				}
 			}
+			outConn.SetWriteDeadline(time.Now().Add(time.Second))
 			writer := bufio.NewWriter(outConn)
 			writer.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
 			err := writer.Flush()
 			if err != nil {
+				utils.CloseConn(&outConn)
 				outConn = nil
-				log.Printf("write udp packet to %s fail ,flush err:%s", *s.cfg.Parent, err)
+				log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
 				goto RETRY
 			}
+			outConn.SetWriteDeadline(time.Time{})
 			//log.Printf("write packet %v", *item.packet)
 		}
 	}()

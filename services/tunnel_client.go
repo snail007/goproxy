@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"proxy/utils"
+	"strings"
 	"time"
 )
 
@@ -40,36 +41,39 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
 	s.Check()
 	s.InitService()
-
+	log.Printf("proxy on tunnel client mode")
 	for {
-		ctrlConn, err := s.GetInConn(CONN_CONTROL)
+		ctrlConn, err := s.GetInConn(CONN_CONTROL, "")
 		if err != nil {
 			log.Printf("control connection err: %s", err)
 			time.Sleep(time.Second * 3)
 			utils.CloseConn(&ctrlConn)
 			continue
 		}
-		if *s.cfg.IsUDP {
-			log.Printf("proxy on udp tunnel client mode")
-		} else {
-			log.Printf("proxy on tcp tunnel client mode")
-		}
+		rw := utils.NewHeartbeatReadWriter(&ctrlConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
+			log.Printf("ctrlConn err %s", err)
+			utils.CloseConn(&ctrlConn)
+		})
 		for {
-			signal := make([]byte, 1)
-			if signal[0] == 1 {
-				continue
-			}
-			_, err = ctrlConn.Read(signal)
+			signal := make([]byte, 50)
+			n, err := rw.Read(signal)
 			if err != nil {
 				utils.CloseConn(&ctrlConn)
 				log.Printf("read connection signal err: %s", err)
 				break
 			}
-			log.Printf("signal revecived:%s", signal)
-			if *s.cfg.IsUDP {
-				go s.ServeUDP()
+			addr := string(signal[:n])
+			// log.Printf("n:%d addr:%s err:%s", n, addr, err)
+			// os.Exit(0)
+			log.Printf("signal revecived:%s", addr)
+			protocol := addr[:3]
+			atIndex := strings.Index(addr, "@")
+			ID := addr[atIndex+1:]
+			localAddr := addr[4:atIndex]
+			if protocol == "udp" {
+				go s.ServeUDP(localAddr, ID)
 			} else {
-				go s.ServeConn()
+				go s.ServeConn(localAddr, ID)
 			}
 		}
 	}
@@ -77,7 +81,7 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 func (s *TunnelClient) Clean() {
 	s.StopService()
 }
-func (s *TunnelClient) GetInConn(typ uint8) (outConn net.Conn, err error) {
+func (s *TunnelClient) GetInConn(typ uint8, ID string) (outConn net.Conn, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		err = fmt.Errorf("connection err: %s", err)
@@ -89,6 +93,12 @@ func (s *TunnelClient) GetInConn(typ uint8) (outConn net.Conn, err error) {
 	binary.Write(pkg, binary.LittleEndian, typ)
 	binary.Write(pkg, binary.LittleEndian, keyLength)
 	binary.Write(pkg, binary.LittleEndian, keyBytes)
+	if ID != "" {
+		IDBytes := []byte(ID)
+		IDLength := uint16(len(IDBytes))
+		binary.Write(pkg, binary.LittleEndian, IDLength)
+		binary.Write(pkg, binary.LittleEndian, IDBytes)
+	}
 	_, err = outConn.Write(pkg.Bytes())
 	if err != nil {
 		err = fmt.Errorf("write connection data err: %s ,retrying...", err)
@@ -105,36 +115,41 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	}
 	return
 }
-func (s *TunnelClient) ServeUDP() {
+func (s *TunnelClient) ServeUDP(localAddr, ID string) {
 	var inConn net.Conn
 	var err error
+	// for {
 	for {
-		for {
-			inConn, err = s.GetInConn(CONN_CLIENT)
-			if err != nil {
-				utils.CloseConn(&inConn)
-				log.Printf("connection err: %s, retrying...", err)
-				time.Sleep(time.Second * 3)
-				continue
-			} else {
-				break
-			}
-		}
-		log.Printf("conn created , remote : %s ", inConn.RemoteAddr())
-		for {
-			srcAddr, body, err := utils.ReadUDPPacket(&inConn)
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				log.Printf("connection %s released", srcAddr)
-				utils.CloseConn(&inConn)
-				break
-			}
-			//log.Printf("udp packet revecived:%s,%v", srcAddr, body)
-			go s.processUDPPacket(&inConn, srcAddr, body)
+		inConn, err = s.GetInConn(CONN_CLIENT, ID)
+		if err != nil {
+			utils.CloseConn(&inConn)
+			log.Printf("connection err: %s, retrying...", err)
+			time.Sleep(time.Second * 3)
+			continue
+		} else {
+			break
 		}
 	}
+	log.Printf("conn %s created", ID)
+	// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
+	// 	log.Printf("hw err %s", err)
+	// 	hw.Close()
+	// })
+	for {
+		// srcAddr, body, err := utils.ReadUDPPacket(&hw)
+		srcAddr, body, err := utils.ReadUDPPacket(inConn)
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			log.Printf("connection %s released", ID)
+			utils.CloseConn(&inConn)
+			break
+		}
+		//log.Printf("udp packet revecived:%s,%v", srcAddr, body)
+		go s.processUDPPacket(&inConn, srcAddr, localAddr, body)
+	}
+	// }
 }
-func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr string, body []byte) {
-	dstAddr, err := net.ResolveUDPAddr("udp", *s.cfg.Local)
+func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr, localAddr string, body []byte) {
+	dstAddr, err := net.ResolveUDPAddr("udp", localAddr)
 	if err != nil {
 		log.Printf("can't resolve address: %s", err)
 		utils.CloseConn(inConn)
@@ -169,11 +184,11 @@ func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr string, body [
 	}
 	//log.Printf("send udp response success ,from:%s", dstAddr.String())
 }
-func (s *TunnelClient) ServeConn() {
+func (s *TunnelClient) ServeConn(localAddr, ID string) {
 	var inConn, outConn net.Conn
 	var err error
 	for {
-		inConn, err = s.GetInConn(CONN_CLIENT)
+		inConn, err = s.GetInConn(CONN_CLIENT, ID)
 		if err != nil {
 			utils.CloseConn(&inConn)
 			log.Printf("connection err: %s, retrying...", err)
@@ -187,29 +202,27 @@ func (s *TunnelClient) ServeConn() {
 	i := 0
 	for {
 		i++
-		outConn, err = utils.ConnectHost(*s.cfg.Local, *s.cfg.Timeout)
+		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {
 			break
 		} else {
 			if i == 3 {
-				log.Printf("connect to %s err: %s, retrying...", *s.cfg.Local, err)
+				log.Printf("connect to %s err: %s, retrying...", localAddr, err)
 				time.Sleep(2 * time.Second)
 				continue
 			}
 		}
 	}
-
 	if err != nil {
 		utils.CloseConn(&inConn)
 		utils.CloseConn(&outConn)
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
-
 	utils.IoBind(inConn, outConn, func(isSrcErr bool, err error) {
-		log.Printf("%s conn %s - %s - %s - %s released", *s.cfg.Key, inConn.RemoteAddr(), inConn.LocalAddr(), outConn.LocalAddr(), outConn.RemoteAddr())
+		log.Printf("conn %s released", ID)
 		utils.CloseConn(&inConn)
 		utils.CloseConn(&outConn)
 	}, func(i int, b bool) {}, 0)
-	log.Printf("%s conn %s - %s - %s - %s created", *s.cfg.Key, inConn.RemoteAddr(), inConn.LocalAddr(), outConn.LocalAddr(), outConn.RemoteAddr())
+	log.Printf("conn %s created", ID)
 }

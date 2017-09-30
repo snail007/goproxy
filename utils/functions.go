@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
@@ -272,8 +271,8 @@ func UDPPacket(srcAddr string, packet []byte) []byte {
 	binary.Write(pkg, binary.LittleEndian, packet)
 	return pkg.Bytes()
 }
-func ReadUDPPacket(conn *net.Conn) (srcAddr string, packet []byte, err error) {
-	reader := bufio.NewReader(*conn)
+func ReadUDPPacket(reader io.Reader) (srcAddr string, packet []byte, err error) {
+	//	reader := bufio.NewReader(_reader)
 	var addrLength uint16
 	var bodyLength uint16
 	err = binary.Read(reader, binary.LittleEndian, &addrLength)

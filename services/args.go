@@ -14,29 +14,31 @@ const (
 )
 
 type Args struct {
-	Local     *string
 	Parent    *string
 	CertBytes []byte
 	KeyBytes  []byte
 }
 type TunnelServerArgs struct {
 	Args
+	Local   *string
 	IsUDP   *bool
 	Key     *string
+	Remote  *string
 	Timeout *int
 }
 type TunnelClientArgs struct {
 	Args
-	IsUDP   *bool
 	Key     *string
 	Timeout *int
 }
 type TunnelBridgeArgs struct {
 	Args
+	Local   *string
 	Timeout *int
 }
 type TCPArgs struct {
 	Args
+	Local               *string
 	ParentType          *string
 	IsTLS               *bool
 	Timeout             *int
@@ -46,6 +48,7 @@ type TCPArgs struct {
 
 type HTTPArgs struct {
 	Args
+	Local               *string
 	Always              *bool
 	HTTPTimeout         *int
 	Interval            *int
@@ -61,6 +64,7 @@ type HTTPArgs struct {
 }
 type UDPArgs struct {
 	Args
+	Local               *string
 	ParentType          *string
 	Timeout             *int
 	PoolSize            *int
