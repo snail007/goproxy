@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
@@ -264,6 +265,7 @@ func UDPPacket(srcAddr string, packet []byte) []byte {
 	addrBytes := []byte(srcAddr)
 	addrLength := uint16(len(addrBytes))
 	bodyLength := uint16(len(packet))
+	//log.Printf("build packet : addr len %d, body len %d", addrLength, bodyLength)
 	pkg := new(bytes.Buffer)
 	binary.Write(pkg, binary.LittleEndian, addrLength)
 	binary.Write(pkg, binary.LittleEndian, addrBytes)
@@ -271,8 +273,8 @@ func UDPPacket(srcAddr string, packet []byte) []byte {
 	binary.Write(pkg, binary.LittleEndian, packet)
 	return pkg.Bytes()
 }
-func ReadUDPPacket(reader io.Reader) (srcAddr string, packet []byte, err error) {
-	//	reader := bufio.NewReader(_reader)
+func ReadUDPPacket(_reader io.Reader) (srcAddr string, packet []byte, err error) {
+	reader := bufio.NewReader(_reader)
 	var addrLength uint16
 	var bodyLength uint16
 	err = binary.Read(reader, binary.LittleEndian, &addrLength)
@@ -285,12 +287,14 @@ func ReadUDPPacket(reader io.Reader) (srcAddr string, packet []byte, err error) 
 		return
 	}
 	if n != int(addrLength) {
+		err = fmt.Errorf("n != int(addrLength), %d,%d", n, addrLength)
 		return
 	}
 	srcAddr = string(_srcAddr)
 
 	err = binary.Read(reader, binary.LittleEndian, &bodyLength)
 	if err != nil {
+
 		return
 	}
 	packet = make([]byte, bodyLength)
@@ -299,6 +303,7 @@ func ReadUDPPacket(reader io.Reader) (srcAddr string, packet []byte, err error) 
 		return
 	}
 	if n != int(bodyLength) {
+		err = fmt.Errorf("n != int(bodyLength), %d,%d", n, bodyLength)
 		return
 	}
 	return

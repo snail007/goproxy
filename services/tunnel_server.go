@@ -1,7 +1,6 @@
 package services
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
@@ -80,8 +79,9 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 				}
 			}()
 			var outConn net.Conn
+			var ID string
 			for {
-				outConn, err = s.GetOutConn("")
+				outConn, ID, err = s.GetOutConn("")
 				if err != nil {
 					utils.CloseConn(&outConn)
 					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
@@ -91,13 +91,18 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-			utils.IoBind(inConn, outConn, func(isSrcErr bool, err error) {
+			hb := utils.NewHeartbeatReadWriter(&outConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
+				log.Printf("%s conn %s to bridge released", *s.cfg.Key, ID)
+				hb.Close()
+			})
+			utils.IoBind(inConn, &hb, func(isSrcErr bool, err error) {
+				//utils.IoBind(inConn, outConn, func(isSrcErr bool, err error) {
 				utils.CloseConn(&outConn)
 				utils.CloseConn(&inConn)
-				log.Printf("%s conn %s - %s - %s - %s released", *s.cfg.Key, inConn.RemoteAddr(), inConn.LocalAddr(), outConn.LocalAddr(), outConn.RemoteAddr())
+				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			}, func(i int, b bool) {}, 0)
 
-			log.Printf("%s conn %s - %s - %s - %s created", *s.cfg.Key, inConn.RemoteAddr(), inConn.LocalAddr(), outConn.LocalAddr(), outConn.RemoteAddr())
+			log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {
 			return
@@ -109,7 +114,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 func (s *TunnelServer) Clean() {
 	s.StopService()
 }
-func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, err error) {
+func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		log.Printf("connection err: %s", err)
@@ -117,8 +122,10 @@ func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, err error) {
 	}
 	keyBytes := []byte(*s.cfg.Key)
 	keyLength := uint16(len(keyBytes))
-	IDBytes := []byte(utils.NewUniqueID().String())
+	ID = utils.NewUniqueID().String()
+	IDBytes := []byte(ID)
 	if id != "" {
+		ID = id
 		IDBytes = []byte(id)
 	}
 	IDLength := uint16(len(IDBytes))
@@ -159,6 +166,8 @@ func (s *TunnelServer) UDPConnDeamon() {
 			}
 		}()
 		var outConn net.Conn
+		var hb utils.HeartbeatReadWriter
+		var ID string
 		var cmdChn = make(chan bool, 1)
 
 		var err error
@@ -167,7 +176,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 		RETRY:
 			if outConn == nil {
 				for {
-					outConn, err = s.GetOutConn("")
+					outConn, ID, err = s.GetOutConn("")
 					if err != nil {
 						cmdChn <- true
 						outConn = nil
@@ -176,19 +185,23 @@ func (s *TunnelServer) UDPConnDeamon() {
 						time.Sleep(time.Second * 3)
 						continue
 					} else {
-						go func(outConn net.Conn) {
+						hb = utils.NewHeartbeatReadWriter(&outConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
+							log.Printf("%s conn %s to bridge released", *s.cfg.Key, ID)
+							hb.Close()
+						})
+						go func(outConn net.Conn, hb utils.HeartbeatReadWriter, ID string) {
 							go func() {
 								<-cmdChn
 								outConn.Close()
 							}()
 							for {
-								srcAddrFromConn, body, err := utils.ReadUDPPacket(bufio.NewReader(outConn))
+								srcAddrFromConn, body, err := utils.ReadUDPPacket(&hb)
 								if err == io.EOF || err == io.ErrUnexpectedEOF {
-									log.Printf("udp connection deamon exited, %s -> %s", outConn.LocalAddr(), outConn.RemoteAddr())
+									log.Printf("UDP deamon connection %s exited", ID)
 									break
 								}
 								if err != nil {
-									log.Printf("parse revecived udp packet fail, err: %s", err)
+									log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
 									continue
 								}
 								//log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
@@ -204,25 +217,27 @@ func (s *TunnelServer) UDPConnDeamon() {
 									log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
 									continue
 								}
-								//log.Printf("udp response to local %s success", srcAddrFromConn)
+								//log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
 							}
-						}(outConn)
+						}(outConn, hb, ID)
 						break
 					}
 				}
 			}
 			outConn.SetWriteDeadline(time.Now().Add(time.Second))
-			writer := bufio.NewWriter(outConn)
-			writer.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
-			err := writer.Flush()
+			_, err = hb.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
+			// writer := bufio.NewWriter(outConn)
+			// writer.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
+			// err := writer.Flush()
+			outConn.SetWriteDeadline(time.Time{})
 			if err != nil {
 				utils.CloseConn(&outConn)
 				outConn = nil
 				log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
 				goto RETRY
 			}
-			outConn.SetWriteDeadline(time.Time{})
-			//log.Printf("write packet %v", *item.packet)
+
+			log.Printf("write packet %v", *item.packet)
 		}
 	}()
 }

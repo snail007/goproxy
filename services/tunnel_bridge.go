@@ -12,7 +12,8 @@ import (
 
 type ServerConn struct {
 	ClientLocalAddr string //tcp:2.2.22:333@ID
-	Conn            *net.Conn
+	// Conn            *net.Conn
+	Conn *utils.HeartbeatReadWriter
 }
 type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
@@ -116,9 +117,13 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 
 		switch connType {
 		case CONN_SERVER:
+			hb := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
+				log.Printf("%s conn %s from server released", key, ID)
+				s.serverConns.Remove(ID)
+			})
 			addr := clientLocalAddr + "@" + ID
 			s.serverConns.Set(ID, ServerConn{
-				Conn:            &inConn,
+				Conn:            &hb,
 				ClientLocalAddr: addr,
 			})
 			for {
@@ -146,13 +151,14 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			}
 			serverConn := serverConnItem.(ServerConn).Conn
 			// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
-			// 	log.Printf("hw err %s", err)
+			// 	log.Printf("%s conn %s from client released", key, ID)
 			// 	hw.Close()
 			// })
-			// utils.IoBind(*serverConn, &hw, func(isSrcErr bool, err error) {
-			utils.IoBind(*serverConn, inConn, func(isSrcErr bool, err error) {
-				utils.CloseConn(serverConn)
+			utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
+				// utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
+				serverConn.Close()
 				utils.CloseConn(&inConn)
+				// hw.Close()
 				s.serverConns.Remove(ID)
 				log.Printf("conn %s released", ID)
 			}, func(i int, b bool) {}, 0)

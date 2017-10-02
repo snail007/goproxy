@@ -469,22 +469,30 @@ type HeartbeatData struct {
 	Error error
 }
 type HeartbeatReadWriter struct {
-	conn       *net.Conn
-	rchn       chan HeartbeatData
+	conn *net.Conn
+	// rchn       chan HeartbeatData
 	l          *sync.Mutex
 	dur        int
 	errHandler func(err error, hb *HeartbeatReadWriter)
 	once       *sync.Once
+	datachn    chan byte
+	// rbuf       bytes.Buffer
+	// signal     chan bool
+	rerrchn chan error
 }
 
 func NewHeartbeatReadWriter(conn *net.Conn, dur int, fn func(err error, hb *HeartbeatReadWriter)) (hrw HeartbeatReadWriter) {
 	hrw = HeartbeatReadWriter{
-		conn:       conn,
-		l:          &sync.Mutex{},
-		dur:        dur,
-		rchn:       make(chan HeartbeatData, 10000),
+		conn: conn,
+		l:    &sync.Mutex{},
+		dur:  dur,
+		// rchn:       make(chan HeartbeatData, 10000),
+		// signal:     make(chan bool, 1),
 		errHandler: fn,
+		datachn:    make(chan byte, 4*1024),
 		once:       &sync.Once{},
+		rerrchn:    make(chan error, 1),
+		// rbuf:       bytes.Buffer{},
 	}
 	hrw.heartbeat()
 	hrw.reader()
@@ -499,15 +507,25 @@ func (rw *HeartbeatReadWriter) reader() {
 		//log.Printf("heartbeat read started")
 		for {
 			n, data, err := rw.read()
-			log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
-			if n >= 0 {
-				rw.rchn <- HeartbeatData{
-					Data:  data,
-					Error: err,
-					N:     n,
+			if n == -1 {
+				continue
+			}
+			//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
+			if err == nil {
+				//fmt.Printf("write data %s\n", string(data))
+				for _, b := range data {
+					rw.datachn <- b
 				}
 			}
 			if err != nil {
+				//log.Printf("heartbeat reader err: %s", err)
+				select {
+				case rw.rerrchn <- err:
+				default:
+				}
+				rw.once.Do(func() {
+					rw.errHandler(err, rw)
+				})
 				break
 			}
 		}
@@ -515,13 +533,6 @@ func (rw *HeartbeatReadWriter) reader() {
 	}()
 }
 func (rw *HeartbeatReadWriter) read() (n int, data []byte, err error) {
-	defer func() {
-		if err != nil {
-			rw.once.Do(func() {
-				rw.errHandler(err, rw)
-			})
-		}
-	}()
 	var typ uint8
 	err = binary.Read((*rw.conn), binary.LittleEndian, &typ)
 	if err != nil {
@@ -534,13 +545,18 @@ func (rw *HeartbeatReadWriter) read() (n int, data []byte, err error) {
 	}
 	var dataLength uint32
 	binary.Read((*rw.conn), binary.LittleEndian, &dataLength)
-	data = make([]byte, dataLength)
+	_data := make([]byte, dataLength)
 	// log.Printf("dataLength:%d , data:%s", dataLength, string(data))
-	n, err = (*rw.conn).Read(data)
+	n, err = (*rw.conn).Read(_data)
 	//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
 	if err != nil {
 		return
 	}
+	if uint32(n) != dataLength {
+		err = fmt.Errorf("read short data body")
+		return
+	}
+	data = _data[:n]
 	return
 }
 func (rw *HeartbeatReadWriter) heartbeat() {
@@ -555,13 +571,11 @@ func (rw *HeartbeatReadWriter) heartbeat() {
 			_, err := (*rw.conn).Write([]byte{0})
 			rw.l.Unlock()
 			if err != nil {
-				if rw.errHandler != nil {
-					//log.Printf("heartbeat err: %s", err)
-					rw.once.Do(func() {
-						rw.errHandler(err, rw)
-					})
-					break
-				}
+				//log.Printf("heartbeat err: %s", err)
+				rw.once.Do(func() {
+					rw.errHandler(err, rw)
+				})
+				break
 			} else {
 				// log.Printf("heartbeat send ok")
 			}
@@ -571,12 +585,18 @@ func (rw *HeartbeatReadWriter) heartbeat() {
 	}()
 }
 func (rw *HeartbeatReadWriter) Read(p []byte) (n int, err error) {
-	item := <-rw.rchn
-	//log.Println(item)
-	if item.N > 0 {
-		copy(p, item.Data)
+	data := make([]byte, cap(p))
+	for i := 0; i < cap(p); i++ {
+		data[i] = <-rw.datachn
+		n++
+		//fmt.Printf("read  %d %v\n", i, data[:n])
+		if len(rw.datachn) == 0 {
+			n = i + 1
+			copy(p, data[:n])
+			return
+		}
 	}
-	return item.N, item.Error
+	return
 }
 func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
 	defer rw.l.Unlock()
@@ -585,6 +605,10 @@ func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
 	binary.Write(pkg, binary.LittleEndian, uint8(1))
 	binary.Write(pkg, binary.LittleEndian, uint32(len(p)))
 	binary.Write(pkg, binary.LittleEndian, p)
-	n, err = (*rw.conn).Write(pkg.Bytes())
+	bs := pkg.Bytes()
+	n, err = (*rw.conn).Write(bs)
+	if err == nil {
+		n = len(p)
+	}
 	return
 }
