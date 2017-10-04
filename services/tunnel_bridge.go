@@ -154,7 +154,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			// 	log.Printf("%s conn %s from client released", key, ID)
 			// 	hw.Close()
 			// })
-			utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
+			utils.IoBind(serverConn, inConn, func(err error) {
 				// utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
 				serverConn.Close()
 				utils.CloseConn(&inConn)

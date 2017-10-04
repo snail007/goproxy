@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(isSrcErr bool, err error), cfn func(count int, isPositive bool), bytesPreSec float64) {
+func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(count int, isPositive bool), bytesPreSec float64) {
 	var one = &sync.Once{}
 	go func() {
 		defer func() {
@@ -31,22 +31,21 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(isSrcErr bool, err err
 			}
 		}()
 		var err error
-		var isSrcErr bool
 		if bytesPreSec > 0 {
 			newreader := NewReader(src)
 			newreader.SetRateLimit(bytesPreSec)
-			_, isSrcErr, err = ioCopy(dst, newreader, func(c int) {
+			_, err = ioCopy(dst, newreader, func(c int) {
 				cfn(c, false)
 			})
 
 		} else {
-			_, isSrcErr, err = ioCopy(dst, src, func(c int) {
+			_, err = ioCopy(dst, src, func(c int) {
 				cfn(c, false)
 			})
 		}
 		if err != nil {
 			one.Do(func() {
-				fn(isSrcErr, err)
+				fn(err)
 			})
 		}
 	}()
@@ -57,26 +56,25 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(isSrcErr bool, err err
 			}
 		}()
 		var err error
-		var isSrcErr bool
 		if bytesPreSec > 0 {
 			newReader := NewReader(dst)
 			newReader.SetRateLimit(bytesPreSec)
-			_, isSrcErr, err = ioCopy(src, newReader, func(c int) {
+			_, err = ioCopy(src, newReader, func(c int) {
 				cfn(c, true)
 			})
 		} else {
-			_, isSrcErr, err = ioCopy(src, dst, func(c int) {
+			_, err = ioCopy(src, dst, func(c int) {
 				cfn(c, true)
 			})
 		}
 		if err != nil {
 			one.Do(func() {
-				fn(isSrcErr, err)
+				fn(err)
 			})
 		}
 	}()
 }
-func ioCopy(dst io.Writer, src io.Reader, fn ...func(count int)) (written int64, isSrcErr bool, err error) {
+func ioCopy(dst io.Writer, src io.Reader, fn ...func(count int)) (written int64, err error) {
 	buf := make([]byte, 32*1024)
 	for {
 		nr, er := src.Read(buf)
@@ -99,11 +97,10 @@ func ioCopy(dst io.Writer, src io.Reader, fn ...func(count int)) (written int64,
 		}
 		if er != nil {
 			err = er
-			isSrcErr = true
 			break
 		}
 	}
-	return written, isSrcErr, err
+	return written, err
 }
 func TlsConnectHost(host string, timeout int, certBytes, keyBytes []byte) (conn tls.Conn, err error) {
 	h := strings.Split(host, ":")

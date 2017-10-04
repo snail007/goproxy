@@ -95,7 +95,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 				log.Printf("%s conn %s to bridge released", *s.cfg.Key, ID)
 				hb.Close()
 			})
-			utils.IoBind(inConn, &hb, func(isSrcErr bool, err error) {
+			utils.IoBind(inConn, &hb, func(err error) {
 				//utils.IoBind(inConn, outConn, func(isSrcErr bool, err error) {
 				utils.CloseConn(&outConn)
 				utils.CloseConn(&inConn)
