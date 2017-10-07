@@ -50,13 +50,14 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 			utils.CloseConn(&ctrlConn)
 			continue
 		}
-		rw := utils.NewHeartbeatReadWriter(&ctrlConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			log.Printf("ctrlConn err %s", err)
-			utils.CloseConn(&ctrlConn)
-		})
+		// rw := utils.NewHeartbeatReadWriter(&ctrlConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
+		// 	log.Printf("ctrlConn err %s", err)
+		// 	utils.CloseConn(&ctrlConn)
+		// })
 		for {
 			signal := make([]byte, 50)
-			n, err := rw.Read(signal)
+			// n, err := rw.Read(signal)
+			n, err := ctrlConn.Read(signal)
 			if err != nil {
 				utils.CloseConn(&ctrlConn)
 				log.Printf("read connection signal err: %s", err)
