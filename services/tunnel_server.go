@@ -40,7 +40,14 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		log.Fatalf("parent required")
 	}
 	//log.Printf("route:%v", *s.cfg.Route)
-	for _, info := range *s.cfg.Route {
+	for _, _info := range *s.cfg.Route {
+		IsUDP := s.cfg.IsUDP
+		if strings.HasPrefix(_info, "udp://") {
+			u := true
+			IsUDP = &u
+		}
+		info := strings.TrimPrefix(_info, "udp://")
+		info = strings.TrimPrefix(info, "tcp://")
 		_routeInfo := strings.Split(info, "@")
 		server := NewTunnelServer()
 		local := _routeInfo[0]
@@ -48,7 +55,7 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		err = server.Start(TunnelServerArgs{
 			Args:    s.cfg.Args,
 			Local:   &local,
-			IsUDP:   s.cfg.IsUDP,
+			IsUDP:   IsUDP,
 			Remote:  &remote,
 			Key:     s.cfg.Key,
 			Timeout: s.cfg.Timeout,

@@ -340,6 +340,12 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
   
 ### TODO  
 - socks5代理支持.  
+### 如何使用源码?   
+cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
+编译直接:go build     
+运行: go run *.go    
+utils是工具包,service是具体的每个服务类.   
+
 ### License  
 Proxy is licensed under GPLv3 license.  
 ### Contact  
