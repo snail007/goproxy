@@ -71,7 +71,7 @@ chmod +x install.sh
 具体格式是通过@符号指定配置文件,例如:./proxy @configfile.txt  
 configfile.txt里面的格式是,第一行是子命令名称,第二行开始一行一个:参数的长格式=参数值,前后不能有空格和双引号.  
 参数的长格式都是--开头的,短格式参数都是-开头,如果你不知道某个短格式参数对应长格式参数,查看帮助命令即可.  
-比如configfile.txt内容如下:  
+比如configfile.txt内容如下:
 ```shell
 http
 --local-type=tcp
