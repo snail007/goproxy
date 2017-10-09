@@ -237,7 +237,29 @@ VPS(IP:22.22.22.33)执行:
 
 1. 完成  
   
-**4.3、UDP普通用法**  
+**4.3、微信接口本地开发**  
+背景:  
+- 自己的笔记本提供了nginx服务80端口  
+- 有VPS一个,公网IP:22.22.22.22  
+
+需求:  
+在微信的开发帐号的网页回调接口配置里面填写地址:http://22.22.22.22/calback.php  
+然后就可以访问到笔记本的80端口下面的calback.php,如果需要绑定域名,可以用自己的域名  
+比如:wx-dev.xxx.com解析到22.22.22.22,然后在自己笔记本的nginx里  
+配置域名wx-dev.xxx.com到具体的目录即可.  
+
+  
+步骤:  
+1. 在vps上执行,确保vps的80端口没被其它程序占用.  
+    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -r ":80@:80" -P ":33080" -C proxy.crt -K proxy.key`  
+
+1. 在自己笔记本上面执行  
+    `./proxy tclient -C proxy.crt -K proxy.key`  
+
+1. 完成  
+  
+**4.4、UDP普通用法**  
 背景:  
 - 公司机器A提供了DNS解析服务,UDP:53端口  
 - 有VPS一个,公网IP:22.22.22.22  
@@ -255,7 +277,7 @@ VPS(IP:22.22.22.33)执行:
 
 1. 完成  
   
-**4.4、高级用法一**  
+**4.5、高级用法一**  
 背景:  
 - 公司机器A提供了web服务80端口  
 - 有VPS一个,公网IP:22.22.22.22  
@@ -276,7 +298,7 @@ VPS(IP:22.22.22.33)执行:
   
 1. 完成  
   
-**4.5、高级用法二**  
+**4.6、高级用法二**  
 提示:  
 如果同时有多个client连接到同一个bridge,需要指定不同的key,可以通过--k参数设定,--k可以是任意唯一字符串,
 只要在同一个bridge上唯一即可.  
@@ -301,14 +323,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 
 1. 完成  
   
-**3.6.查看帮助**  
+**4.7.查看帮助**  
 `./proxy help tbridge`  
 `./proxy help tserver`  
 `./proxy help tserver`  
   
   
 ### TODO  
-- UDP Over TCP,通过tcp代理udp协议.  
+- socks5代理支持.  
 ### License  
 Proxy is licensed under GPLv3 license.  
 ### Contact  
