@@ -24,7 +24,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - ...  
 
 ### 手册目录  
-本页是最新v3.1手册,其他手册请点击下面链接查看.  
+本页是最新v3.1手册,其他版本手册请点击下面链接查看.  
 - [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
 - [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)
 
