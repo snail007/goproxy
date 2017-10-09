@@ -63,8 +63,6 @@ chmod +x install.sh
 ## 使用教程  
   
 **提示**  
-本教程是v3版本,不兼容v2版本,v2版本教程请移驾:[v2教程](https://github.com/snail007/goproxy/tree/v2.2)  
-
 接下来的教程,默认系统是linux,程序是proxy；所有操作需要root权限；  
 如果你的是windows,请使用windows版本的proxy.exe即可.  
   
