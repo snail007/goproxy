@@ -39,12 +39,13 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	} else {
 		log.Fatalf("parent required")
 	}
+	//log.Printf("route:%v", *s.cfg.Route)
 	for _, info := range *s.cfg.Route {
 		_routeInfo := strings.Split(info, "@")
 		server := NewTunnelServer()
 		local := _routeInfo[0]
 		remote := _routeInfo[1]
-		server.Start(TunnelServerArgs{
+		err = server.Start(TunnelServerArgs{
 			Args:    s.cfg.Args,
 			Local:   &local,
 			IsUDP:   s.cfg.IsUDP,
@@ -52,6 +53,9 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 			Key:     s.cfg.Key,
 			Timeout: s.cfg.Timeout,
 		})
+		if err != nil {
+			return
+		}
 	}
 	return
 }
@@ -91,7 +95,6 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p)
-
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpChn <- UDPItem{
@@ -273,8 +276,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 				log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
 				goto RETRY
 			}
-
-			log.Printf("write packet %v", *item.packet)
+			//log.Printf("write packet %v", *item.packet)
 		}
 	}()
 }
