@@ -25,6 +25,7 @@ type TunnelServerArgs struct {
 	Key     *string
 	Remote  *string
 	Timeout *int
+	Route   *[]string
 }
 type TunnelClientArgs struct {
 	Args

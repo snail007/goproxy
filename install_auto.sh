@@ -6,7 +6,7 @@ fi
 mkdir /tmp/proxy
 cd /tmp/proxy
 wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz
-wget https://github.com/snail007/goproxy/releases/download/v3.0/proxy-linux-amd64.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v3.1/proxy-linux-amd64.tar.gz
 
 # install monexec
 tar zxvf monexec_0.1.1_linux_amd64.tar.gz

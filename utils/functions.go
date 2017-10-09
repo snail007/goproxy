@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -304,6 +305,11 @@ func ReadUDPPacket(_reader io.Reader) (srcAddr string, packet []byte, err error)
 		return
 	}
 	return
+}
+func Uniqueid() string {
+	var src = rand.NewSource(time.Now().UnixNano())
+	s := fmt.Sprintf("%d", src.Int63())
+	return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
 }
 
 // type sockaddr struct {

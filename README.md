@@ -22,7 +22,12 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - 以前只能在局域网玩的,现在可以在任何地方玩.  
 - 替代圣剑内网通，显IP内网通，花生壳之类的工具.
 - ...  
-  
+
+### 手册目录  
+本页是最新v3.1手册,其他手册请点击下面链接查看.  
+- [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
+- [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)
+
 ### Fast Start  
 提示:所有操作需要root权限.  
 **0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.**  
@@ -45,7 +50,7 @@ wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_li
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v2.0/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v3.1/proxy-linux-amd64.tar.gz  
 ```  
 **3.下载自动安装脚本**  
 ```shell  

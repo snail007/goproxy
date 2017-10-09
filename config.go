@@ -78,8 +78,9 @@ func initConfig() (err error) {
 	tunnelServerArgs.Timeout = tunnelServer.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
-	tunnelServerArgs.Remote = tunnelServer.Flag("remote", "client's network host:port").Short('r').Default("").String()
-	tunnelServerArgs.Local = tunnelServer.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	//tunnelServerArgs.Remote = tunnelServer.Flag("remote", "client's network host:port").Short('R').Default("").String()
+	//tunnelServerArgs.Local = tunnelServer.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as :localip:localport@clienthost:clientport").Short('r').Default("").Strings()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")
@@ -104,6 +105,7 @@ func initConfig() (err error) {
 	tunnelBridgeArgs.Args = args
 	tunnelClientArgs.Args = args
 	tunnelServerArgs.Args = args
+	*tunnelServerArgs.Route = []string{}
 
 	poster()
 	//regist services and run service
@@ -111,9 +113,10 @@ func initConfig() (err error) {
 	services.Regist("http", services.NewHTTP(), httpArgs)
 	services.Regist("tcp", services.NewTCP(), tcpArgs)
 	services.Regist("udp", services.NewUDP(), udpArgs)
-	services.Regist("tserver", services.NewTunnelServer(), tunnelServerArgs)
+	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
 	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
 	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
+
 	service, err = services.Run(serviceName)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", service, err)

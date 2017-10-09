@@ -25,7 +25,7 @@ func Regist(name string, s Service, args interface{}) {
 		Name: name,
 	}
 }
-func Run(name string) (service *ServiceItem, err error) {
+func Run(name string, args ...interface{}) (service *ServiceItem, err error) {
 	service, ok := servicesMap[name]
 	if ok {
 		go func() {
@@ -35,7 +35,11 @@ func Run(name string) (service *ServiceItem, err error) {
 					log.Fatalf("%s servcie crashed, ERR: %s\ntrace:%s", name, err, string(debug.Stack()))
 				}
 			}()
-			err := service.S.Start(service.Args)
+			if len(args) == 1 {
+				err = service.S.Start(args[0])
+			} else {
+				err = service.S.Start(service.Args)
+			}
 			if err != nil {
 				log.Fatalf("%s servcie fail, ERR: %s", name, err)
 			}

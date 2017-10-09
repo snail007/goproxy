@@ -20,6 +20,44 @@ type TunnelServer struct {
 	sc     utils.ServerChannel
 }
 
+type TunnelServerManager struct {
+	cfg    TunnelServerArgs
+	udpChn chan UDPItem
+	sc     utils.ServerChannel
+}
+
+func NewTunnelServerManager() Service {
+	return &TunnelServerManager{
+		cfg:    TunnelServerArgs{},
+		udpChn: make(chan UDPItem, 50000),
+	}
+}
+func (s *TunnelServerManager) Start(args interface{}) (err error) {
+	s.cfg = args.(TunnelServerArgs)
+	if *s.cfg.Parent != "" {
+		log.Printf("use tls parent %s", *s.cfg.Parent)
+	} else {
+		log.Fatalf("parent required")
+	}
+	for _, info := range *s.cfg.Route {
+		_routeInfo := strings.Split(info, "@")
+		server := NewTunnelServer()
+		local := _routeInfo[0]
+		remote := _routeInfo[1]
+		server.Start(TunnelServerArgs{
+			Args:    s.cfg.Args,
+			Local:   &local,
+			IsUDP:   s.cfg.IsUDP,
+			Remote:  &remote,
+			Key:     s.cfg.Key,
+			Timeout: s.cfg.Timeout,
+		})
+	}
+	return
+}
+func (s *TunnelServerManager) Clean() {
+
+}
 func NewTunnelServer() Service {
 	return &TunnelServer{
 		cfg:    TunnelServerArgs{},
@@ -37,11 +75,6 @@ func (s *TunnelServer) InitService() {
 	s.UDPConnDeamon()
 }
 func (s *TunnelServer) Check() {
-	if *s.cfg.Parent != "" {
-		log.Printf("use tls parent %s", *s.cfg.Parent)
-	} else {
-		log.Fatalf("parent required")
-	}
 	if *s.cfg.Remote == "" {
 		log.Fatalf("remote required")
 	}
@@ -122,7 +155,7 @@ func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, ID string, err e
 	}
 	keyBytes := []byte(*s.cfg.Key)
 	keyLength := uint16(len(keyBytes))
-	ID = utils.NewUniqueID().String()
+	ID = utils.Uniqueid()
 	IDBytes := []byte(ID)
 	if id != "" {
 		ID = id
