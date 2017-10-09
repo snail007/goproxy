@@ -309,10 +309,10 @@ VPS(IP:22.22.22.33)执行:
   
 **4.6、高级用法二**  
 提示:  
-如果同时有多个client连接到同一个bridge,需要指定不同的key,可以通过--k参数设定,--k可以是任意唯一字符串,
+如果同时有多个client连接到同一个bridge,需要指定不同的key,可以通过--k参数设定,--k可以是任意唯一字符串,  
 只要在同一个bridge上唯一即可.  
-server连接到bridge的时候,如果同时有多个client连接到同一个bridge,需要使用--k参数选择client. 
-暴露多个端口重复-r参数即可.-r格式是:"本地IP:本地端口@clientHOST:client端口"  
+server连接到bridge的时候,如果同时有多个client连接到同一个bridge,需要使用--k参数选择client.   
+暴露多个端口重复-r参数即可.-r格式是:"本地IP:本地端口@clientHOST:client端口".   
   
 背景:  
 - 公司机器A提供了web服务80端口,ftp服务21端口  
