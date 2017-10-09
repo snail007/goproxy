@@ -92,7 +92,7 @@ func initConfig() (err error) {
 	tunnelBridgeArgs.Timeout = tunnelBridge.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelBridgeArgs.Local = tunnelBridge.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	if *certTLS != "" && *keyTLS != "" {
 		args.CertBytes, args.KeyBytes = tlsBytes(*certTLS, *keyTLS)
@@ -105,18 +105,14 @@ func initConfig() (err error) {
 	tunnelBridgeArgs.Args = args
 	tunnelClientArgs.Args = args
 	tunnelServerArgs.Args = args
-	*tunnelServerArgs.Route = []string{}
-
 	poster()
 	//regist services and run service
-	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	services.Regist("http", services.NewHTTP(), httpArgs)
 	services.Regist("tcp", services.NewTCP(), tcpArgs)
 	services.Regist("udp", services.NewUDP(), udpArgs)
 	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
 	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
 	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
-
 	service, err = services.Run(serviceName)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", service, err)
