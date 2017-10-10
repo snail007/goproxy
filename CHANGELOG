@@ -1,11 +1,20 @@
 proxy更新日志
 v3.2
-1.内网穿透功能server端-r参数增加了协议,默认是tcp://,可以是udp://.
-  格式是:-r "协议://本地绑定IP:本地监听端口@clientHost:clientPort"
+1.内网穿透功能server端-r参数增加了协议和key设置
+  
+  -r 完整格式是:PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT
+  
+  1.1.协议PROTOCOL:默认是tcp,可以是udp.
   比如: -r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"
-  如果指定了--udp参数,协议留空默认为udp://;
-  如果没有指定--udp参数,协议留空默认为tcp://;
-  本地绑定IP为空默认是绑定全部ip.
+  如果指定了--udp参数,PROTOCOL默认为udp;
+  如果没有指定--udp参数,PROTOCOL默认为tcp;
+  
+  1.2.CLIENT_KEY:默认是default.
+  比如: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"
+  如果指定了--key参数,CLIENT_KEY留空默认为--key指定的值;
+  如果没有指定--key参数,CLIENT_KEY留空默认为default;p;
+
+  1.3.LOCAL_IP为空默认是绑定全部ip.CLIENT_LOCAL_HOST留空默认是127.0.0.1
 
 v3.1
 1.优化了内网穿透功能,bridge,client和server只需要启动一个即可。  

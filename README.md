@@ -332,7 +332,22 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 
 1. 完成  
   
-**4.7.查看帮助**  
+**4.7.tserver的-r参数**  
+  -r完整格式是:`PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
+  
+  4.7.1.协议PROTOCOL:tcp或者udp.  
+  比如: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
+  如果指定了--udp参数,PROTOCOL默认为udp,那么:`-r ":8080@:80"`默认为udp;  
+  如果没有指定--udp参数,PROTOCOL默认为tcp,那么:`-r ":8080@:80"`默认为tcp;  
+  
+  4.7.2.CLIENT_KEY:默认是default.  
+  比如: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
+  如果指定了--k参数,比如--k test,那么:`-r ":8080@:80"`默认为test;  
+  如果没有指定--k参数,那么:`-r ":8080@:80"`默认为default;  
+  
+  4.7.3.LOCAL_IP为空默认是:`0.0.0.0`,CLIENT_LOCAL_HOST为空默认是:`127.0.0.1`; 
+
+**4.8.查看帮助**  
 `./proxy help tbridge`  
 `./proxy help tserver`  
 `./proxy help tserver`  

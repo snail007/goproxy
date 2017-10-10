@@ -78,9 +78,7 @@ func initConfig() (err error) {
 	tunnelServerArgs.Timeout = tunnelServer.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
-	//tunnelServerArgs.Remote = tunnelServer.Flag("remote", "client's network host:port").Short('R').Default("").String()
-	//tunnelServerArgs.Local = tunnelServer.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as :localip:localport@clienthost:clientport").Short('r').Default("").Strings()
+	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as :PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -41,10 +42,9 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	}
 	//log.Printf("route:%v", *s.cfg.Route)
 	for _, _info := range *s.cfg.Route {
-		IsUDP := s.cfg.IsUDP
+		IsUDP := *s.cfg.IsUDP
 		if strings.HasPrefix(_info, "udp://") {
-			u := true
-			IsUDP = &u
+			IsUDP = true
 		}
 		info := strings.TrimPrefix(_info, "udp://")
 		info = strings.TrimPrefix(info, "tcp://")
@@ -52,12 +52,20 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		server := NewTunnelServer()
 		local := _routeInfo[0]
 		remote := _routeInfo[1]
+		KEY := *s.cfg.Key
+		if strings.HasPrefix(remote, "[") {
+			KEY = remote[1:strings.LastIndex(remote, "]")]
+			remote = remote[strings.LastIndex(remote, "]")+1:]
+		}
+		if strings.HasPrefix(remote, ":") {
+			remote = fmt.Sprintf("127.0.0.1%s", remote)
+		}
 		err = server.Start(TunnelServerArgs{
 			Args:    s.cfg.Args,
 			Local:   &local,
-			IsUDP:   IsUDP,
+			IsUDP:   &IsUDP,
 			Remote:  &remote,
-			Key:     s.cfg.Key,
+			Key:     &KEY,
 			Timeout: s.cfg.Timeout,
 		})
 		if err != nil {
