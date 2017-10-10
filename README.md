@@ -242,7 +242,7 @@ VPS(IP:22.22.22.33)执行:
     `./proxy tserver -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
   
 1. 在公司机器A上面执行  
-    `./proxy tclient -C proxy.crt -K proxy.key`  
+    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
@@ -261,10 +261,10 @@ VPS(IP:22.22.22.33)执行:
 步骤:  
 1. 在vps上执行,确保vps的80端口没被其它程序占用.  
     `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `./proxy tserver -r ":80@:80" -P ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy tserver -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 在自己笔记本上面执行  
-    `./proxy tclient -C proxy.crt -K proxy.key`  
+    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
