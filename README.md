@@ -342,8 +342,8 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
   
   4.7.2.CLIENT_KEY:默认是default.  
   比如: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
-  如果指定了--k参数,比如--k test,那么:`-r ":8080@:80"`默认为test;  
-  如果没有指定--k参数,那么:`-r ":8080@:80"`默认为default;  
+  如果指定了--k参数,比如--k test,那么:`-r ":8080@:80"`CLIENT_KEY默认为test;  
+  如果没有指定--k参数,那么:`-r ":8080@:80"`CLIENT_KEY默认为default;  
   
   4.7.3.LOCAL_IP为空默认是:`0.0.0.0`,CLIENT_LOCAL_HOST为空默认是:`127.0.0.1`; 
 
