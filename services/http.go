@@ -25,6 +25,11 @@ func NewHTTP() Service {
 		basicAuth: utils.BasicAuth{},
 	}
 }
+func (s *HTTP) CheckArgs() {
+	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
+		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+	}
+}
 func (s *HTTP) InitService() {
 	s.InitBasicAuth()
 	if *s.cfg.Parent != "" {
@@ -38,13 +43,12 @@ func (s *HTTP) StopService() {
 }
 func (s *HTTP) Start(args interface{}) (err error) {
 	s.cfg = args.(HTTPArgs)
+	s.CheckArgs()
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 		s.InitOutConnPool()
 	}
-
 	s.InitService()
-
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)

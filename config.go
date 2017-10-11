@@ -92,7 +92,14 @@ func initConfig() (err error) {
 
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *certTLS != "" && *keyTLS != "" {
+	if *httpArgs.ParentType == "tls" ||
+		*tcpArgs.ParentType == "tls" ||
+		*udpArgs.ParentType == "tls" ||
+		*httpArgs.LocalType == "tls" ||
+		*tcpArgs.IsTLS ||
+		serviceName == "tserver" ||
+		serviceName == "tclient" ||
+		serviceName == "tbridge" {
 		args.CertBytes, args.KeyBytes = tlsBytes(*certTLS, *keyTLS)
 	}
 
@@ -103,6 +110,7 @@ func initConfig() (err error) {
 	tunnelBridgeArgs.Args = args
 	tunnelClientArgs.Args = args
 	tunnelServerArgs.Args = args
+
 	poster()
 	//regist services and run service
 	services.Regist("http", services.NewHTTP(), httpArgs)

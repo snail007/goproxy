@@ -24,6 +24,14 @@ func NewTCP() Service {
 		cfg:     TCPArgs{},
 	}
 }
+func (s *TCP) CheckArgs() {
+	if *s.cfg.Parent == "" {
+		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+	}
+	if *s.cfg.ParentType == "" {
+		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+	}
+}
 func (s *TCP) InitService() {
 	s.InitOutConnPool()
 }
@@ -34,12 +42,8 @@ func (s *TCP) StopService() {
 }
 func (s *TCP) Start(args interface{}) (err error) {
 	s.cfg = args.(TCPArgs)
-	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	} else {
-		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
-	}
-
+	s.CheckArgs()
+	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	s.InitService()
 
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)

@@ -25,7 +25,7 @@ func NewTunnelClient() Service {
 
 func (s *TunnelClient) InitService() {
 }
-func (s *TunnelClient) Check() {
+func (s *TunnelClient) CheckArgs() {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
@@ -39,7 +39,7 @@ func (s *TunnelClient) StopService() {
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
-	s.Check()
+	s.CheckArgs()
 	s.InitService()
 	log.Printf("proxy on tunnel client mode")
 	for {

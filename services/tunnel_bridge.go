@@ -32,7 +32,7 @@ func NewTunnelBridge() Service {
 func (s *TunnelBridge) InitService() {
 
 }
-func (s *TunnelBridge) Check() {
+func (s *TunnelBridge) CheckArgs() {
 	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
 		log.Fatalf("cert and key file required")
 	}
@@ -43,7 +43,7 @@ func (s *TunnelBridge) StopService() {
 }
 func (s *TunnelBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelBridgeArgs)
-	s.Check()
+	s.CheckArgs()
 	s.InitService()
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)

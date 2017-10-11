@@ -27,6 +27,14 @@ func NewUDP() Service {
 		p:       utils.NewConcurrentMap(),
 	}
 }
+func (s *UDP) CheckArgs() {
+	if *s.cfg.Parent == "" {
+		log.Fatalf("parent required for udp %s", *s.cfg.Local)
+	}
+	if *s.cfg.ParentType == "" {
+		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+	}
+}
 func (s *UDP) InitService() {
 	if *s.cfg.ParentType != TYPE_UDP {
 		s.InitOutConnPool()
@@ -39,12 +47,8 @@ func (s *UDP) StopService() {
 }
 func (s *UDP) Start(args interface{}) (err error) {
 	s.cfg = args.(UDPArgs)
-	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	} else {
-		log.Fatalf("parent required for udp %s", *s.cfg.Local)
-	}
-
+	s.CheckArgs()
+	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	s.InitService()
 
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
