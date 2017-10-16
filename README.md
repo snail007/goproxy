@@ -135,12 +135,13 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 **1.7.HTTP(S)通过SSH中转**  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
-- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
-- 用户user的ssh私钥名称是user.key
-***1.7.1 ssh用户名和密码的方式***  
+- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo  
+- 用户user的ssh私钥名称是user.key    
+
+***1.7.1 ssh用户名和密码的方式***   
 本地HTTP(S)代理28080端口,执行:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
-***1.7.2 ssh用户名和密钥的方式***  
+***1.7.2 ssh用户名和密钥的方式***   
 本地HTTP(S)代理28080端口,执行:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
@@ -407,7 +408,8 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
-- 用户user的ssh私钥名称是user.key
+- 用户user的ssh私钥名称是user.key   
+
 ***5.6.1 ssh用户名和密码的方式***  
 本地SOCKS5代理28080端口,执行:  
 `./proxy socks -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
