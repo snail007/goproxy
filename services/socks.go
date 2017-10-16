@@ -283,8 +283,9 @@ func (s *Socks) getOutConn(reqBytes, headBytes []byte, host string) (outConn net
 }
 func (s *Socks) ConnectSSH() (err error) {
 	config := ssh.ClientConfig{
-		User: *s.cfg.SSHUser,
-		Auth: []ssh.AuthMethod{s.cfg.SSHAuthMethod},
+		Timeout: time.Duration(*s.cfg.Timeout) * time.Millisecond,
+		User:    *s.cfg.SSHUser,
+		Auth:    []ssh.AuthMethod{s.cfg.SSHAuthMethod},
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			return nil
 		},
