@@ -31,9 +31,10 @@ func (s *TunnelClient) CheckArgs() {
 	} else {
 		log.Fatalf("parent required")
 	}
-	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
 		log.Fatalf("cert and key file required")
 	}
+	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelClient) StopService() {
 }

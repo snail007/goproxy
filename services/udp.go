@@ -34,6 +34,9 @@ func (s *UDP) CheckArgs() {
 	if *s.cfg.ParentType == "" {
 		log.Fatalf("parent type unkown,use -T <tls|tcp>")
 	}
+	if *s.cfg.ParentType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	}
 }
 func (s *UDP) InitService() {
 	if *s.cfg.ParentType != TYPE_UDP {

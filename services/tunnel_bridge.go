@@ -33,10 +33,10 @@ func (s *TunnelBridge) InitService() {
 
 }
 func (s *TunnelBridge) CheckArgs() {
-	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
 		log.Fatalf("cert and key file required")
 	}
-
+	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelBridge) StopService() {
 

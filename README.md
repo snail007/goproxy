@@ -11,8 +11,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - 智能HTTP代理,会自动判断访问的网站是否屏蔽,如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽,为了加速访问,代理会直接访问网站,不使用上级代理.  
 - 域名黑白名单，更加自由的控制网站的访问方式。  
 - 跨平台性,无论你是widows,linux,还是mac,甚至是树莓派,都可以很好的运行proxy.  
-- 多协议支持,支持HTTP,TCP,UDP,Websocket代理.  
+- 多协议支持,支持HTTP(S),TCP,UDP,Websocket,SOCKS5代理.  
 - 支持内网穿透,协议支持TCP和UDP.  
+- HTTP(S),SOCKS5代理支持SSH中转,上级Linux服务器不需要任何服务端,本地一个proxy即可开心上网.  
   
 ### Why need these?  
 - 当由于安全因素或者限制,我们不能顺畅的访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道,顺畅的访问我们的服务.  
@@ -24,7 +25,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp代理服务器,支�
 - ...  
 
 ### 手册目录  
-本页是最新v3.1手册,其他版本手册请点击下面链接查看.  
+本页是最新v3.2手册,其他版本手册请点击下面链接查看.  
+- [v3.1手册](https://github.com/snail007/goproxy/tree/v3.1)
 - [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
 - [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)
 
@@ -91,8 +93,9 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 **1.2.普通二级HTTP代理**  
 使用本地端口8090,假设上级HTTP代理是`22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
-默认开启了连接池,如果为了网络情况很好,-L可以关闭连接池,0就是连接池大小,0为关闭.  
-`./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -L 0`  
+默认关闭了连接池,如果要加快访问速度,-L可以开启连接池,10就是连接池大小,0为关闭,  
+开启连接池在网络不好的情况下,稳定不是很好.   
+`./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -L 10`  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,怕匹配规则是最右批评匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
@@ -129,7 +132,19 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理.  
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
-**1.7.查看帮助**  
+**1.7.HTTP(S)通过SSH中转**  
+说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
+假设有:vps  
+- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
+- 用户user的ssh私钥名称是user.key
+***1.7.1 ssh用户名和密码的方式***  
+本地HTTP(S)代理28080端口,执行:  
+`./proxy http -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
+***1.7.2 ssh用户名和密钥的方式***  
+本地HTTP(S)代理28080端口,执行:  
+`./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
+
+**1.8.查看帮助**  
 `./proxy help http`  
 
   
@@ -352,9 +367,62 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help tserver`  
 `./proxy help tserver`  
   
+### 5.SOCKS5代理  
+提示:SOCKS5代理,只支持TCP协议,不支持UDP协议,不支持用户名密码认证.  
+**5.1.普通SOCKS5代理**  
+`./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
+**5.2.普通二级SOCKS5代理**  
+使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
+`./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
+我们还可以指定网站域名的黑白名单文件,一行一个域名,怕匹配规则是最右批评匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
+`./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
+  
+**5.3.SOCKS二级代理(加密)**  
+一级SOCKS代理(VPS,IP:22.22.22.22)  
+`./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+  
+二级SOCKS代理(本地Linux)  
+`./proxy socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+那么访问本地的8080端口就是访问VPS上面的代理端口38080.  
+  
+二级SOCKS代理(本地windows)  
+`./proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
+  
+**5.4.SOCKS三级代理(加密)**  
+一级SOCKS代理VPS_01,IP:22.22.22.22  
+`./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+二级SOCKS代理VPS_02,IP:33.33.33.33  
+`./proxy socks -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+三级SOCKS代理(本地)  
+`./proxy socks -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
+那么访问本地的8080端口就是访问一级SOCKS代理上面的代理端口38080.  
+  
+**5.5.SOCKS代理流量强制走上级SOCKS代理**  
+默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级SOCKS代理.通过--always可以使全部SOCKS代理流量强制走上级SOCKS代理.  
+`./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+  
+**5.6.SOCKS通过SSH中转**  
+说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
+假设有:vps  
+- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
+- 用户user的ssh私钥名称是user.key
+***5.6.1 ssh用户名和密码的方式***  
+本地SOCKS5代理28080端口,执行:  
+`./proxy socks -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
+***5.6.2 ssh用户名和密钥的方式***  
+本地SOCKS5代理28080端口,执行:  
+`./proxy socks -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
+
+那么访问本地的28080端口就是通过VPS访问目标地址.  
+
+**5.7.查看帮助**  
+`./proxy help socks`  
+
 ### TODO  
-- socks5代理支持.  
+- SOCKS5增加用户名密码认证
+
 ### 如何使用源码?   
 cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
 编译直接:go build     

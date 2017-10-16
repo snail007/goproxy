@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
+	"strconv"
 )
 
 type ServerChannel struct {
@@ -21,6 +22,17 @@ func NewServerChannel(ip string, port int) ServerChannel {
 		port: port,
 		errAcceptHandler: func(err error) {
 			fmt.Printf("accept error , ERR:%s", err)
+		},
+	}
+}
+func NewServerChannelHost(host string) ServerChannel {
+	h, port, _ := net.SplitHostPort(host)
+	p, _ := strconv.Atoi(port)
+	return ServerChannel{
+		ip:   h,
+		port: p,
+		errAcceptHandler: func(err error) {
+			log.Printf("accept error , ERR:%s", err)
 		},
 	}
 }

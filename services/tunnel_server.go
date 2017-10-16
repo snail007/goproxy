@@ -61,12 +61,14 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 			remote = fmt.Sprintf("127.0.0.1%s", remote)
 		}
 		err = server.Start(TunnelServerArgs{
-			Args:    s.cfg.Args,
-			Local:   &local,
-			IsUDP:   &IsUDP,
-			Remote:  &remote,
-			Key:     &KEY,
-			Timeout: s.cfg.Timeout,
+			CertBytes: s.cfg.CertBytes,
+			KeyBytes:  s.cfg.KeyBytes,
+			Parent:    s.cfg.Parent,
+			Local:     &local,
+			IsUDP:     &IsUDP,
+			Remote:    &remote,
+			Key:       &KEY,
+			Timeout:   s.cfg.Timeout,
 		})
 		if err != nil {
 			return
@@ -97,9 +99,10 @@ func (s *TunnelServer) CheckArgs() {
 	if *s.cfg.Remote == "" {
 		log.Fatalf("remote required")
 	}
-	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
 		log.Fatalf("cert and key file required")
 	}
+	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelServer) StopService() {
 }

@@ -3,11 +3,15 @@ package services
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"proxy/utils"
 	"runtime/debug"
 	"strconv"
+	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
 type HTTP struct {
@@ -15,6 +19,7 @@ type HTTP struct {
 	cfg       HTTPArgs
 	checker   utils.Checker
 	basicAuth utils.BasicAuth
+	sshClient *ssh.Client
 }
 
 func NewHTTP() Service {
@@ -26,14 +31,51 @@ func NewHTTP() Service {
 	}
 }
 func (s *HTTP) CheckArgs() {
+	var err error
 	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
 		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+	}
+	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	}
+	if *s.cfg.ParentType == "ssh" {
+		if *s.cfg.SSHUser == "" {
+			log.Fatalf("ssh user required")
+		}
+		if *s.cfg.SSHKeyFile == "" && *s.cfg.SSHPassword == "" {
+			log.Fatalf("ssh password or key required")
+		}
+
+		if *s.cfg.SSHPassword != "" {
+			s.cfg.SSHAuthMethod = ssh.Password(*s.cfg.SSHPassword)
+		} else {
+			var SSHSigner ssh.Signer
+			s.cfg.SSHKeyBytes, err = ioutil.ReadFile(*s.cfg.SSHKeyFile)
+			if err != nil {
+				log.Fatalf("read key file ERR: %s", err)
+			}
+			if *s.cfg.SSHKeyFileSalt != "" {
+				SSHSigner, err = ssh.ParsePrivateKeyWithPassphrase(s.cfg.SSHKeyBytes, []byte(*s.cfg.SSHKeyFileSalt))
+			} else {
+				SSHSigner, err = ssh.ParsePrivateKey(s.cfg.SSHKeyBytes)
+			}
+			if err != nil {
+				log.Fatalf("parse ssh private key fail,ERR: %s", err)
+			}
+			s.cfg.SSHAuthMethod = ssh.PublicKeys(SSHSigner)
+		}
 	}
 }
 func (s *HTTP) InitService() {
 	s.InitBasicAuth()
 	if *s.cfg.Parent != "" {
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
+	}
+	if *s.cfg.ParentType == "ssh" {
+		err := s.ConnectSSH()
+		if err != nil {
+			log.Fatalf("init service fail, ERR: %s", err)
+		}
 	}
 }
 func (s *HTTP) StopService() {
@@ -99,8 +141,9 @@ func (s *HTTP) callback(inConn net.Conn) {
 		//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 	}
 	log.Printf("use proxy : %v, %s", useProxy, address)
-	//os.Exit(0)
+
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
+
 	if err != nil {
 		if *s.cfg.Parent == "" {
 			log.Printf("connect to %s fail, ERR:%s", address, err)
@@ -122,9 +165,13 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	var outConn net.Conn
 	var _outConn interface{}
 	if useProxy {
-		_outConn, err = s.outPool.Pool.Get()
-		if err == nil {
-			outConn = _outConn.(net.Conn)
+		if *s.cfg.ParentType == "ssh" {
+			outConn, err = s.getSSHConn(address)
+		} else {
+			_outConn, err = s.outPool.Pool.Get()
+			if err == nil {
+				outConn = _outConn.(net.Conn)
+			}
 		}
 	} else {
 		outConn, err = utils.ConnectHost(address, *s.cfg.Timeout)
@@ -138,20 +185,61 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	outAddr := outConn.RemoteAddr().String()
 	outLocalAddr := outConn.LocalAddr().String()
 
-	if req.IsHTTPS() && !useProxy {
-		req.HTTPSReply()
+	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
+		//https无上级或者上级非代理,proxy需要响应connect请求,并直连目标
+		err = req.HTTPSReply()
 	} else {
-		outConn.Write(req.HeadBuf)
+		//https或者http,上级是代理,proxy需要转发
+		_, err = outConn.Write(req.HeadBuf)
+		if err != nil {
+			log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
+			utils.CloseConn(inConn)
+			return
+		}
 	}
+
 	utils.IoBind((*inConn), outConn, func(err error) {
 		log.Printf("conn %s - %s - %s - %s released [%s]", inAddr, inLocalAddr, outLocalAddr, outAddr, req.Host)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
 	}, func(n int, d bool) {}, 0)
 	log.Printf("conn %s - %s - %s - %s connected [%s]", inAddr, inLocalAddr, outLocalAddr, outAddr, req.Host)
+
 	return
 }
-func (s *HTTP) OutToUDP(inConn *net.Conn) (err error) {
+
+func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err error) {
+	maxTryCount := 1
+	tryCount := 0
+RETRY:
+	if tryCount >= maxTryCount {
+		return
+	}
+	outConn, err = s.sshClient.Dial("tcp", host)
+	//log.Printf("s.sshClient.Dial, host:%s)", host)
+	if err != nil {
+		log.Printf("connect ssh fail, ERR: %s, retrying...", err)
+		s.sshClient.Close()
+		e := s.ConnectSSH()
+		if e == nil {
+			tryCount++
+			time.Sleep(time.Second * 3)
+			goto RETRY
+		} else {
+			err = e
+		}
+	}
+	return
+}
+func (s *HTTP) ConnectSSH() (err error) {
+	config := ssh.ClientConfig{
+		User: *s.cfg.SSHUser,
+		Auth: []ssh.AuthMethod{s.cfg.SSHAuthMethod},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
+		},
+	}
+	s.sshClient, err = ssh.Dial("tcp", *s.cfg.Parent, &config)
 	return
 }
 func (s *HTTP) InitOutConnPool() {

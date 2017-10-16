@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -310,6 +311,19 @@ func Uniqueid() string {
 	var src = rand.NewSource(time.Now().UnixNano())
 	s := fmt.Sprintf("%d", src.Int63())
 	return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
+}
+func TlsBytes(cert, key string) (certBytes, keyBytes []byte) {
+	certBytes, err := ioutil.ReadFile(cert)
+	if err != nil {
+		log.Fatalf("err : %s", err)
+		return
+	}
+	keyBytes, err = ioutil.ReadFile(key)
+	if err != nil {
+		log.Fatalf("err : %s", err)
+		return
+	}
+	return
 }
 
 // type sockaddr struct {
