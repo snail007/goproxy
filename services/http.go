@@ -33,7 +33,7 @@ func NewHTTP() Service {
 func (s *HTTP) CheckArgs() {
 	var err error
 	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+		log.Fatalf("parent type unkown,use -T <tls|tcp|ssh>")
 	}
 	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
