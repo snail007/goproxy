@@ -13,7 +13,6 @@ import (
 type ServerConn struct {
 	ClientLocalAddr string //tcp:2.2.22:333@ID
 	Conn            *net.Conn
-	//Conn *utils.HeartbeatReadWriter
 }
 type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
@@ -78,7 +77,6 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			return
 		}
 		key = string(_key)
-		//log.Printf("conn key %s", key)
 
 		if connType != CONN_CONTROL {
 			var IDLength uint16
@@ -117,13 +115,8 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 
 		switch connType {
 		case CONN_SERVER:
-			// hb := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			// 	log.Printf("%s conn %s from server released", key, ID)
-			// 	s.serverConns.Remove(ID)
-			// })
 			addr := clientLocalAddr + "@" + ID
 			s.serverConns.Set(ID, ServerConn{
-				//Conn:            &hb,
 				Conn:            &inConn,
 				ClientLocalAddr: addr,
 			})
@@ -134,7 +127,9 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 					time.Sleep(time.Second * 3)
 					continue
 				}
+				(*item.(*net.Conn)).SetWriteDeadline(time.Now().Add(time.Second * 3))
 				_, err := (*item.(*net.Conn)).Write([]byte(addr))
+				(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
 				if err != nil {
 					log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
 					time.Sleep(time.Second * 3)
@@ -151,33 +146,36 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 				return
 			}
 			serverConn := serverConnItem.(ServerConn).Conn
-			// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
-			// 	log.Printf("%s conn %s from client released", key, ID)
-			// 	hw.Close()
-			// })
 			utils.IoBind(*serverConn, inConn, func(err error) {
-				// utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
-				//serverConn.Close()
+
 				(*serverConn).Close()
 				utils.CloseConn(&inConn)
-				// hw.Close()
 				s.serverConns.Remove(ID)
 				log.Printf("conn %s released", ID)
 			}, func(i int, b bool) {}, 0)
 			log.Printf("conn %s created", ID)
+
 		case CONN_CONTROL:
 			if s.clientControlConns.Has(key) {
 				item, _ := s.clientControlConns.Get(key)
-				//(*item.(*utils.HeartbeatReadWriter)).Close()
 				(*item.(*net.Conn)).Close()
 			}
-			// hb := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			// 	log.Printf("client %s disconnected", key)
-			// 	s.clientControlConns.Remove(key)
-			// })
-			// s.clientControlConns.Set(key, &hb)
 			s.clientControlConns.Set(key, &inConn)
 			log.Printf("set client %s control conn", key)
+			go func() {
+				for {
+					var b = make([]byte, 1)
+					_, err = inConn.Read(b)
+					if err != nil {
+						inConn.Close()
+						s.serverConns.Remove(ID)
+						log.Printf("%s control conn from client released", key)
+						break
+					} else {
+						//log.Printf("%s heartbeat from client", key)
+					}
+				}
+			}()
 		}
 	})
 	if err != nil {

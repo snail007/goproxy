@@ -46,27 +46,33 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 	for {
 		ctrlConn, err := s.GetInConn(CONN_CONTROL, "")
 		if err != nil {
-			log.Printf("control connection err: %s", err)
+			log.Printf("control connection err: %s, retrying...", err)
 			time.Sleep(time.Second * 3)
 			utils.CloseConn(&ctrlConn)
 			continue
 		}
-		// rw := utils.NewHeartbeatReadWriter(&ctrlConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-		// 	log.Printf("ctrlConn err %s", err)
-		// 	utils.CloseConn(&ctrlConn)
-		// })
+		go func() {
+			for {
+				ctrlConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+				_, err = ctrlConn.Write([]byte{0x00})
+				ctrlConn.SetWriteDeadline(time.Time{})
+				if err != nil {
+					utils.CloseConn(&ctrlConn)
+					log.Printf("ctrlConn err %s", err)
+					break
+				}
+				time.Sleep(time.Second * 3)
+			}
+		}()
 		for {
 			signal := make([]byte, 50)
-			// n, err := rw.Read(signal)
 			n, err := ctrlConn.Read(signal)
 			if err != nil {
 				utils.CloseConn(&ctrlConn)
-				log.Printf("read connection signal err: %s", err)
+				log.Printf("read connection signal err: %s, retrying...", err)
 				break
 			}
 			addr := string(signal[:n])
-			// log.Printf("n:%d addr:%s err:%s", n, addr, err)
-			// os.Exit(0)
 			log.Printf("signal revecived:%s", addr)
 			protocol := addr[:3]
 			atIndex := strings.Index(addr, "@")

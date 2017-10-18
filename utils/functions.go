@@ -194,6 +194,9 @@ func HTTPGet(URL string, timeout int) (err error) {
 }
 
 func CloseConn(conn *net.Conn) {
+	defer func() {
+		_ = recover()
+	}()
 	if conn != nil && *conn != nil {
 		(*conn).SetDeadline(time.Now().Add(time.Millisecond))
 		(*conn).Close()
