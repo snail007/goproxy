@@ -426,6 +426,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 ### TODO  
 - SOCKS5增加用户名密码认证?
 - http,socks代理多个上级负载均衡?
+- 内网穿透server<->bridge心跳机制?
 - 欢迎加群反馈...
 
 ### 如何使用源码?   
