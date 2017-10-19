@@ -20,6 +20,7 @@ type HTTP struct {
 	checker   utils.Checker
 	basicAuth utils.BasicAuth
 	sshClient *ssh.Client
+	lockChn   chan bool
 }
 
 func NewHTTP() Service {
@@ -28,6 +29,7 @@ func NewHTTP() Service {
 		cfg:       HTTPArgs{},
 		checker:   utils.Checker{},
 		basicAuth: utils.BasicAuth{},
+		lockChn:   make(chan bool, 1),
 	}
 }
 func (s *HTTP) CheckArgs() {
@@ -115,7 +117,9 @@ func (s *HTTP) callback(inConn net.Conn) {
 			log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 		}
 	}()
-	req, err := utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
+	var err interface{}
+	var req utils.HTTPRequest
+	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
 	if err != nil {
 		if err != io.EOF {
 			log.Printf("decoder error , form %s, ERR:%s", err, inConn.RemoteAddr())
@@ -153,7 +157,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 		utils.CloseConn(&inConn)
 	}
 }
-func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (err error) {
+func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (err interface{}) {
 	inAddr := (*inConn).RemoteAddr().String()
 	inLocalAddr := (*inConn).LocalAddr().String()
 	//防止死循环
@@ -208,18 +212,27 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	return
 }
 
-func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err error) {
+func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err interface{}) {
 	maxTryCount := 1
 	tryCount := 0
+	errchn := make(chan interface{}, 1)
 RETRY:
 	if tryCount >= maxTryCount {
 		return
 	}
-	outConn, err = s.sshClient.Dial("tcp", host)
-	//log.Printf("s.sshClient.Dial, host:%s)", host)
+	go func() {
+		defer func() {
+			if err == nil {
+				errchn <- recover()
+			} else {
+				errchn <- nil
+			}
+		}()
+		outConn, err = s.sshClient.Dial("tcp", host)
+	}()
+	err = <-errchn
 	if err != nil {
 		log.Printf("connect ssh fail, ERR: %s, retrying...", err)
-		s.sshClient.Close()
 		e := s.ConnectSSH()
 		if e == nil {
 			tryCount++
@@ -232,14 +245,25 @@ RETRY:
 	return
 }
 func (s *HTTP) ConnectSSH() (err error) {
+	select {
+	case s.lockChn <- true:
+	default:
+		err = fmt.Errorf("can not connect at same time")
+		return
+	}
 	config := ssh.ClientConfig{
-		User: *s.cfg.SSHUser,
-		Auth: []ssh.AuthMethod{s.cfg.SSHAuthMethod},
+		Timeout: time.Duration(*s.cfg.Timeout) * time.Millisecond,
+		User:    *s.cfg.SSHUser,
+		Auth:    []ssh.AuthMethod{s.cfg.SSHAuthMethod},
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			return nil
 		},
 	}
+	if s.sshClient != nil {
+		s.sshClient.Close()
+	}
 	s.sshClient, err = ssh.Dial("tcp", *s.cfg.Parent, &config)
+	<-s.lockChn
 	return
 }
 func (s *HTTP) InitOutConnPool() {

@@ -35,7 +35,7 @@ func initConfig() (err error) {
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
-
+	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
 	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
@@ -126,7 +126,13 @@ func initConfig() (err error) {
 	socksArgs.Direct = socks.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
-
+	flags := log.Ldate
+	if *debug {
+		flags |= log.Lshortfile | log.Lmicroseconds
+	} else {
+		flags |= log.Ltime
+	}
+	log.SetFlags(flags)
 	poster()
 	//regist services and run service
 	services.Regist("http", services.NewHTTP(), httpArgs)
