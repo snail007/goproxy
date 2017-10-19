@@ -1,6 +1,9 @@
 proxy更新日志
 v3.3
 1.修复了socks代理模式对证书文件的判断逻辑.
+2.增强了http代理,socks代理的ssh中转模式的稳定性.
+3.socks代理tls,tcp模式新增了CMD_ASSOCIATE(udp)支持.socks代理ssh模式不支持udp.
+4.修复了http代理某些情况下会崩溃的bug.
 
 v3.2
 1.内网穿透功能server端-r参数增加了协议和key设置.

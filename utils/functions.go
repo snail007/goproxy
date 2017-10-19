@@ -315,6 +315,24 @@ func Uniqueid() string {
 	s := fmt.Sprintf("%d", src.Int63())
 	return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
 }
+func SubStr(str string, start, end int) string {
+	if len(str) == 0 {
+		return ""
+	}
+	if end >= len(str) {
+		end = len(str) - 1
+	}
+	return str[start:end]
+}
+func SubBytes(bytes []byte, start, end int) []byte {
+	if len(bytes) == 0 {
+		return []byte{}
+	}
+	if end >= len(bytes) {
+		end = len(bytes) - 1
+	}
+	return bytes[start:end]
+}
 func TlsBytes(cert, key string) (certBytes, keyBytes []byte) {
 	certBytes, err := ioutil.ReadFile(cert)
 	if err != nil {

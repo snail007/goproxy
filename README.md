@@ -423,7 +423,9 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help socks`  
 
 ### TODO  
-- SOCKS5增加用户名密码认证
+- SOCKS5增加用户名密码认证?
+- http,socks代理多个上级负载均衡?
+- 欢迎加群反馈...
 
 ### 如何使用源码?   
 cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   

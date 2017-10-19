@@ -64,12 +64,15 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 			CertBytes: s.cfg.CertBytes,
 			KeyBytes:  s.cfg.KeyBytes,
 			Parent:    s.cfg.Parent,
+			CertFile:  s.cfg.CertFile,
+			KeyFile:   s.cfg.KeyFile,
 			Local:     &local,
 			IsUDP:     &IsUDP,
 			Remote:    &remote,
 			Key:       &KEY,
 			Timeout:   s.cfg.Timeout,
 		})
+
 		if err != nil {
 			return
 		}

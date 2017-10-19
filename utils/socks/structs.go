@@ -242,6 +242,12 @@ func ParseUDPPacket(b []byte) (p UDPPacket, err error) {
 func (s *UDPPacket) Header() []byte {
 	return s.header
 }
+func (s *UDPPacket) NewReply(data []byte) []byte {
+	var buf bytes.Buffer
+	buf.Write(s.header)
+	buf.Write(data)
+	return buf.Bytes()
+}
 func (s *UDPPacket) Host() string {
 	return s.dstHost
 }
