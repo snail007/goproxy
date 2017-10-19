@@ -78,6 +78,28 @@ func (s *HTTP) InitService() {
 		if err != nil {
 			log.Fatalf("init service fail, ERR: %s", err)
 		}
+		go func() {
+			//循环检查ssh网络连通性
+			for {
+				conn, err := utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout*2)
+				if err == nil {
+					_, err = conn.Write([]byte{0})
+				}
+				if err != nil {
+					if s.sshClient != nil {
+						s.sshClient.Close()
+						if s.sshClient.Conn != nil {
+							s.sshClient.Conn.Close()
+						}
+					}
+					log.Printf("ssh offline, retrying...")
+					s.ConnectSSH()
+				} else {
+					conn.Close()
+				}
+				time.Sleep(time.Second * 3)
+			}
+		}()
 	}
 }
 func (s *HTTP) StopService() {
@@ -215,22 +237,25 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err interface{}) {
 	maxTryCount := 1
 	tryCount := 0
-	errchn := make(chan interface{}, 1)
 RETRY:
 	if tryCount >= maxTryCount {
 		return
 	}
-	go func() {
+	wait := make(chan bool, 1)
+	func() {
 		defer func() {
 			if err == nil {
-				errchn <- recover()
-			} else {
-				errchn <- nil
+				err = recover()
 			}
+			wait <- true
 		}()
 		outConn, err = s.sshClient.Dial("tcp", host)
 	}()
-	err = <-errchn
+	select {
+	case <-wait:
+	case <-time.After(time.Second * 5):
+		err = fmt.Errorf("ssh dial %s timeout", host)
+	}
 	if err != nil {
 		log.Printf("connect ssh fail, ERR: %s, retrying...", err)
 		e := s.ConnectSSH()

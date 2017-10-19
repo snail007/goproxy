@@ -88,6 +88,9 @@ func (s *Socks) InitService() {
 			//循环检查ssh网络连通性
 			for {
 				conn, err := utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout*2)
+				if err == nil {
+					_, err = conn.Write([]byte{0})
+				}
 				if err != nil {
 					if s.sshClient != nil {
 						s.sshClient.Close()
@@ -189,7 +192,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 			log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
 			return
 		}
-		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*2)))
+		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*5)))
 		_, err = conn.Write(rawB)
 		log.Printf("udp request:%v", len(rawB))
 		if err != nil {
@@ -293,6 +296,9 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	if err != nil || !methodReq.Select(socks.Method_NO_AUTH) {
 		methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 		utils.CloseConn(&inConn)
+		if err != nil {
+			log.Printf("new methods request fail,ERR: %s", err)
+		}
 		return
 	}
 
@@ -398,7 +404,6 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	utils.CloseConn(&outConn)
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
-	errchn := make(chan interface{}, 1)
 	switch *s.cfg.ParentType {
 	case "tls":
 		fallthrough
@@ -441,17 +446,21 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		if tryCount >= maxTryCount {
 			return
 		}
-		go func() {
+		wait := make(chan bool, 1)
+		func() {
 			defer func() {
 				if err == nil {
-					errchn <- recover()
-				} else {
-					errchn <- nil
+					err = recover()
 				}
+				wait <- true
 			}()
 			outConn, err = s.sshClient.Dial("tcp", host)
 		}()
-		err = <-errchn
+		select {
+		case <-wait:
+		case <-time.After(time.Second * 5):
+			err = fmt.Errorf("ssh dial %s timeout", host)
+		}
 		if err != nil {
 			log.Printf("connect ssh fail, ERR: %s, retrying...", err)
 			e := s.ConnectSSH()
