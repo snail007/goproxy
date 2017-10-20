@@ -37,7 +37,6 @@ func NewSocks() Service {
 func (s *Socks) CheckArgs() {
 	var err error
 	if *s.cfg.LocalType == "tls" {
-		//log.Println(*s.cfg.CertFile, *s.cfg.KeyFile)
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 	}
 	if *s.cfg.Parent != "" {
@@ -45,7 +44,6 @@ func (s *Socks) CheckArgs() {
 			log.Fatalf("parent type unkown,use -T <tls|tcp|ssh>")
 		}
 		if *s.cfg.ParentType == "tls" {
-			log.Println(*s.cfg.CertFile, *s.cfg.KeyFile)
 			s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 		}
 		if *s.cfg.ParentType == "ssh" {

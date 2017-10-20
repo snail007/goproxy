@@ -24,15 +24,23 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 替代圣剑内网通，显IP内网通，花生壳之类的工具.
 - ...  
 
-### 手册目录  
+ 
 本页是最新v3.3手册,其他版本手册请点击下面链接查看.  
 - [v3.2手册](https://github.com/snail007/goproxy/tree/v3.2)
 - [v3.1手册](https://github.com/snail007/goproxy/tree/v3.1)
 - [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
 - [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)  
 
+### 手册目录 
+1. [快速安装](#自动安装)
+1. [手动安装](#手动安装)
+1. [教程必看](#使用教程)
+1. [使用配置文件](#使用配置文件)
+1. [生成通讯证书文件](#0.生成加密通讯需要的证书文件)
+
 ### Fast Start  
 提示:所有操作需要root权限.  
+#### 自动安装
 **0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.**  
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
@@ -40,6 +48,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 安装完成,配置目录是/etc/proxy,更详细的使用方法参考下面的进一步了解.  
 如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
   
+#### 手动安装
 **1.登录你的VPS,下载守护进程monexec,选择合适你的版本,vps一般选择"linux_amd64.tar.gz"的即可.**  
 下载地址:https://github.com/reddec/monexec/releases  
 比如下载到/root/proxy/  
@@ -69,7 +78,7 @@ chmod +x install.sh
 接下来的教程,默认系统是linux,程序是proxy；所有操作需要root权限；  
 如果你的是windows,请使用windows版本的proxy.exe即可.  
   
-**使用配置文件**  
+### **使用配置文件**  
 接下来的教程都是通过命令行参数介绍使用方法,也可以通过读取配置文件获取参数.  
 具体格式是通过@符号指定配置文件,例如:./proxy @configfile.txt  
 configfile.txt里面的格式是,第一行是子命令名称,第二行开始一行一个:参数的长格式=参数值,前后不能有空格和双引号.  
