@@ -118,6 +118,8 @@ type SocksArgs struct {
 	Interval       *int
 	Blocked        *string
 	Direct         *string
+	AuthFile       *string
+	Auth           *[]string
 }
 
 func (a *TCPArgs) Protocol() string {

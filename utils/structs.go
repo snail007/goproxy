@@ -213,7 +213,12 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
-
+func (ba *BasicAuth) CheckUserPass(user, pass string) (ok bool) {
+	if p, _ok := ba.data.Get(user); _ok {
+		return p.(string) == pass
+	}
+	return
+}
 func (ba *BasicAuth) Check(userpass string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) == 2 {
