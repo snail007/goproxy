@@ -393,19 +393,29 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	defer utils.CloseConn(&outConn)
 	var err interface{}
 	useProxy := true
-	if *s.cfg.Always {
-		outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
-	} else {
-		if *s.cfg.Parent != "" {
-			s.checker.Add(request.Addr(), true, "", "", nil)
-			useProxy, _, _ = s.checker.IsBlocked(request.Addr())
-			if useProxy {
-				outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+	tryCount := 0
+	maxTryCount := 3
+	for {
+		if *s.cfg.Always {
+			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+		} else {
+			if *s.cfg.Parent != "" {
+				s.checker.Add(request.Addr(), true, "", "", nil)
+				useProxy, _, _ = s.checker.IsBlocked(request.Addr())
+				if useProxy {
+					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+				} else {
+					outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
+				}
 			} else {
 				outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
 			}
+		}
+		tryCount++
+		if err == nil || tryCount > maxTryCount {
+			break
 		} else {
-			outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
+			log.Printf("get out conn fail,%s,retrying...", err)
 		}
 	}
 	if err != nil {
