@@ -78,6 +78,7 @@ func (s *Socks) CheckArgs() {
 
 }
 func (s *Socks) InitService() {
+	s.InitBasicAuth()
 	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
 	if *s.cfg.ParentType == "ssh" {
 		err := s.ConnectSSH()
@@ -94,9 +95,6 @@ func (s *Socks) InitService() {
 				if err != nil {
 					if s.sshClient != nil {
 						s.sshClient.Close()
-						if s.sshClient.Conn != nil {
-							s.sshClient.Conn.Close()
-						}
 					}
 					log.Printf("ssh offline, retrying...")
 					s.ConnectSSH()
@@ -290,27 +288,71 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		}
 		utils.CloseConn(&inConn)
 	}()
+	//协商开始
 
 	//method select request
+	inConn.SetReadDeadline(time.Now().Add(time.Second * 3))
 	methodReq, err := socks.NewMethodsRequest(inConn)
-	if err != nil || !methodReq.Select(socks.Method_NO_AUTH) {
+	inConn.SetReadDeadline(time.Time{})
+	if err != nil {
 		methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 		utils.CloseConn(&inConn)
-		if err != nil {
-			log.Printf("new methods request fail,ERR: %s", err)
+		log.Printf("new methods request fail,ERR: %s", err)
+		return
+	}
+
+	if !s.IsBasicAuth() {
+		if !methodReq.Select(socks.Method_NO_AUTH) {
+			methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
+			utils.CloseConn(&inConn)
+			log.Printf("none method found : Method_NO_AUTH")
+			return
 		}
-		return
+		//method select reply
+		err = methodReq.Reply(socks.Method_NO_AUTH)
+		if err != nil {
+			log.Printf("reply answer data fail,ERR: %s", err)
+			utils.CloseConn(&inConn)
+			return
+		}
+		// log.Printf("% x", methodReq.Bytes())
+	} else {
+		//auth
+		if !methodReq.Select(socks.Method_USER_PASS) {
+			methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
+			utils.CloseConn(&inConn)
+			log.Printf("none method found : Method_USER_PASS")
+			return
+		}
+		//method reply need auth
+		err = methodReq.Reply(socks.Method_USER_PASS)
+		if err != nil {
+			log.Printf("reply answer data fail,ERR: %s", err)
+			utils.CloseConn(&inConn)
+			return
+		}
+		//read auth
+		buf := make([]byte, 500)
+		inConn.SetReadDeadline(time.Now().Add(time.Second * 3))
+		n, err := inConn.Read(buf)
+		inConn.SetReadDeadline(time.Time{})
+		if err != nil {
+			utils.CloseConn(&inConn)
+			return
+		}
+		r := buf[:n]
+		user := string(r[2 : r[1]+2])
+		pass := string(r[2+r[1]+1:])
+		//log.Printf("user:%s,pass:%s", user, pass)
+		//auth
+		if s.basicAuth.CheckUserPass(user, pass) {
+			inConn.Write([]byte{0x01, 0x00})
+		} else {
+			inConn.Write([]byte{0x01, 0x01})
+			utils.CloseConn(&inConn)
+			return
+		}
 	}
-
-	//method select reply
-	err = methodReq.Reply(socks.Method_NO_AUTH)
-	if err != nil {
-		log.Printf("reply answer data fail,ERR: %s", err)
-		utils.CloseConn(&inConn)
-		return
-	}
-
-	// log.Printf("% x", methodReq.Bytes())
 
 	//request detail
 	request, err := socks.NewRequest(inConn)
@@ -319,6 +361,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		utils.CloseConn(&inConn)
 		return
 	}
+	//协商结束
 
 	switch request.CMD() {
 	case socks.CMD_BIND:
@@ -447,7 +490,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			return
 		}
 		wait := make(chan bool, 1)
-		func() {
+		go func() {
 			defer func() {
 				if err == nil {
 					err = recover()
@@ -458,8 +501,9 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		}()
 		select {
 		case <-wait:
-		case <-time.After(time.Second * 5):
+		case <-time.After(time.Millisecond * time.Duration(*s.cfg.Timeout) * 2):
 			err = fmt.Errorf("ssh dial %s timeout", host)
+			s.sshClient.Close()
 		}
 		if err != nil {
 			log.Printf("connect ssh fail, ERR: %s, retrying...", err)
@@ -497,4 +541,24 @@ func (s *Socks) ConnectSSH() (err error) {
 	s.sshClient, err = ssh.Dial("tcp", *s.cfg.Parent, &config)
 	<-s.lockChn
 	return
+}
+func (s *Socks) InitBasicAuth() (err error) {
+	s.basicAuth = utils.NewBasicAuth()
+	if *s.cfg.AuthFile != "" {
+		var n = 0
+		n, err = s.basicAuth.AddFromFile(*s.cfg.AuthFile)
+		if err != nil {
+			err = fmt.Errorf("auth-file ERR:%s", err)
+			return
+		}
+		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
+	}
+	if len(*s.cfg.Auth) > 0 {
+		n := s.basicAuth.Add(*s.cfg.Auth)
+		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
+	}
+	return
+}
+func (s *Socks) IsBasicAuth() bool {
+	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0
 }

@@ -31,6 +31,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
 - [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)
 
+[TOC]
+
 ### Fast Start  
 提示:所有操作需要root权限.  
 **0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.**  
@@ -420,11 +422,18 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 
 那么访问本地的28080端口就是通过VPS访问目标地址.  
 
-**5.7.查看帮助**  
+**5.7.认证**  
+对于socks5代理协议我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定  
+`./proxy socks -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+多个用户,重复-a参数即可.  
+也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
+`./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
+如果没有-a或-F参数,就是关闭认证.  
+
+**5.8.查看帮助**  
 `./proxy help socks`  
 
 ### TODO  
-- SOCKS5增加用户名密码认证?
 - http,socks代理多个上级负载均衡?
 - 内网穿透server<->bridge心跳机制?
 - 欢迎加群反馈...
