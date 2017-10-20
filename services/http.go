@@ -190,17 +190,28 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	}
 	var outConn net.Conn
 	var _outConn interface{}
-	if useProxy {
-		if *s.cfg.ParentType == "ssh" {
-			outConn, err = s.getSSHConn(address)
-		} else {
-			_outConn, err = s.outPool.Pool.Get()
-			if err == nil {
-				outConn = _outConn.(net.Conn)
+	tryCount := 0
+	maxTryCount := 5
+	for {
+		if useProxy {
+			if *s.cfg.ParentType == "ssh" {
+				outConn, err = s.getSSHConn(address)
+			} else {
+				_outConn, err = s.outPool.Pool.Get()
+				if err == nil {
+					outConn = _outConn.(net.Conn)
+				}
 			}
+		} else {
+			outConn, err = utils.ConnectHost(address, *s.cfg.Timeout)
 		}
-	} else {
-		outConn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+		tryCount++
+		if err == nil || tryCount > maxTryCount {
+			break
+		} else {
+			log.Printf("connect to %s , err:%s,retrying...", *s.cfg.Parent, err)
+			time.Sleep(time.Second * 2)
+		}
 	}
 	if err != nil {
 		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
@@ -242,7 +253,7 @@ RETRY:
 		return
 	}
 	wait := make(chan bool, 1)
-	func() {
+	go func() {
 		defer func() {
 			if err == nil {
 				err = recover()

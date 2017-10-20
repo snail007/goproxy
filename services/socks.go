@@ -392,7 +392,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	var err interface{}
 	useProxy := true
 	tryCount := 0
-	maxTryCount := 3
+	maxTryCount := 5
 	for {
 		if *s.cfg.Always {
 			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
@@ -414,6 +414,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			break
 		} else {
 			log.Printf("get out conn fail,%s,retrying...", err)
+			time.Sleep(time.Second * 2)
 		}
 	}
 	if err != nil {
