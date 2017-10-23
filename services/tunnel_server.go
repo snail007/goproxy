@@ -1,9 +1,7 @@
 package services
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"log"
@@ -22,24 +20,33 @@ type TunnelServer struct {
 }
 
 type TunnelServerManager struct {
-	cfg    TunnelServerArgs
-	udpChn chan UDPItem
-	sc     utils.ServerChannel
+	cfg      TunnelServerArgs
+	udpChn   chan UDPItem
+	sc       utils.ServerChannel
+	serverID string
+	cm       utils.ConnManager
 }
 
 func NewTunnelServerManager() Service {
 	return &TunnelServerManager{
-		cfg:    TunnelServerArgs{},
-		udpChn: make(chan UDPItem, 50000),
+		cfg:      TunnelServerArgs{},
+		udpChn:   make(chan UDPItem, 50000),
+		serverID: utils.Uniqueid(),
+		cm:       utils.NewConnManager(),
 	}
 }
 func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
+	s.CheckArgs()
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
 		log.Fatalf("parent required")
 	}
+
+	s.InitService()
+
+	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
 	for _, _info := range *s.cfg.Route {
 		IsUDP := *s.cfg.IsUDP
@@ -71,6 +78,7 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 			Remote:    &remote,
 			Key:       &KEY,
 			Timeout:   s.cfg.Timeout,
+			Mgr:       s,
 		})
 
 		if err != nil {
@@ -80,7 +88,95 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	return
 }
 func (s *TunnelServerManager) Clean() {
-
+	s.StopService()
+}
+func (s *TunnelServerManager) StopService() {
+	s.cm.RemoveAll()
+}
+func (s *TunnelServerManager) CheckArgs() {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
+		log.Fatalf("cert and key file required")
+	}
+	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+}
+func (s *TunnelServerManager) InitService() {
+	s.InitControlDeamon()
+}
+func (s *TunnelServerManager) InitControlDeamon() {
+	go func() {
+		var ctrlConn net.Conn
+		var ID string
+		for {
+			//close all connection
+			s.cm.Remove(ID)
+			utils.CloseConn(&ctrlConn)
+			ctrlConn, ID, err := s.GetOutConn(CONN_SERVER_CONTROL)
+			if err != nil {
+				log.Printf("control connection err: %s, retrying...", err)
+				time.Sleep(time.Second * 3)
+				utils.CloseConn(&ctrlConn)
+				continue
+			}
+			log.Printf("control connection created,id:%s", ID)
+			writeDie := make(chan bool)
+			readDie := make(chan bool)
+			go func() {
+				for {
+					ctrlConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+					_, err = ctrlConn.Write([]byte{0x00})
+					ctrlConn.SetWriteDeadline(time.Time{})
+					if err != nil {
+						log.Printf("control connection write err %s", err)
+						break
+					}
+					time.Sleep(time.Second * 3)
+				}
+				close(writeDie)
+			}()
+			go func() {
+				for {
+					signal := make([]byte, 1)
+					ctrlConn.SetReadDeadline(time.Now().Add(time.Second * 10))
+					_, err := ctrlConn.Read(signal)
+					ctrlConn.SetReadDeadline(time.Time{})
+					if err != nil {
+						log.Printf("control connection read err: %s", err)
+						break
+					} else {
+						// log.Printf("heartbeat from bridge")
+					}
+				}
+				close(readDie)
+			}()
+			select {
+			case <-readDie:
+			case <-writeDie:
+			}
+		}
+	}()
+}
+func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
+	outConn, err = s.GetConn()
+	if err != nil {
+		log.Printf("connection err: %s", err)
+		return
+	}
+	ID = s.serverID
+	_, err = outConn.Write(utils.BuildPacket(typ, s.serverID))
+	if err != nil {
+		log.Printf("write connection data err: %s ,retrying...", err)
+		utils.CloseConn(&outConn)
+		return
+	}
+	return
+}
+func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
+	var _conn tls.Conn
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	if err == nil {
+		conn = net.Conn(&_conn)
+	}
+	return
 }
 func NewTunnelServer() Service {
 	return &TunnelServer{
@@ -102,13 +198,8 @@ func (s *TunnelServer) CheckArgs() {
 	if *s.cfg.Remote == "" {
 		log.Fatalf("remote required")
 	}
-	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
-	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
-func (s *TunnelServer) StopService() {
-}
+
 func (s *TunnelServer) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
 	s.CheckArgs()
@@ -138,7 +229,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			var outConn net.Conn
 			var ID string
 			for {
-				outConn, ID, err = s.GetOutConn("")
+				outConn, ID, err = s.GetOutConn(CONN_SERVER)
 				if err != nil {
 					utils.CloseConn(&outConn)
 					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
@@ -151,9 +242,11 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			utils.IoBind(inConn, outConn, func(err error) {
 				utils.CloseConn(&outConn)
 				utils.CloseConn(&inConn)
+				s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			}, func(i int, b bool) {}, 0)
-
+			//add conn
+			s.cfg.Mgr.cm.Add(s.cfg.Mgr.serverID, ID, &inConn)
 			log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {
@@ -164,37 +257,20 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 	return
 }
 func (s *TunnelServer) Clean() {
-	s.StopService()
+
 }
-func (s *TunnelServer) GetOutConn(id string) (outConn net.Conn, ID string, err error) {
+func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		log.Printf("connection err: %s", err)
 		return
 	}
-	keyBytes := []byte(*s.cfg.Key)
-	keyLength := uint16(len(keyBytes))
-	ID = utils.Uniqueid()
-	IDBytes := []byte(ID)
-	if id != "" {
-		ID = id
-		IDBytes = []byte(id)
-	}
-	IDLength := uint16(len(IDBytes))
-	remoteAddr := []byte("tcp:" + *s.cfg.Remote)
+	remoteAddr := "tcp:" + *s.cfg.Remote
 	if *s.cfg.IsUDP {
-		remoteAddr = []byte("udp:" + *s.cfg.Remote)
+		remoteAddr = "udp:" + *s.cfg.Remote
 	}
-	remoteAddrLength := uint16(len(remoteAddr))
-	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, CONN_SERVER)
-	binary.Write(pkg, binary.LittleEndian, keyLength)
-	binary.Write(pkg, binary.LittleEndian, keyBytes)
-	binary.Write(pkg, binary.LittleEndian, IDLength)
-	binary.Write(pkg, binary.LittleEndian, IDBytes)
-	binary.Write(pkg, binary.LittleEndian, remoteAddrLength)
-	binary.Write(pkg, binary.LittleEndian, remoteAddr)
-	_, err = outConn.Write(pkg.Bytes())
+	ID = utils.Uniqueid()
+	_, err = outConn.Write(utils.BuildPacket(typ, *s.cfg.Key, ID, remoteAddr, s.cfg.Mgr.serverID))
 	if err != nil {
 		log.Printf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
@@ -227,7 +303,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 		RETRY:
 			if outConn == nil {
 				for {
-					outConn, ID, err = s.GetOutConn("")
+					outConn, ID, err = s.GetOutConn(CONN_SERVER)
 					if err != nil {
 						// cmdChn <- true
 						outConn = nil

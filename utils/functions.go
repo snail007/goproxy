@@ -315,6 +315,68 @@ func Uniqueid() string {
 	s := fmt.Sprintf("%d", src.Int63())
 	return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
 }
+func ReadData(r io.Reader) (data string, err error) {
+	var len uint16
+	err = binary.Read(r, binary.LittleEndian, &len)
+	if err != nil {
+		return
+	}
+	var n int
+	_data := make([]byte, len)
+	n, err = r.Read(_data)
+	if err != nil {
+		return
+	}
+	if n != int(len) {
+		err = fmt.Errorf("error data len")
+		return
+	}
+	data = string(_data)
+	return
+}
+func ReadPacketData(r io.Reader, data ...*string) (err error) {
+	for _, d := range data {
+		*d, err = ReadData(r)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func ReadPacket(r io.Reader, typ *uint8, data ...*string) (err error) {
+	var connType uint8
+	err = binary.Read(r, binary.LittleEndian, &connType)
+	if err != nil {
+		return
+	}
+	*typ = connType
+	for _, d := range data {
+		*d, err = ReadData(r)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func BuildPacket(typ uint8, data ...string) []byte {
+	pkg := new(bytes.Buffer)
+	binary.Write(pkg, binary.LittleEndian, typ)
+	for _, d := range data {
+		bytes := []byte(d)
+		binary.Write(pkg, binary.LittleEndian, uint16(len(bytes)))
+		binary.Write(pkg, binary.LittleEndian, bytes)
+	}
+	return pkg.Bytes()
+}
+func BuildPacketData(data ...string) []byte {
+	pkg := new(bytes.Buffer)
+	for _, d := range data {
+		bytes := []byte(d)
+		binary.Write(pkg, binary.LittleEndian, uint16(len(bytes)))
+		binary.Write(pkg, binary.LittleEndian, bytes)
+	}
+	return pkg.Bytes()
+}
 func SubStr(str string, start, end int) string {
 	if len(str) == 0 {
 		return ""
