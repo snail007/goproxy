@@ -147,7 +147,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 						s.cmClient.Remove(key)
 						break
 					} else {
-						//log.Printf("%s heartbeat from client", key)
+						// log.Printf("heartbeat from client %s", key)
 					}
 				}
 			}()
@@ -184,7 +184,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 						log.Printf("control connection read err: %s", err)
 						break
 					} else {
-						// log.Printf("heartbeat from server ,id:%s", ID)
+						// log.Printf("heartbeat from server ,id:%s", serverID)
 					}
 				}
 				close(readDie)
