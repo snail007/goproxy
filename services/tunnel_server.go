@@ -148,11 +148,6 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-			// hb := utils.NewHeartbeatReadWriter(&outConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			// 	log.Printf("%s conn %s to bridge released", *s.cfg.Key, ID)
-			// 	hb.Close()
-			// })
-			// utils.IoBind(inConn, &hb, func(err error) {
 			utils.IoBind(inConn, outConn, func(err error) {
 				utils.CloseConn(&outConn)
 				utils.CloseConn(&inConn)
