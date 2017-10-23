@@ -1,25 +1,24 @@
 package services
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"proxy/utils"
-	"strings"
 	"time"
 )
 
 type TunnelClient struct {
 	cfg TunnelClientArgs
+	cm  utils.ConnManager
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
 		cfg: TunnelClientArgs{},
+		cm:  utils.NewConnManager(),
 	}
 }
 
@@ -37,14 +36,20 @@ func (s *TunnelClient) CheckArgs() {
 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelClient) StopService() {
+	s.cm.RemoveAll()
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
 	s.CheckArgs()
 	s.InitService()
 	log.Printf("proxy on tunnel client mode")
+	var ctrlConn net.Conn
 	for {
-		ctrlConn, err := s.GetInConn(CONN_CONTROL, "")
+		//close all conn
+		s.cm.Remove(*s.cfg.Key)
+		utils.CloseConn(&ctrlConn)
+
+		ctrlConn, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
 		if err != nil {
 			log.Printf("control connection err: %s, retrying...", err)
 			time.Sleep(time.Second * 3)
@@ -53,6 +58,9 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 		}
 		go func() {
 			for {
+				if ctrlConn == nil {
+					break
+				}
 				ctrlConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 				_, err = ctrlConn.Write([]byte{0x00})
 				ctrlConn.SetWriteDeadline(time.Time{})
@@ -65,23 +73,20 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 			}
 		}()
 		for {
-			signal := make([]byte, 50)
-			n, err := ctrlConn.Read(signal)
+			var ID, clientLocalAddr, serverID string
+			err = utils.ReadPacketData(ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
 				utils.CloseConn(&ctrlConn)
 				log.Printf("read connection signal err: %s, retrying...", err)
 				break
 			}
-			addr := string(signal[:n])
-			log.Printf("signal revecived:%s", addr)
-			protocol := addr[:3]
-			atIndex := strings.Index(addr, "@")
-			ID := addr[atIndex+1:]
-			localAddr := addr[4:atIndex]
+			log.Printf("signal revecived:%s %s %s", serverID, ID, clientLocalAddr)
+			protocol := clientLocalAddr[:3]
+			localAddr := clientLocalAddr[4:]
 			if protocol == "udp" {
-				go s.ServeUDP(localAddr, ID)
+				go s.ServeUDP(localAddr, ID, serverID)
 			} else {
-				go s.ServeConn(localAddr, ID)
+				go s.ServeConn(localAddr, ID, serverID)
 			}
 		}
 	}
@@ -89,25 +94,13 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 func (s *TunnelClient) Clean() {
 	s.StopService()
 }
-func (s *TunnelClient) GetInConn(typ uint8, ID string) (outConn net.Conn, err error) {
+func (s *TunnelClient) GetInConn(typ uint8, data ...string) (outConn net.Conn, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		err = fmt.Errorf("connection err: %s", err)
 		return
 	}
-	keyBytes := []byte(*s.cfg.Key)
-	keyLength := uint16(len(keyBytes))
-	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, typ)
-	binary.Write(pkg, binary.LittleEndian, keyLength)
-	binary.Write(pkg, binary.LittleEndian, keyBytes)
-	if ID != "" {
-		IDBytes := []byte(ID)
-		IDLength := uint16(len(IDBytes))
-		binary.Write(pkg, binary.LittleEndian, IDLength)
-		binary.Write(pkg, binary.LittleEndian, IDBytes)
-	}
-	_, err = outConn.Write(pkg.Bytes())
+	_, err = outConn.Write(utils.BuildPacket(typ, data...))
 	if err != nil {
 		err = fmt.Errorf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
@@ -123,12 +116,13 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	}
 	return
 }
-func (s *TunnelClient) ServeUDP(localAddr, ID string) {
+func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	var inConn net.Conn
 	var err error
 	// for {
 	for {
-		inConn, err = s.GetInConn(CONN_CLIENT, ID)
+		s.cm.RemoveOne(*s.cfg.Key, ID)
+		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
 			log.Printf("connection err: %s, retrying...", err)
@@ -138,13 +132,10 @@ func (s *TunnelClient) ServeUDP(localAddr, ID string) {
 			break
 		}
 	}
+	s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
-	// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
-	// 	log.Printf("hw err %s", err)
-	// 	hw.Close()
-	// })
+
 	for {
-		// srcAddr, body, err := utils.ReadUDPPacket(&hw)
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			log.Printf("connection %s released", ID)
@@ -197,11 +188,11 @@ func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr, localAddr str
 	}
 	//log.Printf("send udp response success ,from:%s ,%d ,%v", dstAddr.String(), len(bs), bs)
 }
-func (s *TunnelClient) ServeConn(localAddr, ID string) {
+func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	var inConn, outConn net.Conn
 	var err error
 	for {
-		inConn, err = s.GetInConn(CONN_CLIENT, ID)
+		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
 			log.Printf("connection err: %s, retrying...", err)
@@ -236,6 +227,8 @@ func (s *TunnelClient) ServeConn(localAddr, ID string) {
 		log.Printf("conn %s released", ID)
 		utils.CloseConn(&inConn)
 		utils.CloseConn(&outConn)
+		s.cm.RemoveOne(*s.cfg.Key, ID)
 	}, func(i int, b bool) {}, 0)
+	s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
 }

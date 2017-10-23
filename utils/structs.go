@@ -617,3 +617,64 @@ func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
 	}
 	return
 }
+
+type ConnManager struct {
+	pool ConcurrentMap
+	l    *sync.Mutex
+}
+
+func NewConnManager() ConnManager {
+	cm := ConnManager{
+		pool: NewConcurrentMap(),
+		l:    &sync.Mutex{},
+	}
+	return cm
+}
+func (cm *ConnManager) Add(key, ID string, conn *net.Conn) {
+	cm.pool.Upsert(key, nil, func(exist bool, valueInMap interface{}, newValue interface{}) interface{} {
+		var conns ConcurrentMap
+		if !exist {
+			conns = NewConcurrentMap()
+		} else {
+			conns = valueInMap.(ConcurrentMap)
+		}
+		if conns.Has(ID) {
+			v, _ := conns.Get(ID)
+			(*v.(*net.Conn)).Close()
+		}
+		conns.Set(ID, conn)
+		log.Printf("%s conn added", key)
+		return conns
+	})
+}
+func (cm *ConnManager) Remove(key string) {
+	var conns ConcurrentMap
+	if v, ok := cm.pool.Get(key); ok {
+		conns = v.(ConcurrentMap)
+		conns.IterCb(func(key string, v interface{}) {
+			CloseConn(v.(*net.Conn))
+		})
+		log.Printf("%s conns closed", key)
+	}
+	cm.pool.Remove(key)
+}
+func (cm *ConnManager) RemoveOne(key string, ID string) {
+	defer cm.l.Unlock()
+	cm.l.Lock()
+	var conns ConcurrentMap
+	if v, ok := cm.pool.Get(key); ok {
+		conns = v.(ConcurrentMap)
+		if conns.Has(ID) {
+			v, _ := conns.Get(ID)
+			(*v.(*net.Conn)).Close()
+			conns.Remove(ID)
+			cm.pool.Set(key, conns)
+			log.Printf("%s %s conn closed", key, ID)
+		}
+	}
+}
+func (cm *ConnManager) RemoveAll() {
+	for _, k := range cm.pool.Keys() {
+		cm.Remove(k)
+	}
+}
