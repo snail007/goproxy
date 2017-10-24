@@ -3,7 +3,6 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -429,31 +428,12 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	inLocalAddr := (*inConn).LocalAddr().String()
 
 	log.Printf("conn %s - %s connected [%s]", inAddr, inLocalAddr, request.Addr())
-	var bind = func() (err interface{}) {
-		defer func() {
-			if err == nil {
-				if err = recover(); err != nil {
-					log.Printf("bind crashed %s", err)
-				}
-			}
-		}()
-		go func() {
-			defer func() {
-				if err == nil {
-					if err = recover(); err != nil {
-						log.Printf("bind crashed %s", err)
-					}
-				}
-			}()
-			_, err = io.Copy(outConn, (*inConn))
-		}()
-		_, err = io.Copy((*inConn), outConn)
-		return
-	}
-	bind()
-	log.Printf("conn %s - %s released [%s]", inAddr, inLocalAddr, request.Addr())
-	utils.CloseConn(inConn)
-	utils.CloseConn(&outConn)
+	utils.IoBind0(*inConn, outConn, func(err error) {
+		log.Printf("conn %s - %s released [%s]", inAddr, inLocalAddr, request.Addr())
+		utils.CloseConn(inConn)
+		utils.CloseConn(&outConn)
+	})
+	//}, func(i int, b bool) {}, 0)
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
@@ -468,26 +448,34 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			outConn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
 		}
 		if err != nil {
+			err = fmt.Errorf("connect fail,%s", err)
 			return
 		}
 		var buf = make([]byte, 1024)
 		//var n int
 		_, err = outConn.Write(methodBytes)
 		if err != nil {
+			err = fmt.Errorf("write method fail,%s", err)
 			return
 		}
 		_, err = outConn.Read(buf)
 		if err != nil {
+			err = fmt.Errorf("read method reply fail,%s", err)
 			return
 		}
 		//resp := buf[:n]
 		//log.Printf("resp:%v", resp)
 
-		outConn.Write(reqBytes)
-		_, err = outConn.Read(buf)
+		_, err = outConn.Write(reqBytes)
 		if err != nil {
+			err = fmt.Errorf("write req detail fail,%s", err)
 			return
 		}
+		// _, err = outConn.Read(buf)
+		// if err != nil {
+		// 	err = fmt.Errorf("read req reply fail,%s", err)
+		// 	return
+		// }
 		//result := buf[:n]
 		//log.Printf("result:%v", result)
 

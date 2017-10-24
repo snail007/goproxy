@@ -24,6 +24,32 @@ import (
 	"time"
 )
 
+func IoBind0(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
+	go func() {
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					log.Printf("IoBind0 crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				}
+			}()
+			_, err := io.Copy(dst, src)
+			if err != nil {
+				fn(err)
+			}
+		}()
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					log.Printf("IoBind0 crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				}
+			}()
+			_, err := io.Copy(src, dst)
+			if err != nil {
+				fn(err)
+			}
+		}()
+	}()
+}
 func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(count int, isPositive bool), bytesPreSec float64) {
 	var one = &sync.Once{}
 	go func() {
