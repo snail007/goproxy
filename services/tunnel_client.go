@@ -228,7 +228,7 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 		utils.CloseConn(&inConn)
 		utils.CloseConn(&outConn)
 		s.cm.RemoveOne(*s.cfg.Key, ID)
-	}, func(i int, b bool) {}, 0)
+	})
 	s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
 }

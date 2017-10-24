@@ -50,7 +50,7 @@ func IoBind0(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 		}()
 	}()
 }
-func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(count int, isPositive bool), bytesPreSec float64) {
+func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 	var one = &sync.Once{}
 	go func() {
 		defer func() {
@@ -59,18 +59,7 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(c
 			}
 		}()
 		var err error
-		if bytesPreSec > 0 {
-			newreader := NewReader(src)
-			newreader.SetRateLimit(bytesPreSec)
-			_, err = ioCopy(dst, newreader, func(c int) {
-				cfn(c, false)
-			})
-
-		} else {
-			_, err = ioCopy(dst, src, func(c int) {
-				cfn(c, false)
-			})
-		}
+		_, err = ioCopy(dst, src)
 		if err != nil {
 			one.Do(func() {
 				fn(err)
@@ -84,17 +73,7 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(c
 			}
 		}()
 		var err error
-		if bytesPreSec > 0 {
-			newReader := NewReader(dst)
-			newReader.SetRateLimit(bytesPreSec)
-			_, err = ioCopy(src, newReader, func(c int) {
-				cfn(c, true)
-			})
-		} else {
-			_, err = ioCopy(src, dst, func(c int) {
-				cfn(c, true)
-			})
-		}
+		_, err = ioCopy(src, dst)
 		if err != nil {
 			one.Do(func() {
 				fn(err)
@@ -102,31 +81,24 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error), cfn func(c
 		}
 	}()
 }
-func ioCopy(dst io.Writer, src io.Reader, fn ...func(count int)) (written int64, err error) {
+func ioCopy(dst io.Writer, src io.Reader) (written int64, err error) {
 	buf := make([]byte, 32*1024)
 	for {
 		nr, er := src.Read(buf)
-		if nr > 0 {
-			nw, ew := dst.Write(buf[0:nr])
-			if nw > 0 {
-				written += int64(nw)
-				if len(fn) == 1 {
-					fn[0](nw)
-				}
-			}
-			if ew != nil {
-				err = ew
-				break
-			}
-			if nr != nw {
-				err = io.ErrShortWrite
-				break
-			}
-		}
 		if er != nil {
 			err = er
 			break
 		}
+		nw, ew := dst.Write(buf[0:nr])
+		if ew != nil {
+			err = ew
+			break
+		}
+		if nr != nw {
+			err = io.ErrShortWrite
+			break
+		}
+		written += int64(nw)
 	}
 	return written, err
 }

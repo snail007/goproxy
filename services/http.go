@@ -239,7 +239,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		log.Printf("conn %s - %s - %s - %s released [%s]", inAddr, inLocalAddr, outLocalAddr, outAddr, req.Host)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
-	}, func(n int, d bool) {}, 0)
+	})
 	log.Printf("conn %s - %s - %s - %s connected [%s]", inAddr, inLocalAddr, outLocalAddr, outAddr, req.Host)
 
 	return

@@ -244,7 +244,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 				utils.CloseConn(&inConn)
 				s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
-			}, func(i int, b bool) {}, 0)
+			})
 			//add conn
 			s.cfg.Mgr.cm.Add(s.cfg.Mgr.serverID, ID, &inConn)
 			log.Printf("%s conn %s created", *s.cfg.Key, ID)

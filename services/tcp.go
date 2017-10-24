@@ -109,7 +109,7 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 		log.Printf("conn %s - %s - %s - %s released", inAddr, inLocalAddr, outLocalAddr, outAddr)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
-	}, func(n int, d bool) {}, 0)
+	})
 	log.Printf("conn %s - %s - %s - %s connected", inAddr, inLocalAddr, outLocalAddr, outAddr)
 	return
 }

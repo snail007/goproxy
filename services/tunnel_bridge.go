@@ -119,7 +119,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 				s.cmClient.RemoveOne(key, ID)
 				s.cmServer.RemoveOne(serverID, ID)
 				log.Printf("conn %s released", ID)
-			}, func(i int, b bool) {}, 0)
+			})
 			s.cmClient.Add(key, ID, &inConn)
 			log.Printf("conn %s created", ID)
 
