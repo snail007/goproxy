@@ -6,6 +6,8 @@ import (
 	"net"
 	"runtime/debug"
 	"strconv"
+
+	kcp "github.com/xtaci/kcp-go"
 )
 
 type ServerChannel struct {
@@ -55,7 +57,7 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes []byte, fn func(conn net.
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								log.Printf("tls connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -89,7 +91,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								log.Printf("tcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -126,6 +128,38 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 							}
 						}()
 						fn(packet, addr, srcAddr)
+					}()
+				} else {
+					sc.errAcceptHandler(err)
+					break
+				}
+			}
+		}()
+	}
+	return
+}
+func (sc *ServerChannel) ListenKCP(method, key string, fn func(conn net.Conn)) (err error) {
+	var l net.Listener
+	l, err = kcp.ListenWithOptions(fmt.Sprintf("%s:%d", sc.ip, sc.port), GetKCPBlock(method, key), 10, 3)
+	if err == nil {
+		sc.Listener = &l
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					log.Printf("ListenKCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				}
+			}()
+			for {
+				var conn net.Conn
+				conn, err = (*sc.Listener).Accept()
+				if err == nil {
+					go func() {
+						defer func() {
+							if e := recover(); e != nil {
+								log.Printf("kcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+							}
+						}()
+						fn(conn)
 					}()
 				} else {
 					sc.errAcceptHandler(err)

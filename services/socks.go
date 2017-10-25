@@ -105,8 +105,8 @@ func (s *Socks) InitService() {
 	if *s.cfg.ParentType == "ssh" {
 		log.Println("warn: socks udp not suppored for ssh")
 	} else {
-		_, port, _ := net.SplitHostPort(*s.cfg.Local)
-		s.udpSC = utils.NewServerChannelHost(":" + port)
+
+		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal)
 		err := s.udpSC.ListenUDP(s.udpCallback)
 		if err != nil {
 			log.Fatalf("init udp service fail, ERR: %s", err)
@@ -133,8 +133,10 @@ func (s *Socks) Start(args interface{}) (err error) {
 	sc := utils.NewServerChannelHost(*s.cfg.Local)
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.socksConnCallback)
-	} else {
+	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.socksConnCallback)
+	} else if *s.cfg.LocalType == TYPE_KCP {
+		err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.socksConnCallback)
 	}
 	if err != nil {
 		return
@@ -176,7 +178,11 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 				return
 			}
 		}
-		dstAddr, err := net.ResolveUDPAddr("udp", *s.cfg.Parent)
+		parent := *s.cfg.UDPParent
+		if parent == "" {
+			parent = *s.cfg.Parent
+		}
+		dstAddr, err := net.ResolveUDPAddr("udp", parent)
 		if err != nil {
 			log.Printf("can't resolve address: %s", err)
 			return
@@ -382,7 +388,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
 	_, port, _ := net.SplitHostPort(s.udpSC.UDPListener.LocalAddr().String())
-	// log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
+	log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
 	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
 }
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
@@ -428,15 +434,16 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	inLocalAddr := (*inConn).LocalAddr().String()
 
 	log.Printf("conn %s - %s connected [%s]", inAddr, inLocalAddr, request.Addr())
-	utils.IoBind0(*inConn, outConn, func(err error) {
+	utils.IoBind(*inConn, outConn, func(err error) {
 		log.Printf("conn %s - %s released [%s]", inAddr, inLocalAddr, request.Addr())
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
 	})
-	//}, func(i int, b bool) {}, 0)
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
+	case "kcp":
+		fallthrough
 	case "tls":
 		fallthrough
 	case "tcp":
@@ -444,6 +451,8 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			var _outConn tls.Conn
 			_outConn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
 			outConn = net.Conn(&_outConn)
+		} else if *s.cfg.ParentType == "kcp" {
+			outConn, err = utils.ConnectKCPHost(*s.cfg.Parent, *s.cfg.KCPMethod, *s.cfg.KCPKey)
 		} else {
 			outConn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
 		}

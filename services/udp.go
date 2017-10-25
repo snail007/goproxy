@@ -207,7 +207,8 @@ func (s *UDP) InitOutConnPool() {
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutPool(
 			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType == TYPE_TLS,
+			*s.cfg.ParentType,
+			"", "",
 			s.cfg.CertBytes, s.cfg.KeyBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,

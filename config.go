@@ -41,8 +41,8 @@ func initConfig() (err error) {
 	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	httpArgs.CertFile = http.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	httpArgs.KeyFile = http.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
-	httpArgs.LocalType = http.Flag("local-type", "local protocol type <tls|tcp>").Default("tcp").Short('t').Enum("tls", "tcp")
-	httpArgs.ParentType = http.Flag("parent-type", "parent protocol type <tls|tcp|ssh>").Short('T').Enum("tls", "tcp", "ssh")
+	httpArgs.LocalType = http.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
+	httpArgs.ParentType = http.Flag("parent-type", "parent protocol type <tls|tcp|ssh|kcp>").Short('T').Enum("tls", "tcp", "ssh", "kcp")
 	httpArgs.Always = http.Flag("always", "always use parent proxy").Default("false").Bool()
 	httpArgs.Timeout = http.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
 	httpArgs.HTTPTimeout = http.Flag("http-timeout", "check domain if blocked , http request timeout milliseconds when connect to host").Default("3000").Int()
@@ -58,6 +58,8 @@ func initConfig() (err error) {
 	httpArgs.SSHKeyFile = http.Flag("ssh-key", "private key file for ssh").Short('S').Default("").String()
 	httpArgs.SSHKeyFileSalt = http.Flag("ssh-keysalt", "salt of ssh private key").Short('s').Default("").String()
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
+	httpArgs.KCPKey = http.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
+	httpArgs.KCPMethod = http.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
@@ -110,9 +112,11 @@ func initConfig() (err error) {
 	//########ssh#########
 	socks := app.Command("socks", "proxy on ssh mode")
 	socksArgs.Parent = socks.Flag("parent", "parent ssh address, such as: \"23.32.32.19:22\"").Default("").Short('P').String()
-	socksArgs.ParentType = socks.Flag("parent-type", "parent protocol type <tls|tcp|ssh>").Default("tcp").Short('T').Enum("tls", "tcp", "ssh")
-	socksArgs.LocalType = socks.Flag("local-type", "local protocol type <tls|tcp>").Default("tcp").Short('t').Enum("tls", "tcp")
+	socksArgs.ParentType = socks.Flag("parent-type", "parent protocol type <tls|tcp|kcp|ssh>").Default("tcp").Short('T').Enum("tls", "tcp", "kcp", "ssh")
+	socksArgs.LocalType = socks.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	socksArgs.Local = socks.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	socksArgs.UDPParent = socks.Flag("udp-parent", "udp parent address, such as: \"23.32.32.19:33090\"").Default("").Short('X').String()
+	socksArgs.UDPLocal = socks.Flag("udp-local", "udp local ip:port to listen").Short('x').Default(":33090").String()
 	socksArgs.CertFile = socks.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	socksArgs.KeyFile = socks.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	socksArgs.SSHUser = socks.Flag("ssh-user", "user for ssh").Short('u').Default("").String()
@@ -126,6 +130,9 @@ func initConfig() (err error) {
 	socksArgs.Direct = socks.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	socksArgs.AuthFile = socks.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
 	socksArgs.Auth = socks.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
+	socksArgs.KCPKey = socks.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
+	socksArgs.KCPMethod = socks.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
+
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	flags := log.Ldate

@@ -120,8 +120,10 @@ func (s *HTTP) Start(args interface{}) (err error) {
 	sc := utils.NewServerChannel(host, p)
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.callback)
-	} else {
+	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+	} else if *s.cfg.LocalType == TYPE_KCP {
+		err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
 	}
 	if err != nil {
 		return
@@ -197,6 +199,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			if *s.cfg.ParentType == "ssh" {
 				outConn, err = s.getSSHConn(address)
 			} else {
+				//log.Printf("%v", s.outPool)
 				_outConn, err = s.outPool.Pool.Get()
 				if err == nil {
 					outConn = _outConn.(net.Conn)
@@ -303,12 +306,14 @@ func (s *HTTP) ConnectSSH() (err error) {
 	return
 }
 func (s *HTTP) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP {
+	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutPool(
 			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType == TYPE_TLS,
+			*s.cfg.ParentType,
+			*s.cfg.KCPMethod,
+			*s.cfg.KCPKey,
 			s.cfg.CertBytes, s.cfg.KeyBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,

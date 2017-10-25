@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
@@ -16,92 +17,50 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"sync"
+
+	"golang.org/x/crypto/pbkdf2"
 
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	kcp "github.com/xtaci/kcp-go"
 )
 
-func IoBind0(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
-	go func() {
-		go func() {
-			defer func() {
-				if e := recover(); e != nil {
-					log.Printf("IoBind0 crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
-				}
-			}()
-			_, err := io.Copy(dst, src)
-			if err != nil {
-				fn(err)
-			}
-		}()
-		go func() {
-			defer func() {
-				if e := recover(); e != nil {
-					log.Printf("IoBind0 crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
-				}
-			}()
-			_, err := io.Copy(src, dst)
-			if err != nil {
-				fn(err)
-			}
-		}()
-	}()
-}
 func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
-	var one = &sync.Once{}
 	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
-			}
+		e1 := make(chan error, 1)
+		e2 := make(chan error, 1)
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				}
+			}()
+
+			_, e := io.Copy(dst, src)
+			e1 <- e
+		}()
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				}
+			}()
+
+			_, e := io.Copy(src, dst)
+			e2 <- e
 		}()
 		var err error
-		_, err = ioCopy(dst, src)
-		if err != nil {
-			one.Do(func() {
-				fn(err)
-			})
+		select {
+		case err = <-e1:
+		case err = <-e2:
 		}
-	}()
-	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
-			}
-		}()
-		var err error
-		_, err = ioCopy(src, dst)
-		if err != nil {
-			one.Do(func() {
-				fn(err)
-			})
-		}
+		fn(err)
 	}()
 }
-func ioCopy(dst io.Writer, src io.Reader) (written int64, err error) {
-	buf := make([]byte, 32*1024)
-	for {
-		nr, er := src.Read(buf)
-		if er != nil {
-			err = er
-			break
-		}
-		nw, ew := dst.Write(buf[0:nr])
-		if ew != nil {
-			err = ew
-			break
-		}
-		if nr != nw {
-			err = io.ErrShortWrite
-			break
-		}
-		written += int64(nw)
-	}
-	return written, err
-}
+
 func TlsConnectHost(host string, timeout int, certBytes, keyBytes []byte) (conn tls.Conn, err error) {
 	h := strings.Split(host, ":")
 	port, _ := strconv.Atoi(h[1])
@@ -141,6 +100,10 @@ func getRequestTlsConfig(certBytes, keyBytes []byte) (conf *tls.Config, err erro
 
 func ConnectHost(hostAndPort string, timeout int) (conn net.Conn, err error) {
 	conn, err = net.DialTimeout("tcp", hostAndPort, time.Duration(timeout)*time.Millisecond)
+	return
+}
+func ConnectKCPHost(hostAndPort, method, key string) (conn net.Conn, err error) {
+	conn, err = kcp.DialWithOptions(hostAndPort, GetKCPBlock(method, key), 10, 3)
 	return
 }
 func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listener, err error) {
@@ -403,6 +366,38 @@ func TlsBytes(cert, key string) (certBytes, keyBytes []byte) {
 	if err != nil {
 		log.Fatalf("err : %s", err)
 		return
+	}
+	return
+}
+func GetKCPBlock(method, key string) (block kcp.BlockCrypt) {
+	pass := pbkdf2.Key([]byte(key), []byte(key), 4096, 32, sha1.New)
+	switch method {
+	case "sm4":
+		block, _ = kcp.NewSM4BlockCrypt(pass[:16])
+	case "tea":
+		block, _ = kcp.NewTEABlockCrypt(pass[:16])
+	case "xor":
+		block, _ = kcp.NewSimpleXORBlockCrypt(pass)
+	case "none":
+		block, _ = kcp.NewNoneBlockCrypt(pass)
+	case "aes-128":
+		block, _ = kcp.NewAESBlockCrypt(pass[:16])
+	case "aes-192":
+		block, _ = kcp.NewAESBlockCrypt(pass[:24])
+	case "blowfish":
+		block, _ = kcp.NewBlowfishBlockCrypt(pass)
+	case "twofish":
+		block, _ = kcp.NewTwofishBlockCrypt(pass)
+	case "cast5":
+		block, _ = kcp.NewCast5BlockCrypt(pass[:16])
+	case "3des":
+		block, _ = kcp.NewTripleDESBlockCrypt(pass[:24])
+	case "xtea":
+		block, _ = kcp.NewXTEABlockCrypt(pass[:16])
+	case "salsa20":
+		block, _ = kcp.NewSalsa20BlockCrypt(pass)
+	default:
+		block, _ = kcp.NewAESBlockCrypt(pass)
 	}
 	return
 }

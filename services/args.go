@@ -10,6 +10,7 @@ const (
 	TYPE_UDP            = "udp"
 	TYPE_HTTP           = "http"
 	TYPE_TLS            = "tls"
+	TYPE_KCP            = "kcp"
 	CONN_CLIENT_CONTROL = uint8(1)
 	CONN_SERVER_CONTROL = uint8(2)
 	CONN_SERVER         = uint8(3)
@@ -87,6 +88,8 @@ type HTTPArgs struct {
 	SSHUser             *string
 	SSHKeyBytes         []byte
 	SSHAuthMethod       ssh.AuthMethod
+	KCPMethod           *string
+	KCPKey              *string
 }
 type UDPArgs struct {
 	Parent              *string
@@ -122,6 +125,10 @@ type SocksArgs struct {
 	Direct         *string
 	AuthFile       *string
 	Auth           *[]string
+	KCPMethod      *string
+	KCPKey         *string
+	UDPParent      *string
+	UDPLocal       *string
 }
 
 func (a *TCPArgs) Protocol() string {

@@ -390,19 +390,23 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 type OutPool struct {
 	Pool      ConnPool
 	dur       int
-	isTLS     bool
+	typ       string
 	certBytes []byte
 	keyBytes  []byte
+	kcpMethod string
+	kcpKey    string
 	address   string
 	timeout   int
 }
 
-func NewOutPool(dur int, isTLS bool, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
+func NewOutPool(dur int, typ, kcpMethod, kcpKey string, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
 	op = OutPool{
 		dur:       dur,
-		isTLS:     isTLS,
+		typ:       typ,
 		certBytes: certBytes,
 		keyBytes:  keyBytes,
+		kcpMethod: kcpMethod,
+		kcpKey:    kcpKey,
 		address:   address,
 		timeout:   timeout,
 	}
@@ -436,12 +440,14 @@ func NewOutPool(dur int, isTLS bool, certBytes, keyBytes []byte, address string,
 	return
 }
 func (op *OutPool) getConn() (conn interface{}, err error) {
-	if op.isTLS {
+	if op.typ == "tls" {
 		var _conn tls.Conn
 		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes)
 		if err == nil {
 			conn = net.Conn(&_conn)
 		}
+	} else if op.typ == "kcp" {
+		conn, err = ConnectKCPHost(op.address, op.kcpMethod, op.kcpKey)
 	} else {
 		conn, err = ConnectHost(op.address, op.timeout)
 	}

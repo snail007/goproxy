@@ -167,7 +167,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 					_, err = inConn.Write([]byte{0x00})
 					inConn.SetWriteDeadline(time.Time{})
 					if err != nil {
-						log.Printf("control connection write err %s", err)
+						log.Printf("server control connection write err %s", err)
 						break
 					}
 					time.Sleep(time.Second * 3)
@@ -181,7 +181,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 					_, err := inConn.Read(signal)
 					inConn.SetReadDeadline(time.Time{})
 					if err != nil {
-						log.Printf("control connection read err: %s", err)
+						log.Printf("server control connection read err: %s", err)
 						break
 					} else {
 						// log.Printf("heartbeat from server ,id:%s", serverID)
