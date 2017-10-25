@@ -51,7 +51,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.7 通过SSH中转](#17https通过ssh中转)
         - [1.7.1 用户名和密码的方式](#171-ssh用户名和密码的方式)
         - [1.7.2 用户名和密钥的方式](#172-ssh用户名和密钥的方式)
-    - [1.8 查看帮助](#18查看帮助)
+    - [1.8 KCP协议传输](#18KCP协议传输)
+    - [1.9 查看帮助](#19查看帮助)
 - [2. TCP代理](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -85,7 +86,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
         - [5.6.1 用户名和密码的方式](#561-ssh用户名和密码的方式)
         - [5.6.2 用户名和密钥的方式](#562-ssh用户名和密钥的方式)
     - [5.7 认证](#57认证)
-    - [5.8 查看帮助](#58查看帮助)
+    - [5.8 KCP协议传输](#58KCP协议传输)
+    - [5.9 查看帮助](#59查看帮助)
 
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -204,9 +206,18 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 本地HTTP(S)代理28080端口,执行:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
-#### **1.8.查看帮助**  
-`./proxy help http`  
+#### **1.8.KCP协议传输**  
+KCP协议需要-B参数设置一个密码用于加密解密数据  
 
+一级HTTP代理(VPS,IP:22.22.22.22)  
+`./proxy http -t kcp -p ":38080" -B mypassword  
+  
+二级HTTP代理(本地Linux)  
+`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
+
+#### **1.9.查看帮助**  
+`./proxy help http`  
   
 ### 2.TCP代理  
   
@@ -486,7 +497,17 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 如果没有-a或-F参数,就是关闭认证.  
 
-#### **5.8.查看帮助**  
+#### **5.8.KCP协议传输**  
+KCP协议需要-B参数设置一个密码用于加密解密数据  
+
+一级HTTP代理(VPS,IP:22.22.22.22)  
+`./proxy socks -t kcp -p ":38080" -B mypassword  
+  
+二级HTTP代理(本地Linux)  
+`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
+
+#### **5.9.查看帮助**  
 `./proxy help socks`  
 
 ### TODO  
