@@ -102,15 +102,15 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 		return
 	}
 	inAddr := (*inConn).RemoteAddr().String()
-	inLocalAddr := (*inConn).LocalAddr().String()
+	//inLocalAddr := (*inConn).LocalAddr().String()
 	outAddr := outConn.RemoteAddr().String()
-	outLocalAddr := outConn.LocalAddr().String()
+	//outLocalAddr := outConn.LocalAddr().String()
 	utils.IoBind((*inConn), outConn, func(err error) {
-		log.Printf("conn %s - %s - %s - %s released", inAddr, inLocalAddr, outLocalAddr, outAddr)
+		log.Printf("conn %s - %s released", inAddr, outAddr)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
 	})
-	log.Printf("conn %s - %s - %s - %s connected", inAddr, inLocalAddr, outLocalAddr, outAddr)
+	log.Printf("conn %s - %s connected", inAddr, outAddr)
 	return
 }
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {

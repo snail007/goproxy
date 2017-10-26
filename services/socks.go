@@ -431,11 +431,11 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 
 	request.TCPReply(socks.REP_SUCCESS)
 	inAddr := (*inConn).RemoteAddr().String()
-	inLocalAddr := (*inConn).LocalAddr().String()
+	//inLocalAddr := (*inConn).LocalAddr().String()
 
-	log.Printf("conn %s - %s connected [%s]", inAddr, inLocalAddr, request.Addr())
+	log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err error) {
-		log.Printf("conn %s - %s released [%s]", inAddr, inLocalAddr, request.Addr())
+		log.Printf("conn %s - %s released", inAddr, request.Addr())
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
 	})

@@ -38,8 +38,8 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
-
-			_, e := io.Copy(dst, src)
+			e := ioCopy(dst, src)
+			//_, e := io.Copy(dst, src)
 			e1 <- e
 		}()
 		go func() {
@@ -48,8 +48,8 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
-
-			_, e := io.Copy(src, dst)
+			//_, e := io.Copy(src, dst)
+			e := ioCopy(src, dst)
 			e2 <- e
 		}()
 		var err error
@@ -62,7 +62,21 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 		fn(err)
 	}()
 }
-
+func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
+	buf := make([]byte, 32*1024)
+	n := 0
+	for {
+		n, err = src.Read(buf)
+		if n > 0 {
+			if _, e := dst.Write(buf[0:n]); e != nil {
+				return e
+			}
+		}
+		if err != nil {
+			return
+		}
+	}
+}
 func TlsConnectHost(host string, timeout int, certBytes, keyBytes []byte) (conn tls.Conn, err error) {
 	h := strings.Split(host, ":")
 	port, _ := strconv.Atoi(h[1])
