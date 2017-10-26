@@ -55,7 +55,9 @@ func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
 		var err error
 		select {
 		case err = <-e1:
+			//log.Printf("e1")
 		case err = <-e2:
+			//log.Printf("e2")
 		}
 		fn(err)
 	}()
