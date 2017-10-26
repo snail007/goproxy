@@ -100,33 +100,34 @@ func (s *TunnelServerManager) CheckArgs() {
 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelServerManager) InitService() {
-	s.InitControlDeamon()
+	s.InitHeartbeatDeamon()
 }
-func (s *TunnelServerManager) InitControlDeamon() {
+func (s *TunnelServerManager) InitHeartbeatDeamon() {
+	log.Printf("heartbeat started")
 	go func() {
-		var ctrlConn net.Conn
+		var heartbeatConn net.Conn
 		var ID string
 		for {
 			//close all connection
 			s.cm.Remove(ID)
-			utils.CloseConn(&ctrlConn)
-			ctrlConn, ID, err := s.GetOutConn(CONN_SERVER_CONTROL)
+			utils.CloseConn(&heartbeatConn)
+			heartbeatConn, ID, err := s.GetOutConn(CONN_SERVER_HEARBEAT)
 			if err != nil {
-				log.Printf("control connection err: %s, retrying...", err)
+				log.Printf("heartbeat connection err: %s, retrying...", err)
 				time.Sleep(time.Second * 3)
-				utils.CloseConn(&ctrlConn)
+				utils.CloseConn(&heartbeatConn)
 				continue
 			}
-			log.Printf("control connection created,id:%s", ID)
+			log.Printf("heartbeat connection created,id:%s", ID)
 			writeDie := make(chan bool)
 			readDie := make(chan bool)
 			go func() {
 				for {
-					ctrlConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-					_, err = ctrlConn.Write([]byte{0x00})
-					ctrlConn.SetWriteDeadline(time.Time{})
+					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+					_, err = heartbeatConn.Write([]byte{0x00})
+					heartbeatConn.SetWriteDeadline(time.Time{})
 					if err != nil {
-						log.Printf("control connection write err %s", err)
+						log.Printf("heartbeat connection write err %s", err)
 						break
 					}
 					time.Sleep(time.Second * 3)
@@ -136,11 +137,11 @@ func (s *TunnelServerManager) InitControlDeamon() {
 			go func() {
 				for {
 					signal := make([]byte, 1)
-					ctrlConn.SetReadDeadline(time.Now().Add(time.Second * 10))
-					_, err := ctrlConn.Read(signal)
-					ctrlConn.SetReadDeadline(time.Time{})
+					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
+					_, err := heartbeatConn.Read(signal)
+					heartbeatConn.SetReadDeadline(time.Time{})
 					if err != nil {
-						log.Printf("control connection read err: %s", err)
+						log.Printf("heartbeat connection read err: %s", err)
 						break
 					} else {
 						// log.Printf("heartbeat from bridge")

@@ -6,15 +6,16 @@ import "golang.org/x/crypto/ssh"
 // t := tcp.Flag("tcp-timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
 
 const (
-	TYPE_TCP            = "tcp"
-	TYPE_UDP            = "udp"
-	TYPE_HTTP           = "http"
-	TYPE_TLS            = "tls"
-	TYPE_KCP            = "kcp"
-	CONN_CLIENT_CONTROL = uint8(1)
-	CONN_SERVER_CONTROL = uint8(2)
-	CONN_SERVER         = uint8(3)
-	CONN_CLIENT         = uint8(4)
+	TYPE_TCP             = "tcp"
+	TYPE_UDP             = "udp"
+	TYPE_HTTP            = "http"
+	TYPE_TLS             = "tls"
+	TYPE_KCP             = "kcp"
+	CONN_CLIENT_CONTROL  = uint8(1)
+	CONN_CLIENT_HEARBEAT = uint8(2)
+	CONN_SERVER_HEARBEAT = uint8(3)
+	CONN_SERVER          = uint8(4)
+	CONN_CLIENT          = uint8(5)
 )
 
 type TunnelServerArgs struct {

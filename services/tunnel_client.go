@@ -11,8 +11,9 @@ import (
 )
 
 type TunnelClient struct {
-	cfg TunnelClientArgs
-	cm  utils.ConnManager
+	cfg      TunnelClientArgs
+	cm       utils.ConnManager
+	ctrlConn net.Conn
 }
 
 func NewTunnelClient() Service {
@@ -23,6 +24,65 @@ func NewTunnelClient() Service {
 }
 
 func (s *TunnelClient) InitService() {
+	s.InitHeartbeatDeamon()
+}
+func (s *TunnelClient) InitHeartbeatDeamon() {
+	log.Printf("heartbeat started")
+	go func() {
+		var heartbeatConn net.Conn
+		var ID = *s.cfg.Key
+		for {
+
+			//close all connection
+			s.cm.RemoveAll()
+			if s.ctrlConn != nil {
+				s.ctrlConn.Close()
+			}
+			utils.CloseConn(&heartbeatConn)
+			heartbeatConn, err := s.GetInConn(CONN_CLIENT_HEARBEAT, ID)
+			if err != nil {
+				log.Printf("heartbeat connection err: %s, retrying...", err)
+				time.Sleep(time.Second * 3)
+				utils.CloseConn(&heartbeatConn)
+				continue
+			}
+			log.Printf("heartbeat connection created,id:%s", ID)
+			writeDie := make(chan bool)
+			readDie := make(chan bool)
+			go func() {
+				for {
+					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+					_, err = heartbeatConn.Write([]byte{0x00})
+					heartbeatConn.SetWriteDeadline(time.Time{})
+					if err != nil {
+						log.Printf("heartbeat connection write err %s", err)
+						break
+					}
+					time.Sleep(time.Second * 3)
+				}
+				close(writeDie)
+			}()
+			go func() {
+				for {
+					signal := make([]byte, 1)
+					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
+					_, err := heartbeatConn.Read(signal)
+					heartbeatConn.SetReadDeadline(time.Time{})
+					if err != nil {
+						log.Printf("heartbeat connection read err: %s", err)
+						break
+					} else {
+						log.Printf("heartbeat from bridge")
+					}
+				}
+				close(readDie)
+			}()
+			select {
+			case <-readDie:
+			case <-writeDie:
+			}
+		}
+	}()
 }
 func (s *TunnelClient) CheckArgs() {
 	if *s.cfg.Parent != "" {
@@ -43,40 +103,30 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.CheckArgs()
 	s.InitService()
 	log.Printf("proxy on tunnel client mode")
-	var ctrlConn net.Conn
+
 	for {
 		//close all conn
 		s.cm.Remove(*s.cfg.Key)
-		utils.CloseConn(&ctrlConn)
+		if s.ctrlConn != nil {
+			s.ctrlConn.Close()
+		}
 
-		ctrlConn, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
+		s.ctrlConn, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
 		if err != nil {
 			log.Printf("control connection err: %s, retrying...", err)
 			time.Sleep(time.Second * 3)
-			utils.CloseConn(&ctrlConn)
+			if s.ctrlConn != nil {
+				s.ctrlConn.Close()
+			}
 			continue
 		}
-		go func() {
-			for {
-				if ctrlConn == nil {
-					break
-				}
-				ctrlConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-				_, err = ctrlConn.Write([]byte{0x00})
-				ctrlConn.SetWriteDeadline(time.Time{})
-				if err != nil {
-					utils.CloseConn(&ctrlConn)
-					log.Printf("ctrlConn err %s", err)
-					break
-				}
-				time.Sleep(time.Second * 3)
-			}
-		}()
 		for {
 			var ID, clientLocalAddr, serverID string
-			err = utils.ReadPacketData(ctrlConn, &ID, &clientLocalAddr, &serverID)
+			err = utils.ReadPacketData(s.ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
-				utils.CloseConn(&ctrlConn)
+				if s.ctrlConn != nil {
+					s.ctrlConn.Close()
+				}
 				log.Printf("read connection signal err: %s, retrying...", err)
 				break
 			}
