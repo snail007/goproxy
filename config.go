@@ -60,6 +60,7 @@ func initConfig() (err error) {
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
 	httpArgs.KCPKey = http.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
 	httpArgs.KCPMethod = http.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
+	httpArgs.LocalIPS = http.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
@@ -134,6 +135,7 @@ func initConfig() (err error) {
 	socksArgs.Auth = socks.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
 	socksArgs.KCPKey = socks.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
 	socksArgs.KCPMethod = socks.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
+	socksArgs.LocalIPS = socks.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))

@@ -362,6 +362,9 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 			}
 		}
 		interfaceIPs, err := utils.GetAllInterfaceAddr()
+		for _, ip := range *s.cfg.LocalIPS {
+			interfaceIPs = append(interfaceIPs, net.ParseIP(ip).To4())
+		}
 		if err == nil {
 			for _, localIP := range interfaceIPs {
 				for _, outIP := range outIPs {

@@ -93,6 +93,7 @@ type HTTPArgs struct {
 	SSHAuthMethod       ssh.AuthMethod
 	KCPMethod           *string
 	KCPKey              *string
+	LocalIPS            *[]string
 }
 type UDPArgs struct {
 	Parent              *string
@@ -132,6 +133,7 @@ type SocksArgs struct {
 	KCPKey         *string
 	UDPParent      *string
 	UDPLocal       *string
+	LocalIPS       *[]string
 }
 
 func (a *TCPArgs) Protocol() string {

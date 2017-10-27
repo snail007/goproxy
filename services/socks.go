@@ -167,6 +167,11 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		log.Printf("parse udp packet fail, ERR:%s", err)
 		return
 	}
+	//防止死循环
+	if s.IsDeadLoop((*localAddr).String(), p.Host()) {
+		log.Printf("dead loop detected , %s", p.Host())
+		return
+	}
 	//log.Printf("##########udp to -> %s:%s###########", p.Host(), p.Port())
 	if *s.cfg.Parent != "" {
 		//有上级代理,转发给上级
@@ -398,6 +403,13 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	useProxy := true
 	tryCount := 0
 	maxTryCount := 5
+	//防止死循环
+	if s.IsDeadLoop((*inConn).LocalAddr().String(), request.Host()) {
+		utils.CloseConn(inConn)
+		log.Printf("dead loop detected , %s", request.Host())
+		utils.CloseConn(inConn)
+		return
+	}
 	for {
 		if *s.cfg.Always {
 			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
@@ -567,4 +579,39 @@ func (s *Socks) InitBasicAuth() (err error) {
 }
 func (s *Socks) IsBasicAuth() bool {
 	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0
+}
+func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
+	inIP, inPort, err := net.SplitHostPort(inLocalAddr)
+	if err != nil {
+		return false
+	}
+	outDomain, outPort, err := net.SplitHostPort(host)
+	if err != nil {
+		return false
+	}
+	if inPort == outPort {
+		var outIPs []net.IP
+		outIPs, err = net.LookupIP(outDomain)
+		if err == nil {
+			for _, ip := range outIPs {
+				if ip.String() == inIP {
+					return true
+				}
+			}
+		}
+		interfaceIPs, err := utils.GetAllInterfaceAddr()
+		for _, ip := range *s.cfg.LocalIPS {
+			interfaceIPs = append(interfaceIPs, net.ParseIP(ip).To4())
+		}
+		if err == nil {
+			for _, localIP := range interfaceIPs {
+				for _, outIP := range outIPs {
+					if localIP.Equal(outIP) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
