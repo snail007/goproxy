@@ -9,7 +9,7 @@ cd .cert
 cd ..
 rm -rf ${RELEASE}
 mkdir ${RELEASE}
-set CGO_ENABLED=0
+export CGO_ENABLED=0
 #linux
 GOOS=linux GOARCH=386 go build && tar zcfv "${RELEASE}/proxy-linux-386.tar.gz" proxy direct blocked
 GOOS=linux GOARCH=amd64 go build && tar zcfv "${RELEASE}/proxy-linux-amd64.tar.gz" proxy direct blocked 
