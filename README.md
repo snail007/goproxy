@@ -128,7 +128,7 @@ chmod +x install.sh
   
 ## 首次使用必看  
   
-#### **提示**  
+#### **环境**  
 接下来的教程,默认系统是linux,程序是proxy；所有操作需要root权限；  
 如果你的是windows,请使用windows版本的proxy.exe即可.  
   
