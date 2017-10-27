@@ -29,9 +29,9 @@ func (s *TCP) CheckArgs() {
 		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+		log.Fatalf("parent type unkown,use -T <tls|tcp|kcp|udp>")
 	}
-	if *s.cfg.ParentType == "tls" || *s.cfg.IsTLS {
+	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 	}
 }
@@ -52,10 +52,13 @@ func (s *TCP) Start(args interface{}) (err error) {
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
-	if !*s.cfg.IsTLS {
+
+	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.callback)
-	} else {
+	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+	} else if *s.cfg.LocalType == TYPE_KCP {
+		err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
 	}
 	if err != nil {
 		return
@@ -75,6 +78,8 @@ func (s *TCP) callback(inConn net.Conn) {
 	}()
 	var err error
 	switch *s.cfg.ParentType {
+	case TYPE_KCP:
+		fallthrough
 	case TYPE_TCP:
 		fallthrough
 	case TYPE_TLS:
@@ -162,13 +167,14 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 
 }
 func (s *TCP) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP {
+	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutPool(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
-			"", "",
+			*s.cfg.KCPMethod,
+			*s.cfg.KCPKey,
 			s.cfg.CertBytes, s.cfg.KeyBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,

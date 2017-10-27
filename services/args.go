@@ -58,10 +58,12 @@ type TCPArgs struct {
 	KeyBytes            []byte
 	Local               *string
 	ParentType          *string
-	IsTLS               *bool
+	LocalType           *string
 	Timeout             *int
 	PoolSize            *int
 	CheckParentInterval *int
+	KCPMethod           *string
+	KCPKey              *string
 }
 
 type HTTPArgs struct {
@@ -133,8 +135,13 @@ type SocksArgs struct {
 }
 
 func (a *TCPArgs) Protocol() string {
-	if *a.IsTLS {
-		return "tls"
+	switch *a.LocalType {
+	case TYPE_TLS:
+		return TYPE_TLS
+	case TYPE_TCP:
+		return TYPE_TCP
+	case TYPE_KCP:
+		return TYPE_KCP
 	}
-	return "tcp"
+	return "unknown"
 }

@@ -223,7 +223,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	}
 
 	outAddr := outConn.RemoteAddr().String()
-	outLocalAddr := outConn.LocalAddr().String()
+	//outLocalAddr := outConn.LocalAddr().String()
 
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
 		//https无上级或者上级非代理,proxy需要响应connect请求,并直连目标
