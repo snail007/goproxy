@@ -72,7 +72,7 @@ func (s *TunnelClient) InitHeartbeatDeamon() {
 						log.Printf("heartbeat connection read err: %s", err)
 						break
 					} else {
-						log.Printf("heartbeat from bridge")
+						//log.Printf("heartbeat from bridge")
 					}
 				}
 				close(readDie)

@@ -119,8 +119,15 @@ func ConnectHost(hostAndPort string, timeout int) (conn net.Conn, err error) {
 	return
 }
 func ConnectKCPHost(hostAndPort, method, key string) (conn net.Conn, err error) {
-	conn, err = kcp.DialWithOptions(hostAndPort, GetKCPBlock(method, key), 10, 3)
-	return
+	kcpconn, err := kcp.DialWithOptions(hostAndPort, GetKCPBlock(method, key), 10, 3)
+	if err != nil {
+		return
+	}
+	kcpconn.SetNoDelay(1, 40, 0, 1)
+	kcpconn.SetWindowSize(128, 512)
+	kcpconn.SetMtu(1400)
+	kcpconn.SetACKNoDelay(false)
+	return kcpconn, err
 }
 func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listener, err error) {
 	var cert tls.Certificate
