@@ -123,8 +123,8 @@ func ConnectKCPHost(hostAndPort, method, key string) (conn net.Conn, err error) 
 	if err != nil {
 		return
 	}
-	kcpconn.SetNoDelay(1, 40, 0, 1)
-	kcpconn.SetWindowSize(128, 512)
+	kcpconn.SetNoDelay(1, 10, 2, 1)
+	kcpconn.SetWindowSize(1024, 1024)
 	kcpconn.SetMtu(1400)
 	kcpconn.SetACKNoDelay(false)
 	return kcpconn, err
