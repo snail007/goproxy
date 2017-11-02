@@ -446,7 +446,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help tserver`  
   
 ### 5.SOCKS5代理  
-提示:SOCKS5代理,只支持TCP协议,不支持UDP协议,不支持用户名密码认证.  
+提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
 #### **5.1.普通SOCKS5代理**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
