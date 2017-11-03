@@ -424,6 +424,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 				}
 			} else {
 				outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
+				useProxy = false
 			}
 		}
 		tryCount++
@@ -447,7 +448,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 
 	log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err error) {
-		log.Printf("conn %s - %s released", inAddr, request.Addr())
+		log.Printf("conn %s - %s released %s", inAddr, request.Addr(), err)
 		utils.CloseConn(inConn)
 		utils.CloseConn(&outConn)
 	})
