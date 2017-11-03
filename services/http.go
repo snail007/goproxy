@@ -146,7 +146,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
 	if err != nil {
 		if err != io.EOF {
-			log.Printf("decoder error , form %s, ERR:%s", err, inConn.RemoteAddr())
+			log.Printf("decoder error , from %s, ERR:%s", inConn.RemoteAddr(), err)
 		}
 		utils.CloseConn(&inConn)
 		return
@@ -322,6 +322,10 @@ func (s *HTTP) InitOutConnPool() {
 }
 func (s *HTTP) InitBasicAuth() (err error) {
 	s.basicAuth = utils.NewBasicAuth()
+	if *s.cfg.AuthURL != "" {
+		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
+		log.Printf("auth from %s", *s.cfg.AuthURL)
+	}
 	if *s.cfg.AuthFile != "" {
 		var n = 0
 		n, err = s.basicAuth.AddFromFile(*s.cfg.AuthFile)
@@ -338,7 +342,7 @@ func (s *HTTP) InitBasicAuth() (err error) {
 	return
 }
 func (s *HTTP) IsBasicAuth() bool {
-	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0
+	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0 || *s.cfg.AuthURL != ""
 }
 func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 	inIP, inPort, err := net.SplitHostPort(inLocalAddr)

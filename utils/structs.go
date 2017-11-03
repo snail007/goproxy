@@ -176,13 +176,23 @@ func (c *Checker) Add(address string, isHTTPS bool, method, URL string, data []b
 }
 
 type BasicAuth struct {
-	data ConcurrentMap
+	data        ConcurrentMap
+	authURL     string
+	authOkCode  int
+	authTimeout int
+	authRetry   int
 }
 
 func NewBasicAuth() BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
 	}
+}
+func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
+	ba.authURL = URL
+	ba.authOkCode = code
+	ba.authTimeout = timeout
+	ba.authRetry = retry
 }
 func (ba *BasicAuth) AddFromFile(file string) (n int, err error) {
 	_content, err := ioutil.ReadFile(file)
@@ -219,15 +229,65 @@ func (ba *BasicAuth) CheckUserPass(user, pass string) (ok bool) {
 	}
 	return
 }
-func (ba *BasicAuth) Check(userpass string) (ok bool) {
+func (ba *BasicAuth) Check(userpass string, ip string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) == 2 {
 		if p, _ok := ba.data.Get(u[0]); _ok {
 			return p.(string) == u[1]
 		}
+		if ba.authURL != "" {
+			err := ba.checkFromURL(userpass, ip)
+			if err == nil {
+				return true
+			}
+			log.Printf("%s", err)
+		}
+		return false
 	}
 	return
 }
+func (ba *BasicAuth) checkFromURL(userpass, ip string) (err error) {
+	u := strings.Split(strings.Trim(userpass, " "), ":")
+	if len(u) != 2 {
+		return
+	}
+	URL := ba.authURL
+	if strings.Contains(URL, "?") {
+		URL += "&"
+	} else {
+		URL += "?"
+	}
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s", u[0], u[1], ip)
+	var code int
+	var tryCount = 0
+	var body []byte
+	for tryCount <= ba.authRetry {
+		body, code, err = HttpGet(URL, ba.authTimeout)
+		if err == nil && code == ba.authOkCode {
+			break
+		} else if err != nil {
+			err = fmt.Errorf("auth fail from url %s,resonse err:%s , %s", URL, err, ip)
+		} else {
+			if len(body) > 0 {
+				err = fmt.Errorf(string(body[0:100]))
+			} else {
+				err = fmt.Errorf("token error")
+			}
+			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, string(body))
+		}
+		if err != nil && tryCount < ba.authRetry {
+			log.Print(err)
+			time.Sleep(time.Second * 2)
+		}
+		tryCount++
+	}
+	if err != nil {
+		return
+	}
+	//log.Printf("auth success from auth url, %s", ip)
+	return
+}
+
 func (ba *BasicAuth) Total() (n int) {
 	n = ba.data.Count()
 	return
@@ -325,6 +385,14 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		CloseConn(req.conn)
 		return
 	}
+	if authorization == "" {
+		authorization, err = req.getHeader("Proxy-Authorization")
+		if err != nil {
+			fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
+			CloseConn(req.conn)
+			return
+		}
+	}
 	//log.Printf("Authorization:%s", authorization)
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
@@ -338,7 +406,8 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		CloseConn(req.conn)
 		return
 	}
-	authOk := (*req.basicAuth).Check(string(user))
+	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
+	authOk := (*req.basicAuth).Check(string(user), addr[0])
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
 		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")
@@ -362,6 +431,7 @@ func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
 func (req *HTTPRequest) getHeader(key string) (val string, err error) {
 	key = strings.ToUpper(key)
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
+	//log.Println(lines)
 	for _, line := range lines {
 		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
 		if len(line) == 2 {
@@ -373,7 +443,6 @@ func (req *HTTPRequest) getHeader(key string) (val string, err error) {
 			}
 		}
 	}
-	err = fmt.Errorf("can not find HOST header")
 	return
 }
 

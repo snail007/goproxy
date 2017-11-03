@@ -576,7 +576,7 @@ func (s *Socks) InitBasicAuth() (err error) {
 	return
 }
 func (s *Socks) IsBasicAuth() bool {
-	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0
+	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0 || *s.cfg.AuthURL != ""
 }
 func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
 	inIP, inPort, err := net.SplitHostPort(inLocalAddr)

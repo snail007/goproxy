@@ -80,6 +80,10 @@ type HTTPArgs struct {
 	Direct              *string
 	AuthFile            *string
 	Auth                *[]string
+	AuthURL             *string
+	AuthURLOkCode       *int
+	AuthURLTimeout      *int
+	AuthURLRetry        *int
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
@@ -129,6 +133,10 @@ type SocksArgs struct {
 	Direct         *string
 	AuthFile       *string
 	Auth           *[]string
+	AuthURL        *string
+	AuthURLOkCode  *int
+	AuthURLTimeout *int
+	AuthURLRetry   *int
 	KCPMethod      *string
 	KCPKey         *string
 	UDPParent      *string
