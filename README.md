@@ -40,6 +40,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 ### 首次使用必看
 - [环境](#首次使用必看-1)
 - [使用配置文件](#使用配置文件)
+- [后台运行](#后台运行)
 - [生成通讯证书文件](#生成加密通讯需要的证书文件)
 - [安全建议](#安全建议)
 
@@ -150,6 +151,13 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 `./proxy keygen`  
 默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
   
+### 后台运行
+默认执行proxy之后,如果要保持proxy运行,不能关闭命令行.  
+如果想在后台运行proxy,命令行可以关闭,只需要在命令最后加上--daemon参数即可.  
+比如:  
+`./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
+更推荐用monexec守护运行proxy比较好.  
+
 ### 安全建议
 当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
 假设你的vps外网ip是23.23.23.23,下面命令通过-g参数设置23.23.23.23  
@@ -218,7 +226,7 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 KCP协议需要-B参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
-`./proxy http -t kcp -p ":38080" -B mypassword  
+`./proxy http -t kcp -p ":38080" -B mypassword`  
   
 二级HTTP代理(本地Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
@@ -508,7 +516,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 KCP协议需要-B参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
-`./proxy socks -t kcp -p ":38080" -B mypassword  
+`./proxy socks -t kcp -p ":38080" -B mypassword`  
   
 二级HTTP代理(本地Linux)  
 `./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  

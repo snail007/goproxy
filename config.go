@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"proxy/services"
 	"proxy/utils"
 
@@ -36,6 +37,7 @@ func initConfig() (err error) {
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
+	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
 	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
@@ -140,6 +142,18 @@ func initConfig() (err error) {
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	flags := log.Ldate
+	if *daemon {
+		args := []string{}
+		for _, arg := range os.Args[1:] {
+			if arg != "--daemon" {
+				args = append(args, arg)
+			}
+		}
+		cmd := exec.Command(os.Args[0], args...)
+		cmd.Start()
+		fmt.Printf("%s [PID] %d running...\n", os.Args[0], cmd.Process.Pid)
+		os.Exit(0)
+	}
 	if *debug {
 		flags |= log.Lshortfile | log.Lmicroseconds
 	} else {
