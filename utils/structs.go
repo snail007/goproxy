@@ -223,11 +223,9 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
-func (ba *BasicAuth) CheckUserPass(user, pass string) (ok bool) {
-	if p, _ok := ba.data.Get(user); _ok {
-		return p.(string) == pass
-	}
-	return
+func (ba *BasicAuth) CheckUserPass(user, pass, ip string) (ok bool) {
+
+	return ba.Check(user+":"+pass, ip)
 }
 func (ba *BasicAuth) Check(userpass string, ip string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")

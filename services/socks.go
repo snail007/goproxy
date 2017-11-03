@@ -10,6 +10,7 @@ import (
 	"proxy/utils/aes"
 	"proxy/utils/socks"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -353,7 +354,8 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		pass := string(r[2+r[1]+1:])
 		//log.Printf("user:%s,pass:%s", user, pass)
 		//auth
-		if s.basicAuth.CheckUserPass(user, pass) {
+		_addr := strings.Split(inConn.RemoteAddr().String(), ":")
+		if s.basicAuth.CheckUserPass(user, pass, _addr[0]) {
 			inConn.Write([]byte{0x01, 0x00})
 		} else {
 			inConn.Write([]byte{0x01, 0x01})
@@ -560,6 +562,10 @@ func (s *Socks) ConnectSSH() (err error) {
 }
 func (s *Socks) InitBasicAuth() (err error) {
 	s.basicAuth = utils.NewBasicAuth()
+	if *s.cfg.AuthURL != "" {
+		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
+		log.Printf("auth from %s", *s.cfg.AuthURL)
+	}
 	if *s.cfg.AuthFile != "" {
 		var n = 0
 		n, err = s.basicAuth.AddFromFile(*s.cfg.AuthFile)
