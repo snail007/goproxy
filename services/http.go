@@ -238,10 +238,8 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		}
 	}
 
-	utils.IoBind((*inConn), outConn, func(err error) {
+	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
-		utils.CloseConn(inConn)
-		utils.CloseConn(&outConn)
 	})
 	log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
 

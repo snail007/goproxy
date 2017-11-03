@@ -61,3 +61,9 @@ GOOS=windows GOARCH=386 go build && tar zcfv "${RELEASE}/proxy-windows-386.tar.g
 GOOS=windows GOARCH=amd64 go build && tar zcfv "${RELEASE}/proxy-windows-amd64.tar.gz" proxy.exe  direct blocked .cert/proxy.crt .cert/proxy.key
 
 rm -rf proxy proxy.exe .cert
+
+#todo
+#1.release.sh        VER="xxx"
+#2.main.go           APP_VERSION="xxx"
+#3.install_auto.sh   goproxy/releases/download/vxxx
+#4.README            goproxy/releases/download/vxxx

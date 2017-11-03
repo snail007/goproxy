@@ -110,10 +110,8 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	//inLocalAddr := (*inConn).LocalAddr().String()
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
-	utils.IoBind((*inConn), outConn, func(err error) {
+	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, outAddr)
-		utils.CloseConn(inConn)
-		utils.CloseConn(&outConn)
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
 	return

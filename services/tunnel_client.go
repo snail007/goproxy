@@ -273,10 +273,8 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
-	utils.IoBind(inConn, outConn, func(err error) {
+	utils.IoBind(inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s released", ID)
-		utils.CloseConn(&inConn)
-		utils.CloseConn(&outConn)
 		s.cm.RemoveOne(*s.cfg.Key, ID)
 	})
 	s.cm.Add(*s.cfg.Key, ID, &inConn)

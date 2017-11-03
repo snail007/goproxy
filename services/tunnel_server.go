@@ -240,9 +240,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-			utils.IoBind(inConn, outConn, func(err error) {
-				utils.CloseConn(&outConn)
-				utils.CloseConn(&inConn)
+			utils.IoBind(inConn, outConn, func(err interface{}) {
 				s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			})

@@ -293,8 +293,8 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("socks conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+			inConn.Close()
 		}
-		utils.CloseConn(&inConn)
 	}()
 	//协商开始
 
@@ -398,7 +398,6 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 }
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
 	var outConn net.Conn
-	defer utils.CloseConn(&outConn)
 	var err interface{}
 	useProxy := true
 	tryCount := 0
@@ -428,7 +427,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			}
 		}
 		tryCount++
-		if err == nil || tryCount > maxTryCount {
+		if err == nil || tryCount > maxTryCount || *s.cfg.Parent == "" {
 			break
 		} else {
 			log.Printf("get out conn fail,%s,retrying...", err)
@@ -447,10 +446,8 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	//inLocalAddr := (*inConn).LocalAddr().String()
 
 	log.Printf("conn %s - %s connected", inAddr, request.Addr())
-	utils.IoBind(*inConn, outConn, func(err error) {
-		log.Printf("conn %s - %s released %s", inAddr, request.Addr(), err)
-		utils.CloseConn(inConn)
-		utils.CloseConn(&outConn)
+	utils.IoBind(*inConn, outConn, func(err interface{}) {
+		log.Printf("conn %s - %s released", inAddr, request.Addr())
 	})
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {

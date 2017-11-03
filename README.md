@@ -116,7 +116,7 @@ wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_li
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v3.1fix/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v3.4/proxy-linux-amd64.tar.gz  
 ```  
 #### **3.下载自动安装脚本**  
 ```shell  

@@ -20,7 +20,6 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -28,37 +27,42 @@ import (
 	kcp "github.com/xtaci/kcp-go"
 )
 
-func IoBind(dst io.ReadWriter, src io.ReadWriter, fn func(err error)) {
+func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{})) {
 	go func() {
-		e1 := make(chan error, 1)
-		e2 := make(chan error, 1)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("bind crashed %s", err)
+			}
+		}()
+		e1 := make(chan interface{}, 1)
+		e2 := make(chan interface{}, 1)
 		go func() {
 			defer func() {
-				if e := recover(); e != nil {
-					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				if err := recover(); err != nil {
+					log.Printf("bind crashed %s", err)
 				}
 			}()
-			e := ioCopy(dst, src)
-			//_, e := io.Copy(dst, src)
-			e1 <- e
+			_, err := io.Copy(dst, src)
+			e1 <- err
 		}()
 		go func() {
 			defer func() {
-				if e := recover(); e != nil {
-					log.Printf("IoBind crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+				if err := recover(); err != nil {
+					log.Printf("bind crashed %s", err)
 				}
 			}()
-			//_, e := io.Copy(src, dst)
-			e := ioCopy(src, dst)
-			e2 <- e
+			_, err := io.Copy(src, dst)
+			e2 <- err
 		}()
-		var err error
+		var err interface{}
 		select {
 		case err = <-e1:
 			//log.Printf("e1")
 		case err = <-e2:
 			//log.Printf("e2")
 		}
+		src.Close()
+		dst.Close()
 		fn(err)
 	}()
 }

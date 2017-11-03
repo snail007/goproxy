@@ -112,9 +112,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 				return
 			}
 			serverConn := serverConnItem.(ServerConn).Conn
-			utils.IoBind(*serverConn, inConn, func(err error) {
-				(*serverConn).Close()
-				utils.CloseConn(&inConn)
+			utils.IoBind(*serverConn, inConn, func(err interface{}) {
 				s.serverConns.Remove(ID)
 				s.cmClient.RemoveOne(key, ID)
 				s.cmServer.RemoveOne(serverID, ID)
