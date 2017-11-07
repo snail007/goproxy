@@ -223,18 +223,18 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
-func (ba *BasicAuth) CheckUserPass(user, pass, ip string) (ok bool) {
+func (ba *BasicAuth) CheckUserPass(user, pass, ip, target string) (ok bool) {
 
-	return ba.Check(user+":"+pass, ip)
+	return ba.Check(user+":"+pass, ip, target)
 }
-func (ba *BasicAuth) Check(userpass string, ip string) (ok bool) {
+func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) == 2 {
 		if p, _ok := ba.data.Get(u[0]); _ok {
 			return p.(string) == u[1]
 		}
 		if ba.authURL != "" {
-			err := ba.checkFromURL(userpass, ip)
+			err := ba.checkFromURL(userpass, ip, target)
 			if err == nil {
 				return true
 			}
@@ -244,7 +244,7 @@ func (ba *BasicAuth) Check(userpass string, ip string) (ok bool) {
 	}
 	return
 }
-func (ba *BasicAuth) checkFromURL(userpass, ip string) (err error) {
+func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) != 2 {
 		return
@@ -255,7 +255,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip string) (err error) {
 	} else {
 		URL += "?"
 	}
-	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s", u[0], u[1], ip)
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, target)
 	var code int
 	var tryCount = 0
 	var body []byte
@@ -405,7 +405,13 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		return
 	}
 	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
-	authOk := (*req.basicAuth).Check(string(user), addr[0])
+	URL := ""
+	if req.IsHTTPS() {
+		URL = "https://" + req.Host
+	} else {
+		URL, _ = req.getHTTPURL()
+	}
+	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
 		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")

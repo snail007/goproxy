@@ -26,7 +26,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v3.5手册,其他版本手册请点击下面链接查看.  
+本页是v3.6手册,其他版本手册请点击下面链接查看.  
+- [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
 - [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
 - [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
 - [v3.2手册](https://github.com/snail007/goproxy/tree/v3.2)
@@ -118,7 +119,7 @@ wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_li
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v3.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v3.6/proxy-linux-amd64.tar.gz  
 ```  
 #### **3.下载自动安装脚本**  
 ```shell  
@@ -203,9 +204,23 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 `./proxy http -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 多个用户,重复-a参数即可.  
 也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
-`./proxy http -t tcp -p ":33080" -F auth-file.txt`  
-如果没有-a或-F参数,就是关闭Basic认证.  
+`./proxy http -t tcp -p ":33080" -F auth-file.txt`   
   
+另外,http(s)代理还集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
+然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
+其它情况认为认证失败.  
+比如:  
+`./proxy http -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
+用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
+带上user,pass,ip,target四个参数:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
+user:用户名  
+pass:密码  
+ip:用户的IP,比如:192.168.1.200  
+target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.com:80  
+
+如果没有-a或-F或--auth-url参数,就是关闭Basic认证.   
+
 #### **1.6.HTTP代理流量强制走上级HTTP代理**  
 默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理.  
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
@@ -511,7 +526,20 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 多个用户,重复-a参数即可.  
 也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
-如果没有-a或-F参数,就是关闭认证.  
+
+另外,socks5代理还集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
+然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
+其它情况认为认证失败.  
+比如:  
+`./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
+用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
+带上user,pass,ip,三个参数:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}  
+user:用户名  
+pass:密码  
+ip:用户的IP,比如:192.168.1.200  
+
+如果没有-a或-F或--auth-url参数,就是关闭认证.    
 
 #### **5.8.KCP协议传输**  
 KCP协议需要-B参数设置一个密码用于加密解密数据  

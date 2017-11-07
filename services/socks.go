@@ -355,7 +355,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		//log.Printf("user:%s,pass:%s", user, pass)
 		//auth
 		_addr := strings.Split(inConn.RemoteAddr().String(), ":")
-		if s.basicAuth.CheckUserPass(user, pass, _addr[0]) {
+		if s.basicAuth.CheckUserPass(user, pass, _addr[0], "") {
 			inConn.Write([]byte{0x01, 0x00})
 		} else {
 			inConn.Write([]byte{0x01, 0x01})
