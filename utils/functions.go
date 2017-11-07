@@ -428,6 +428,29 @@ func GetKCPBlock(method, key string) (block kcp.BlockCrypt) {
 	}
 	return
 }
+func HttpGet(URL string, timeout int) (body []byte, code int, err error) {
+	var tr *http.Transport
+	var client *http.Client
+	conf := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	if strings.Contains(URL, "https://") {
+		tr = &http.Transport{TLSClientConfig: conf}
+		client = &http.Client{Timeout: time.Millisecond * time.Duration(timeout), Transport: tr}
+	} else {
+		tr = &http.Transport{}
+		client = &http.Client{Timeout: time.Millisecond * time.Duration(timeout), Transport: tr}
+	}
+	defer tr.CloseIdleConnections()
+	resp, err := client.Get(URL)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	code = resp.StatusCode
+	body, err = ioutil.ReadAll(resp.Body)
+	return
+}
 
 // type sockaddr struct {
 // 	family uint16
