@@ -17,8 +17,8 @@ type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
 	serverConns        utils.ConcurrentMap
 	clientControlConns utils.ConcurrentMap
-	cmServer           utils.ConnManager
-	cmClient           utils.ConnManager
+	// cmServer           utils.ConnManager
+	// cmClient           utils.ConnManager
 }
 
 func NewTunnelBridge() Service {
@@ -26,8 +26,8 @@ func NewTunnelBridge() Service {
 		cfg:                TunnelBridgeArgs{},
 		serverConns:        utils.NewConcurrentMap(),
 		clientControlConns: utils.NewConcurrentMap(),
-		cmServer:           utils.NewConnManager(),
-		cmClient:           utils.NewConnManager(),
+		// cmServer:           utils.NewConnManager(),
+		// cmClient:           utils.NewConnManager(),
 	}
 }
 
@@ -92,7 +92,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 					time.Sleep(time.Second * 3)
 					continue
 				} else {
-					s.cmServer.Add(serverID, ID, &inConn)
+					// s.cmServer.Add(serverID, ID, &inConn)
 					break
 				}
 			}
@@ -114,11 +114,11 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			serverConn := serverConnItem.(ServerConn).Conn
 			utils.IoBind(*serverConn, inConn, func(err interface{}) {
 				s.serverConns.Remove(ID)
-				s.cmClient.RemoveOne(key, ID)
-				s.cmServer.RemoveOne(serverID, ID)
+				// s.cmClient.RemoveOne(key, ID)
+				// s.cmServer.RemoveOne(serverID, ID)
 				log.Printf("conn %s released", ID)
 			})
-			s.cmClient.Add(key, ID, &inConn)
+			// s.cmClient.Add(key, ID, &inConn)
 			log.Printf("conn %s created", ID)
 
 		case CONN_CLIENT_CONTROL:
@@ -136,101 +136,101 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			s.clientControlConns.Set(key, &inConn)
 			log.Printf("set client %s control conn", key)
 
-		case CONN_SERVER_HEARBEAT:
-			var serverID string
-			err = utils.ReadPacketData(reader, &serverID)
-			if err != nil {
-				log.Printf("read error,ERR:%s", err)
-				return
-			}
-			log.Printf("server heartbeat connection, id: %s", serverID)
-			writeDie := make(chan bool)
-			readDie := make(chan bool)
-			go func() {
-				for {
-					inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-					_, err = inConn.Write([]byte{0x00})
-					inConn.SetWriteDeadline(time.Time{})
-					if err != nil {
-						log.Printf("server heartbeat connection write err %s", err)
-						break
-					}
-					time.Sleep(time.Second * 3)
-				}
-				close(writeDie)
-			}()
-			go func() {
-				for {
-					signal := make([]byte, 1)
-					inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-					_, err := inConn.Read(signal)
-					inConn.SetReadDeadline(time.Time{})
-					if err != nil {
-						log.Printf("server heartbeat connection read err: %s", err)
-						break
-					} else {
-						// log.Printf("heartbeat from server ,id:%s", serverID)
-					}
-				}
-				close(readDie)
-			}()
-			select {
-			case <-readDie:
-			case <-writeDie:
-			}
-			utils.CloseConn(&inConn)
-			s.cmServer.Remove(serverID)
-			log.Printf("server heartbeat conn %s released", serverID)
-		case CONN_CLIENT_HEARBEAT:
-			var clientID string
-			err = utils.ReadPacketData(reader, &clientID)
-			if err != nil {
-				log.Printf("read error,ERR:%s", err)
-				return
-			}
-			log.Printf("client heartbeat connection, id: %s", clientID)
-			writeDie := make(chan bool)
-			readDie := make(chan bool)
-			go func() {
-				for {
-					inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-					_, err = inConn.Write([]byte{0x00})
-					inConn.SetWriteDeadline(time.Time{})
-					if err != nil {
-						log.Printf("client heartbeat connection write err %s", err)
-						break
-					}
-					time.Sleep(time.Second * 3)
-				}
-				close(writeDie)
-			}()
-			go func() {
-				for {
-					signal := make([]byte, 1)
-					inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-					_, err := inConn.Read(signal)
-					inConn.SetReadDeadline(time.Time{})
-					if err != nil {
-						log.Printf("client control connection read err: %s", err)
-						break
-					} else {
-						// log.Printf("heartbeat from client ,id:%s", clientID)
-					}
-				}
-				close(readDie)
-			}()
-			select {
-			case <-readDie:
-			case <-writeDie:
-			}
-			utils.CloseConn(&inConn)
-			s.cmClient.Remove(clientID)
-			if s.clientControlConns.Has(clientID) {
-				item, _ := s.clientControlConns.Get(clientID)
-				(*item.(*net.Conn)).Close()
-			}
-			s.clientControlConns.Remove(clientID)
-			log.Printf("client heartbeat conn %s released", clientID)
+			// case CONN_SERVER_HEARBEAT:
+			// 	var serverID string
+			// 	err = utils.ReadPacketData(reader, &serverID)
+			// 	if err != nil {
+			// 		log.Printf("read error,ERR:%s", err)
+			// 		return
+			// 	}
+			// 	log.Printf("server heartbeat connection, id: %s", serverID)
+			// 	writeDie := make(chan bool)
+			// 	readDie := make(chan bool)
+			// 	go func() {
+			// 		for {
+			// 			inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+			// 			_, err = inConn.Write([]byte{0x00})
+			// 			inConn.SetWriteDeadline(time.Time{})
+			// 			if err != nil {
+			// 				log.Printf("server heartbeat connection write err %s", err)
+			// 				break
+			// 			}
+			// 			time.Sleep(time.Second * 3)
+			// 		}
+			// 		close(writeDie)
+			// 	}()
+			// 	go func() {
+			// 		for {
+			// 			signal := make([]byte, 1)
+			// 			inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
+			// 			_, err := inConn.Read(signal)
+			// 			inConn.SetReadDeadline(time.Time{})
+			// 			if err != nil {
+			// 				log.Printf("server heartbeat connection read err: %s", err)
+			// 				break
+			// 			} else {
+			// 				// log.Printf("heartbeat from server ,id:%s", serverID)
+			// 			}
+			// 		}
+			// 		close(readDie)
+			// 	}()
+			// 	select {
+			// 	case <-readDie:
+			// 	case <-writeDie:
+			// 	}
+			// 	utils.CloseConn(&inConn)
+			// 	s.cmServer.Remove(serverID)
+			// 	log.Printf("server heartbeat conn %s released", serverID)
+			// case CONN_CLIENT_HEARBEAT:
+			// 	var clientID string
+			// 	err = utils.ReadPacketData(reader, &clientID)
+			// 	if err != nil {
+			// 		log.Printf("read error,ERR:%s", err)
+			// 		return
+			// 	}
+			// 	log.Printf("client heartbeat connection, id: %s", clientID)
+			// 	writeDie := make(chan bool)
+			// 	readDie := make(chan bool)
+			// 	go func() {
+			// 		for {
+			// 			inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+			// 			_, err = inConn.Write([]byte{0x00})
+			// 			inConn.SetWriteDeadline(time.Time{})
+			// 			if err != nil {
+			// 				log.Printf("client heartbeat connection write err %s", err)
+			// 				break
+			// 			}
+			// 			time.Sleep(time.Second * 3)
+			// 		}
+			// 		close(writeDie)
+			// 	}()
+			// 	go func() {
+			// 		for {
+			// 			signal := make([]byte, 1)
+			// 			inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
+			// 			_, err := inConn.Read(signal)
+			// 			inConn.SetReadDeadline(time.Time{})
+			// 			if err != nil {
+			// 				log.Printf("client control connection read err: %s", err)
+			// 				break
+			// 			} else {
+			// 				// log.Printf("heartbeat from client ,id:%s", clientID)
+			// 			}
+			// 		}
+			// 		close(readDie)
+			// 	}()
+			// 	select {
+			// 	case <-readDie:
+			// 	case <-writeDie:
+			// 	}
+			// 	utils.CloseConn(&inConn)
+			// 	s.cmClient.Remove(clientID)
+			// 	if s.clientControlConns.Has(clientID) {
+			// 		item, _ := s.clientControlConns.Get(clientID)
+			// 		(*item.(*net.Conn)).Close()
+			// 	}
+			// 	s.clientControlConns.Remove(clientID)
+			// 	log.Printf("client heartbeat conn %s released", clientID)
 		}
 	})
 	if err != nil {

@@ -16,6 +16,8 @@ const (
 	CONN_SERVER_HEARBEAT = uint8(3)
 	CONN_SERVER          = uint8(4)
 	CONN_CLIENT          = uint8(5)
+	CONN_SERVER_MUX      = uint8(6)
+	CONN_CLIENT_MUX      = uint8(7)
 )
 
 type TunnelServerArgs struct {
@@ -31,6 +33,7 @@ type TunnelServerArgs struct {
 	Timeout   *int
 	Route     *[]string
 	Mgr       *TunnelServerManager
+	Mux       *bool
 }
 type TunnelClientArgs struct {
 	Parent    *string
@@ -40,6 +43,7 @@ type TunnelClientArgs struct {
 	KeyBytes  []byte
 	Key       *string
 	Timeout   *int
+	Mux       *bool
 }
 type TunnelBridgeArgs struct {
 	Parent    *string
@@ -49,6 +53,7 @@ type TunnelBridgeArgs struct {
 	KeyBytes  []byte
 	Local     *string
 	Timeout   *int
+	Mux       *bool
 }
 type TCPArgs struct {
 	Parent              *string

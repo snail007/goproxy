@@ -102,6 +102,7 @@ func initConfig() (err error) {
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
 	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as :PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	tunnelServerArgs.Mux = tunnelServer.Flag("mux", "use multiplexing mode").Default("false").Bool()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")
@@ -110,6 +111,7 @@ func initConfig() (err error) {
 	tunnelClientArgs.KeyFile = tunnelClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	tunnelClientArgs.Timeout = tunnelClient.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelClientArgs.Key = tunnelClient.Flag("k", "key same with server").Default("default").String()
+	tunnelClientArgs.Mux = tunnelClient.Flag("mux", "use multiplexing mode").Default("false").Bool()
 
 	//########tunnel-bridge#########
 	tunnelBridge := app.Command("tbridge", "proxy on tunnel bridge mode")
@@ -117,6 +119,7 @@ func initConfig() (err error) {
 	tunnelBridgeArgs.KeyFile = tunnelBridge.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	tunnelBridgeArgs.Timeout = tunnelBridge.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelBridgeArgs.Local = tunnelBridge.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	tunnelBridgeArgs.Mux = tunnelBridge.Flag("mux", "use multiplexing mode").Default("false").Bool()
 
 	//########ssh#########
 	socks := app.Command("socks", "proxy on ssh mode")
