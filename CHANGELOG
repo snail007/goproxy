@@ -1,4 +1,8 @@
 proxy更新日志
+v3.7
+1.修复了socks代理不能正常和上级代理通讯的问题.
+
+
 v3.6
 1.http(s),socks代理,集成了外部HTTP API认证,可以通过外部API对用户名和密码进行认证.
 2.手册http(s),socks代理认证部分增加了集成外部HTTP API认证的使用说明.

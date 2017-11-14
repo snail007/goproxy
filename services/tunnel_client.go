@@ -11,79 +11,80 @@ import (
 )
 
 type TunnelClient struct {
-	cfg      TunnelClientArgs
-	cm       utils.ConnManager
+	cfg TunnelClientArgs
+	// cm       utils.ConnManager
 	ctrlConn net.Conn
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
 		cfg: TunnelClientArgs{},
-		cm:  utils.NewConnManager(),
+		// cm:  utils.NewConnManager(),
 	}
 }
 
 func (s *TunnelClient) InitService() {
-	s.InitHeartbeatDeamon()
+	// s.InitHeartbeatDeamon()
 }
-func (s *TunnelClient) InitHeartbeatDeamon() {
-	log.Printf("heartbeat started")
-	go func() {
-		var heartbeatConn net.Conn
-		var ID = *s.cfg.Key
-		for {
 
-			//close all connection
-			s.cm.RemoveAll()
-			if s.ctrlConn != nil {
-				s.ctrlConn.Close()
-			}
-			utils.CloseConn(&heartbeatConn)
-			heartbeatConn, err := s.GetInConn(CONN_CLIENT_HEARBEAT, ID)
-			if err != nil {
-				log.Printf("heartbeat connection err: %s, retrying...", err)
-				time.Sleep(time.Second * 3)
-				utils.CloseConn(&heartbeatConn)
-				continue
-			}
-			log.Printf("heartbeat connection created,id:%s", ID)
-			writeDie := make(chan bool)
-			readDie := make(chan bool)
-			go func() {
-				for {
-					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-					_, err = heartbeatConn.Write([]byte{0x00})
-					heartbeatConn.SetWriteDeadline(time.Time{})
-					if err != nil {
-						log.Printf("heartbeat connection write err %s", err)
-						break
-					}
-					time.Sleep(time.Second * 3)
-				}
-				close(writeDie)
-			}()
-			go func() {
-				for {
-					signal := make([]byte, 1)
-					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-					_, err := heartbeatConn.Read(signal)
-					heartbeatConn.SetReadDeadline(time.Time{})
-					if err != nil {
-						log.Printf("heartbeat connection read err: %s", err)
-						break
-					} else {
-						//log.Printf("heartbeat from bridge")
-					}
-				}
-				close(readDie)
-			}()
-			select {
-			case <-readDie:
-			case <-writeDie:
-			}
-		}
-	}()
-}
+// func (s *TunnelClient) InitHeartbeatDeamon() {
+// 	log.Printf("heartbeat started")
+// 	go func() {
+// 		var heartbeatConn net.Conn
+// 		var ID = *s.cfg.Key
+// 		for {
+
+// 			//close all connection
+// 			s.cm.RemoveAll()
+// 			if s.ctrlConn != nil {
+// 				s.ctrlConn.Close()
+// 			}
+// 			utils.CloseConn(&heartbeatConn)
+// 			heartbeatConn, err := s.GetInConn(CONN_CLIENT_HEARBEAT, ID)
+// 			if err != nil {
+// 				log.Printf("heartbeat connection err: %s, retrying...", err)
+// 				time.Sleep(time.Second * 3)
+// 				utils.CloseConn(&heartbeatConn)
+// 				continue
+// 			}
+// 			log.Printf("heartbeat connection created,id:%s", ID)
+// 			writeDie := make(chan bool)
+// 			readDie := make(chan bool)
+// 			go func() {
+// 				for {
+// 					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+// 					_, err = heartbeatConn.Write([]byte{0x00})
+// 					heartbeatConn.SetWriteDeadline(time.Time{})
+// 					if err != nil {
+// 						log.Printf("heartbeat connection write err %s", err)
+// 						break
+// 					}
+// 					time.Sleep(time.Second * 3)
+// 				}
+// 				close(writeDie)
+// 			}()
+// 			go func() {
+// 				for {
+// 					signal := make([]byte, 1)
+// 					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
+// 					_, err := heartbeatConn.Read(signal)
+// 					heartbeatConn.SetReadDeadline(time.Time{})
+// 					if err != nil {
+// 						log.Printf("heartbeat connection read err: %s", err)
+// 						break
+// 					} else {
+// 						//log.Printf("heartbeat from bridge")
+// 					}
+// 				}
+// 				close(readDie)
+// 			}()
+// 			select {
+// 			case <-readDie:
+// 			case <-writeDie:
+// 			}
+// 		}
+// 	}()
+// }
 func (s *TunnelClient) CheckArgs() {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
@@ -96,7 +97,7 @@ func (s *TunnelClient) CheckArgs() {
 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *TunnelClient) StopService() {
-	s.cm.RemoveAll()
+	// s.cm.RemoveAll()
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
@@ -106,7 +107,7 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 
 	for {
 		//close all conn
-		s.cm.Remove(*s.cfg.Key)
+		// s.cm.Remove(*s.cfg.Key)
 		if s.ctrlConn != nil {
 			s.ctrlConn.Close()
 		}
@@ -171,7 +172,7 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	var err error
 	// for {
 	for {
-		s.cm.RemoveOne(*s.cfg.Key, ID)
+		// s.cm.RemoveOne(*s.cfg.Key, ID)
 		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
@@ -182,7 +183,7 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 			break
 		}
 	}
-	s.cm.Add(*s.cfg.Key, ID, &inConn)
+	// s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
 
 	for {
@@ -275,8 +276,8 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	}
 	utils.IoBind(inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s released", ID)
-		s.cm.RemoveOne(*s.cfg.Key, ID)
+		// s.cm.RemoveOne(*s.cfg.Key, ID)
 	})
-	s.cm.Add(*s.cfg.Key, ID, &inConn)
+	// s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
 }

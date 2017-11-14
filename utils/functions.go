@@ -42,7 +42,8 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 					log.Printf("bind crashed %s", err)
 				}
 			}()
-			_, err := io.Copy(dst, src)
+			//_, err := io.Copy(dst, src)
+			err := ioCopy(dst, src)
 			e1 <- err
 		}()
 		go func() {
@@ -51,7 +52,8 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 					log.Printf("bind crashed %s", err)
 				}
 			}()
-			_, err := io.Copy(src, dst)
+			//_, err := io.Copy(src, dst)
+			err := ioCopy(src, dst)
 			e2 <- err
 		}()
 		var err interface{}

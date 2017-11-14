@@ -26,7 +26,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v3.6手册,其他版本手册请点击下面链接查看.  
+本页是v3.6-v3.7手册,其他版本手册请点击下面链接查看.  
 - [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
 - [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
 - [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
@@ -122,7 +122,7 @@ wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_li
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v3.6/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v3.7/proxy-linux-amd64.tar.gz  
 ```  
 #### **3.下载自动安装脚本**  
 ```shell  

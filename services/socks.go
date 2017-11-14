@@ -492,11 +492,11 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			err = fmt.Errorf("write req detail fail,%s", err)
 			return
 		}
-		// _, err = outConn.Read(buf)
-		// if err != nil {
-		// 	err = fmt.Errorf("read req reply fail,%s", err)
-		// 	return
-		// }
+		_, err = outConn.Read(buf)
+		if err != nil {
+			err = fmt.Errorf("read req reply fail,%s", err)
+			return
+		}
 		//result := buf[:n]
 		//log.Printf("result:%v", result)
 
