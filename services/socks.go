@@ -449,9 +449,8 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 
 	log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
-		log.Printf("conn %s - %s released,%s", inAddr, request.Addr(), err)
+		log.Printf("conn %s - %s released", inAddr, request.Addr())
 	})
-	select {}
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
@@ -493,11 +492,11 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			err = fmt.Errorf("write req detail fail,%s", err)
 			return
 		}
-		// _, err = outConn.Read(buf)
-		// if err != nil {
-		// 	err = fmt.Errorf("read req reply fail,%s", err)
-		// 	return
-		// }
+		_, err = outConn.Read(buf)
+		if err != nil {
+			err = fmt.Errorf("read req reply fail,%s", err)
+			return
+		}
 		//result := buf[:n]
 		//log.Printf("result:%v", result)
 
