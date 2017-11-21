@@ -14,7 +14,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 多协议支持,支持HTTP(S),TCP,UDP,Websocket,SOCKS5代理.  
 - 支持内网穿透,协议支持TCP和UDP.  
 - SSH中转,HTTP(S),SOCKS5代理支持SSH中转,上级Linux服务器不需要任何服务端,本地一个proxy即可开心上网.  
-- 支持[KCP](https://github.com/xtaci/kcp-go)协议,HTTP(S),SOCKS5代理支持KCP协议传输数据,降低延迟,提升浏览体验.  
+- [KCP](https://github.com/xtaci/kcp-go)协议支持,HTTP(S),SOCKS5代理支持KCP协议传输数据,降低延迟,提升浏览体验.  
+- 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
   
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
