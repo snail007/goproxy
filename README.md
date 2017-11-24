@@ -403,7 +403,7 @@ VPS(IP:22.22.22.33)执行:
     `./proxy tserver --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-    `./proxy tclient --udp -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
