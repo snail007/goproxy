@@ -27,7 +27,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v3.6-v3.7手册,其他版本手册请点击下面链接查看.  
+本页是v3.8手册,其他版本手册请点击下面链接查看.  
+- [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
 - [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
 - [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
 - [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
@@ -46,6 +47,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 ### 首次使用必看
 - [环境](#首次使用必看-1)
 - [使用配置文件](#使用配置文件)
+- [调试输出](#调试输出)
+- [使用日志文件](#使用日志文件)
 - [后台运行](#后台运行)
 - [生成通讯证书文件](#生成加密通讯需要的证书文件)
 - [安全建议](#安全建议)
@@ -150,26 +153,33 @@ http
 --local-type=tcp
 --local=:33080
 ```
-### 生成加密通讯需要的证书文件  
-  
+### **调试输出**   
+默认情况下,日志输出的信息不包含文件行数,某些情况下为了排除程序问题,快速定位问题,  
+可以使用--debug参数,输出代码行数和毫秒时间.  
+
+### **使用日志文件**   
+默认情况下,日志输出的信息不包含文件行数,某些情况下为了排除程序问题,快速定位问题,  
+可以使用--debug参数,输出代码行数和毫秒时间.  
+
+### **生成加密通讯需要的证书文件**  
 http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,当然可以选择不加密通信通讯,本教程所有和上级通讯都采用加密,需要证书文件.  
 在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.  
 `./proxy keygen`  
 默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
   
-### 后台运行
+### **后台运行**
 默认执行proxy之后,如果要保持proxy运行,不能关闭命令行.  
 如果想在后台运行proxy,命令行可以关闭,只需要在命令最后加上--daemon参数即可.  
 比如:  
 `./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
 更推荐用monexec守护运行proxy比较好.  
 
-### 安全建议
+### **安全建议**
 当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
 假设你的vps外网ip是23.23.23.23,下面命令通过-g参数设置23.23.23.23  
 `./proxy http -g "23.23.23.23"`  
 
-### 1.HTTP代理  
+### **1.HTTP代理**  
 #### **1.1.普通HTTP代理**  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
@@ -255,7 +265,7 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 #### **1.9.查看帮助**  
 `./proxy help http`  
   
-### 2.TCP代理  
+### **2.TCP代理**  
   
 #### **2.1.普通一级TCP代理**  
 本地执行:  
@@ -297,7 +307,7 @@ VPS(IP:22.22.22.33)执行:
 #### **2.6.查看帮助**  
 `./proxy help tcp`  
   
-### 3.UDP代理  
+### **3.UDP代理**  
   
 #### **3.1.普通一级UDP代理**  
 本地执行:  
@@ -339,7 +349,7 @@ VPS(IP:22.22.22.33)执行:
 #### **3.6.查看帮助**  
 `./proxy help udp`  
   
-### 4.内网穿透  
+### **4.内网穿透**  
 #### **4.1、原理说明**  
 内网穿透,由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.  
 当用户访问server端,流程是:  
@@ -473,7 +483,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help tserver`  
 `./proxy help tserver`  
   
-### 5.SOCKS5代理  
+### **5.SOCKS5代理**  
 提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
 #### **5.1.普通SOCKS5代理**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
