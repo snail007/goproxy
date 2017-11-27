@@ -38,6 +38,8 @@ func initConfig() (err error) {
 	app.Author("snail").Version(APP_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
+	logfile := app.Flag("log", "log file path").Default("").String()
+
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
 	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
@@ -171,7 +173,16 @@ func initConfig() (err error) {
 		flags |= log.Ltime
 	}
 	log.SetFlags(flags)
-	poster()
+
+	if *logfile != "" {
+		f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+		if e != nil {
+			log.Fatal(e)
+		}
+		log.SetOutput(f)
+	} else {
+		poster()
+	}
 	//regist services and run service
 	services.Regist("http", services.NewHTTP(), httpArgs)
 	services.Regist("tcp", services.NewTCP(), tcpArgs)
