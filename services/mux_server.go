@@ -11,12 +11,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type MuxServer struct {
-	cfg    MuxServerArgs
-	udpChn chan MuxUDPItem
-	sc     utils.ServerChannel
+	cfg            MuxServerArgs
+	udpChn         chan MuxUDPItem
+	sc             utils.ServerChannel
+	underLayerConn net.Conn
+	session        *smux.Session
 }
 
 type MuxServerManager struct {
@@ -100,86 +104,9 @@ func (s *MuxServerManager) CheckArgs() {
 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *MuxServerManager) InitService() {
-	// s.InitHeartbeatDeamon()
+
 }
 
-// func (s *MuxServerManager) InitHeartbeatDeamon() {
-// 	log.Printf("heartbeat started")
-// 	go func() {
-// 		var heartbeatConn net.Conn
-// 		var ID string
-// 		for {
-// 			//close all connection
-// 			s.cm.Remove(ID)
-// 			utils.CloseConn(&heartbeatConn)
-// 			heartbeatConn, ID, err := s.GetOutConn(CONN_SERVER_HEARBEAT)
-// 			if err != nil {
-// 				log.Printf("heartbeat connection err: %s, retrying...", err)
-// 				time.Sleep(time.Second * 3)
-// 				utils.CloseConn(&heartbeatConn)
-// 				continue
-// 			}
-// 			log.Printf("heartbeat connection created,id:%s", ID)
-// 			writeDie := make(chan bool)
-// 			readDie := make(chan bool)
-// 			go func() {
-// 				for {
-// 					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-// 					_, err = heartbeatConn.Write([]byte{0x00})
-// 					heartbeatConn.SetWriteDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection write err %s", err)
-// 						break
-// 					}
-// 					time.Sleep(time.Second * 3)
-// 				}
-// 				close(writeDie)
-// 			}()
-// 			go func() {
-// 				for {
-// 					signal := make([]byte, 1)
-// 					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-// 					_, err := heartbeatConn.Read(signal)
-// 					heartbeatConn.SetReadDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection read err: %s", err)
-// 						break
-// 					} else {
-// 						// log.Printf("heartbeat from bridge")
-// 					}
-// 				}
-// 				close(readDie)
-// 			}()
-// 			select {
-// 			case <-readDie:
-// 			case <-writeDie:
-// 			}
-// 		}
-// 	}()
-// }
-func (s *MuxServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
-	outConn, err = s.GetConn()
-	if err != nil {
-		log.Printf("connection err: %s", err)
-		return
-	}
-	ID = s.serverID
-	_, err = outConn.Write(utils.BuildPacket(typ, s.serverID))
-	if err != nil {
-		log.Printf("write connection data err: %s ,retrying...", err)
-		utils.CloseConn(&outConn)
-		return
-	}
-	return
-}
-func (s *MuxServerManager) GetConn() (conn net.Conn, err error) {
-	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
-	if err == nil {
-		conn = net.Conn(&_conn)
-	}
-	return
-}
 func NewMuxServer() Service {
 	return &MuxServer{
 		cfg:    MuxServerArgs{},
