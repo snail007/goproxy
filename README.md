@@ -168,12 +168,12 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 比如:  
 `./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
 
-### **守护运行**
+### **守护运行**  
 守护运行参数--forever,比如: `proxy http --forever` ,  
 proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后重启子进程.  
 该参数配合后台运行参数--daemon和日志参数--log,可以保障proxy一直在后台执行不会因为意外退出,  
 而且可以通过日志文件看到proxy的输出日志内容.  
-比如: `proxy http -p ":9090" --forever --log proxy.log --daemon`
+比如: `proxy http -p ":9090" --forever --log proxy.log --daemon`  
 
 ### **安全建议**
 当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
