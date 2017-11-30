@@ -20,6 +20,38 @@ const (
 	CONN_CLIENT_MUX      = uint8(7)
 )
 
+type MuxServerArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Local     *string
+	IsUDP     *bool
+	Key       *string
+	Remote    *string
+	Timeout   *int
+	Route     *[]string
+	Mgr       *MuxServerManager
+}
+type MuxClientArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Key       *string
+	Timeout   *int
+}
+type MuxBridgeArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Local     *string
+	Timeout   *int
+}
 type TunnelServerArgs struct {
 	Parent    *string
 	CertFile  *string
