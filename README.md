@@ -27,7 +27,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v3.8手册,其他版本手册请点击下面链接查看.  
+本页是v3.9手册,其他版本手册请点击下面链接查看.  
+- [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
 - [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
 - [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
 - [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
@@ -50,6 +51,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - [调试输出](#调试输出)
 - [使用日志文件](#使用日志文件)
 - [后台运行](#后台运行)
+- [守护运行](#守护运行)
 - [生成通讯证书文件](#生成加密通讯需要的证书文件)
 - [安全建议](#安全建议)
 
@@ -165,7 +167,13 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 如果想在后台运行proxy,命令行可以关闭,只需要在命令最后加上--daemon参数即可.  
 比如:  
 `./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
-更推荐用monexec守护运行proxy比较好.  
+
+### **守护运行**
+守护运行参数--forever,比如: `proxy http --forever` ,  
+proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后重启子进程.  
+该参数配合后台运行参数--daemon和日志参数--log,可以保障proxy一直在后台执行不会因为意外退出,  
+而且可以通过日志文件看到proxy的输出日志内容.  
+比如: `proxy http -p ":9090" --forever --log proxy.log --daemon`
 
 ### **安全建议**
 当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
