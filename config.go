@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"proxy/services"
 	"proxy/utils"
+	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -14,6 +16,7 @@ import (
 var (
 	app     *kingpin.Application
 	service *services.ServiceItem
+	cmd     *exec.Cmd
 )
 
 func initConfig() (err error) {
@@ -38,6 +41,7 @@ func initConfig() (err error) {
 	app.Author("snail").Version(APP_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
+	forever := app.Flag("forever", "run proxy in forever,fail and retry").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
 
 	//########http#########
@@ -155,18 +159,6 @@ func initConfig() (err error) {
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 	flags := log.Ldate
-	if *daemon {
-		args := []string{}
-		for _, arg := range os.Args[1:] {
-			if arg != "--daemon" {
-				args = append(args, arg)
-			}
-		}
-		cmd := exec.Command(os.Args[0], args...)
-		cmd.Start()
-		fmt.Printf("%s [PID] %d running...\n", os.Args[0], cmd.Process.Pid)
-		os.Exit(0)
-	}
 	if *debug {
 		flags |= log.Lshortfile | log.Lmicroseconds
 	} else {
@@ -180,7 +172,75 @@ func initConfig() (err error) {
 			log.Fatal(e)
 		}
 		log.SetOutput(f)
-	} else {
+	}
+	if *daemon {
+		args := []string{}
+		for _, arg := range os.Args[1:] {
+			if arg != "--daemon" {
+				args = append(args, arg)
+			}
+		}
+		cmd = exec.Command(os.Args[0], args...)
+		cmd.Start()
+		f := ""
+		if *forever {
+			f = "forever "
+		}
+		log.Printf("%s%s [PID] %d running...\n", f, os.Args[0], cmd.Process.Pid)
+		os.Exit(0)
+	}
+	if *forever {
+		args := []string{}
+		for _, arg := range os.Args[1:] {
+			if arg != "--forever" {
+				args = append(args, arg)
+			}
+		}
+		go func() {
+			for {
+				if cmd != nil {
+					cmd.Process.Kill()
+				}
+				cmd = exec.Command(os.Args[0], args...)
+				cmdReaderStderr, err := cmd.StderrPipe()
+				if err != nil {
+					log.Printf("ERR:%s,restarting...\n", err)
+					continue
+				}
+				cmdReader, err := cmd.StdoutPipe()
+				if err != nil {
+					log.Printf("ERR:%s,restarting...\n", err)
+					continue
+				}
+				scanner := bufio.NewScanner(cmdReader)
+				scannerStdErr := bufio.NewScanner(cmdReaderStderr)
+				go func() {
+					for scanner.Scan() {
+						fmt.Println(scanner.Text())
+					}
+				}()
+				go func() {
+					for scannerStdErr.Scan() {
+						fmt.Println(scannerStdErr.Text())
+					}
+				}()
+				if err := cmd.Start(); err != nil {
+					log.Printf("ERR:%s,restarting...\n", err)
+					continue
+				}
+				pid := cmd.Process.Pid
+				log.Printf("worker %s [PID] %d running...\n", os.Args[0], pid)
+				if err := cmd.Wait(); err != nil {
+					log.Printf("ERR:%s,restarting...", err)
+					continue
+				}
+				log.Printf("%s [PID] %d unexpected exited, restarting...\n", os.Args[0], pid)
+				time.Sleep(time.Second * 5)
+			}
+		}()
+		return
+	}
+	if *logfile == "" {
 		poster()
 	}
 	//regist services and run service

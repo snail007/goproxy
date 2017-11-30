@@ -112,23 +112,15 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 安装完成,配置目录是/etc/proxy,更详细的使用方法参考下面的进一步了解.  
 如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
   
-#### 手动安装
-#### **1.登录你的VPS,下载守护进程monexec,选择合适你的版本,vps一般选择"linux_amd64.tar.gz"的即可.**  
-下载地址:https://github.com/reddec/monexec/releases  
-比如下载到/root/proxy/  
-执行:  
-```shell  
-mkdir /root/proxy/  
-cd /root/proxy/  
-wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz  
-```  
-#### **2.下载proxy**  
+#### 手动安装  
+
+#### **1.下载proxy**  
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v3.8/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v3.9/proxy-linux-amd64.tar.gz  
 ```  
-#### **3.下载自动安装脚本**  
+#### **2.下载自动安装脚本**  
 ```shell  
 cd /root/proxy/  
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
