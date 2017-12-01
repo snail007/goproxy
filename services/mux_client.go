@@ -74,20 +74,23 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 				time.Sleep(time.Second * 3)
 				break
 			}
-			var ID, clientLocalAddr, serverID string
-			err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
-			if err != nil {
-				log.Printf("read connection signal err: %s, retrying...", err)
-				break
-			}
-			log.Printf("signal revecived:%s %s %s", serverID, ID, clientLocalAddr)
-			protocol := clientLocalAddr[:3]
-			localAddr := clientLocalAddr[4:]
-			if protocol == "udp" {
-				go s.ServeUDP(stream, localAddr, ID)
-			} else {
-				go s.ServeConn(stream, localAddr, ID)
-			}
+			go func() {
+				var ID, clientLocalAddr, serverID string
+				err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
+				if err != nil {
+					log.Printf("read stream signal err: %s", err)
+					stream.Close()
+					return
+				}
+				log.Printf("signal revecived:%s %s %s", serverID, ID, clientLocalAddr)
+				protocol := clientLocalAddr[:3]
+				localAddr := clientLocalAddr[4:]
+				if protocol == "udp" {
+					s.ServeUDP(stream, localAddr, ID)
+				} else {
+					s.ServeConn(stream, localAddr, ID)
+				}
+			}()
 		}
 	}
 

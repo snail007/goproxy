@@ -131,8 +131,20 @@ func (s *MuxBridge) callback(inConn net.Conn, key string) {
 				continue
 			}
 			log.Printf("server stream %s created", ID)
-			go io.Copy(stream, inConn)
-			io.Copy(inConn, stream)
+			die1 := make(chan bool, 1)
+			die2 := make(chan bool, 1)
+			go func() {
+				io.Copy(stream, inConn)
+				die1 <- true
+			}()
+			go func() {
+				io.Copy(inConn, stream)
+				die2 <- true
+			}()
+			select {
+			case <-die1:
+			case <-die2:
+			}
 			stream.Close()
 			inConn.Close()
 			log.Printf("server stream %s released", ID)
