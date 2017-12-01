@@ -12,7 +12,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +19,7 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
+	"proxy/utils/id"
 	"strconv"
 	"strings"
 	"time"
@@ -301,9 +301,10 @@ func ReadUDPPacket(_reader io.Reader) (srcAddr string, packet []byte, err error)
 	return
 }
 func Uniqueid() string {
-	var src = rand.NewSource(time.Now().UnixNano())
-	s := fmt.Sprintf("%d", src.Int63())
-	return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
+	return xid.New().String()
+	// var src = rand.NewSource(time.Now().UnixNano())
+	// s := fmt.Sprintf("%d", src.Int63())
+	// return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
 }
 func ReadData(r io.Reader) (data string, err error) {
 	var len uint16
