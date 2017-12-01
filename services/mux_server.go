@@ -3,7 +3,6 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"proxy/utils"
@@ -16,11 +15,11 @@ import (
 )
 
 type MuxServer struct {
-	cfg            MuxServerArgs
-	udpChn         chan MuxUDPItem
-	sc             utils.ServerChannel
-	underLayerConn net.Conn
-	session        *smux.Session
+	cfg     MuxServerArgs
+	udpChn  chan MuxUDPItem
+	sc      utils.ServerChannel
+	session *smux.Session
+	lockChn chan bool
 }
 
 type MuxServerManager struct {
@@ -28,7 +27,6 @@ type MuxServerManager struct {
 	udpChn   chan MuxUDPItem
 	sc       utils.ServerChannel
 	serverID string
-	// cm       utils.ConnManager
 }
 
 func NewMuxServerManager() Service {
@@ -36,7 +34,6 @@ func NewMuxServerManager() Service {
 		cfg:      MuxServerArgs{},
 		udpChn:   make(chan MuxUDPItem, 50000),
 		serverID: utils.Uniqueid(),
-		// cm:       utils.NewConnManager(),
 	}
 }
 func (s *MuxServerManager) Start(args interface{}) (err error) {
@@ -53,6 +50,9 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
 	for _, _info := range *s.cfg.Route {
+		if _info == "" {
+			continue
+		}
 		IsUDP := *s.cfg.IsUDP
 		if strings.HasPrefix(_info, "udp://") {
 			IsUDP = true
@@ -95,7 +95,6 @@ func (s *MuxServerManager) Clean() {
 	s.StopService()
 }
 func (s *MuxServerManager) StopService() {
-	// s.cm.RemoveAll()
 }
 func (s *MuxServerManager) CheckArgs() {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
@@ -104,13 +103,13 @@ func (s *MuxServerManager) CheckArgs() {
 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
 func (s *MuxServerManager) InitService() {
-
 }
 
 func NewMuxServer() Service {
 	return &MuxServer{
-		cfg:    MuxServerArgs{},
-		udpChn: make(chan MuxUDPItem, 50000),
+		cfg:     MuxServerArgs{},
+		udpChn:  make(chan MuxUDPItem, 50000),
+		lockChn: make(chan bool, 1),
 	}
 }
 
@@ -147,18 +146,18 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on udp tunnel server mode %s", (*s.sc.UDPListener).LocalAddr())
+		log.Printf("proxy on udp mux server mode %s", (*s.sc.UDPListener).LocalAddr())
 	} else {
 		err = s.sc.ListenTCP(func(inConn net.Conn) {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Printf("tserver conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+					log.Printf("server conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 				}
 			}()
 			var outConn net.Conn
 			var ID string
 			for {
-				outConn, ID, err = s.GetOutConn(CONN_SERVER)
+				outConn, ID, err = s.GetOutConn()
 				if err != nil {
 					utils.CloseConn(&outConn)
 					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
@@ -169,24 +168,22 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				}
 			}
 			utils.IoBind(inConn, outConn, func(err interface{}) {
-				// s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			})
 			//add conn
-			// s.cfg.Mgr.cm.Add(s.cfg.Mgr.serverID, ID, &inConn)
 			log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on tunnel server mode %s", (*s.sc.Listener).Addr())
+		log.Printf("proxy on mux server mode %s", (*s.sc.Listener).Addr())
 	}
 	return
 }
 func (s *MuxServer) Clean() {
 
 }
-func (s *MuxServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
+func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		log.Printf("connection err: %s", err)
@@ -197,7 +194,7 @@ func (s *MuxServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err erro
 		remoteAddr = "udp:" + *s.cfg.Remote
 	}
 	ID = utils.Uniqueid()
-	_, err = outConn.Write(utils.BuildPacket(typ, *s.cfg.Key, ID, remoteAddr, s.cfg.Mgr.serverID))
+	_, err = outConn.Write(utils.BuildPacketData(ID, remoteAddr, s.cfg.Mgr.serverID))
 	if err != nil {
 		log.Printf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
@@ -206,11 +203,43 @@ func (s *MuxServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err erro
 	return
 }
 func (s *MuxServer) GetConn() (conn net.Conn, err error) {
-	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
-	if err == nil {
-		conn = net.Conn(&_conn)
+	select {
+	case s.lockChn <- true:
+	default:
+		err = fmt.Errorf("can not connect at same time")
+		return
 	}
+	defer func() {
+		<-s.lockChn
+	}()
+	if s.session == nil {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+		if err != nil {
+			s.session = nil
+			return
+		}
+		c := net.Conn(&_conn)
+		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key))
+		if err != nil {
+			c.Close()
+			s.session = nil
+			return
+		}
+		if err == nil {
+			s.session, err = smux.Client(c, nil)
+			if err != nil {
+				s.session = nil
+				return
+			}
+		}
+	}
+	conn, err = s.session.OpenStream()
+	if err != nil {
+		s.session.Close()
+		s.session = nil
+	}
+
 	return
 }
 func (s *MuxServer) UDPConnDeamon() {
@@ -221,18 +250,15 @@ func (s *MuxServer) UDPConnDeamon() {
 			}
 		}()
 		var outConn net.Conn
-		// var hb utils.HeartbeatReadWriter
 		var ID string
-		// var cmdChn = make(chan bool, 1000)
 		var err error
 		for {
 			item := <-s.udpChn
 		RETRY:
 			if outConn == nil {
 				for {
-					outConn, ID, err = s.GetOutConn(CONN_SERVER)
+					outConn, ID, err = s.GetOutConn()
 					if err != nil {
-						// cmdChn <- true
 						outConn = nil
 						utils.CloseConn(&outConn)
 						log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
@@ -241,18 +267,14 @@ func (s *MuxServer) UDPConnDeamon() {
 					} else {
 						go func(outConn net.Conn, ID string) {
 							go func() {
-								// <-cmdChn
 								// outConn.Close()
 							}()
 							for {
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
-								if err == io.EOF || err == io.ErrUnexpectedEOF {
-									log.Printf("UDP deamon connection %s exited", ID)
-									break
-								}
 								if err != nil {
 									log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
-									continue
+									log.Printf("UDP deamon connection %s exited", ID)
+									break
 								}
 								//log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
 								_srcAddr := strings.Split(srcAddrFromConn, ":")

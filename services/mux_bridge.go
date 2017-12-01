@@ -2,6 +2,7 @@ package services
 
 import (
 	"bufio"
+	"io"
 	"log"
 	"net"
 	"proxy/utils"
@@ -11,20 +12,14 @@ import (
 	"github.com/xtaci/smux"
 )
 
-type MuxServerConn struct {
-	//ClientLocalAddr string //tcp:2.2.22:333@ID
-	Conn *net.Conn
-}
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
-	serverConns        utils.ConcurrentMap
 	clientControlConns utils.ConcurrentMap
 }
 
 func NewMuxBridge() Service {
 	return &MuxBridge{
 		cfg:                MuxBridgeArgs{},
-		serverConns:        utils.NewConcurrentMap(),
 		clientControlConns: utils.NewConcurrentMap(),
 	}
 }
@@ -51,31 +46,46 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 
 	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, func(inConn net.Conn) {
 		reader := bufio.NewReader(inConn)
+
 		var err error
 		var connType uint8
-		err = utils.ReadPacket(reader, &connType)
+		var key string
+		err = utils.ReadPacket(reader, &connType, &key)
 		if err != nil {
 			log.Printf("read error,ERR:%s", err)
 			return
 		}
 		switch connType {
 		case CONN_SERVER:
+			log.Printf("server connection %s", key)
 			session, err := smux.Server(inConn, nil)
 			if err != nil {
 				utils.CloseConn(&inConn)
-				log.Printf("server underlayer connection error,ERR:%s", err)
+				log.Printf("server session error,ERR:%s", err)
 				return
 			}
-			conn, err := session.AcceptStream()
+			for {
+				stream, err := session.AcceptStream()
+				if err != nil {
+					session.Close()
+					utils.CloseConn(&inConn)
+					return
+				}
+				go s.callback(stream, key)
+			}
+		case CONN_CLIENT:
+
+			log.Printf("client connection %s", key)
+			session, err := smux.Client(inConn, nil)
 			if err != nil {
-				session.Close()
 				utils.CloseConn(&inConn)
+				log.Printf("client session error,ERR:%s", err)
 				return
 			}
-			log.Printf("server connection %s", conn.RemoteAddr())
-			//s.callback(conn)
+			s.clientControlConns.Set(key, session)
+			//log.Printf("set client session,key: %s", key)
 		}
-		s.callback(inConn)
+
 	})
 	if err != nil {
 		return
@@ -86,86 +96,48 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 func (s *MuxBridge) Clean() {
 	s.StopService()
 }
-func (s *MuxBridge) callback(inConn net.Conn) {
+func (s *MuxBridge) callback(inConn net.Conn, key string) {
 	reader := bufio.NewReader(inConn)
 	var err error
-	var connType uint8
-	err = utils.ReadPacket(reader, &connType)
+	var ID, clientLocalAddr, serverID string
+	err = utils.ReadPacketData(reader, &ID, &clientLocalAddr, &serverID)
 	if err != nil {
 		log.Printf("read error,ERR:%s", err)
 		return
 	}
-	switch connType {
-	case CONN_SERVER:
-		var key, ID, clientLocalAddr, serverID string
-		err = utils.ReadPacketData(reader, &key, &ID, &clientLocalAddr, &serverID)
-		if err != nil {
-			log.Printf("read error,ERR:%s", err)
-			return
+	packet := utils.BuildPacketData(ID, clientLocalAddr, serverID)
+	try := 20
+	for {
+		try--
+		if try == 0 {
+			break
 		}
-		packet := utils.BuildPacketData(ID, clientLocalAddr, serverID)
-		log.Printf("server connection, key: %s , id: %s %s %s", key, ID, clientLocalAddr, serverID)
-
-		//addr := clientLocalAddr + "@" + ID
-		s.serverConns.Set(ID, MuxServerConn{
-			Conn: &inConn,
-		})
-		for {
-			item, ok := s.clientControlConns.Get(key)
-			if !ok {
-				log.Printf("client %s control conn not exists", key)
-				time.Sleep(time.Second * 3)
-				continue
-			}
-			(*item.(*net.Conn)).SetWriteDeadline(time.Now().Add(time.Second * 3))
-			_, err := (*item.(*net.Conn)).Write(packet)
-			(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
-			if err != nil {
-				log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
-				time.Sleep(time.Second * 3)
-				continue
-			} else {
-				break
-			}
-		}
-	case CONN_CLIENT:
-		var key, ID, serverID string
-		err = utils.ReadPacketData(reader, &key, &ID, &serverID)
-		if err != nil {
-			log.Printf("read error,ERR:%s", err)
-			return
-		}
-		log.Printf("client connection , key: %s , id: %s, server id:%s", key, ID, serverID)
-
-		serverConnItem, ok := s.serverConns.Get(ID)
+		session, ok := s.clientControlConns.Get(key)
 		if !ok {
-			inConn.Close()
-			log.Printf("server conn %s exists", ID)
-			return
+			log.Printf("client %s session not exists", key)
+			time.Sleep(time.Second * 3)
+			continue
 		}
-		serverConn := serverConnItem.(MuxServerConn).Conn
-		utils.IoBind(*serverConn, inConn, func(err interface{}) {
-			s.serverConns.Remove(ID)
-			// s.cmClient.RemoveOne(key, ID)
-			// s.cmServer.RemoveOne(serverID, ID)
-			log.Printf("conn %s released", ID)
-		})
-		// s.cmClient.Add(key, ID, &inConn)
-		log.Printf("conn %s created", ID)
-
-	case CONN_CLIENT_CONTROL:
-		var key string
-		err = utils.ReadPacketData(reader, &key)
+		stream, err := session.(*smux.Session).OpenStream()
 		if err != nil {
-			log.Printf("read error,ERR:%s", err)
-			return
+			log.Printf("%s client session open stream fail, err: %s, retrying...", key, err)
+			time.Sleep(time.Second * 3)
+			continue
+		} else {
+			_, err := stream.Write(packet)
+			if err != nil {
+				log.Printf("server %s stream write fail, err: %s, retrying...", key, err)
+				time.Sleep(time.Second * 3)
+				continue
+			}
+			log.Printf("server stream %s created", ID)
+			go io.Copy(stream, inConn)
+			io.Copy(inConn, stream)
+			stream.Close()
+			inConn.Close()
+			log.Printf("server stream %s released", ID)
+			break
 		}
-		log.Printf("client control connection, key: %s", key)
-		if s.clientControlConns.Has(key) {
-			item, _ := s.clientControlConns.Get(key)
-			(*item.(*net.Conn)).Close()
-		}
-		s.clientControlConns.Set(key, &inConn)
-		log.Printf("set client %s control conn", key)
 	}
+
 }

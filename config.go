@@ -103,17 +103,17 @@ func initConfig() (err error) {
 	udpArgs.Local = udp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
 	//########mux-server#########
-	muxServer := app.Command("server", "proxy on mux server mode")
+	muxServer := app.Command("server", "proxy on mux server mode").Hidden()
 	muxServerArgs.Parent = muxServer.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	muxServerArgs.CertFile = muxServer.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxServerArgs.KeyFile = muxServer.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxServerArgs.Timeout = muxServer.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	muxServerArgs.IsUDP = muxServer.Flag("udp", "proxy on udp mux server mode").Default("false").Bool()
 	muxServerArgs.Key = muxServer.Flag("k", "client key").Default("default").String()
-	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as :PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 
 	//########mux-client#########
-	muxClient := app.Command("client", "proxy on mux client mode")
+	muxClient := app.Command("client", "proxy on mux client mode").Hidden()
 	muxClientArgs.Parent = muxClient.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	muxClientArgs.CertFile = muxClient.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxClientArgs.KeyFile = muxClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -121,7 +121,7 @@ func initConfig() (err error) {
 	muxClientArgs.Key = muxClient.Flag("k", "key same with server").Default("default").String()
 
 	//########mux-bridge#########
-	muxBridge := app.Command("bridge", "proxy on mux bridge mode")
+	muxBridge := app.Command("bridge", "proxy on mux bridge mode").Hidden()
 	muxBridgeArgs.CertFile = muxBridge.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxBridgeArgs.KeyFile = muxBridge.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxBridgeArgs.Timeout = muxBridge.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
@@ -135,7 +135,7 @@ func initConfig() (err error) {
 	tunnelServerArgs.Timeout = tunnelServer.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
-	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as :PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")
@@ -259,7 +259,7 @@ func initConfig() (err error) {
 					log.Printf("ERR:%s,restarting...", err)
 					continue
 				}
-				log.Printf("%s [PID] %d unexpected exited, restarting...\n", os.Args[0], pid)
+				log.Printf("worker %s [PID] %d unexpected exited, restarting...\n", os.Args[0], pid)
 				time.Sleep(time.Second * 5)
 			}
 		}()
