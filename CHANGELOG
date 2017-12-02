@@ -1,6 +1,8 @@
 proxy更新日志
 v4.0
-1.内网穿透三端重构了一个multiplexing版本，对应的子命令分别是server，client，bridge
+1.内网穿透三端重构了一个multiplexing版本，使用github.com/xtaci/smux实现了tcp链接的多路复用，
+  鼎鼎大名的kcp-go底层就是使用的这个库，基于kcp-go的双边加速工具kcptun的广泛使用已经很好
+  的验证来该库的强大与稳定。multiplexing版的内网穿透对应的子命令分别是server，client，bridge
   使用方式和参数与之前的子命令tserver，tclient，tserver完全一样，另外server，client增加了
   压缩传输参数--c，使用压缩传输速度更快。
 
