@@ -352,12 +352,19 @@ VPS(IP:22.22.22.33)执行:
   
 ### **4.内网穿透**  
 #### **4.1、原理说明**  
-内网穿透,由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.  
-当用户访问server端,流程是:  
-1. server主动和bridge端建立连接；  
-1. 然后bridge端通知client端连接bridge端,并连接内网目标端口;  
-1. 然后绑定client端到bridge端和client端到内网端口的连接；  
-1. 然后bridge端把client过来的连接与server端过来的连接绑定；  
+内网穿透,分为两个版本。
+1. 多链接版本，对应的子命令是tserver，tclient，tbridge。  
+1. 多路复用版本，对应的子命令是server，client，bridge。  
+1. 多链接版本和多路复用版本的参数和使用方式完全一样。  
+1. **多路复用版本的server，client可以开启压缩传输，参数是--c。**  
+1. **server，client要么都开启压缩，要么都不开启，不能只开一个。**  
+下面的教程以“多链接版本”为例子，说明使用方法。  
+内网穿透由三部分组成:tclient端,tserver端,tbridge端；tclient和tserver主动连接tbridge端进行桥接.  
+当用户访问tserver端,流程是:  
+1. tserver主动和tbridge端建立连接；  
+1. 然后tbridge端通知tclient端连接tbridge端,并连接内网目标端口;  
+1. 然后绑定tclient端到tbridge端和tclient端到内网端口的连接；  
+1. 然后tbridge端把tclient过来的连接与tserver端过来的连接绑定；  
 1. 整个通道建立完成；  
   
 #### **4.2、TCP普通用法**  
@@ -571,7 +578,6 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 
 ### TODO  
 - http,socks代理多个上级负载均衡?
-- 内网穿透增加multiplexing模式?
 - 欢迎加群反馈...
 
 ### 如何使用源码?   

@@ -1,4 +1,9 @@
 proxy更新日志
+v4.0
+1.内网穿透三端重构了一个multiplexing版本，对应的子命令分别是server，client，bridge
+  使用方式和参数与之前的子命令tserver，tclient，tserver完全一样，另外server，client增加了
+  压缩传输参数--c，使用压缩传输速度更快。
+
 v3.9
 1.增加了守护运行参数--forever,比如: proxy http --forever ,
   proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后重启子进程.

@@ -2,11 +2,13 @@ package services
 
 import (
 	"crypto/tls"
+	"io"
 	"log"
 	"net"
 	"proxy/utils"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/xtaci/smux"
 )
 
@@ -42,7 +44,7 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
 	s.CheckArgs()
 	s.InitService()
-	log.Printf("proxy on mux client mode")
+	log.Printf("proxy on mux client mode, compress %v", *s.cfg.IsCompress)
 	for {
 		var _conn tls.Conn
 		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
@@ -176,8 +178,29 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
-	utils.IoBind(inConn, outConn, func(err interface{}) {
-		log.Printf("conn %s released", ID)
-	})
+
 	log.Printf("conn %s created", ID)
+	if *s.cfg.IsCompress {
+		die1 := make(chan bool, 1)
+		die2 := make(chan bool, 1)
+		go func() {
+			io.Copy(outConn, snappy.NewReader(inConn))
+			die1 <- true
+		}()
+		go func() {
+			io.Copy(snappy.NewWriter(inConn), outConn)
+			die2 <- true
+		}()
+		select {
+		case <-die1:
+		case <-die2:
+		}
+		outConn.Close()
+		inConn.Close()
+		log.Printf("%s stream %s released", *s.cfg.Key, ID)
+	} else {
+		utils.IoBind(inConn, outConn, func(err interface{}) {
+			log.Printf("conn %s released", ID)
+		})
+	}
 }

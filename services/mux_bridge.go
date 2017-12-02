@@ -97,15 +97,6 @@ func (s *MuxBridge) Clean() {
 	s.StopService()
 }
 func (s *MuxBridge) callback(inConn net.Conn, key string) {
-	reader := bufio.NewReader(inConn)
-	var err error
-	var ID, clientLocalAddr, serverID string
-	err = utils.ReadPacketData(reader, &ID, &clientLocalAddr, &serverID)
-	if err != nil {
-		log.Printf("read error,ERR:%s", err)
-		return
-	}
-	packet := utils.BuildPacketData(ID, clientLocalAddr, serverID)
 	try := 20
 	for {
 		try--
@@ -124,13 +115,7 @@ func (s *MuxBridge) callback(inConn net.Conn, key string) {
 			time.Sleep(time.Second * 3)
 			continue
 		} else {
-			_, err := stream.Write(packet)
-			if err != nil {
-				log.Printf("server %s stream write fail, err: %s, retrying...", key, err)
-				time.Sleep(time.Second * 3)
-				continue
-			}
-			log.Printf("server stream %s created", ID)
+			log.Printf("%s stream created", key)
 			die1 := make(chan bool, 1)
 			die2 := make(chan bool, 1)
 			go func() {
@@ -147,7 +132,7 @@ func (s *MuxBridge) callback(inConn net.Conn, key string) {
 			}
 			stream.Close()
 			inConn.Close()
-			log.Printf("server stream %s released", ID)
+			log.Printf("%s stream released", key)
 			break
 		}
 	}

@@ -111,6 +111,7 @@ func initConfig() (err error) {
 	muxServerArgs.IsUDP = muxServer.Flag("udp", "proxy on udp mux server mode").Default("false").Bool()
 	muxServerArgs.Key = muxServer.Flag("k", "client key").Default("default").String()
 	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp mode").Default("false").Bool()
 
 	//########mux-client#########
 	muxClient := app.Command("client", "proxy on mux client mode").Hidden()
@@ -119,6 +120,7 @@ func initConfig() (err error) {
 	muxClientArgs.KeyFile = muxClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxClientArgs.Timeout = muxClient.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	muxClientArgs.Key = muxClient.Flag("k", "key same with server").Default("default").String()
+	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp mode").Default("false").Bool()
 
 	//########mux-bridge#########
 	muxBridge := app.Command("bridge", "proxy on mux bridge mode").Hidden()

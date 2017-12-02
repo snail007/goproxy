@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"proxy/utils"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/xtaci/smux"
 )
 
@@ -72,17 +74,18 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 			remote = fmt.Sprintf("127.0.0.1%s", remote)
 		}
 		err = server.Start(MuxServerArgs{
-			CertBytes: s.cfg.CertBytes,
-			KeyBytes:  s.cfg.KeyBytes,
-			Parent:    s.cfg.Parent,
-			CertFile:  s.cfg.CertFile,
-			KeyFile:   s.cfg.KeyFile,
-			Local:     &local,
-			IsUDP:     &IsUDP,
-			Remote:    &remote,
-			Key:       &KEY,
-			Timeout:   s.cfg.Timeout,
-			Mgr:       s,
+			CertBytes:  s.cfg.CertBytes,
+			KeyBytes:   s.cfg.KeyBytes,
+			Parent:     s.cfg.Parent,
+			CertFile:   s.cfg.CertFile,
+			KeyFile:    s.cfg.KeyFile,
+			Local:      &local,
+			IsUDP:      &IsUDP,
+			Remote:     &remote,
+			Key:        &KEY,
+			Timeout:    s.cfg.Timeout,
+			Mgr:        s,
+			IsCompress: s.cfg.IsCompress,
 		})
 
 		if err != nil {
@@ -167,16 +170,35 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-			utils.IoBind(inConn, outConn, func(err interface{}) {
-				log.Printf("%s conn %s released", *s.cfg.Key, ID)
-			})
-			//add conn
-			log.Printf("%s conn %s created", *s.cfg.Key, ID)
+			log.Printf("%s stream %s created", *s.cfg.Key, ID)
+			if *s.cfg.IsCompress {
+				die1 := make(chan bool, 1)
+				die2 := make(chan bool, 1)
+				go func() {
+					io.Copy(inConn, snappy.NewReader(outConn))
+					die1 <- true
+				}()
+				go func() {
+					io.Copy(snappy.NewWriter(outConn), inConn)
+					die2 <- true
+				}()
+				select {
+				case <-die1:
+				case <-die2:
+				}
+				outConn.Close()
+				inConn.Close()
+				log.Printf("%s stream %s released", *s.cfg.Key, ID)
+			} else {
+				utils.IoBind(inConn, outConn, func(err interface{}) {
+					log.Printf("%s conn %s released", *s.cfg.Key, ID)
+				})
+			}
 		})
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on mux server mode %s", (*s.sc.Listener).Addr())
+		log.Printf("proxy on mux server mode %s, compress %v", (*s.sc.Listener).Addr(), *s.cfg.IsCompress)
 	}
 	return
 }

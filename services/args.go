@@ -21,36 +21,39 @@ const (
 )
 
 type MuxServerArgs struct {
-	Parent    *string
-	CertFile  *string
-	KeyFile   *string
-	CertBytes []byte
-	KeyBytes  []byte
-	Local     *string
-	IsUDP     *bool
-	Key       *string
-	Remote    *string
-	Timeout   *int
-	Route     *[]string
-	Mgr       *MuxServerManager
+	Parent     *string
+	CertFile   *string
+	KeyFile    *string
+	CertBytes  []byte
+	KeyBytes   []byte
+	Local      *string
+	IsUDP      *bool
+	Key        *string
+	Remote     *string
+	Timeout    *int
+	Route      *[]string
+	Mgr        *MuxServerManager
+	IsCompress *bool
 }
 type MuxClientArgs struct {
-	Parent    *string
-	CertFile  *string
-	KeyFile   *string
-	CertBytes []byte
-	KeyBytes  []byte
-	Key       *string
-	Timeout   *int
+	Parent     *string
+	CertFile   *string
+	KeyFile    *string
+	CertBytes  []byte
+	KeyBytes   []byte
+	Key        *string
+	Timeout    *int
+	IsCompress *bool
 }
 type MuxBridgeArgs struct {
-	Parent    *string
-	CertFile  *string
-	KeyFile   *string
-	CertBytes []byte
-	KeyBytes  []byte
-	Local     *string
-	Timeout   *int
+	Parent     *string
+	CertFile   *string
+	KeyFile    *string
+	CertBytes  []byte
+	KeyBytes   []byte
+	Local      *string
+	Timeout    *int
+	IsCompress *bool
 }
 type TunnelServerArgs struct {
 	Parent    *string
