@@ -103,7 +103,7 @@ func initConfig() (err error) {
 	udpArgs.Local = udp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
 	//########mux-server#########
-	muxServer := app.Command("server", "proxy on mux server mode").Hidden()
+	muxServer := app.Command("server", "proxy on mux server mode")
 	muxServerArgs.Parent = muxServer.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	muxServerArgs.CertFile = muxServer.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxServerArgs.KeyFile = muxServer.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -114,7 +114,7 @@ func initConfig() (err error) {
 	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp mode").Default("false").Bool()
 
 	//########mux-client#########
-	muxClient := app.Command("client", "proxy on mux client mode").Hidden()
+	muxClient := app.Command("client", "proxy on mux client mode")
 	muxClientArgs.Parent = muxClient.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	muxClientArgs.CertFile = muxClient.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxClientArgs.KeyFile = muxClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -123,7 +123,7 @@ func initConfig() (err error) {
 	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp mode").Default("false").Bool()
 
 	//########mux-bridge#########
-	muxBridge := app.Command("bridge", "proxy on mux bridge mode").Hidden()
+	muxBridge := app.Command("bridge", "proxy on mux bridge mode")
 	muxBridgeArgs.CertFile = muxBridge.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxBridgeArgs.KeyFile = muxBridge.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxBridgeArgs.Timeout = muxBridge.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
