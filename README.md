@@ -357,11 +357,12 @@ VPS(IP:22.22.22.33)执行:
 1. 多链接版本，对应的子命令是tserver，tclient，tbridge。  
 1. 多路复用版本，对应的子命令是server，client，bridge。  
 1. 多链接版本和多路复用版本的参数和使用方式完全一样。  
-1. **多路复用版本的server，client可以开启压缩传输，参数是--c。**  
-1. **server，client要么都开启压缩，要么都不开启，不能只开一个。**  
-下面的教程以“多链接版本”为例子，说明使用方法。  
-内网穿透由三部分组成:tclient端,tserver端,tbridge端；tclient和tserver主动连接tbridge端进行桥接.  
-当用户访问tserver端,流程是:  
+1. **多路复用版本的server，client可以开启压缩传输，参数是--c。**   
+1. **server，client要么都开启压缩，要么都不开启，不能只开一个。**    
+
+下面的教程以“多链接版本”为例子，说明使用方法。    
+内网穿透由三部分组成:tclient端,tserver端,tbridge端；tclient和tserver主动连接tbridge端进行桥接.    
+当用户访问tserver端,流程是:   
 1. tserver主动和tbridge端建立连接；  
 1. 然后tbridge端通知tclient端连接tbridge端,并连接内网目标端口;  
 1. 然后绑定tclient端到tbridge端和tclient端到内网端口的连接；  
