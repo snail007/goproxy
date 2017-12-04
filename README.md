@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、内网穿透、SSH中转。  
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、内网穿透、TCP/UDP端口转发、SSH中转。  
   
 ---  
   
@@ -11,7 +11,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 智能HTTP,SOCKS5代理,会自动判断访问的网站是否屏蔽,如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽,为了加速访问,代理会直接访问网站,不使用上级代理.  
 - 域名黑白名单，更加自由的控制网站的访问方式。  
 - 跨平台性,无论你是widows,linux,还是mac,甚至是树莓派,都可以很好的运行proxy.  
-- 多协议支持,支持HTTP(S),TCP,UDP,Websocket,SOCKS5代理.  
+- 多协议支持,支持HTTP(S),TCP,UDP,Websocket,SOCKS5代理. 
+- TCP/UDP端口转发. 
 - 支持内网穿透,协议支持TCP和UDP.  
 - SSH中转,HTTP(S),SOCKS5代理支持SSH中转,上级Linux服务器不需要任何服务端,本地一个proxy即可开心上网.  
 - [KCP](https://github.com/xtaci/kcp-go)协议支持,HTTP(S),SOCKS5代理支持KCP协议传输数据,降低延迟,提升浏览体验.  
