@@ -154,7 +154,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		err = s.sc.ListenTCP(func(inConn net.Conn) {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Printf("server conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+					log.Printf("connection handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 				}
 			}()
 			var outConn net.Conn
@@ -191,7 +191,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				log.Printf("%s stream %s released", *s.cfg.Key, ID)
 			} else {
 				utils.IoBind(inConn, outConn, func(err interface{}) {
-					log.Printf("%s conn %s released", *s.cfg.Key, ID)
+					log.Printf("%s stream %s released", *s.cfg.Key, ID)
 				})
 			}
 		})
@@ -218,7 +218,7 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	ID = utils.Uniqueid()
 	_, err = outConn.Write(utils.BuildPacketData(ID, remoteAddr, s.cfg.Mgr.serverID))
 	if err != nil {
-		log.Printf("write connection data err: %s ,retrying...", err)
+		log.Printf("write stream data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
 		return
 	}
@@ -242,7 +242,7 @@ func (s *MuxServer) GetConn() (conn net.Conn, err error) {
 			return
 		}
 		c := net.Conn(&_conn)
-		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key))
+		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key, s.cfg.Mgr.serverID))
 		if err != nil {
 			c.Close()
 			s.session = nil

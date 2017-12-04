@@ -84,7 +84,7 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 					stream.Close()
 					return
 				}
-				log.Printf("signal revecived:%s %s %s", serverID, ID, clientLocalAddr)
+				log.Printf("signal revecived,server %s stream %s %s", serverID, ID, clientLocalAddr)
 				protocol := clientLocalAddr[:3]
 				localAddr := clientLocalAddr[4:]
 				if protocol == "udp" {
@@ -179,7 +179,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		return
 	}
 
-	log.Printf("conn %s created", ID)
+	log.Printf("stream %s created", ID)
 	if *s.cfg.IsCompress {
 		die1 := make(chan bool, 1)
 		die2 := make(chan bool, 1)
@@ -200,7 +200,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		log.Printf("%s stream %s released", *s.cfg.Key, ID)
 	} else {
 		utils.IoBind(inConn, outConn, func(err interface{}) {
-			log.Printf("conn %s released", ID)
+			log.Printf("stream %s released", ID)
 		})
 	}
 }

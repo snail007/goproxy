@@ -57,7 +57,13 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 		}
 		switch connType {
 		case CONN_SERVER:
-			log.Printf("server connection %s", key)
+			var serverID string
+			err = utils.ReadPacketData(reader, &serverID)
+			if err != nil {
+				log.Printf("read error,ERR:%s", err)
+				return
+			}
+			log.Printf("server connection %s %s connected", serverID, key)
 			session, err := smux.Server(inConn, nil)
 			if err != nil {
 				utils.CloseConn(&inConn)
@@ -71,11 +77,11 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 					utils.CloseConn(&inConn)
 					return
 				}
-				go s.callback(stream, key)
+				go s.callback(stream, serverID, key)
 			}
 		case CONN_CLIENT:
 
-			log.Printf("client connection %s", key)
+			log.Printf("client connection %s connected", key)
 			session, err := smux.Client(inConn, nil)
 			if err != nil {
 				utils.CloseConn(&inConn)
@@ -96,7 +102,7 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 func (s *MuxBridge) Clean() {
 	s.StopService()
 }
-func (s *MuxBridge) callback(inConn net.Conn, key string) {
+func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 	try := 20
 	for {
 		try--
@@ -105,17 +111,17 @@ func (s *MuxBridge) callback(inConn net.Conn, key string) {
 		}
 		session, ok := s.clientControlConns.Get(key)
 		if !ok {
-			log.Printf("client %s session not exists", key)
+			log.Printf("client %s session not exists for server stream %s", key, serverID)
 			time.Sleep(time.Second * 3)
 			continue
 		}
 		stream, err := session.(*smux.Session).OpenStream()
 		if err != nil {
-			log.Printf("%s client session open stream fail, err: %s, retrying...", key, err)
+			log.Printf("%s client session open stream %s fail, err: %s, retrying...", key, serverID, err)
 			time.Sleep(time.Second * 3)
 			continue
 		} else {
-			log.Printf("%s stream created", key)
+			log.Printf("%s server %s stream created", key, serverID)
 			die1 := make(chan bool, 1)
 			die2 := make(chan bool, 1)
 			go func() {
@@ -132,7 +138,7 @@ func (s *MuxBridge) callback(inConn net.Conn, key string) {
 			}
 			stream.Close()
 			inConn.Close()
-			log.Printf("%s stream released", key)
+			log.Printf("%s server %s stream released", key, serverID)
 			break
 		}
 	}
