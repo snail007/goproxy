@@ -91,7 +91,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [4.4 UDP普通用法](#44udp普通用法)
     - [4.5 高级用法一](#45高级用法一)
     - [4.6 高级用法一](#46高级用法二)
-    - [4.7 tserver的-r参数](#47tserver的-r参数)
+    - [4.7 server的-r参数](#47server的-r参数)
     - [4.8 查看帮助](#48查看帮助)
 - [5. SOCKS5代理](#5socks5代理)
     - [5.1 普通SOCKS5代理](#51普通socks5代理)
@@ -122,7 +122,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.0/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.1/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -361,13 +361,13 @@ VPS(IP:22.22.22.33)执行:
 1. **多路复用版本的server，client可以开启压缩传输，参数是--c。**   
 1. **server，client要么都开启压缩，要么都不开启，不能只开一个。**    
 
-下面的教程以“多链接版本”为例子，说明使用方法。    
-内网穿透由三部分组成:tclient端,tserver端,tbridge端；tclient和tserver主动连接tbridge端进行桥接.    
-当用户访问tserver端,流程是:   
-1. tserver主动和tbridge端建立连接；  
-1. 然后tbridge端通知tclient端连接tbridge端,并连接内网目标端口;  
-1. 然后绑定tclient端到tbridge端和tclient端到内网端口的连接；  
-1. 然后tbridge端把tclient过来的连接与tserver端过来的连接绑定；  
+下面的教程以“多路复用版本”为例子，说明使用方法。    
+内网穿透由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.    
+当用户访问server端,流程是:   
+1. server主动和bridge端建立连接；  
+1. 然后bridge端通知client端连接bridge端,并连接内网目标端口;  
+1. 然后绑定client端到bridge端和client端到内网端口的连接；  
+1. 然后bridge端把client过来的连接与server端过来的连接绑定；  
 1. 整个通道建立完成；  
   
 #### **4.2、TCP普通用法**  
@@ -380,11 +380,11 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `./proxy tserver -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+    `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
   
 1. 在公司机器A上面执行  
-    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
@@ -402,11 +402,11 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行,确保vps的80端口没被其它程序占用.  
-    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `./proxy tserver -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 在自己笔记本上面执行  
-    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
@@ -420,11 +420,11 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `./proxy tserver --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+    `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
   
@@ -439,13 +439,13 @@ VPS(IP:22.22.22.33)执行:
   
 步骤:  
 1. 在vps上执行  
-    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
   
 1. 在公司机器A上面执行  
-    `./proxy tclient -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
 1. 在家里电脑上执行  
-    `./proxy tserver -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+    `./proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
 1. 完成  
   
@@ -466,15 +466,15 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
   
 步骤:  
 1. 在vps上执行  
-    `./proxy tbridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `./proxy tserver -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+    `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+    `./proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-    `./proxy tclient --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key` 
+    `./proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key` 
 
 1. 完成  
   
-#### **4.7.tserver的-r参数**  
+#### **4.7.server的-r参数**  
   -r完整格式是:`PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
   
   4.7.1.协议PROTOCOL:tcp或者udp.  
@@ -490,9 +490,9 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
   4.7.3.LOCAL_IP为空默认是:`0.0.0.0`,CLIENT_LOCAL_HOST为空默认是:`127.0.0.1`; 
 
 #### **4.8.查看帮助**  
-`./proxy help tbridge`  
-`./proxy help tserver`  
-`./proxy help tserver`  
+`./proxy help bridge`  
+`./proxy help server`  
+`./proxy help server`  
   
 ### **5.SOCKS5代理**  
 提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  

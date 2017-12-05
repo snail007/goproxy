@@ -1,4 +1,7 @@
 proxy更新日志
+v4.1
+1.优化了http(s),socks5代理中的域名智能判断,如果是内网IP,直接走本地网络,提升浏览体验.
+
 v4.0
 1.内网穿透三端重构了一个multiplexing版本，使用github.com/xtaci/smux实现了tcp链接的多路复用，
   鼎鼎大名的kcp-go底层就是使用的这个库，基于kcp-go的双边加速工具kcptun的广泛使用已经很好

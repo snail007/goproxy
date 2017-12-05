@@ -416,8 +416,14 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
 		} else {
 			if *s.cfg.Parent != "" {
-				s.checker.Add(request.Addr(), true, "", "", nil)
-				useProxy, _, _ = s.checker.IsBlocked(request.Addr())
+				host, _, _ := net.SplitHostPort(request.Addr())
+				useProxy := false
+				if utils.IsIternalIP(host) {
+					useProxy = false
+				} else {
+					s.checker.Add(request.Addr(), true, "", "", nil)
+					useProxy, _, _ = s.checker.IsBlocked(request.Addr())
+				}
 				if useProxy {
 					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
 				} else {

@@ -152,22 +152,26 @@ func (s *HTTP) callback(inConn net.Conn) {
 		return
 	}
 	address := req.Host
-
-	useProxy := true
-	if *s.cfg.Parent == "" {
-		useProxy = false
-	} else if *s.cfg.Always {
+	host, _, _ := net.SplitHostPort(address)
+	useProxy := false
+	if !utils.IsIternalIP(host) {
 		useProxy = true
-	} else {
-		if req.IsHTTPS() {
-			s.checker.Add(address, true, req.Method, "", nil)
+		if *s.cfg.Parent == "" {
+			useProxy = false
+		} else if *s.cfg.Always {
+			useProxy = true
 		} else {
-			s.checker.Add(address, false, req.Method, req.URL, req.HeadBuf)
+			if req.IsHTTPS() {
+				s.checker.Add(address, true, req.Method, "", nil)
+			} else {
+				s.checker.Add(address, false, req.Method, req.URL, req.HeadBuf)
+			}
+			//var n, m uint
+			useProxy, _, _ = s.checker.IsBlocked(req.Host)
+			//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 		}
-		//var n, m uint
-		useProxy, _, _ = s.checker.IsBlocked(req.Host)
-		//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 	}
+
 	log.Printf("use proxy : %v, %s", useProxy, address)
 
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
