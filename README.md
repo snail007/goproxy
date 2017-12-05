@@ -584,7 +584,8 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
-### 如何使用源码?   
+### 如何使用源码? 
+建议go1.8,不保证>=1.9能用.   
 cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
 编译直接:go build     
 运行: go run *.go    
