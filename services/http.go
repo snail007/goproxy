@@ -161,11 +161,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 		} else if *s.cfg.Always {
 			useProxy = true
 		} else {
-			if req.IsHTTPS() {
-				s.checker.Add(address, true, req.Method, "", nil)
-			} else {
-				s.checker.Add(address, false, req.Method, req.URL, req.HeadBuf)
-			}
+			s.checker.Add(address)
 			//var n, m uint
 			useProxy, _, _ = s.checker.IsBlocked(req.Host)
 			//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)

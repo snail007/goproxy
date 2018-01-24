@@ -16,8 +16,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build && tar zcfv "${RELEASE}/pro
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=6 go build && tar zcfv "${RELEASE}/proxy-linux-arm64-v6.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build && tar zcfv "${RELEASE}/proxy-linux-arm-v7.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build && tar zcfv "${RELEASE}/proxy-linux-arm64-v7.tar.gz" proxy direct blocked 
-CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=8 go build && tar zcfv "${RELEASE}/proxy-linux-arm-v8.tar.gz" proxy direct blocked 
-CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=8 go build && tar zcfv "${RELEASE}/proxy-linux-arm64-v8.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=5 go build && tar zcfv "${RELEASE}/proxy-linux-arm-v5.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=5 go build && tar zcfv "${RELEASE}/proxy-linux-arm64-v5.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips go build && tar zcfv "${RELEASE}/proxy-linux-mips.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips64 go build && tar zcfv "${RELEASE}/proxy-linux-mips64.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips64le go build && tar zcfv "${RELEASE}/proxy-linux-mips64le.tar.gz" proxy direct blocked 
