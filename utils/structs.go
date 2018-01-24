@@ -74,21 +74,19 @@ func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 }
 func (c *Checker) start() {
 	go func() {
+		//log.Printf("checker started")
 		for {
+			//log.Printf("checker did")
 			for _, v := range c.data.Items() {
 				go func(item CheckerItem) {
 					if c.isNeedCheck(item) {
-						//log.Printf("check %s", item.Domain)
+						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
-						if item.IsHTTPS {
-							conn, err = ConnectHost(item.Host, c.timeout)
-							if err == nil {
-								conn.SetDeadline(time.Now().Add(time.Millisecond))
-								conn.Close()
-							}
-						} else {
-							err = HTTPGet(item.URL, c.timeout)
+						conn, err = ConnectHost(item.Host, c.timeout)
+						if err == nil {
+							conn.SetDeadline(time.Now().Add(time.Millisecond))
+							conn.Close()
 						}
 						if err != nil {
 							item.FailCount = item.FailCount + 1
@@ -155,22 +153,13 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(address string, isHTTPS bool, method, URL string, data []byte) {
+func (c *Checker) Add(address string) {
 	if c.domainIsInMap(address, false) || c.domainIsInMap(address, true) {
 		return
 	}
-	if !isHTTPS && strings.ToLower(method) != "get" {
-		return
-	}
 	var item CheckerItem
-	u := strings.Split(address, ":")
 	item = CheckerItem{
-		URL:     URL,
-		Domain:  u[0],
-		Host:    address,
-		Data:    data,
-		IsHTTPS: isHTTPS,
-		Method:  method,
+		Host: address,
 	}
 	c.data.SetIfAbsent(item.Host, item)
 }
@@ -361,6 +350,12 @@ func (req *HTTPRequest) HTTP() (err error) {
 	return
 }
 func (req *HTTPRequest) HTTPS() (err error) {
+	if req.isBasicAuth {
+		err = req.BasicAuth()
+		if err != nil {
+			return
+		}
+	}
 	req.Host = req.hostOrURL
 	req.addPortIfNot()
 	//_, err = fmt.Fprint(*req.conn, "HTTP/1.1 200 Connection established\r\n\r\n")
@@ -376,7 +371,8 @@ func (req *HTTPRequest) IsHTTPS() bool {
 
 func (req *HTTPRequest) BasicAuth() (err error) {
 
-	//log.Printf("request :%s", string(b[:n]))
+	//log.Printf("request :%s", string(b[:n]))authorization
+	isProxyAuthorization := false
 	authorization, err := req.getHeader("Authorization")
 	if err != nil {
 		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
@@ -386,10 +382,11 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	if authorization == "" {
 		authorization, err = req.getHeader("Proxy-Authorization")
 		if err != nil {
-			fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
+			fmt.Fprint((*req.conn), "HTTP/1.1 407 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
 			CloseConn(req.conn)
 			return
 		}
+		isProxyAuthorization = true
 	}
 	//log.Printf("Authorization:%s", authorization)
 	basic := strings.Fields(authorization)
@@ -414,7 +411,11 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")
+		code := "401"
+		if isProxyAuthorization {
+			code = "407"
+		}
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
