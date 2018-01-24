@@ -596,4 +596,9 @@ Proxy is licensed under GPLv3 license.
 QQ交流群:189618940  
   
   
+### Donation  
+如果proxy帮助你解决了很多问题,你可以通过下面的捐赠帮助proxy更好的发展.  
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
+
   
