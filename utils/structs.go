@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"
@@ -306,13 +307,22 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 		return
 	}
 	req.HeadBuf = buf[:len]
-	index := bytes.IndexByte(req.HeadBuf, '\n')
-	if index == -1 {
-		err = fmt.Errorf("http decoder data line err:%s", SubStr(string(req.HeadBuf), 0, 50))
-		CloseConn(inConn)
-		return
+	//try sni
+	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
+	if err0 == nil {
+		//sni success
+		req.Method = "SNI"
+		req.hostOrURL = "https://" + serverName + ":443"
+	} else {
+		//sni fail , try http
+		index := bytes.IndexByte(req.HeadBuf, '\n')
+		if index == -1 {
+			err = fmt.Errorf("http decoder data line err:%s", SubStr(string(req.HeadBuf), 0, 50))
+			CloseConn(inConn)
+			return
+		}
+		fmt.Sscanf(string(req.HeadBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
 	}
-	fmt.Sscanf(string(req.HeadBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
 	if req.Method == "" || req.hostOrURL == "" {
 		err = fmt.Errorf("http decoder data err:%s", SubStr(string(req.HeadBuf), 0, 50))
 		CloseConn(inConn)

@@ -8,7 +8,7 @@ import (
 	"syscall"
 )
 
-const APP_VERSION = "4.1"
+const APP_VERSION = "4.2"
 
 func main() {
 	err := initConfig()
