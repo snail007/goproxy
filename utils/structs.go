@@ -307,6 +307,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 		return
 	}
 	req.HeadBuf = buf[:len]
+	//fmt.Println(string(req.HeadBuf))
 	//try sni
 	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
 	if err0 == nil {
