@@ -326,9 +326,9 @@ iptables -t nat -A PREROUTING -p tcp -j PROXY
 # Apply the rules to localhost
 iptables -t nat -A OUTPUT -p tcp -j PROXY
 ```
-- 清空整个链 iptables -F 链名比如iptables -t nat -F SHADOWSOCKS
-- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X SHADOWSOCKS
-- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D SHADOWSOCKS -d 223.223.192.0/255.255.240.0 -j RETURN
+- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY
+- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
+- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
 #### **1.9.查看帮助**  
 `./proxy help http`  
