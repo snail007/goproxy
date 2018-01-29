@@ -432,10 +432,10 @@ VPS(IP:22.22.22.33)执行:
 下面的教程以“多路复用版本”为例子，说明使用方法。    
 内网穿透由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.    
 当用户访问server端,流程是:   
-1. server主动和bridge端建立连接；  
-1. 然后bridge端通知client端连接bridge端,并连接内网目标端口;  
-1. 然后绑定client端到bridge端和client端到内网端口的连接；  
-1. 然后bridge端把client过来的连接与server端过来的连接绑定；  
+1. 首先server端主动和bridge端建立连接；  
+1. 然后bridge端通知client端连接bridge端和目标端口;  
+1. 然后client端绑定“client端到bridge端”和“client端到目标端口”的连接；  
+1. 然后bridge端把“client过来的连接”与“server端过来的连接”绑定；  
 1. 整个通道建立完成；  
   
 #### **4.2、TCP普通用法**  
