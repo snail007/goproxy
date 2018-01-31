@@ -49,7 +49,7 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
 
-### First use must be read
+### First use must read
 - [Environmental Science](#environmental-science)
 - [Use configuration file](#use-configuration-file)
 - [Debug output](#debug-output)
@@ -564,7 +564,7 @@ ip: user's IP, for example: 192.168.1.200
 If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
 #### **5.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter to set a password to encrypt and decrypt data.  
+The KCP protocol requires a -B parameter which can set a password to encrypt and decrypt data.  
 
 HTTP first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t kcp -p ":38080" -B mypassword`  
@@ -580,7 +580,7 @@ Then access to the local 8080 port is access to the proxy port 38080 on the VPS,
 - Welcome joining group feedback...
 
 ### How to use the source code?   
-use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy.   
+use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy   
 Direct compilation: go build     
 execution: go run *.go    
 Utils is a toolkit, and service is a specific service class.  
