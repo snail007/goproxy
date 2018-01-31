@@ -89,6 +89,15 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 				return
 			}
 			s.clientControlConns.Set(key, session)
+			go func() {
+				for {
+					if session.IsClosed() {
+						s.clientControlConns.Remove(key)
+						break
+					}
+					time.Sleep(time.Second * 5)
+				}
+			}()
 			//log.Printf("set client session,key: %s", key)
 		}
 
