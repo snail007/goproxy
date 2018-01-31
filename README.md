@@ -594,7 +594,7 @@ proxy QQ group:189618940
 if proxy help you a lot,you can support us by:  
 ### AliPay   
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
-### Wechat Pay  
+### **Wechat Pay**  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
 
   
