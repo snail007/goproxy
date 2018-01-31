@@ -1,137 +1,132 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输。下载地址:https://github.com/snail007/goproxy/releases 官方QQ交流群:189618940  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer. you can expose a local server behind a NAT or firewall to the internet.  
   
 ---  
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-[English Manual](/README_EN.md)  
+[中文手册](/README_ZH.md)  
 
 ### Features  
-- 链式代理,程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.  
-- 通讯加密,如果程序不是一级代理,而且上级代理也是本程序,那么可以加密和上级代理之间的通讯,采用底层tls高强度加密,安全无特征.  
-- 智能HTTP,SOCKS5代理,会自动判断访问的网站是否屏蔽,如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽,为了加速访问,代理会直接访问网站,不使用上级代理.  
-- 域名黑白名单，更加自由的控制网站的访问方式。  
-- 跨平台性,无论你是widows,linux,还是mac,甚至是树莓派,都可以很好的运行proxy.  
-- 多协议支持,支持HTTP(S),TCP,UDP,Websocket,SOCKS5代理. 
-- TCP/UDP端口转发. 
-- 支持内网穿透,协议支持TCP和UDP.  
-- SSH中转,HTTP(S),SOCKS5代理支持SSH中转,上级Linux服务器不需要任何服务端,本地一个proxy即可开心上网.  
-- [KCP](https://github.com/xtaci/kcp-go)协议支持,HTTP(S),SOCKS5代理支持KCP协议传输数据,降低延迟,提升浏览体验.  
-- 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
-- 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
-- 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
-
+- chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
+- Encrypted communication: if the program is not a primary proxy, and the parent proxy is also the program, then it can communicate with the parent proxy by encryption. The TLS encryption is high-intensity encryption, and it is safe and featureless.  
+- Intelligent HTTP, SOCKS5 proxy: the program will automatically determine whether the site which it access is blocked, if the site is blocked, the program will use parent proxy (the premise is you set up a parent proxy) to access the site. If the site isn't blocked, in order to speed up the access, the program will directly access the site and don't use parent proxy.  
+- The black-and-white list of domain: It is very flexible to control the way which you visite site.  
+- Cross platform: no mater what the os (such as Linux, windows, and even Raspberry Pi) you use, you always can use proxy well.  
+- Multi protocol support: the program support HTTP (S), TCP, UDP, Websocket, SOCKS5 proxy. 
+- The TCP/UDP port  forwarding is supported. 
+- Nat forwarding in different network is supported: the program support TCP protocol and UDP protocol.  
+- SSH forwarding: HTTP (S), SOCKS5 proxy support SSH transfer, parent Linux server does not need any server, a local proxy can be happy to access the Internet.  
+- [KCP](https://github.com/xtaci/kcp-go) protocol is supported: HTTP (S), SOCKS5 proxy supports the KCP protocol which can transmit data, reduce latency, and improve the browsing experience.  
+- The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
+  
 ### Why need these?  
-- 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
-- 微信接口本地开发,方便调试.  
-- 远程访问内网机器.  
-- 和小伙伴一起玩局域网游戏.  
-- 以前只能在局域网玩的,现在可以在任何地方玩.  
-- 替代圣剑内网通，显IP内网通，花生壳之类的工具.
+- Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
+- WeChat interface is developed locally, which is convenient to debug.  
+- Remote access to intranet machines.  
+- Play with partners in a LAN game.  
+- something used to be played only in the LAN, now it can be played anywhere.  
+- Instead of 剑内网通,显IP内网通,花生壳,frp and so on.
 - ...  
 
  
-本页是v4.2手册,其他版本手册请点击下面链接查看.  
-- [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2手册](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1手册](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)  
+This page is the v4.0-v4.1 manual, and the other version of the manual can be checked by the following link.  
+- [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
+- [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
+- [v3.6-v3.7 manual](https://github.com/snail007/goproxy/tree/v3.6)
+- [v3.5 manual](https://github.com/snail007/goproxy/tree/v3.5)
+- [v3.4 manual](https://github.com/snail007/goproxy/tree/v3.4)
+- [v3.3 manual](https://github.com/snail007/goproxy/tree/v3.3)
+- [v3.2 manual](https://github.com/snail007/goproxy/tree/v3.2)
+- [v3.1 manual](https://github.com/snail007/goproxy/tree/v3.1)
+- [v3.0 manual](https://github.com/snail007/goproxy/tree/v3.0)
+- [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
 
-### 怎么找到组织?  
-[点击加入交流组织](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
+### How to find the organization?  
+[Click to join the communication organization](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
 
-### 安装 
-1. [快速安装](#自动安装)
-1. [手动安装](#手动安装)
+### Installation
+- [Quick installation](#quick-installation)
+- [Manual installation](#manual-installation)
 
-### 首次使用必看
-- [环境](#首次使用必看-1)
-- [使用配置文件](#使用配置文件)
-- [调试输出](#调试输出)
-- [使用日志文件](#使用日志文件)
-- [后台运行](#后台运行)
-- [守护运行](#守护运行)
-- [生成通讯证书文件](#生成加密通讯需要的证书文件)
-- [安全建议](#安全建议)
+### First use must be read
+- [Environmental Science](#environmental-science)
+- [Use configuration file](#use-configuration-file)
+- [Debug output](#debug-output)
+- [Using log files](#using-log-files)
+- [Daemon mode](#daemon-mode)
+- [Monitor mode](#monitor-mode)
+- [Generating a communication certificate file](#generating-a-communication-certificate-file)
+- [Safety advice](#safety-advice)
 
-### 手册目录
-- [1. HTTP代理](#1http代理)
-    - [1.1 普通HTTP代理](#11普通http代理)
-    - [1.2 普通二级HTTP代理](#12普通二级http代理)
-    - [1.3 HTTP二级代理(加密)](#13http二级代理加密)
-    - [1.4 HTTP三级代理(加密)](#14http三级代理加密)
-    - [1.5 Basic认证](#15basic认证)
-    - [1.6 强制走上级HTTP代理](#16http代理流量强制走上级http代理)
-    - [1.7 通过SSH中转](#17https通过ssh中转)
-        - [1.7.1 用户名和密码的方式](#171-ssh用户名和密码的方式)
-        - [1.7.2 用户名和密钥的方式](#172-ssh用户名和密钥的方式)
-    - [1.8 KCP协议传输](#18kcp协议传输)
-    - [1.9 HTTP(S)反向代理](#19-https反向代理)
-    - [1.10 HTTP(S)透明代理](#110-https透明代理)
-    - [1.11 查看帮助](#111查看帮助)
-- [2. TCP代理](#2tcp代理)
-    - [2.1 普通一级TCP代理](#21普通一级tcp代理)
-    - [2.2 普通二级TCP代理](#22普通二级tcp代理)
-    - [2.3 普通三级TCP代理](#23普通三级tcp代理)
-    - [2.4 加密二级TCP代理](#24加密二级tcp代理)
-    - [2.5 加密三级TCP代理](#25加密三级tcp代理)
-    - [2.6 查看帮助](#26查看帮助)
-- [3. UDP代理](#3udp代理)
-    - [3.1 普通一级UDP代理](#31普通一级udp代理)
-    - [3.2 普通二级UDP代理](#32普通二级udp代理)
-    - [3.3 普通三级UDP代理](#33普通三级udp代理)
-    - [3.4 加密二级UDP代理](#34加密二级udp代理)
-    - [3.5 加密三级UDP代理](#35加密三级udp代理)
-    - [3.6 查看帮助](#36查看帮助)
-- [4. 内网穿透](#4内网穿透)
-    - [4.1 原理说明](#41原理说明)
-    - [4.2 TCP普通用法](#42tcp普通用法)
-    - [4.3 微信接口本地开发](#43微信接口本地开发)
-    - [4.4 UDP普通用法](#44udp普通用法)
-    - [4.5 高级用法一](#45高级用法一)
-    - [4.6 高级用法一](#46高级用法二)
-    - [4.7 server的-r参数](#47server的-r参数)
-    - [4.8 查看帮助](#48查看帮助)
-- [5. SOCKS5代理](#5socks5代理)
-    - [5.1 普通SOCKS5代理](#51普通socks5代理)
-    - [5.2 普通二级SOCKS5代理](#52普通二级socks5代理)
-    - [5.3 SOCKS二级代理(加密)](#53socks二级代理加密)
-    - [5.4 SOCKS三级代理(加密)](#54socks三级代理加密)
-    - [5.5 流量强制走上级SOCKS代理](#55socks代理流量强制走上级socks代理)
-    - [5.6 通过SSH中转](#56socks通过ssh中转)
-        - [5.6.1 用户名和密码的方式](#561-ssh用户名和密码的方式)
-        - [5.6.2 用户名和密钥的方式](#562-ssh用户名和密钥的方式)
-    - [5.7 认证](#57认证)
-    - [5.8 KCP协议传输](#58kcp协议传输)
-    - [5.9 查看帮助](#59查看帮助)
+### Manual catalogues
+- [1.HTTP proxy](#1http-proxy)
+    - [1.1 Common HTTP proxy](#11common-http-proxy)
+    - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
+    - [1.3 HTTP second level proxy(encrypted)](#13http-second-level-encrypted-proxy)
+    - [1.4 HTTP third level proxy(encrypted)](#14http-third-level-encrypted-proxy)
+    - [1.5 Basic Authentication](#15basic-authentication)
+    - [1.6 HTTP proxy traffic force to go to parent http proxy](#16http-proxy-traffic-force-to-go-to-parent-http-proxy)
+    - [1.7 Transfer through SSH](#17transfer-through-ssh)
+        - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
+        - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
+    - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
+    - [1.9 View help](#19view-help)
+- [2.TCP proxy](#2tcp-proxy)
+    - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
+    - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
+    - [2.3 Common TCP third level proxy](#23common-tcp-third-level-proxy)
+    - [2.4 TCP second level encrypted proxy](#24tcp-second-level-encrypted-proxy)
+    - [2.5 TCP third level encrypted proxy](#25tcp-third-level-encrypted-proxy)
+    - [2.6 View help](#26view-help)
+- [3.UDP proxy](#3udp-proxy)
+    - [3.1 Common UDP first level proxy](#31common-udp-first-level-proxy)
+    - [3.2 Common UDP second level proxy](#32common-udp-second-level-proxy)
+    - [3.3 Common UDP third level proxy](#33common-udp-third-level-proxy)
+    - [3.4 UDP second level encrypted proxy](#34udp-second-level-encrypted-proxy)
+    - [3.5 UDP third level encrypted proxy](#35udp-third-level-encrypted-proxy)
+    - [3.6 View help](#36view-help)
+- [4.Nat forward](#4nat-forward)
+    - [4.1 Principle explanation](#41principle-explanation)
+    - [4.2 TCP common usage](#42tcp-common-usage)
+    - [4.3 Local development of WeChat interface](#43local-development-of-wechat-interface)
+    - [4.4 UDP common usage](#44udp-common-usage)
+    - [4.5 Advanced usage 1](#45advanced-usage-1)
+    - [4.6 Advanced usage 2](#46advanced-usage-2)
+    - [4.7 -r parameters of server](#47-r-parameters-of-server)
+    - [4.8 View help](#48view-help)
+- [5.SOCKS5 proxy](#5socks5-proxy)
+    - [5.1 Common SOCKS5 proxy](#51common-socks5-proxy)
+    - [5.2 Common SOCKS5 second level proxy](#52common-socks5-second-level-proxy)
+    - [5.3 SOCKS5 second level proxy(encrypted)](#53socks-second-level-encrypted-proxy)
+    - [5.4 SOCKS third level proxy(encrypted)](#54socks-third-level-encrypted-proxy)
+    - [5.5 SOCKS proxy traffic force to go to parent socks proxy](#55socks-proxy-traffic-force-to-go-to-parent-socks-proxy)
+    - [5.6 Transfer through SSH](#56transfer-through-ssh)
+        - [5.6.1 The way of username and password](#561the-way-of-username-and-password)
+        - [5.6.2 The way of username and key](#562the-way-of-username-and-key)
+    - [5.7 Authentication](#57authentication)
+    - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
+    - [5.9 View help](#59view-help)
 
 ### Fast Start  
-提示:所有操作需要root权限.  
-#### 自动安装
-#### **0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.**  
+tips:all operations require root permissions.   
+#### Quick installation
+#### **0. If your VPS is a linux64 system, you can complete the automatic installation and configuration by the following sentence.**  
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
-安装完成,配置目录是/etc/proxy,更详细的使用方法参考下面的进一步了解.  
-如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
+The installation is completed, the configuration directory is /etc/proxy, more detailed use of the method referred to the following manual for further understanding.  
+If the installation fails or your VPS is not a linux64 system, please follow the semi-automatic step below:  
   
-#### 手动安装  
+#### Manual installation 
 
-#### **1.下载proxy**  
-下载地址:https://github.com/snail007/goproxy/releases  
+#### **1.Download proxy**  
+Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.2/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.0/proxy-linux-amd64.tar.gz  
 ```  
-#### **2.下载自动安装脚本**  
+#### **2.Download the automatic installation script**  
 ```shell  
 cd /root/proxy/  
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
@@ -139,538 +134,468 @@ chmod +x install.sh
 ./install.sh  
 ```  
   
-## **首次使用必看**  
+## **First use must be read**  
   
-### **环境**  
-接下来的教程,默认系统是linux,程序是proxy；所有操作需要root权限；  
-如果你的是windows,请使用windows版本的proxy.exe即可.  
+### **Environmental Science**  
+The following tutorial, the default system is Linux, the program is proxy; all operations require root permissions.   
+If the system are windows, please use proxy.exe.  
   
-### **使用配置文件**  
-接下来的教程都是通过命令行参数介绍使用方法,也可以通过读取配置文件获取参数.  
-具体格式是通过@符号指定配置文件,例如:./proxy @configfile.txt  
-configfile.txt里面的格式是,第一行是子命令名称,第二行开始一行一个:参数的长格式=参数值,前后不能有空格和双引号.  
-参数的长格式都是--开头的,短格式参数都是-开头,如果你不知道某个短格式参数对应长格式参数,查看帮助命令即可.  
-比如configfile.txt内容如下:
+### **Use configuration file**  
+The following tutorial is to introduce the use method by the command line parameters, or by reading the configuration file to get the parameters.  
+The specific format is to specify a configuration file by the @ symbol, for example, ./proxy @configfile.txt.   
+configfile.txt's format: The first line is the subcommand name, and the second line begins one line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
+The long format of the parameter's beginning is always --, the short format of the parameter's beginning is always -. If you don't know which short form parameter corresponds to the long format parameter, please look at the help command.  
+For example, the contents of configfile.txt are as follows:
 ```shell
 http
 --local-type=tcp
 --local=:33080
 ```
-### **调试输出**   
-默认情况下,日志输出的信息不包含文件行数,某些情况下为了排除程序问题,快速定位问题,  
-可以使用--debug参数,输出代码行数和毫秒时间.  
+### **Debug output**   
+By default, the log output information does not contain the number of file lines. In some cases, in order to eliminate and positione the program problem, You can use the --debug parameter to output the number of lines of code and the wrong time.   
 
-### **使用日志文件**   
-默认情况下,日志是直接在控制台显示出来的,如果要保存到文件,可以使用--log参数,  
-比如: --log proxy.log,日志就会输出到proxy.log方便排除问题.   
+### **Using log files**   
+By default, the log is displayed directly on the console, and if you want to save it to the file, you can use the --log parameter.  
+for example, --log proxy.log, The log will be exported to proxy.log file which is easy to troubleshoot.   
 
-
-### **生成加密通讯需要的证书文件**  
-http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,当然可以选择不加密通信通讯,本教程所有和上级通讯都采用加密,需要证书文件.  
-在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.  
+### **Generating a communication certificate file**  
+HTTP, TCP, UDP proxy process will communicate with parent proxy. In order to secure, we use encrypted communication. Of course, we can choose not to encrypted communication. All communication with parent proxy in this tutorial is encrypted, requiring certificate files.    
+The OpenSSL command is installed on the Linux and encrypted certificate can be generated directly through the following command.    
 `./proxy keygen`  
-默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
+By default, the certificate file proxy.crt and the key file proxy.key are generated under the current program directory.  
   
-### **后台运行**
-默认执行proxy之后,如果要保持proxy运行,不能关闭命令行.  
-如果想在后台运行proxy,命令行可以关闭,只需要在命令最后加上--daemon参数即可.  
-比如:  
-`./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
+### **Daemon mode**
+After the default execution of proxy, if you want to keep proxy running, you can't close the command line. 
+If you want to run proxy in the daemon mode, the command line can be shut down, just add the --daemon parameter at the end of the command.    
+for example: `./proxy http -t tcp -p "0.0.0.0:38080" --daemon`   
 
-### **守护运行**  
-守护运行参数--forever,比如: `proxy http --forever` ,  
-proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后重启子进程.  
-该参数配合后台运行参数--daemon和日志参数--log,可以保障proxy一直在后台执行不会因为意外退出,  
-而且可以通过日志文件看到proxy的输出日志内容.  
-比如: `proxy http -p ":9090" --forever --log proxy.log --daemon`  
+### **Monitor mode**  
+Monitor mode parameter --forever, for example: `proxy http --forever`,  
+Proxy will fork subprocess, then monitor the child process, if the subprocess exits, restarts the subprocess after 5 seconds.  
+This parameter, with the parameter --daemon and the log parameter --log, can guarantee that the proxy has been ran in the background and not exited accidentally.  
+And you can see the output log of proxy through the log file.   
+for example: `proxy http -p ":9090" --forever --log proxy.log --daemon`  
 
-### **安全建议**
-当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
-假设你的vps外网ip是23.23.23.23,下面命令通过-g参数设置23.23.23.23  
+### **Safety advice**
+When vps is behind the NAT, the network card IP on VPS is an internal network IP, and then you can add the VPS's external network IP to prevent the dead cycle by -g parameter.  
+Assuming that your VPS outer external network IP is 23.23.23.23, the following command sets the 23.23.23.23 through the -g parameter.  
 `./proxy http -g "23.23.23.23"`  
 
-### **1.HTTP代理**  
-#### **1.1.普通HTTP代理**  
-![1.1](/docs/images/1.1.jpg)  
+### **1.HTTP proxy**  
+#### **1.1.common HTTP proxy**  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
-#### **1.2.普通二级HTTP代理**  
-使用本地端口8090,假设上级HTTP代理是`22.22.22.22:8080`  
+#### **1.2.Common HTTP second level proxy**  
+Using local port 8090, assume the parent HTTP proxy is: `22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
-默认关闭了连接池,如果要加快访问速度,-L可以开启连接池,10就是连接池大小,0为关闭,  
-开启连接池在网络不好的情况下,稳定不是很好.   
+The connection pool is closed by default. If you want to speed up access speed, -L can open the connection pool, the 10 is the size of the connection pool, and the 0 is closed.  
+It is not good to stability of connection pool when the network is not good.  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -L 10`  
-我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
+We can also specify the black and white list files of the domain name, one line for one domain name. The matching rule is the most right-hand matching, for example, baidu.com, which matches *.*.baidu.com. The domain name of the blacklist is directly headed by the parent proxy, and the domain name of the white list does not go to the parent proxy.  
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
-#### **1.3.HTTP二级代理(加密)**  
-一级HTTP代理(VPS,IP:22.22.22.22)  
+#### **1.3.HTTP second level encrypted proxy**  
+HTTP first level proxy(VPS,IP:22.22.22.22)    
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
-二级HTTP代理(本地Linux)  
+HTTP second level proxy(local Linux)  
 `./proxy http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-那么访问本地的8080端口就是访问VPS上面的代理端口38080.  
+accessing the local 8080 port is accessing the proxy port 38080 above VPS.  
   
-二级HTTP代理(本地windows)  
+HTTP second level proxy(local windows)  
 `./proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
+In your windos system, the mode of the program that needs to surf the Internet by proxy is setted up as HTTP mode, the address is 127.0.0.1, the port is: 8080, the program can go through the encrypted channel through VPS to surf on the internet.  
   
-#### **1.4.HTTP三级代理(加密)**  
-一级HTTP代理VPS_01,IP:22.22.22.22  
+#### **1.4.HTTP third level encrypted proxy**  
+HTTP first level proxy VPS_01,IP:22.22.22.22    
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
-二级HTTP代理VPS_02,IP:33.33.33.33  
+HTTP second level proxy VPS_02,IP:33.33.33.33   
 `./proxy http -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-三级HTTP代理(本地)  
+HTTP third level proxy(local)   
 `./proxy http -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
-那么访问本地的8080端口就是访问一级HTTP代理上面的代理端口38080.  
+Then access to the local 8080 port is access to the HTTP first level proxy which port is 38080.  
   
-#### **1.5.Basic认证**  
-对于代理HTTP协议我们可以basic进行Basic认证,认证的用户名和密码可以在命令行指定  
+#### **1.5.Basic Authentication**  
+We can do Basic authentication for the HTTP proxy, The authenticated username and password can be specified at the command line.  
 `./proxy http -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
-多个用户,重复-a参数即可.  
-也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
+If you need multiple users, repeat the -a parameters.   
+You can also be placed in a file, which is a line, a ‘username: password’, and then specified in -F.    
 `./proxy http -t tcp -p ":33080" -F auth-file.txt`   
   
-另外,http(s)代理还集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
-然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
-其它情况认为认证失败.  
-比如:  
+In addition, the HTTP (s) proxy also integrates external HTTP API authentication, and we can specify a HTTP URL interface address by the --auth-url parameter.  
+When somebody connect the proxy, which will request this URL by GET way, with the following four parameters, and if the HTTP state code 204 is returned, the authentication is successful.  
+In other cases, authentication failed.  
+for example:  
 `./proxy http -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
-用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
-带上user,pass,ip,target四个参数:  
+When the user connecte the proxy, which will request this URL by GET way("http://test.com/auth.php"),  
+ with user, pass, IP, and target four parameters:  
 http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
-user:用户名  
-pass:密码  
-ip:用户的IP,比如:192.168.1.200  
-target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.com:80  
+user:username  
+pass:password  
+ip:user's IP,for example: 192.168.1.200  
+target:URL user connect to, for example: http://demo.com:80/1.html  or  https://www.baidu.com:80  
 
-如果没有-a或-F或--auth-url参数,就是关闭Basic认证.   
+If there is no -a or -F or --auth-url parameters, Basic authentication is closed.   
 
-#### **1.6.HTTP代理流量强制走上级HTTP代理**  
-默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理.  
+#### **1.6.HTTP proxy traffic force to go to parent http proxy**  
+By default, proxy will intelligently judge whether a domain name can be accessed. If it cannot be accessed, it will access to parent HTTP proxy.    
+Through --always, all HTTP proxy traffic can be coercion to the parent HTTP proxy.  
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
-#### **1.7.HTTP(S)通过SSH中转**  
-说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
-假设有:vps  
-- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo  
-- 用户user的ssh私钥名称是user.key    
+#### **1.7.Transfer through SSH**  
+Explanation: the principle of SSH transfer is to take advantage of SSH's forwarding function, which is, after you connect to SSH, you can access to the target address through the SSH proxy.  
+Suppose there is a vps  
+- IP is 2.2.2.2, ssh port is 22, ssh username is user, ssh password is demo  
+- The SSH private key of the user is user.key    
 
-##### ***1.7.1 ssh用户名和密码的方式***   
-本地HTTP(S)代理28080端口,执行:  
+##### ***1.7.1.The way of username and password***   
+Local HTTP (S) proxy use 28080 port,excute:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
-##### ***1.7.2 ssh用户名和密钥的方式***   
-本地HTTP(S)代理28080端口,执行:  
+##### ***1.7.2.The way of username and key***   
+Local HTTP (S) proxy use 28080 port,excute:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
-#### **1.8.KCP协议传输**  
-KCP协议需要-B参数设置一个密码用于加密解密数据  
+#### **1.8.KCP protocol transmission**  
+The KCP protocol requires a -B parameter to set a password which can encrypt and decrypt data.  
 
-一级HTTP代理(VPS,IP:22.22.22.22)  
+Http first level proxy(VPS,IP:22.22.22.22)  
 `./proxy http -t kcp -p ":38080" -B mypassword`  
   
-二级HTTP代理(本地Linux)  
+Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
-那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
+Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
 
-#### **1.9 HTTP(S)反向代理** 
-proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
-
-使用方式:  
-在"最后一级proxy代理"的机器上,因为proxy要伪装成所有网站,网站默认的端口HTTP是80,HTTPS是443,让proxy监听80和443端口即可.参数-p多个地址用逗号分割.  
-`./proxy http -t tcp -p :80,:443`    
-
-这个命令就在机器上启动了一个proxy代理,同时监听80和443端口,既可以当作普通的代理使用,也可以直接把需要代理的域名解析到这个机器的IP上. 
-
-如果有上级代理那么参照上面教程设置上级即可,使用方式完全一样.  
-`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
-
-注意:  
-proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
-  
-#### **1.10 HTTP(S)透明代理** 
-该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
-假设proxy现在在路由器上运行,启动命令如下:  
-`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
-
-然后添加iptables规则,下面是参考规则:  
-```shell
-#上级proxy服务端服务器IP地址:
-proxy_server_ip=2.2.2.2
-
-#路由器运行proxy监听的端口:
-proxy_local_port=33080
-
-#下面的就不用修改了
-#create a new chain named PROXY
-iptables -t nat -N PROXY
-
-# Ignore your PROXY server's addresses
-# It's very IMPORTANT, just be careful.
-
-iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN
-
-# Ignore LANs IP address
-iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN
-iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN
-iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN
-iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN
-iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN
-iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN
-iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN
-iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN
-
-# Anything to port 80 443 should be redirected to PROXY's local port
-iptables -t nat -A PROXY -p tcp --dport 80 -j REDIRECT --to-ports $proxy_local_port
-iptables -t nat -A PROXY -p tcp --dport 443 -j REDIRECT --to-ports $proxy_local_port
-
-# Apply the rules to nat client
-iptables -t nat -A PREROUTING -p tcp -j PROXY
-# Apply the rules to localhost
-iptables -t nat -A OUTPUT -p tcp -j PROXY
-```
-- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY
-- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
-- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
-
-#### **1.9.查看帮助**  
+#### **1.9.view help**  
 `./proxy help http`  
   
-### **2.TCP代理**  
+### **2.TCP proxy**  
   
-#### **2.1.普通一级TCP代理**  
-![2.1](/docs/images/2.1.png)  
-本地执行:  
-`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
-那么访问本地33080端口就是访问192.168.22.33的22端口.  
+#### **2.1.Common TCP first level proxy**  
+Local execution:  
+`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -L 0`  
+Then access to the local 33080 port is the 22 port of access to 192.168.22.33.  
   
-#### **2.2.普通二级TCP代理**  
-![2.2](/docs/images/2.2.png)  
-VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
-本地执行:  
+#### **2.2.Common TCP second level proxy**  
+VPS(IP:22.22.22.33) execute:  
+`./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0`  
+local execution:  
 `./proxy tcp -p ":23080" -T tcp -P "22.22.22.33:33080"`  
-那么访问本地23080端口就是访问22.22.22.33的8080端口.  
+Then access to the local 23080 port is the 8080 port of access to 22.22.22.33.  
   
-#### **2.3.普通三级TCP代理**  
-一级TCP代理VPS_01,IP:22.22.22.22  
-`./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
-二级TCP代理VPS_02,IP:33.33.33.33  
+#### **2.3.Common TCP third level proxy**  
+TCP first level proxy VPS_01,IP:22.22.22.22  
+`./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080" -L 0`  
+TCP second level proxy VPS_02,IP:33.33.33.33  
 `./proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
-三级TCP代理(本地)  
+TCP third level proxy (local)  
 `./proxy tcp -p ":8080" -T tcp -P "33.33.33.33:28080"`  
-那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
+Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66 by encrypting the TCP tunnel.  
   
-#### **2.4.加密二级TCP代理**  
-VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
-本地执行:  
+#### **2.4.TCP second level encrypted proxy**  
+VPS(IP:22.22.22.33) execute:  
+`./proxy tcp --tls -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0 -C proxy.crt -K proxy.key`  
+local execution:  
 `./proxy tcp -p ":23080" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
-那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口.  
+Then access to the local 23080 port is to access the 8080 port of the 22.22.22.33 by encrypting the TCP tunnel.  
   
-#### **2.5.加密三级TCP代理**  
-一级TCP代理VPS_01,IP:22.22.22.22  
-`./proxy tcp -t tcp -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
-二级TCP代理VPS_02,IP:33.33.33.33  
-`./proxy tcp -t tcp -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-三级TCP代理(本地)  
+#### **2.5.TCP third level encrypted proxy**  
+TCP first level proxy VPS_01,IP:22.22.22.22  
+`./proxy tcp --tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
+TCP second level proxy VPS_02,IP:33.33.33.33  
+`./proxy tcp --tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+TCP third level proxy (local)  
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
-那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
+Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66 by encrypting the TCP tunnel.  
   
-#### **2.6.查看帮助**  
+#### **2.6.view help**  
 `./proxy help tcp`  
   
-### **3.UDP代理**  
+### **3.UDP proxy**  
   
-#### **3.1.普通一级UDP代理**  
-本地执行:  
+#### **3.1.Common UDP first level proxy**  
+local execution:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
-那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口.  
+Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8.  
   
-#### **3.2.普通二级UDP代理**  
-VPS(IP:22.22.22.33)执行:  
+#### **3.2.Common UDP second level proxy**  
+VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
-本地执行:  
+local execution:  
 `./proxy udp -p ":5353" -T tcp -P "22.22.22.33:33080"`  
-那么访问本地UDP:5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
+Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8 through the TCP tunnel.  
   
-#### **3.3.普通三级UDP代理**  
-一级TCP代理VPS_01,IP:22.22.22.22  
+#### **3.3.Common UDP third level proxy**  
+TCP first level proxy VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
-二级TCP代理VPS_02,IP:33.33.33.33  
+TCP second level proxy VPS_02,IP:33.33.33.33  
 `./proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
-三级TCP代理(本地)  
+TCP third level proxy (local)  
 `./proxy udp -p ":5353" -T tcp -P "33.33.33.33:28080"`  
-那么访问本地5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的53端口.  
+Then access to the local 5353 port is access to the 53 port of the 8.8.8.8 through the TCP tunnel.  
   
-#### **3.4.加密二级UDP代理**  
-VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tcp -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
-本地执行:  
+#### **3.4.UDP second level encrypted proxy**  
+VPS(IP:22.22.22.33) execute:  
+`./proxy tcp --tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+local execution:  
 `./proxy udp -p ":5353" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
-那么访问本地UDP:5353端口就是通过加密TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
+Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8 by the encrypting TCP tunnel. 
   
-#### **3.5.加密三级UDP代理**  
-一级TCP代理VPS_01,IP:22.22.22.22  
-`./proxy tcp -t tcp -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
-二级TCP代理VPS_02,IP:33.33.33.33  
-`./proxy tcp -t tcp -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-三级TCP代理(本地)  
+#### **3.5.UDP third level encrypted proxy**  
+TCP first level proxy VPS_01,IP:22.22.22.22  
+`./proxy tcp --tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+TCP second level proxy VPS_02,IP:33.33.33.33  
+`./proxy tcp --tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+TCP third level proxy (local)  
 `./proxy udp -p ":5353" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
-那么访问本地5353端口就是通过加密TCP隧道,通过VPS_01访问8.8.8.8的53端口.  
+Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8 by the encrypting TCP tunnel. 
   
-#### **3.6.查看帮助**  
+#### **3.6.view help**  
 `./proxy help udp`  
   
-### **4.内网穿透**  
-#### **4.1、原理说明**  
-内网穿透,分为两个版本，“多链接版本”和“多路复用版本”，一般像web服务这种不是长时间连接的服务建议用“多链接版本”，如果是要保持长时间连接建议使用“多路复用版本”。
-1. 多链接版本，对应的子命令是tserver，tclient，tbridge。  
-1. 多路复用版本，对应的子命令是server，client，bridge。  
-1. 多链接版本和多路复用版本的参数和使用方式完全一样。  
-1. **多路复用版本的server，client可以开启压缩传输，参数是--c。**   
-1. **server，client要么都开启压缩，要么都不开启，不能只开一个。**    
+### **4.Nat forward**  
+#### **4.1、Principle explanation**  
+Nat forward, divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommended "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
+1. Multilink version, the corresponding subcommand is tserver，tclient，tbridge。  
+1. Multiplexed version, the corresponding subcommand is server，client，bridge。  
+1. the parameters and use of Multilink version and multiplexed is exactly the same.  
+1. **Multiplexed version of the server, client can open the compressed transmission, the parameter is --c.**   
+1. **Server, client or both are open compression, either do not open, can not only open one.**    
 
-下面的教程以“多路复用版本”为例子，说明使用方法。    
-内网穿透由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.    
-当用户访问server端,流程是:   
-1. 首先server端主动和bridge端建立连接；  
-1. 然后bridge端通知client端连接bridge端和目标端口;  
-1. 然后client端绑定“client端到bridge端”和“client端到目标端口”的连接；  
-1. 然后bridge端把“client过来的连接”与“server端过来的连接”绑定；  
-1. 整个通道建立完成；  
+The following tutorial uses "Multiplexing Versions" as an example to illustrate how to use it.    
+Nat forward consists of three parts: client-side, server-side, bridge-side; client and server take the initiative to connect the bridge to bridge.    
+When the user access the server side, the process is:   
+1. Server and bridge initiative to establish a link;  
+1. Then the bridge notifies the client to connect the bridge, and connects the intranet target port;  
+1. Then bind the client to the bridge and client to the internal network port connection;  
+1. Then the bridge of the client over the connection and server-side connection binding;  
+1. The entire channel is completed;  
   
-#### **4.2、TCP普通用法**  
-背景:  
-- 公司机器A提供了web服务80端口  
-- 有VPS一个,公网IP:22.22.22.22  
+#### **4.2.TCP common usage** 
+Background:  
+- The company computer A provides the 80 port of the web service  
+- There is one VPS, which public IP is 22.22.22.22  
 
-需求:  
-在家里能够通过访问VPS的28080端口访问到公司机器A的80端口  
+Demand:  
+You can access the 80 port of the company's computer by access to VPS's 28080 port when you are at home.  
   
-步骤:  
-1. 在vps上执行  
+Procedure:  
+1. Execute on VPS  
     `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
     `./proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
   
-1. 在公司机器A上面执行  
+1. Execute on the company's computer A  
     `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
-1. 完成  
+1. complete  
   
-#### **4.3、微信接口本地开发**  
-背景:  
-- 自己的笔记本提供了nginx服务80端口  
-- 有VPS一个,公网IP:22.22.22.22  
+#### **4.3.Local development of WeChat interface**  
+Background:  
+- My own computer provides the 80 port of nginx service  
+- There is one VPS, which public IP is 22.22.22.22  
 
-需求:  
-在微信的开发帐号的网页回调接口配置里面填写地址:http://22.22.22.22/calback.php  
-然后就可以访问到笔记本的80端口下面的calback.php,如果需要绑定域名,可以用自己的域名  
-比如:wx-dev.xxx.com解析到22.22.22.22,然后在自己笔记本的nginx里  
-配置域名wx-dev.xxx.com到具体的目录即可.  
+Demand:  
+Fill out the Web callback interface configuration address of WeChat Development Account: http://22.22.22.22/calback.php  
+Then you can access the calback.php under the 80 port of the computer, and if you need to bind the domain name, you can use your own domain name.  
+for example: Wx-dev.xxx.com is resolved to 22.22.22.22, and then configure the domain name wx-dev.xxx.com into a specific directory in the nginx of your own computer.  
 
   
-步骤:  
-1. 在vps上执行,确保vps的80端口没被其它程序占用.  
+Procedure:  
+1. Execute on VPS and ensure that the 80 port of VPS is not occupied by other programs.  
     `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
     `./proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
-1. 在自己笔记本上面执行  
+1. Execute it on your own computer  
     `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
-1. 完成  
+1. compolete  
   
-#### **4.4、UDP普通用法**  
-背景:  
-- 公司机器A提供了DNS解析服务,UDP:53端口  
-- 有VPS一个,公网IP:22.22.22.22  
+#### **4.4.UDP common usage**  
+Background:  
+- The company computer A provides the DNS resolution, the UDP:53 port.  
+- There is one VPS, which public IP is 22.22.22.22.  
   
-需求:  
-在家里能够通过设置本地dns为22.22.22.22,使用公司机器A进行域名解析服务.  
+Demand:  
+You can use the company computer A for domain name resolution services by setting up local DNS as 22.22.22.22 at home.  
   
-步骤:  
-1. 在vps上执行  
+Procedure:  
+1. Execute on VPS  
     `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
     `./proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
-1. 在公司机器A上面执行  
+1. Execute on the company's computer A  
     `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
-1. 完成  
+1. compolete  
   
-#### **4.5、高级用法一**  
-背景:  
-- 公司机器A提供了web服务80端口  
-- 有VPS一个,公网IP:22.22.22.22  
+#### **4.5.Advanced usage 1**  
+Background:  
+- The company computer A provides the 80 port of the web service  
+- There is one VPS, which public IP is 22.22.22.22  
   
-需求:  
-为了安全,不想在VPS上能够访问到公司机器A,在家里能够通过访问本机的28080端口,  
-通过加密隧道访问到公司机器A的80端口.  
+Demand:  
+For security, it doesn't want to be able to access the company's computer A on VPS. At home, it can access the 80 port of the company's computer A through the encrypted tunnel by accessing the 28080 port of you own computer.  
   
-步骤:  
-1. 在vps上执行  
+Procedure:  
+1. Execute on VPS  
     `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
   
-1. 在公司机器A上面执行  
+1. Execute on the company's computer A  
     `./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
-1. 在家里电脑上执行  
+1. Execute it on your own computer  
     `./proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
   
-1. 完成  
+1. compolete  
   
-#### **4.6、高级用法二**  
-提示:  
-如果同时有多个client连接到同一个bridge,需要指定不同的key,可以通过--k参数设定,--k可以是任意唯一字符串,  
-只要在同一个bridge上唯一即可.  
-server连接到bridge的时候,如果同时有多个client连接到同一个bridge,需要使用--k参数选择client.   
-暴露多个端口重复-r参数即可.-r格式是:"本地IP:本地端口@clientHOST:client端口".   
+#### **4.6.Advanced usage 2**  
+Tips:  
+If there are multiple client connected to the same bridge at the same time, you need to specify different key, which can be set by --k parameter. --k must be a unique string on the same bridge.  
+When server is connected to bridge, if multiple client is connected to the same bridge at the same time, you need to use the --k parameter to select client.   
+Repeating -r parameters can expose multiple ports: -r format is "local IP: local port @clientHOST:client port".   
   
-背景:  
-- 公司机器A提供了web服务80端口,ftp服务21端口  
-- 有VPS一个,公网IP:22.22.22.22  
+Background:  
+- The company computer A provides the web service 80 port and the FTP service 21 port  
+- There is one VPS, which public IP is 22.22.22.22  
   
-需求:  
-在家里能够通过访问VPS的28080端口访问到公司机器A的80端口  
-在家里能够通过访问VPS的29090端口访问到公司机器A的21端口  
+Demand:  
+You can access the 80 port of the company's computer by access to VPS's 28080 port at home.  
+You can access the 21 port of the company's computer by access to VPS's 29090 port at home.  
   
-步骤:  
-1. 在vps上执行  
+Procedure:  
+1. Execute on VPS  
     `./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
     `./proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
-1. 在公司机器A上面执行  
+1. Execute on the company's computer A  
     `./proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key` 
 
-1. 完成  
+1. complete  
   
-#### **4.7.server的-r参数**  
-  -r完整格式是:`PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
+#### **4.7.-r parameters of server**  
+  The full format of the -r is:`PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
   
-  4.7.1.协议PROTOCOL:tcp或者udp.  
-  比如: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
-  如果指定了--udp参数,PROTOCOL默认为udp,那么:`-r ":8080@:80"`默认为udp;  
-  如果没有指定--udp参数,PROTOCOL默认为tcp,那么:`-r ":8080@:80"`默认为tcp;  
+  4.7.1.PROTOCOL is tcp or udp.  
+  for example: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
+  If the --udp parameter is specified, PROTOCOL is UDP by default, then `-r ": 8080@: 80"` is UDP.  
+  If the --udp parameter is not specified, PROTOCOL is TCP by default, then `-r ": 8080@: 80"` is TCP.  
   
-  4.7.2.CLIENT_KEY:默认是default.  
-  比如: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
-  如果指定了--k参数,比如--k test,那么:`-r ":8080@:80"`CLIENT_KEY默认为test;  
-  如果没有指定--k参数,那么:`-r ":8080@:80"`CLIENT_KEY默认为default;  
+  4.7.2.CLIENT_KEY by default is 'default'.  
+  for example: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
+  If the --k parameter is specified, such as --k test, then `-r ":8080@:80"` CLIENT_KEY is 'test'.  
+  If the --k parameter is not specified,then `-r ":8080@:80"`CLIENT_KEY is 'default'.  
   
-  4.7.3.LOCAL_IP为空默认是:`0.0.0.0`,CLIENT_LOCAL_HOST为空默认是:`127.0.0.1`; 
+  4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`. 
 
-#### **4.8.查看帮助**  
+#### **4.8.view help**  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help server`  
   
-### **5.SOCKS5代理**  
-提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
-#### **5.1.普通SOCKS5代理**  
+### **5.SOCKS5 proxy**  
+Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and support username password authentication.  
+#### **5.1.Common SOCKS5 proxy**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
-  
-#### **5.2.普通二级SOCKS5代理**  
-![5.2](/docs/images/5.2.png)  
-使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
+   
+#### **5.2.Common SOCKS5 second level proxy**  
+Using local port 8090, assume that the parent SOCKS5 proxy is `22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
-我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
+We can also specify the black and white list files of the domain name, one line for one domain name. The matching rule is the most right-hand matching. For example, baidu.com is *.*.baidu.com, the domain name of the blacklist is directly accessed by the parent proxy, and the domain name of the white list does not access to the parent proxy.  
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
-#### **5.3.SOCKS二级代理(加密)**  
-一级SOCKS代理(VPS,IP:22.22.22.22)  
+#### **5.3.SOCKS second level encrypted proxy**  
+SOCKS5 first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
-二级SOCKS代理(本地Linux)  
+SOCKS5 second level proxy(local Linux)  
 `./proxy socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-那么访问本地的8080端口就是访问VPS上面的代理端口38080.  
+Then access to the local 8080 port is access to the proxy port 38080 above VPS.  
   
-二级SOCKS代理(本地windows)  
+SOCKS5 second level proxy(local windows)  
 `./proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
+Then set up your windows system, the proxy that needs to surf the Internet by proxy is Socks5 mode, the address is: 127.0.0.1, the port is: 8080. the program can surf the Internet through the encrypted channel which is running on VPS.  
   
-#### **5.4.SOCKS三级代理(加密)**  
-一级SOCKS代理VPS_01,IP:22.22.22.22  
+#### **5.4.SOCKS third level encrypted proxy**  
+SOCKS5 first level proxy VPS_01,IP:22.22.22.22  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
-二级SOCKS代理VPS_02,IP:33.33.33.33  
+SOCKS5 second level proxy VPS_02,IP:33.33.33.33  
 `./proxy socks -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-三级SOCKS代理(本地)  
+SOCKS5 third level proxy(local)  
 `./proxy socks -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
-那么访问本地的8080端口就是访问一级SOCKS代理上面的代理端口38080.  
+Then access to the local 8080 port is access to the proxy port 38080 above the SOCKS first level proxy.  
   
-#### **5.5.SOCKS代理流量强制走上级SOCKS代理**  
-默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级SOCKS代理.通过--always可以使全部SOCKS代理流量强制走上级SOCKS代理.  
+#### **5.5.SOCKS proxy traffic force to go to parent socks proxy**  
+By default, proxy will intelligently judge whether a domain name can be accessed. If it cannot be accessed, it will go to parent SOCKS proxy. Through --always parameter, all SOCKS proxy traffic can be coercion to the parent SOCKS proxy.  
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
-#### **5.6.SOCKS通过SSH中转**  
-说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
-假设有:vps  
-- IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
-- 用户user的ssh私钥名称是user.key   
+#### **5.6.Transfer through SSH**  
+Explanation: the principle of SSH transfer is to take advantage of SSH's forwarding function, which is, after you connect to SSH, you can access the target address by the SSH.  
+Suppose there is a vps  
+- IP is 2.2.2.2, SSH port is 22, SSH username is user, SSH password is Demo
+- The SSH private key name of the user is user.key   
 
-##### ***5.6.1 ssh用户名和密码的方式***  
-本地SOCKS5代理28080端口,执行:  
+##### ***5.6.1.The way of username and password***  
+Local SOCKS5 proxy 28080 port, execute:  
 `./proxy socks -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
-##### ***5.6.2 ssh用户名和密钥的方式***  
-本地SOCKS5代理28080端口,执行:  
+##### ***5.6.2.The way of username and key***  
+Local SOCKS5 proxy 28080 port, execute:  
 `./proxy socks -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
-那么访问本地的28080端口就是通过VPS访问目标地址.  
+Then access to the local 28080 port is to access the target address through VPS.  
 
-#### **5.7.认证**  
-对于socks5代理协议我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定  
+#### **5.7.Authentication**  
+For socks5 proxy protocol we can use username and password authentication, username and password authentication can be specified on the command line.  
 `./proxy socks -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
-多个用户,重复-a参数即可.  
-也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
+If you need multiple users, repeat the -a parameters.   
+You can also be placed in a file, which is a line, a ‘username: password’, and then specified in -F.  
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
-另外,socks5代理还集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
-然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
-其它情况认为认证失败.  
-比如:  
+In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
+Then when the user is connected, the proxy GET request this url, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+In other cases, the authentication fails.  
+for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
-用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
-带上user,pass,ip,三个参数:  
+When the user is connected, the proxy will request this URL ("http://test.com/auth.php") by GET way.  
+With user, pass, IP, three parameters:  
 http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}  
-user:用户名  
-pass:密码  
-ip:用户的IP,比如:192.168.1.200  
+user:username  
+pass:password  
+ip: user's IP, for example: 192.168.1.200  
 
-如果没有-a或-F或--auth-url参数,就是关闭认证.    
+If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
-#### **5.8.KCP协议传输**  
-KCP协议需要-B参数设置一个密码用于加密解密数据  
+#### **5.8.KCP protocol transmission**  
+The KCP protocol requires a -B parameter to set a password to encrypt and decrypt data.  
 
-一级HTTP代理(VPS,IP:22.22.22.22)  
+HTTP first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t kcp -p ":38080" -B mypassword`  
   
-二级HTTP代理(本地Linux)  
+HTTP two level proxy(local os is Linux)  
 `./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
-那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
+Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
 
-#### **5.9.查看帮助**  
+#### **5.9.view help**  
 `./proxy help socks`  
 
 ### TODO  
-- http,socks代理多个上级负载均衡?
-- http(s)代理增加pac支持?
-- 欢迎加群反馈...
+- Welcome adding group feedback...
 
-### 如何使用源码? 
-建议go1.8,不保证>=1.9能用.   
-cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
-编译直接:go build     
-运行: go run *.go    
-utils是工具包,service是具体的每个服务类.   
+### How to use the source code?   
+use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy.   
+Direct compilation: go build     
+execution: go run *.go    
+Utils is a toolkit, and service is a specific service class.  
 
 ### License  
 Proxy is licensed under GPLv3 license.  
 ### Contact  
-QQ交流群:189618940  
-  
+proxy QQ group:189618940  
   
 ### Donation  
-如果proxy帮助你解决了很多问题,你可以通过下面的捐赠更好的支持proxy.  
+if proxy help you a lot,you can support us by:  
+### AliPay   
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
+### Wechat Pay  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
 
+  
   
