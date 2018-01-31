@@ -31,7 +31,7 @@ CGO_ENABLED=0 GOOS=android GOARCH=amd64 go build && tar zcfv "${RELEASE}/proxy-a
 CGO_ENABLED=0 GOOS=android GOARCH=arm go build && tar zcfv "${RELEASE}/proxy-android-arm.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build && tar zcfv "${RELEASE}/proxy-android-arm64.tar.gz" proxy direct blocked 
 #darwin
-CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build go build && tar zcfv "${RELEASE}/proxy-darwin-386.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build && tar zcfv "${RELEASE}/proxy-darwin-386.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build && tar zcfv "${RELEASE}/proxy-darwin-amd64.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=darwin GOARCH=arm go build && tar zcfv "${RELEASE}/proxy-darwin-arm.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build && tar zcfv "${RELEASE}/proxy-darwin-arm64.tar.gz" proxy direct blocked 
