@@ -577,7 +577,7 @@ Then access to the local 8080 port is access to the proxy port 38080 on the VPS,
 `./proxy help socks`  
 
 ### TODO  
-- Welcome adding group feedback...
+- Welcome joining group feedback...
 
 ### How to use the source code?   
 use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy.   
