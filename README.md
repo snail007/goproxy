@@ -71,7 +71,7 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
         - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
-    - [1.9 View help](#19view-help)
+    - [1.11 View help](#111view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -183,6 +183,7 @@ Assuming that your VPS outer external network IP is 23.23.23.23, the following c
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
+![1.1](/docs/images/1.1.jpg)
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.Common HTTP second level proxy**  
@@ -264,18 +265,79 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
+#### **1.9 HTTP(S)反向代理** 
+proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
 
-#### **1.9.view help**  
+使用方式:  
+在"最后一级proxy代理"的机器上,因为proxy要伪装成所有网站,网站默认的端口HTTP是80,HTTPS是443,让proxy监听80和443端口即可.参数-p多个地址用逗号分割.  
+`./proxy http -t tcp -p :80,:443`    
+
+这个命令就在机器上启动了一个proxy代理,同时监听80和443端口,既可以当作普通的代理使用,也可以直接把需要代理的域名解析到这个机器的IP上. 
+
+如果有上级代理那么参照上面教程设置上级即可,使用方式完全一样.  
+`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
+
+注意:  
+proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
+  
+#### **1.10 HTTP(S)透明代理** 
+该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
+假设proxy现在在路由器上运行,启动命令如下:  
+`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
+
+然后添加iptables规则,下面是参考规则:  
+```shell
+#上级proxy服务端服务器IP地址:
+proxy_server_ip=2.2.2.2
+
+#路由器运行proxy监听的端口:
+proxy_local_port=33080
+
+#下面的就不用修改了
+#create a new chain named PROXY
+iptables -t nat -N PROXY
+
+# Ignore your PROXY server's addresses
+# It's very IMPORTANT, just be careful.
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN
+
+# Ignore LANs IP address
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN
+
+# Anything to port 80 443 should be redirected to PROXY's local port
+iptables -t nat -A PROXY -p tcp --dport 80 -j REDIRECT --to-ports $proxy_local_port
+iptables -t nat -A PROXY -p tcp --dport 443 -j REDIRECT --to-ports $proxy_local_port
+
+# Apply the rules to nat client
+iptables -t nat -A PREROUTING -p tcp -j PROXY
+# Apply the rules to localhost
+iptables -t nat -A OUTPUT -p tcp -j PROXY
+```
+- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY
+- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
+- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
+
+#### **1.11.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
   
 #### **2.1.Common TCP first level proxy**  
+![2.1](/docs/images/2.1.png)
 Local execution:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -L 0`  
 Then access to the local 33080 port is the 22 port of access to 192.168.22.33.  
   
 #### **2.2.Common TCP second level proxy**  
+![2.2](/docs/images/2.2.png)
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0`  
 local execution:  
@@ -497,6 +559,7 @@ Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and sup
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
    
 #### **5.2.Common SOCKS5 second level proxy**  
+![5.2](/docs/images/5.2.png)
 Using local port 8090, assume that the parent SOCKS5 proxy is `22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 We can also specify the black and white list files of the domain name, one line for one domain name. The matching rule is the most right-hand matching. For example, baidu.com is *.*.baidu.com, the domain name of the blacklist is directly accessed by the parent proxy, and the domain name of the white list does not access to the parent proxy.  
