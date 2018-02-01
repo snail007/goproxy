@@ -1,11 +1,11 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、内网穿透、TCP/UDP端口转发、SSH中转。下载地址:https://github.com/snail007/goproxy/releases 官方QQ交流群:189618940  
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输。下载地址:https://github.com/snail007/goproxy/releases 官方QQ交流群:189618940  
   
 ---  
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-[English Manual](/README.md)  
+[English Manual](/README.md) 
 
 ### Features  
 - 链式代理,程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.  
@@ -19,18 +19,21 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - SSH中转,HTTP(S),SOCKS5代理支持SSH中转,上级Linux服务器不需要任何服务端,本地一个proxy即可开心上网.  
 - [KCP](https://github.com/xtaci/kcp-go)协议支持,HTTP(S),SOCKS5代理支持KCP协议传输数据,降低延迟,提升浏览体验.  
 - 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
-  
+- 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
+- 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
+
 ### Why need these?  
-- 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
+- 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
 - 微信接口本地开发,方便调试.  
 - 远程访问内网机器.  
 - 和小伙伴一起玩局域网游戏.  
 - 以前只能在局域网玩的,现在可以在任何地方玩.  
 - 替代圣剑内网通，显IP内网通，花生壳之类的工具.
-- ...  
+- ...  
 
  
-本页是v4.0-v4.1手册,其他版本手册请点击下面链接查看.  
+本页是v4.2手册,其他版本手册请点击下面链接查看.  
+- [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
 - [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
 - [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
 - [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
@@ -71,7 +74,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
         - [1.7.1 用户名和密码的方式](#171-ssh用户名和密码的方式)
         - [1.7.2 用户名和密钥的方式](#172-ssh用户名和密钥的方式)
     - [1.8 KCP协议传输](#18kcp协议传输)
-    - [1.9 查看帮助](#19查看帮助)
+    - [1.9 HTTP(S)反向代理](#19-https反向代理)
+    - [1.10 HTTP(S)透明代理](#110-https透明代理)
+    - [1.11 查看帮助](#111查看帮助)
 - [2. TCP代理](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -80,7 +85,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [2.5 加密三级TCP代理](#25加密三级tcp代理)
     - [2.6 查看帮助](#26查看帮助)
 - [3. UDP代理](#3udp代理)
-    - [3.1 普通一级UDP代理](#31普通一级udp代理)
+    - [3.1 普通一级UDP代理](#31普通一级udp代理)
     - [3.2 普通二级UDP代理](#32普通二级udp代理)
     - [3.3 普通三级UDP代理](#33普通三级udp代理)
     - [3.4 加密二级UDP代理](#34加密二级udp代理)
@@ -124,7 +129,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.1/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.2/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -268,6 +273,66 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
+#### **1.9 HTTP(S)反向代理** 
+proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
+
+使用方式:  
+在"最后一级proxy代理"的机器上,因为proxy要伪装成所有网站,网站默认的端口HTTP是80,HTTPS是443,让proxy监听80和443端口即可.参数-p多个地址用逗号分割.  
+`./proxy http -t tcp -p :80,:443`    
+
+这个命令就在机器上启动了一个proxy代理,同时监听80和443端口,既可以当作普通的代理使用,也可以直接把需要代理的域名解析到这个机器的IP上. 
+
+如果有上级代理那么参照上面教程设置上级即可,使用方式完全一样.  
+`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
+
+注意:  
+proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
+  
+#### **1.10 HTTP(S)透明代理** 
+该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
+假设proxy现在在路由器上运行,启动命令如下:  
+`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
+
+然后添加iptables规则,下面是参考规则:  
+```shell
+#上级proxy服务端服务器IP地址:
+proxy_server_ip=2.2.2.2
+
+#路由器运行proxy监听的端口:
+proxy_local_port=33080
+
+#下面的就不用修改了
+#create a new chain named PROXY
+iptables -t nat -N PROXY
+
+# Ignore your PROXY server's addresses
+# It's very IMPORTANT, just be careful.
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN
+
+# Ignore LANs IP address
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN
+
+# Anything to port 80 443 should be redirected to PROXY's local port
+iptables -t nat -A PROXY -p tcp --dport 80 -j REDIRECT --to-ports $proxy_local_port
+iptables -t nat -A PROXY -p tcp --dport 443 -j REDIRECT --to-ports $proxy_local_port
+
+# Apply the rules to nat client
+iptables -t nat -A PREROUTING -p tcp -j PROXY
+# Apply the rules to localhost
+iptables -t nat -A OUTPUT -p tcp -j PROXY
+```
+- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY
+- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
+- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
+
 #### **1.9.查看帮助**  
 `./proxy help http`  
   
@@ -369,10 +434,10 @@ VPS(IP:22.22.22.33)执行:
 下面的教程以“多路复用版本”为例子，说明使用方法。    
 内网穿透由三部分组成:client端,server端,bridge端；client和server主动连接bridge端进行桥接.    
 当用户访问server端,流程是:   
-1. server主动和bridge端建立连接；  
-1. 然后bridge端通知client端连接bridge端,并连接内网目标端口;  
-1. 然后绑定client端到bridge端和client端到内网端口的连接；  
-1. 然后bridge端把client过来的连接与server端过来的连接绑定；  
+1. 首先server端主动和bridge端建立连接；  
+1. 然后bridge端通知client端连接bridge端和目标端口;  
+1. 然后client端绑定“client端到bridge端”和“client端到目标端口”的连接；  
+1. 然后bridge端把“client过来的连接”与“server端过来的连接”绑定；  
 1. 整个通道建立完成；  
   
 #### **4.2、TCP普通用法**  
