@@ -111,7 +111,7 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
 ### Fast Start  
 tips:all operations require root permissions.   
 #### Quick installation
-#### **0. If your VPS is a linux64 system, you can complete the automatic installation and configuration by the following sentence.**  
+#### **0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**  
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
