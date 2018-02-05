@@ -265,35 +265,35 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
-#### **1.9 HTTP(S)反向代理** 
-proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
+#### **1.9 HTTP(S) Reverse proxy** 
+Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
-使用方式:  
-在"最后一级proxy代理"的机器上,因为proxy要伪装成所有网站,网站默认的端口HTTP是80,HTTPS是443,让proxy监听80和443端口即可.参数-p多个地址用逗号分割.  
+How to use:  
+On the last level proxy computer, because proxy is disguised as all websites and the default port of HTTP is 80, HTTPS is 443, the proxy listens to 80 and 443 port. Parameters -p multiple addresses are separated by commas.  
 `./proxy http -t tcp -p :80,:443`    
 
-这个命令就在机器上启动了一个proxy代理,同时监听80和443端口,既可以当作普通的代理使用,也可以直接把需要代理的域名解析到这个机器的IP上. 
+This command starts a proxy on the computer, and listens to 80 and 443 ports. It can be used as a common proxy and it can directly resolve the domain that needs proxy to the IP of the computer. 
 
-如果有上级代理那么参照上面教程设置上级即可,使用方式完全一样.  
+If a parent proxy exist, you can refer to the above tutorial to set up a parent. The way of use is exactly the same.  
 `./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
 
-注意:  
-proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
+Notice:  
+The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
   
-#### **1.10 HTTP(S)透明代理** 
-该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
-假设proxy现在在路由器上运行,启动命令如下:  
+#### **1.10 HTTP(S) transparent proxy** 
+The mode needs a certain network base, if the related concepts don't understand, you must resolve it by yourself.  
+Assuming that proxy is now running on the router, the boot command is as follows:  
 `./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
 
-然后添加iptables规则,下面是参考规则:  
+Then the iptables rule is added, and the following rule is a reference rule:  
 ```shell
-#上级proxy服务端服务器IP地址:
+#IP of parent proxy:
 proxy_server_ip=2.2.2.2
 
-#路由器运行proxy监听的端口:
+#Proxy that the router runs monitor the port:
 proxy_local_port=33080
 
-#下面的就不用修改了
+#The following don't need to be modified
 #create a new chain named PROXY
 iptables -t nat -N PROXY
 
@@ -321,9 +321,9 @@ iptables -t nat -A PREROUTING -p tcp -j PROXY
 # Apply the rules to localhost
 iptables -t nat -A OUTPUT -p tcp -j PROXY
 ```
-- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY
-- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
-- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
+- Clearing the whole chain command is iptables -F chain name, such as iptables -t NAT -F PROXY
+- Deleting the specified chain that user defined command is iptables -X chain name, such as iptables -t NAT -X PROXY
+- Deleting the rules of the chain command is iptables -D chain name from the selected chain, such as  iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
 #### **1.11.view help**  
 `./proxy help http`  
