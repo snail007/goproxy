@@ -71,8 +71,8 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
         - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
-    - [1.9 HTTP(S) reverse proxy](#19http(s)-reverse-proxy)
-    - [1.10 HTTP(S) transparent proxy](#110http(s)-transparent-proxy)
+    - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
+    - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
     - [1.11 View help](#111view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
@@ -267,7 +267,7 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
-#### **1.9.HTTP(S) reverse proxy** 
+#### **1.9.HTTP reverse proxy** 
 Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
 How to use:  
@@ -282,7 +282,7 @@ If a parent proxy exist, you can refer to the above tutorial to set up a parent.
 Notice:  
 The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
   
-#### **1.10.HTTP(S) transparent proxy** 
+#### **1.10.HTTP transparent proxy** 
 The mode needs a certain network base, if the related concepts don't understand, you must resolve it by yourself.  
 Assuming that proxy is now running on the router, the boot command is as follows:  
 `./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
@@ -418,7 +418,7 @@ Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8
   
 ### **4.Nat forward**  
 #### **4.1、Principle explanation**  
-Nat forward, divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommended "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
+Nat forward, is divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommende "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
 1. Multilink version, the corresponding subcommand is tserver，tclient，tbridge。  
 1. Multiplexed version, the corresponding subcommand is server，client，bridge。  
 1. the parameters and use of Multilink version and multiplexed is exactly the same.  
@@ -615,7 +615,7 @@ You can also be placed in a file, which is a line, a ‘username: password’, a
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
-Then when the user is connected, the proxy GET request this url, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+Then when the user is connected, the proxy request this url by get way, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
 In other cases, the authentication fails.  
 for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
