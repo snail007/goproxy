@@ -71,6 +71,8 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
         - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
+    - [1.9 HTTP(S) reverse proxy](#19http(s)-reverse-proxy)
+    - [1.10 HTTP(S) transparent proxy](#110http(s)-transparent-proxy)
     - [1.11 View help](#111view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
@@ -137,14 +139,14 @@ chmod +x install.sh
 ## **First use must be read**  
   
 ### **Environmental Science**  
-The following tutorial, the default system is Linux, the program is proxy; all operations require root permissions.   
+The following tutorial defaults system is Linux, the program is proxy and all operations require root permissions.   
 If the system are windows, please use proxy.exe.  
   
 ### **Use configuration file**  
-The following tutorial is to introduce the use method by the command line parameters, or by reading the configuration file to get the parameters.  
+The following tutorial is to introduce the useage by the command line parameters, or by reading the configuration file to get the parameters.  
 The specific format is to specify a configuration file by the @ symbol, for example, ./proxy @configfile.txt.   
-configfile.txt's format: The first line is the subcommand name, and the second line begins one line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
-The long format of the parameter's beginning is always --, the short format of the parameter's beginning is always -. If you don't know which short form parameter corresponds to the long format parameter, please look at the help command.  
+configfile.txt's format: The first line is the subcommand name, and the second line begins a new line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
+The long format of the parameter's beginning is --, the short format of the parameter's beginning is -. If you don't know which short form corresponds to the long format, please look at the help command.  
 For example, the contents of configfile.txt are as follows:
 ```shell
 http
@@ -265,7 +267,7 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
-#### **1.9 HTTP(S) Reverse proxy** 
+#### **1.9.HTTP(S) reverse proxy** 
 Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
 How to use:  
@@ -280,7 +282,7 @@ If a parent proxy exist, you can refer to the above tutorial to set up a parent.
 Notice:  
 The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
   
-#### **1.10 HTTP(S) transparent proxy** 
+#### **1.10.HTTP(S) transparent proxy** 
 The mode needs a certain network base, if the related concepts don't understand, you must resolve it by yourself.  
 Assuming that proxy is now running on the router, the boot command is as follows:  
 `./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
