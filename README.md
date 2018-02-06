@@ -19,6 +19,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - SSH forwarding: HTTP (S), SOCKS5 proxy support SSH transfer, parent Linux server does not need any server, a local proxy can be happy to access the Internet.  
 - [KCP](https://github.com/xtaci/kcp-go) protocol is supported: HTTP (S), SOCKS5 proxy supports the KCP protocol which can transmit data, reduce latency, and improve the browsing experience.  
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
+- Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
+- Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -49,7 +51,7 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
 
-### First use must be read
+### First use must read
 - [Environmental Science](#environmental-science)
 - [Use configuration file](#use-configuration-file)
 - [Debug output](#debug-output)
@@ -71,7 +73,9 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
         - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
-    - [1.9 View help](#19view-help)
+    - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
+    - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
+    - [1.11 View help](#111view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -111,7 +115,7 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
 ### Fast Start  
 tips:all operations require root permissions.   
 #### Quick installation
-#### **0. If your VPS is a linux64 system, you can complete the automatic installation and configuration by the following sentence.**  
+#### **0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**  
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
@@ -137,14 +141,14 @@ chmod +x install.sh
 ## **First use must be read**  
   
 ### **Environmental Science**  
-The following tutorial, the default system is Linux, the program is proxy; all operations require root permissions.   
+The following tutorial defaults system is Linux, the program is proxy and all operations require root permissions.   
 If the system are windows, please use proxy.exe.  
   
 ### **Use configuration file**  
-The following tutorial is to introduce the use method by the command line parameters, or by reading the configuration file to get the parameters.  
+The following tutorial is to introduce the useage by the command line parameters, or by reading the configuration file to get the parameters.  
 The specific format is to specify a configuration file by the @ symbol, for example, ./proxy @configfile.txt.   
-configfile.txt's format: The first line is the subcommand name, and the second line begins one line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
-The long format of the parameter's beginning is always --, the short format of the parameter's beginning is always -. If you don't know which short form parameter corresponds to the long format parameter, please look at the help command.  
+configfile.txt's format: The first line is the subcommand name, and the second line begins a new line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
+The long format of the parameter's beginning is --, the short format of the parameter's beginning is -. If you don't know which short form corresponds to the long format, please look at the help command.  
 For example, the contents of configfile.txt are as follows:
 ```shell
 http
@@ -183,6 +187,7 @@ Assuming that your VPS outer external network IP is 23.23.23.23, the following c
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
+![1.1](/docs/images/1.1.jpg)
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.Common HTTP second level proxy**  
@@ -264,18 +269,79 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
+#### **1.9.HTTP reverse proxy** 
+Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
-#### **1.9.view help**  
+How to use:  
+On the last level proxy computer, because proxy is disguised as all websites and the default port of HTTP is 80, HTTPS is 443, the proxy listens to 80 and 443 port. Parameters -p multiple addresses are separated by commas.  
+`./proxy http -t tcp -p :80,:443`    
+
+This command starts a proxy on the computer, and listens to 80 and 443 ports. It can be used as a common proxy and it can directly resolve the domain that needs proxy to the IP of the computer. 
+
+If a parent proxy exist, you can refer to the above tutorial to set up a parent. The way of use is exactly the same.  
+`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
+
+Notice:  
+The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
+  
+#### **1.10.HTTP transparent proxy** 
+The mode needs a certain network knowledge, if the related concepts don't understand, you must search it by yourself.  
+Assuming that proxy is now running on the router, the boot command is as follows:  
+`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
+
+Then the iptables rule is added, and the following rule is a reference rule:  
+```shell
+#IP of parent proxy:
+proxy_server_ip=2.2.2.2
+
+#Proxy that the router runs monitor the port:
+proxy_local_port=33080
+
+#The following don't need to be modified
+#create a new chain named PROXY
+iptables -t nat -N PROXY
+
+# Ignore your PROXY server's addresses
+# It's very IMPORTANT, just be careful.
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN
+
+# Ignore LANs IP address
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN
+
+# Anything to port 80 443 should be redirected to PROXY's local port
+iptables -t nat -A PROXY -p tcp --dport 80 -j REDIRECT --to-ports $proxy_local_port
+iptables -t nat -A PROXY -p tcp --dport 443 -j REDIRECT --to-ports $proxy_local_port
+
+# Apply the rules to nat client
+iptables -t nat -A PREROUTING -p tcp -j PROXY
+# Apply the rules to localhost
+iptables -t nat -A OUTPUT -p tcp -j PROXY
+```
+- Clearing the whole chain command is iptables -F chain name, such as iptables -t NAT -F PROXY
+- Deleting the specified chain that user defined command is iptables -X chain name, such as iptables -t NAT -X PROXY
+- Deleting the rules of the chain command is iptables -D chain name from the selected chain, such as  iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
+
+#### **1.11.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
   
 #### **2.1.Common TCP first level proxy**  
+![2.1](/docs/images/2.1.png)
 Local execution:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -L 0`  
 Then access to the local 33080 port is the 22 port of access to 192.168.22.33.  
   
 #### **2.2.Common TCP second level proxy**  
+![2.2](/docs/images/2.2.png)
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0`  
 local execution:  
@@ -354,7 +420,7 @@ Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8
   
 ### **4.Nat forward**  
 #### **4.1、Principle explanation**  
-Nat forward, divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommended "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
+Nat forward, is divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommende "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
 1. Multilink version, the corresponding subcommand is tserver，tclient，tbridge。  
 1. Multiplexed version, the corresponding subcommand is server，client，bridge。  
 1. the parameters and use of Multilink version and multiplexed is exactly the same.  
@@ -497,6 +563,7 @@ Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and sup
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
    
 #### **5.2.Common SOCKS5 second level proxy**  
+![5.2](/docs/images/5.2.png)
 Using local port 8090, assume that the parent SOCKS5 proxy is `22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 We can also specify the black and white list files of the domain name, one line for one domain name. The matching rule is the most right-hand matching. For example, baidu.com is *.*.baidu.com, the domain name of the blacklist is directly accessed by the parent proxy, and the domain name of the white list does not access to the parent proxy.  
@@ -550,7 +617,7 @@ You can also be placed in a file, which is a line, a ‘username: password’, a
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
-Then when the user is connected, the proxy GET request this url, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+Then when the user is connected, the proxy request this url by get way, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
 In other cases, the authentication fails.  
 for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
@@ -564,7 +631,7 @@ ip: user's IP, for example: 192.168.1.200
 If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
 #### **5.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter to set a password to encrypt and decrypt data.  
+The KCP protocol requires a -B parameter which can set a password to encrypt and decrypt data.  
 
 HTTP first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t kcp -p ":38080" -B mypassword`  
@@ -577,10 +644,10 @@ Then access to the local 8080 port is access to the proxy port 38080 on the VPS,
 `./proxy help socks`  
 
 ### TODO  
-- Welcome adding group feedback...
+- Welcome joining group feedback...
 
 ### How to use the source code?   
-use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy.   
+use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy   
 Direct compilation: go build     
 execution: go run *.go    
 Utils is a toolkit, and service is a specific service class.  
