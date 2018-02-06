@@ -283,7 +283,7 @@ Notice:
 The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
   
 #### **1.10.HTTP transparent proxy** 
-The mode needs a certain network base, if the related concepts don't understand, you must resolve it by yourself.  
+The mode needs a certain network knowledge, if the related concepts don't understand, you must search it by yourself.  
 Assuming that proxy is now running on the router, the boot command is as follows:  
 `./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
 
