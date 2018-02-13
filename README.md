@@ -476,8 +476,8 @@ Procedure:
   
   4.7.1.PROTOCOL is tcp or udp.  
   for example: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
-  If the --udp parameter is specified, PROTOCOL is UDP by default, then `-r ": 8080@: 80"` is UDP.  
-  If the --udp parameter is not specified, PROTOCOL is TCP by default, then `-r ": 8080@: 80"` is TCP.  
+  If the --udp parameter is specified, PROTOCOL is UDP by default, then `-r ":8080@:80"` is UDP.  
+  If the --udp parameter is not specified, PROTOCOL is TCP by default, then `-r ":8080@:80"` is TCP.  
   
   4.7.2.CLIENT_KEY by default is 'default'.  
   for example: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
