@@ -773,3 +773,45 @@ func (cm *ConnManager) RemoveAll() {
 		cm.Remove(k)
 	}
 }
+
+type ClientKeyRouter struct {
+	keyChan chan string
+	ctrl    *ConcurrentMap
+	lock    *sync.Mutex
+}
+
+func NewClientKeyRouter(ctrl *ConcurrentMap, size int) ClientKeyRouter {
+	return ClientKeyRouter{
+		keyChan: make(chan string, size),
+		ctrl:    ctrl,
+		lock:    &sync.Mutex{},
+	}
+}
+func (c *ClientKeyRouter) GetKey() string {
+	defer c.lock.Unlock()
+	c.lock.Lock()
+	if len(c.keyChan) == 0 {
+	EXIT:
+		for _, k := range c.ctrl.Keys() {
+			select {
+			case c.keyChan <- k:
+			default:
+				goto EXIT
+			}
+		}
+	}
+	for {
+		if len(c.keyChan) == 0 {
+			return "*"
+		}
+		select {
+		case key := <-c.keyChan:
+			if c.ctrl.Has(key) {
+				return key
+			}
+		default:
+			return "*"
+		}
+	}
+
+}
