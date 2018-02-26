@@ -11,7 +11,7 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"proxy/utils/sni"
+	"snail007/proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"

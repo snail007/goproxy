@@ -19,7 +19,7 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"proxy/utils/id"
+	"snail007/proxy/utils/id"
 	"strconv"
 	"strings"
 	"time"

@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"proxy/services"
-	"proxy/utils"
+	"snail007/proxy/services"
+	"snail007/proxy/utils"
 	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"

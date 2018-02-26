@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"proxy/services"
+	"snail007/proxy/services"
 	"syscall"
 )
 
