@@ -431,7 +431,7 @@ func GetKCPBlock(method, key string) (block kcp.BlockCrypt) {
 	}
 	return
 }
-func HttpGet(URL string, timeout int) (body []byte, code int, err error) {
+func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, err error) {
 	var tr *http.Transport
 	var client *http.Client
 	conf := &tls.Config{
@@ -445,7 +445,16 @@ func HttpGet(URL string, timeout int) (body []byte, code int, err error) {
 		client = &http.Client{Timeout: time.Millisecond * time.Duration(timeout), Transport: tr}
 	}
 	defer tr.CloseIdleConnections()
-	resp, err := client.Get(URL)
+
+	//resp, err := client.Get(URL)
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return
+	}
+	if len(host) == 1 {
+		req.Host = host[0]
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}

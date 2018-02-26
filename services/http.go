@@ -16,12 +16,13 @@ import (
 )
 
 type HTTP struct {
-	outPool   utils.OutPool
-	cfg       HTTPArgs
-	checker   utils.Checker
-	basicAuth utils.BasicAuth
-	sshClient *ssh.Client
-	lockChn   chan bool
+	outPool        utils.OutPool
+	cfg            HTTPArgs
+	checker        utils.Checker
+	basicAuth      utils.BasicAuth
+	sshClient      *ssh.Client
+	lockChn        chan bool
+	domainResolver utils.DomainResolver
 }
 
 func NewHTTP() Service {
@@ -74,6 +75,9 @@ func (s *HTTP) InitService() {
 	if *s.cfg.Parent != "" {
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
 	}
+	if *s.cfg.DNSAddress != "" {
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+	}
 	if *s.cfg.ParentType == "ssh" {
 		err := s.ConnectSSH()
 		if err != nil {
@@ -82,7 +86,7 @@ func (s *HTTP) InitService() {
 		go func() {
 			//循环检查ssh网络连通性
 			for {
-				conn, err := utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout*2)
+				conn, err := utils.ConnectHost(s.domainResolver.MustResolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					_, err = conn.Write([]byte{0})
 				}
@@ -211,7 +215,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 				}
 			}
 		} else {
-			outConn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+			outConn, err = utils.ConnectHost(s.domainResolver.MustResolve(address), *s.cfg.Timeout)
 		}
 		tryCount++
 		if err == nil || tryCount > maxTryCount {
@@ -304,7 +308,7 @@ func (s *HTTP) ConnectSSH() (err error) {
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
-	s.sshClient, err = ssh.Dial("tcp", *s.cfg.Parent, &config)
+	s.sshClient, err = ssh.Dial("tcp", s.domainResolver.MustResolve(*s.cfg.Parent), &config)
 	<-s.lockChn
 	return
 }
@@ -318,7 +322,7 @@ func (s *HTTP) InitOutConnPool() {
 			*s.cfg.KCPMethod,
 			*s.cfg.KCPKey,
 			s.cfg.CertBytes, s.cfg.KeyBytes,
-			*s.cfg.Parent,
+			s.domainResolver.MustResolve(*s.cfg.Parent),
 			*s.cfg.Timeout,
 			*s.cfg.PoolSize,
 			*s.cfg.PoolSize*2,

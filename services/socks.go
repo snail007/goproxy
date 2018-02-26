@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"runtime/debug"
 	"snail007/proxy/utils"
 	"snail007/proxy/utils/aes"
 	"snail007/proxy/utils/socks"
-	"runtime/debug"
 	"strings"
 	"time"
 
@@ -17,12 +17,13 @@ import (
 )
 
 type Socks struct {
-	cfg       SocksArgs
-	checker   utils.Checker
-	basicAuth utils.BasicAuth
-	sshClient *ssh.Client
-	lockChn   chan bool
-	udpSC     utils.ServerChannel
+	cfg            SocksArgs
+	checker        utils.Checker
+	basicAuth      utils.BasicAuth
+	sshClient      *ssh.Client
+	lockChn        chan bool
+	udpSC          utils.ServerChannel
+	domainResolver utils.DomainResolver
 }
 
 func NewSocks() Service {
@@ -77,6 +78,9 @@ func (s *Socks) CheckArgs() {
 }
 func (s *Socks) InitService() {
 	s.InitBasicAuth()
+	if *s.cfg.DNSAddress != "" {
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+	}
 	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
 	if *s.cfg.ParentType == "ssh" {
 		err := s.ConnectSSH()

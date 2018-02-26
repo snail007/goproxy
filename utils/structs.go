@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"src/github.com/miekg/dns"
 )
 
 type Checker struct {
@@ -814,4 +816,92 @@ func (c *ClientKeyRouter) GetKey() string {
 		}
 	}
 
+}
+
+type DomainResolver struct {
+	ttl         int
+	dnsAddrress string
+	data        ConcurrentMap
+}
+type DomainResolverItem struct {
+	ip        string
+	domain    string
+	expiredAt int64
+}
+
+func NewDomainResolver(dnsAddrress string, ttl int) DomainResolver {
+
+	return DomainResolver{
+		ttl:         ttl,
+		dnsAddrress: dnsAddrress,
+		data:        NewConcurrentMap(),
+	}
+}
+func (a *DomainResolver) MustResolve(address string) (ip string) {
+	ip, _ = a.Resolve(address)
+	return
+}
+func (a *DomainResolver) Resolve(address string) (ip string, err error) {
+	domain := address
+	port := ""
+	defer func() {
+		if port != "" {
+			ip = net.JoinHostPort(ip, port)
+		}
+	}()
+	if strings.Contains(domain, ":") {
+		domain, port, err = net.SplitHostPort(domain)
+		if err != nil {
+			return
+		}
+	}
+	item, ok := a.data.Get(domain)
+	if ok {
+		if (*item.(*DomainResolverItem)).expiredAt > time.Now().Unix() {
+			ip = (*item.(*DomainResolverItem)).ip
+			return
+		}
+
+	} else {
+		item = &DomainResolverItem{
+			domain: domain,
+		}
+		a.data.Set(domain, item)
+	}
+
+	if net.ParseIP(domain) != nil {
+		return domain, nil
+	}
+	c := new(dns.Client)
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+	m.RecursionDesired = true
+	r, _, err := c.Exchange(m, a.dnsAddrress)
+	if r == nil {
+		return
+	}
+
+	if r.Rcode != dns.RcodeSuccess {
+		err = fmt.Errorf(" *** invalid answer name %s after A query for %s", domain, a.dnsAddrress)
+		return
+	}
+	for _, answer := range r.Answer {
+		if answer.Header().Rrtype == dns.TypeA {
+			info := strings.Fields(answer.String())
+			if len(info) >= 5 {
+				ip = info[4]
+				_item := item.(*DomainResolverItem)
+				(*_item).expiredAt = time.Now().Unix() + int64(a.ttl)
+				(*_item).ip = ip
+			}
+			return
+		}
+	}
+	return
+}
+func (a *DomainResolver) PrintData() {
+	for k, item := range a.data.Items() {
+		d := item.(*DomainResolverItem)
+		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
+	}
 }

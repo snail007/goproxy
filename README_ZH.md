@@ -656,8 +656,9 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 - 欢迎加群反馈...
 
 ### 如何使用源码? 
-建议go1.8,不保证>=1.9能用.   
-cd进入你的go src目录,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
+建议go1.8.5,不保证>=1.9能用.   
+cd进入你的go src目录,新建文件夹snail007,
+cd进入snail007,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
 编译直接:go build     
 运行: go run *.go    
 utils是工具包,service是具体的每个服务类.   

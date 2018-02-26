@@ -138,6 +138,8 @@ type HTTPArgs struct {
 	KCPMethod           *string
 	KCPKey              *string
 	LocalIPS            *[]string
+	DNSAddress          *string
+	DNSTTL              *int
 }
 type UDPArgs struct {
 	Parent              *string
@@ -182,6 +184,8 @@ type SocksArgs struct {
 	UDPParent      *string
 	UDPLocal       *string
 	LocalIPS       *[]string
+	DNSAddress     *string
+	DNSTTL         *int
 }
 
 func (a *TCPArgs) Protocol() string {
