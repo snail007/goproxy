@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"src/github.com/miekg/dns"
+	"github.com/miekg/dns"
 )
 
 type Checker struct {
