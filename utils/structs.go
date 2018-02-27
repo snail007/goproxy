@@ -173,11 +173,13 @@ type BasicAuth struct {
 	authOkCode  int
 	authTimeout int
 	authRetry   int
+	dns         *DomainResolver
 }
 
-func NewBasicAuth() BasicAuth {
+func NewBasicAuth(dns *DomainResolver) BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
+		dns:  dns,
 	}
 }
 func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
@@ -241,18 +243,27 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 	if len(u) != 2 {
 		return
 	}
+
 	URL := ba.authURL
 	if strings.Contains(URL, "?") {
 		URL += "&"
 	} else {
 		URL += "?"
 	}
-	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, target)
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, url.QueryEscape(target))
+	getURL := URL
+	var domain string
+	if ba.dns != nil {
+		_url, _ := url.Parse(ba.authURL)
+		domain = _url.Host
+		domainIP := ba.dns.MustResolve(domain)
+		getURL = strings.Replace(URL, domain, domainIP, 1)
+	}
 	var code int
 	var tryCount = 0
 	var body []byte
 	for tryCount <= ba.authRetry {
-		body, code, err = HttpGet(URL, ba.authTimeout)
+		body, code, err = HttpGet(getURL, ba.authTimeout, domain)
 		if err == nil && code == ba.authOkCode {
 			break
 		} else if err != nil {
@@ -855,6 +866,10 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 			return
 		}
 	}
+	if net.ParseIP(domain) != nil {
+		ip = domain
+		return
+	}
 	item, ok := a.data.Get(domain)
 	if ok {
 		if (*item.(*DomainResolverItem)).expiredAt > time.Now().Unix() {
@@ -868,10 +883,6 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 		}
 		a.data.Set(domain, item)
 	}
-
-	if net.ParseIP(domain) != nil {
-		return domain, nil
-	}
 	c := new(dns.Client)
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
@@ -880,7 +891,6 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 	if r == nil {
 		return
 	}
-
 	if r.Rcode != dns.RcodeSuccess {
 		err = fmt.Errorf(" *** invalid answer name %s after A query for %s", domain, a.dnsAddrress)
 		return

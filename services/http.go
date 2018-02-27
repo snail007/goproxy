@@ -37,7 +37,7 @@ func NewHTTP() Service {
 func (s *HTTP) CheckArgs() {
 	var err error
 	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|ssh>")
+		log.Fatalf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 	}
 	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
@@ -86,7 +86,7 @@ func (s *HTTP) InitService() {
 		go func() {
 			//循环检查ssh网络连通性
 			for {
-				conn, err := utils.ConnectHost(s.domainResolver.MustResolve(*s.cfg.Parent), *s.cfg.Timeout*2)
+				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					_, err = conn.Write([]byte{0})
 				}
@@ -170,9 +170,10 @@ func (s *HTTP) callback(inConn net.Conn) {
 		} else if *s.cfg.Always {
 			useProxy = true
 		} else {
-			s.checker.Add(address)
+			k := s.Resolve(address)
+			s.checker.Add(k)
 			//var n, m uint
-			useProxy, _, _ = s.checker.IsBlocked(req.Host)
+			useProxy, _, _ = s.checker.IsBlocked(k)
 			//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 		}
 	}
@@ -215,7 +216,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 				}
 			}
 		} else {
-			outConn, err = utils.ConnectHost(s.domainResolver.MustResolve(address), *s.cfg.Timeout)
+			outConn, err = utils.ConnectHost(s.Resolve(address), *s.cfg.Timeout)
 		}
 		tryCount++
 		if err == nil || tryCount > maxTryCount {
@@ -308,7 +309,7 @@ func (s *HTTP) ConnectSSH() (err error) {
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
-	s.sshClient, err = ssh.Dial("tcp", s.domainResolver.MustResolve(*s.cfg.Parent), &config)
+	s.sshClient, err = ssh.Dial("tcp", s.Resolve(*s.cfg.Parent), &config)
 	<-s.lockChn
 	return
 }
@@ -322,7 +323,7 @@ func (s *HTTP) InitOutConnPool() {
 			*s.cfg.KCPMethod,
 			*s.cfg.KCPKey,
 			s.cfg.CertBytes, s.cfg.KeyBytes,
-			s.domainResolver.MustResolve(*s.cfg.Parent),
+			s.Resolve(*s.cfg.Parent),
 			*s.cfg.Timeout,
 			*s.cfg.PoolSize,
 			*s.cfg.PoolSize*2,
@@ -330,7 +331,11 @@ func (s *HTTP) InitOutConnPool() {
 	}
 }
 func (s *HTTP) InitBasicAuth() (err error) {
-	s.basicAuth = utils.NewBasicAuth()
+	if *s.cfg.DNSAddress != "" {
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+	} else {
+		s.basicAuth = utils.NewBasicAuth(nil)
+	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
 		log.Printf("auth from %s", *s.cfg.AuthURL)
@@ -364,7 +369,11 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 	}
 	if inPort == outPort {
 		var outIPs []net.IP
-		outIPs, err = net.LookupIP(outDomain)
+		if *s.cfg.DNSAddress != "" {
+			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
+		} else {
+			outIPs, err = net.LookupIP(outDomain)
+		}
 		if err == nil {
 			for _, ip := range outIPs {
 				if ip.String() == inIP {
@@ -387,4 +396,10 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 		}
 	}
 	return false
+}
+func (s *HTTP) Resolve(address string) string {
+	if *s.cfg.DNSAddress == "" {
+		return address
+	}
+	return s.domainResolver.MustResolve(address)
 }

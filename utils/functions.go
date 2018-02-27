@@ -451,7 +451,7 @@ func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, er
 	if err != nil {
 		return
 	}
-	if len(host) == 1 {
+	if len(host) == 1 && host[0] != "" {
 		req.Host = host[0]
 	}
 	resp, err := client.Do(req)
