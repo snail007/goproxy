@@ -334,7 +334,7 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 
 #### **1.11.Custom DNS** 
 --dns-address and --dns-ttl parameters can be used to specify DNS when you use proxy to access to a domain name（--dns-address）.  
-they also can specify analytical result cache time (--dns-ttl) which unit is seconds, which can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+they also can specify analytical result cache time (--dns-ttl) which unit is seconds. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
 for example:  
 `./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
@@ -651,7 +651,7 @@ Then access to the local 8080 port is access to the proxy port 38080 on the VPS,
 
 #### **5.9.Custom DNS** 
 --dns-address and --dns-ttl parameters can be used to specify DNS when you use proxy to access to a domain name（--dns-address）.  
-they also can specify analytical result cache time (--dns-ttl) which unit is seconds, which can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+they also can specify analytical result cache time (--dns-ttl) which unit is seconds. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
 for example:  
 `./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
