@@ -77,7 +77,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.8 KCP协议传输](#18kcp协议传输)
     - [1.9 HTTP(S)反向代理](#19-https反向代理)
     - [1.10 HTTP(S)透明代理](#110-https透明代理)
-    - [1.11 自定义DNS](#111-自定义DNS)
+    - [1.11 自定义DNS](#111-自定义dns)
     - [1.12 查看帮助](#112-查看帮助)
 - [2. TCP代理](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
@@ -113,7 +113,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
         - [5.6.2 用户名和密钥的方式](#562-ssh用户名和密钥的方式)
     - [5.7 认证](#57认证)
     - [5.8 KCP协议传输](#58kcp协议传输)
-    - [5.9 查看帮助](#59查看帮助)
+    - [5.9 自定义DNS](#59自定义dns)
+    - [5.10 查看帮助](#510查看帮助)
 
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -655,7 +656,13 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 `./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
-#### **5.9.查看帮助**  
+#### **5.9.自定义DNS** 
+--dns-address和--dns-ttl参数,用于自己指定proxy访问域名的时候使用的dns（--dns-address）  
+以及解析结果缓存时间（--dns-ttl）秒数，避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度.    
+比如：  
+`./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+#### **5.10.查看帮助**  
 `./proxy help socks`  
 
 ### TODO  
