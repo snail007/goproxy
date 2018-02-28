@@ -333,7 +333,7 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 - Deleting the rules of the chain command is iptables -D chain name from the selected chain, such as  iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
 #### **1.11.Custom DNS** 
---dns-address and --dns-ttl parameters can be used to specify DNS when you use proxy to access to a domain name（--dns-address）.  
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain name.  
 they also can specify analytical result cache time (--dns-ttl) which unit is seconds. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
 for example:  
 `./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
@@ -650,10 +650,10 @@ HTTP two level proxy(local os is Linux)
 Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.
 
 #### **5.9.Custom DNS** 
---dns-address and --dns-ttl parameters can be used to specify DNS when you use proxy to access to a domain name（--dns-address）.  
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain name.  
 they also can specify analytical result cache time (--dns-ttl) which unit is seconds. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
 for example:  
-`./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+`./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
 
 #### **5.10.view help**  
