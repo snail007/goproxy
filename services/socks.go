@@ -641,5 +641,9 @@ func (s *Socks) Resolve(address string) string {
 	if *s.cfg.DNSAddress == "" {
 		return address
 	}
-	return s.domainResolver.MustResolve(address)
+	ip, err := s.domainResolver.Resolve(address)
+	if err != nil {
+		log.Printf("dns error %s , ERR:%s", address, err)
+	}
+	return ip
 }
