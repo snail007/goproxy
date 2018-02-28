@@ -1,5 +1,5 @@
 #!/bin/bash
-VER="4.2"
+VER="4.3"
 RELEASE="release-${VER}"
 rm -rf .cert
 mkdir .cert

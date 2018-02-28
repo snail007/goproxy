@@ -32,7 +32,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.2手册,其他版本手册请点击下面链接查看.  
+本页是v4.3手册,其他版本手册请点击下面链接查看. 
+- [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
 - [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
 - [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
 - [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
@@ -76,7 +77,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.8 KCP协议传输](#18kcp协议传输)
     - [1.9 HTTP(S)反向代理](#19-https反向代理)
     - [1.10 HTTP(S)透明代理](#110-https透明代理)
-    - [1.11 查看帮助](#111查看帮助)
+    - [1.11 自定义DNS](#111-自定义DNS)
+    - [1.12 查看帮助](#112-查看帮助)
 - [2. TCP代理](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -129,7 +131,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.2/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.3/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -333,7 +335,13 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 - 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
 - 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
-#### **1.9.查看帮助**  
+#### **1.11 自定义DNS** 
+--dns-address和--dns-ttl参数,用于自己指定proxy访问域名的时候使用的dns（--dns-address）  
+以及解析结果缓存时间（--dns-ttl）秒数，避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度.    
+比如：  
+`./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+#### **1.12 查看帮助**  
 `./proxy help http`  
   
 ### **2.TCP代理**  
