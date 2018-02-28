@@ -77,7 +77,8 @@ This page is the v4.2 manual, and the other version of the manual can be checked
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
     - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
     - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
-    - [1.11 View help](#111view-help)
+    - [1.11 Custom DNS](#111custom-dns)
+    - [1.12 View help](#112view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -112,7 +113,8 @@ This page is the v4.2 manual, and the other version of the manual can be checked
         - [5.6.2 The way of username and key](#562the-way-of-username-and-key)
     - [5.7 Authentication](#57authentication)
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
-    - [5.9 View help](#59view-help)
+    - [5.9 Custom DNS](#59custom-dns)
+    - [5.10 View help](#510view-help)
 
 ### Fast Start  
 tips:all operations require root permissions.   
@@ -331,7 +333,13 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 - Deleting the specified chain that user defined command is iptables -X chain name, such as iptables -t NAT -X PROXY
 - Deleting the rules of the chain command is iptables -D chain name from the selected chain, such as  iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
-#### **1.11.view help**  
+#### **1.11.Custom DNS** 
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain.  
+they also can specify dns result cache time (--dns-ttl) which unit is second. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+for example:  
+`./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+#### **1.12.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
@@ -640,9 +648,16 @@ HTTP first level proxy(VPS,IP:22.22.22.22)
   
 HTTP two level proxy(local os is Linux)  
 `./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
-Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
+Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.
 
-#### **5.9.view help**  
+#### **5.9.Custom DNS** 
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain.  
+they also can specify dns result cache time (--dns-ttl) which unit is second. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+for example:  
+`./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+
+#### **5.10.view help**  
 `./proxy help socks`  
 
 ### TODO  
