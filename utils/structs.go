@@ -855,10 +855,13 @@ func (a *DomainResolver) MustResolve(address string) (ip string) {
 func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 	domain := address
 	port := ""
+	fromCache := "false"
 	defer func() {
 		if port != "" {
 			ip = net.JoinHostPort(ip, port)
 		}
+		log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
+		//a.PrintData()
 	}()
 	if strings.Contains(domain, ":") {
 		domain, port, err = net.SplitHostPort(domain)
@@ -868,25 +871,28 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 	}
 	if net.ParseIP(domain) != nil {
 		ip = domain
+		fromCache = "ip ignore"
 		return
 	}
 	item, ok := a.data.Get(domain)
 	if ok {
+		//log.Println("find ", domain)
 		if (*item.(*DomainResolverItem)).expiredAt > time.Now().Unix() {
 			ip = (*item.(*DomainResolverItem)).ip
+			fromCache = "true"
+			//log.Println("from cache ", domain)
 			return
 		}
-
 	} else {
 		item = &DomainResolverItem{
 			domain: domain,
 		}
-		a.data.Set(domain, item)
+
 	}
 	c := new(dns.Client)
-	c.DialTimeout = time.Millisecond * 1500
-	c.ReadTimeout = time.Millisecond * 1500
-	c.WriteTimeout = time.Millisecond * 1500
+	c.DialTimeout = time.Millisecond * 5000
+	c.ReadTimeout = time.Millisecond * 5000
+	c.WriteTimeout = time.Millisecond * 5000
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
 	m.RecursionDesired = true
@@ -906,8 +912,9 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 				_item := item.(*DomainResolverItem)
 				(*_item).expiredAt = time.Now().Unix() + int64(a.ttl)
 				(*_item).ip = ip
+				a.data.Set(domain, item)
+				return
 			}
-			return
 		}
 	}
 	return
