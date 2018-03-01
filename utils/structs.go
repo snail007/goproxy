@@ -884,6 +884,9 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 		a.data.Set(domain, item)
 	}
 	c := new(dns.Client)
+	c.DialTimeout = time.Millisecond * 1500
+	c.ReadTimeout = time.Millisecond * 1500
+	c.WriteTimeout = time.Millisecond * 1500
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
 	m.RecursionDesired = true
