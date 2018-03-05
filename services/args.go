@@ -187,7 +187,28 @@ type SocksArgs struct {
 	DNSAddress     *string
 	DNSTTL         *int
 }
+type SPSArgs struct {
+	Parent            *string
+	CertFile          *string
+	KeyFile           *string
+	CertBytes         []byte
+	KeyBytes          []byte
+	Local             *string
+	ParentType        *string
+	LocalType         *string
+	Timeout           *int
+	ParentServiceType *string
+}
 
+func (a *SPSArgs) Protocol() string {
+	switch *a.LocalType {
+	case TYPE_TLS:
+		return TYPE_TLS
+	case TYPE_TCP:
+		return TYPE_TCP
+	}
+	return "unknown"
+}
 func (a *TCPArgs) Protocol() string {
 	switch *a.LocalType {
 	case TYPE_TLS:

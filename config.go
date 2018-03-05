@@ -39,6 +39,7 @@ func initConfig() (err error) {
 	muxBridgeArgs := services.MuxBridgeArgs{}
 	udpArgs := services.UDPArgs{}
 	socksArgs := services.SocksArgs{}
+	spsArgs := services.SPSArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
@@ -186,6 +187,16 @@ func initConfig() (err error) {
 	socksArgs.AuthURLRetry = socks.Flag("auth-retry", "access 'auth-url' fail and retry count").Default("0").Int()
 	socksArgs.DNSAddress = socks.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
 	socksArgs.DNSTTL = socks.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
+	//########socks+http(s)#########
+	sps := app.Command("sps", "proxy on socks+http(s) mode")
+	spsArgs.Parent = sps.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	spsArgs.CertFile = sps.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
+	spsArgs.KeyFile = sps.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	spsArgs.Timeout = sps.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('e').Default("2000").Int()
+	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
+	spsArgs.ParentType = sps.Flag("parent-type", "parent protocol type <tls|tcp>").Short('T').Enum("tls", "tcp")
+	spsArgs.LocalType = sps.Flag("local-type", "local protocol type <tls|tcp>").Default("tcp").Short('t').Enum("tls", "tcp")
+	spsArgs.Local = sps.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -285,6 +296,7 @@ func initConfig() (err error) {
 	services.Regist("client", services.NewMuxClient(), muxClientArgs)
 	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
 	services.Regist("socks", services.NewSocks(), socksArgs)
+	services.Regist("sps", services.NewSPS(), spsArgs)
 	service, err = services.Run(serviceName)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", serviceName, err)

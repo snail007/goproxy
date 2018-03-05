@@ -309,21 +309,27 @@ type HTTPRequest struct {
 	basicAuth   *BasicAuth
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
-	len := 0
+	n := 0
 	req = HTTPRequest{
 		conn: inConn,
 	}
-	len, err = (*inConn).Read(buf[:])
-	if err != nil {
-		if err != io.EOF {
-			err = fmt.Errorf("http decoder read err:%s", err)
+	if len(header) == 1 {
+		buf = header[0]
+		n = len(header[0])
+	} else {
+		n, err = (*inConn).Read(buf[:])
+		if err != nil {
+			if err != io.EOF {
+				err = fmt.Errorf("http decoder read err:%s", err)
+			}
+			CloseConn(inConn)
+			return
 		}
-		CloseConn(inConn)
-		return
 	}
-	req.HeadBuf = buf[:len]
+
+	req.HeadBuf = buf[:n]
 	//fmt.Println(string(req.HeadBuf))
 	//try sni
 	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
