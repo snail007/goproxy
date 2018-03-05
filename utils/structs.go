@@ -54,7 +54,10 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 	if !ch.directMap.IsEmpty() {
 		log.Printf("direct file loaded , domains : %d", ch.directMap.Count())
 	}
-	ch.start()
+	if interval>0{
+		ch.start()
+	}
+	
 	return ch
 }
 
