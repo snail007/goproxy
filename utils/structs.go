@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -54,10 +55,10 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 	if !ch.directMap.IsEmpty() {
 		log.Printf("direct file loaded , domains : %d", ch.directMap.Count())
 	}
-	if interval>0{
+	if interval > 0 {
 		ch.start()
 	}
-	
+
 	return ch
 }
 
@@ -364,16 +365,14 @@ func (req *HTTPRequest) HTTP() (err error) {
 			return
 		}
 	}
-	req.URL, err = req.getHTTPURL()
-	if err == nil {
-		var u *url.URL
-		u, err = url.Parse(req.URL)
-		if err != nil {
-			return
-		}
-		req.Host = u.Host
-		req.addPortIfNot()
+	req.URL = req.getHTTPURL()
+	var u *url.URL
+	u, err = url.Parse(req.URL)
+	if err != nil {
+		return
 	}
+	req.Host = u.Host
+	req.addPortIfNot()
 	return
 }
 func (req *HTTPRequest) HTTPS() (err error) {
@@ -385,7 +384,6 @@ func (req *HTTPRequest) HTTPS() (err error) {
 	}
 	req.Host = req.hostOrURL
 	req.addPortIfNot()
-	//_, err = fmt.Fprint(*req.conn, "HTTP/1.1 200 Connection established\r\n\r\n")
 	return
 }
 func (req *HTTPRequest) HTTPSReply() (err error) {
@@ -398,24 +396,20 @@ func (req *HTTPRequest) IsHTTPS() bool {
 
 func (req *HTTPRequest) BasicAuth() (err error) {
 
-	//log.Printf("request :%s", string(b[:n]))authorization
-	isProxyAuthorization := false
-	authorization, err := req.getHeader("Authorization")
-	if err != nil {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
+	// log.Printf("request :%s", string(req.HeadBuf))
+	code := "407"
+	authorization := req.getHeader("Proxy-Authorization")
+	// if authorization == "" {
+	// 	authorization = req.getHeader("Authorization")
+	// 	code = "401"
+	// }
+	if authorization == "" {
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
+		err = errors.New("require auth header data")
 		return
 	}
-	if authorization == "" {
-		authorization, err = req.getHeader("Proxy-Authorization")
-		if err != nil {
-			fmt.Fprint((*req.conn), "HTTP/1.1 407 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
-			CloseConn(req.conn)
-			return
-		}
-		isProxyAuthorization = true
-	}
-	//log.Printf("Authorization:%s", authorization)
+	//log.Printf("Authorization:%authorization = req.getHeader("Authorization")
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
 		err = fmt.Errorf("authorization data error,ERR:%s", authorization)
@@ -433,15 +427,11 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	if req.IsHTTPS() {
 		URL = "https://" + req.Host
 	} else {
-		URL, _ = req.getHTTPURL()
+		URL = req.getHTTPURL()
 	}
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		code := "401"
-		if isProxyAuthorization {
-			code = "407"
-		}
 		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
@@ -449,18 +439,18 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	}
 	return
 }
-func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
+func (req *HTTPRequest) getHTTPURL() (URL string) {
 	if !strings.HasPrefix(req.hostOrURL, "/") {
-		return req.hostOrURL, nil
+		return req.hostOrURL
 	}
-	_host, err := req.getHeader("host")
-	if err != nil {
+	_host := req.getHeader("host")
+	if _host == "" {
 		return
 	}
 	URL = fmt.Sprintf("http://%s%s", _host, req.hostOrURL)
 	return
 }
-func (req *HTTPRequest) getHeader(key string) (val string, err error) {
+func (req *HTTPRequest) getHeader(key string) (val string) {
 	key = strings.ToUpper(key)
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
 	//log.Println(lines)
