@@ -1,9 +1,10 @@
 proxy更新日志
 v4.3
-1.优化了参数keygen生成证书逻辑，避免证书出现特征.
-2.http(s)和socks代理增加了--dns-address和--dns-ttl参数,
+1.优化了参数keygen生成证书逻辑，避免证书出现特征。
+2.http(s)和socks代理增加了--dns-address和--dns-ttl参数。
  用于自己指定proxy访问域名的时候使用的dns（--dns-address）以及解析结果缓存时间（--dns-ttl）秒数，
- 避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度.
+ 避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度。
+3.优化了http代理的basic认证逻辑。
 
 v4.2
 1.优化了内网穿透,避免了client意外下线,导致链接信息残留的问题.
