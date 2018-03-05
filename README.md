@@ -565,7 +565,7 @@ Procedure:
 #### **4.8.view help**  
 `./proxy help bridge`  
 `./proxy help server`  
-`./proxy help server`  
+`./proxy help client`  
   
 ### **5.SOCKS5 proxy**  
 Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and support username password authentication.  

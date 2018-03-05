@@ -571,7 +571,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 #### **4.8.查看帮助**  
 `./proxy help bridge`  
 `./proxy help server`  
-`./proxy help server`  
+`./proxy help client`  
   
 ### **5.SOCKS5代理**  
 提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
