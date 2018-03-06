@@ -68,20 +68,24 @@ func (s *SPS) Start(args interface{}) (err error) {
 	log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
 	s.InitService()
 
-	host, port, _ := net.SplitHostPort(*s.cfg.Local)
-	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p)
-	if *s.cfg.LocalType == TYPE_TCP {
-		err = sc.ListenTCP(s.callback)
-	} else if *s.cfg.LocalType == TYPE_TLS {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
-	} else if *s.cfg.LocalType == TYPE_KCP {
-		err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
+	for _, addr := range strings.Split(*s.cfg.Local, ",") {
+		if addr != "" {
+			host, port, _ := net.SplitHostPort(*s.cfg.Local)
+			p, _ := strconv.Atoi(port)
+			sc := utils.NewServerChannel(host, p)
+			if *s.cfg.LocalType == TYPE_TCP {
+				err = sc.ListenTCP(s.callback)
+			} else if *s.cfg.LocalType == TYPE_TLS {
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+			} else if *s.cfg.LocalType == TYPE_KCP {
+				err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
+			}
+			if err != nil {
+				return
+			}
+			log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+		}
 	}
-	if err != nil {
-		return
-	}
-	log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
 	return
 }
 

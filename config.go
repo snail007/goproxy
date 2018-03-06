@@ -195,7 +195,7 @@ func initConfig() (err error) {
 	spsArgs.Timeout = sps.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('i').Default("2000").Int()
 	spsArgs.ParentType = sps.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
 	spsArgs.LocalType = sps.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
-	spsArgs.Local = sps.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	spsArgs.Local = sps.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
 	spsArgs.KCPKey = sps.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
 	spsArgs.KCPMethod = sps.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
