@@ -197,7 +197,11 @@ type SPSArgs struct {
 	ParentType        *string
 	LocalType         *string
 	Timeout           *int
+	KCPMethod         *string
+	KCPKey            *string
 	ParentServiceType *string
+	DNSAddress        *string
+	DNSTTL            *int
 }
 
 func (a *SPSArgs) Protocol() string {
@@ -206,6 +210,8 @@ func (a *SPSArgs) Protocol() string {
 		return TYPE_TLS
 	case TYPE_TCP:
 		return TYPE_TCP
+	case TYPE_KCP:
+		return TYPE_KCP
 	}
 	return "unknown"
 }

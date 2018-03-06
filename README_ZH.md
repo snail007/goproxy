@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输。
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输，协议转换。
 
 [点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
 
@@ -23,6 +23,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
+- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
@@ -34,7 +35,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.3手册,其他版本手册请点击下面链接查看. 
+本页是v4.4手册,其他版本手册请点击下面链接查看. 
+- [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
 - [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
 - [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
 - [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
@@ -117,6 +119,12 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [5.8 KCP协议传输](#58kcp协议传输)
     - [5.9 自定义DNS](#59自定义dns)
     - [5.10 查看帮助](#510查看帮助)
+- [6. 代理协议转换](#6代理协议转换)
+    - [6.1 功能介绍](#61-功能介绍)
+    - [6.2 HTTP(S)转HTTP(S)+SOCKS5](#62-https转https+socks5)
+    - [6.3 SOCKS5转HTTP(S)+SOCKS5](#63-socks5转https+socks5)
+    - [6.4 链式连接](#64-链式连接)
+    - [6.5 查看帮助](#65-查看帮助)
 
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -666,6 +674,60 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 
 #### **5.10.查看帮助**  
 `./proxy help socks`  
+
+### **6.代理协议转换** 
+
+#### **6.1 功能介绍** 
+代理协议转换使用的是sps子命令(socks+https的缩写)，sps本身不提供代理功能，只是接受代理请求**转换并转发**给已经存在的http(s)代理或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口同时支持http(s)和socks5代理，而且http(s)代理主持正向代理和反向代理(SNI)；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
+
+#### **6.2 HTTP(S)转HTTP(S)+SOCKS5** 
+假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+命令如下：  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+假设已经存在一个tls的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
+命令如下：  
+`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+命令如下：  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.3 SOCKS5转HTTP(S)+SOCKS5** 
+假设已经存在一个普通的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+命令如下：  
+`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+假设已经存在一个tls的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
+命令如下：  
+`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+命令如下：  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.4 链式连接** 
+上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
+vps01：2.2.2.2  
+vps02：3.3.3.3  
+现在我们想利用pc和vps01和vps02构建一个加密通道，本例子用tls加密也可以用kcp，在pc上访问本地18080端口就是访问vps02的本地8080端口。  
+首先在vps01(2.2.2.2)上我们运行一个只有本地可以访问的http(s)代理,执行：  
+`./proxy -t tcp -p 127.0.0.1:8080`  
+
+然后在vps01(2.2.2.2)上运行一个sps结点，执行：  
+`./proxy -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
+
+然后在vps02(3.3.3.3)上运行一个sps结点，执行：  
+`./proxy -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
+
+然后在pc上运行一个sps结点，执行：  
+`./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
+
+完成。  
+
+#### **6.5 查看帮助** 
+`./proxy help sps`  
+
 
 ### TODO  
 - http,socks代理多个上级负载均衡?
