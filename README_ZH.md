@@ -121,8 +121,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [5.10 查看帮助](#510查看帮助)
 - [6. 代理协议转换](#6代理协议转换)
     - [6.1 功能介绍](#61-功能介绍)
-    - [6.2 HTTP(S)转HTTP(S)+SOCKS5](#62-https转https+socks5)
-    - [6.3 SOCKS5转HTTP(S)+SOCKS5](#63-socks5转https+socks5)
+    - [6.2 HTTP(S)转HTTP(S)+SOCKS5](#62-https转httpssocks5)
+    - [6.3 SOCKS5转HTTP(S)+SOCKS5](#63-socks5转httpssocks5)
     - [6.4 链式连接](#64-链式连接)
     - [6.5 查看帮助](#65-查看帮助)
 
