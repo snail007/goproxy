@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer. you can expose a local server behind a NAT or firewall to the internet.  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
   
 ---  
   
@@ -114,6 +114,13 @@ This page is the v4.2 manual, and the other version of the manual can be checked
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
     - [5.9 Custom DNS](#59custom-dns)
     - [5.10 View help](#510view-help)
+- [6.Proxy protocol conversion](#6proxy-protocol-conversion)
+    - [6.1 Functional introduction](#61functional-introduction)
+    - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
+    - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
+    - [6.4 Chain style connection](#64chain-style-connection)
+    - [6.5 Monitor multiple ports](#65monitor-multiple-ports)
+    - [6.6 View Help](#56transfer-through-ssh)
 
 ### Fast Start  
 tips:all operations require root permissions.   
