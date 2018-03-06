@@ -203,7 +203,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
-		fmt.Fprintf(outConn, "CONNECT %s\r\n", address)
+		fmt.Fprintf(outConn, "CONNECT %s HTTP/1.1\r\n", address)
 		reply := make([]byte, 100)
 		n, err = outConn.Read(reply)
 		if err != nil {
