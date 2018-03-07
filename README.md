@@ -21,6 +21,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -121,7 +122,7 @@ This page is the v4.4 manual, and the other version of the manual can be checked
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
     - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
     - [6.4 Chain style connection](#64chain-style-connection)
-    - [6.5 Monitor multiple ports](#65monitor-multiple-ports)
+    - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
     - [6.6 View Help](#56transfer-through-ssh)
 
 ### Fast Start  
@@ -674,29 +675,29 @@ for example:
 The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is conversed does not support UDP. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
 
 #### **6.2 HTTP(S) to HTTP(S) + SOCKS5** 
-假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
-命令如下：  
+Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
 
-假设已经存在一个tls的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
-命令如下：  
+Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common porxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+command：  
 `./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
 
-假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
-命令如下：  
+Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
 `./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
 
 #### **6.3 SOCKS5 to HTTP(S) + SOCKS5** 
-假设已经存在一个普通的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
-命令如下：  
+Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+command：  
 `./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
 
 假设已经存在一个tls的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
-命令如下：  
+command：  
 `./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
 
 假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
-命令如下：  
+command：  
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
 
 #### **6.4 Chain style connection** 
@@ -716,11 +717,11 @@ vps02：3.3.3.3
 然后在pc上运行一个sps结点，执行：  
 `./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
 
-完成。  
+finish。  
 
-#### **6.5 Monitor multiple ports**   
+#### **6.5 Listening on multiple ports**   
 一般情况下监听一个端口就可以，不过如果作为反向代理需要同时监听80和443两个端口，那么-p参数是支持的，  
-格式是：`-p 0.0.0.0:80,0.0.0.0:443`，多个绑定用逗号分隔即可。  
+The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
 
 #### **6.6 view help** 
 `./proxy help sps`  
