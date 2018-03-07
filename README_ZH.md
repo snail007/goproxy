@@ -713,16 +713,16 @@ vps01：2.2.2.2
 vps02：3.3.3.3  
 现在我们想利用pc和vps01和vps02构建一个加密通道，本例子用tls加密也可以用kcp，在pc上访问本地18080端口就是访问vps01的本地8080端口。  
 首先在vps01(2.2.2.2)上我们运行一个只有本地可以访问的http(s)代理,执行：  
-`./proxy -t tcp -p 127.0.0.1:8080`  
+`./proxy http -t tcp -p 127.0.0.1:8080`  
 
 然后在vps01(2.2.2.2)上运行一个sps结点，执行：  
-`./proxy -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
 
 然后在vps02(3.3.3.3)上运行一个sps结点，执行：  
-`./proxy -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
+`./proxy sps -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
 
 然后在pc上运行一个sps结点，执行：  
-`./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
+`./proxy sps -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
 
 完成。  
 
