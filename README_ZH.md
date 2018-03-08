@@ -749,7 +749,7 @@ proxy的很多功能都支持kcp协议，凡是使用了kcp协议的功能都支
 ```
 --kcp-key="secrect"        pre-shared secret between client and server
 --kcp-method="aes"         encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, 
-                              twofish, cast5, 3des, tea, xtea, xor, sm4, none
+                          twofish, cast5, 3des, tea, xtea, xor, sm4, none
 --kcp-mode="secrect"       profiles: fast3, fast2, fast, normal, manual
 --kcp-mtu=1350             set maximum transmission unit for UDP packets
 --kcp-sndwnd=1024          set send window size(num of packets)
