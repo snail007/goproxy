@@ -1,5 +1,6 @@
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy is a high performance HTTP(S), websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer. you can expose a local server behind a NAT or firewall to the internet.  
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
+
   
 ---  
   
@@ -21,6 +22,7 @@ Proxy is a high performance HTTP(S), websocket, TCP, UDP, Socks5 proxy server im
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -32,7 +34,9 @@ Proxy is a high performance HTTP(S), websocket, TCP, UDP, Socks5 proxy server im
 - ...  
 
  
-This page is the v4.2 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.4 manual, and the other version of the manual can be checked by the following link.  
+- [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
+- [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
 - [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
 - [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
 - [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
@@ -46,8 +50,9 @@ This page is the v4.2 manual, and the other version of the manual can be checked
 - [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
 
 ### How to find the organization?  
-[Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)    
+[Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
 [Click to join the proxy group of telegram](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)    
+
 
 ### Installation
 - [Quick installation](#quick-installation)
@@ -115,6 +120,13 @@ This page is the v4.2 manual, and the other version of the manual can be checked
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
     - [5.9 Custom DNS](#59custom-dns)
     - [5.10 View help](#510view-help)
+- [6.Proxy protocol conversion](#6proxy-protocol-conversion)
+    - [6.1 Functional introduction](#61functional-introduction)
+    - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
+    - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
+    - [6.4 Chain style connection](#64chain-style-connection)
+    - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
+    - [6.6 View Help](#56transfer-through-ssh)
 
 ### Fast Start  
 tips:all operations require root permissions.   
@@ -659,6 +671,63 @@ for example:
 
 #### **5.10.view help**  
 `./proxy help socks`  
+
+### **6.Proxy protocol conversion** 
+
+#### **6.1.Functional introduction** 
+The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is conversed does not support UDP. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
+
+#### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
+Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+command：  
+`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.3.SOCKS5 to HTTP(S) + SOCKS5** 
+Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+command：  
+`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+Suppose there is a TLS Socks5 proxy: 127.0.0.1:8080. Now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+command：  
+`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+command：  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.4.Chain style connection** 
+It is mentioned above that multiple SPS nodes can be connected to build encrypted channels, assuming you have the following VPS and a PC.  
+vps01：2.2.2.2  
+vps02：3.3.3.3  
+Now we want to use PC and vps01 and vps02 to build an encrypted channel. In this example, TLS is used. KCP also supports encryption in addition to TLS. and accessing to local 18080 port on PC is accessing to the local 8080 ports of vps01.  
+First, on vps01 (2.2.2.2), we run a HTTP (s) proxy that only can be accessed locally,excute：  
+`./proxy -t tcp -p 127.0.0.1:8080`  
+
+Then run a SPS node on vps01 (2.2.2.2)，excute：  
+`./proxy -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
+
+Then run a SPS node on vps02 (3.3.3.3)，excute：  
+`./proxy -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
+
+Then run a SPS node on the PC，excute：  
+`./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
+
+finish。  
+
+#### **6.5.Listening on multiple ports**   
+In general, listening one port is enough, but if you need to monitor 80 and 443 ports at the same time as a reverse proxy, the -p parameter can support it.  
+The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
+
+#### **6.6.view help** 
+`./proxy help sps`  
 
 ### TODO  
 - Welcome joining group feedback...
