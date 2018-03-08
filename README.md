@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer. you can expose a local server behind a NAT or firewall to the internet.  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
   
 ---  
   
@@ -19,6 +19,9 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - SSH forwarding: HTTP (S), SOCKS5 proxy support SSH transfer, parent Linux server does not need any server, a local proxy can be happy to access the Internet.  
 - [KCP](https://github.com/xtaci/kcp-go) protocol is supported: HTTP (S), SOCKS5 proxy supports the KCP protocol which can transmit data, reduce latency, and improve the browsing experience.  
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
+- Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
+- Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -30,7 +33,10 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.0-v4.1 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.4 manual, and the other version of the manual can be checked by the following link.  
+- [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
+- [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
+- [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
 - [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
 - [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
 - [v3.6-v3.7 manual](https://github.com/snail007/goproxy/tree/v3.6)
@@ -43,13 +49,14 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
 - [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
 
 ### How to find the organization?  
-[Click to join the communication organization](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
+[Click to join the communication organization gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)   
+[Click to join the communication organization TG](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)  
 
 ### Installation
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
 
-### First use must be read
+### First use must read
 - [Environmental Science](#environmental-science)
 - [Use configuration file](#use-configuration-file)
 - [Debug output](#debug-output)
@@ -71,7 +78,10 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
         - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
     - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
-    - [1.9 View help](#19view-help)
+    - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
+    - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
+    - [1.11 Custom DNS](#111custom-dns)
+    - [1.12 View help](#112view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -106,12 +116,20 @@ This page is the v4.0-v4.1 manual, and the other version of the manual can be ch
         - [5.6.2 The way of username and key](#562the-way-of-username-and-key)
     - [5.7 Authentication](#57authentication)
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
-    - [5.9 View help](#59view-help)
+    - [5.9 Custom DNS](#59custom-dns)
+    - [5.10 View help](#510view-help)
+- [6.Proxy protocol conversion](#6proxy-protocol-conversion)
+    - [6.1 Functional introduction](#61functional-introduction)
+    - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
+    - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
+    - [6.4 Chain style connection](#64chain-style-connection)
+    - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
+    - [6.6 View Help](#56transfer-through-ssh)
 
 ### Fast Start  
 tips:all operations require root permissions.   
 #### Quick installation
-#### **0. If your VPS is a linux64 system, you can complete the automatic installation and configuration by the following sentence.**  
+#### **0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**  
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
@@ -137,14 +155,14 @@ chmod +x install.sh
 ## **First use must be read**  
   
 ### **Environmental Science**  
-The following tutorial, the default system is Linux, the program is proxy; all operations require root permissions.   
+The following tutorial defaults system is Linux, the program is proxy and all operations require root permissions.   
 If the system are windows, please use proxy.exe.  
   
 ### **Use configuration file**  
-The following tutorial is to introduce the use method by the command line parameters, or by reading the configuration file to get the parameters.  
+The following tutorial is to introduce the useage by the command line parameters, or by reading the configuration file to get the parameters.  
 The specific format is to specify a configuration file by the @ symbol, for example, ./proxy @configfile.txt.   
-configfile.txt's format: The first line is the subcommand name, and the second line begins one line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
-The long format of the parameter's beginning is always --, the short format of the parameter's beginning is always -. If you don't know which short form parameter corresponds to the long format parameter, please look at the help command.  
+configfile.txt's format: The first line is the subcommand name, and the second line begins a new line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
+The long format of the parameter's beginning is --, the short format of the parameter's beginning is -. If you don't know which short form corresponds to the long format, please look at the help command.  
 For example, the contents of configfile.txt are as follows:
 ```shell
 http
@@ -183,6 +201,7 @@ Assuming that your VPS outer external network IP is 23.23.23.23, the following c
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
+![1.1](/docs/images/1.1.jpg)
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.Common HTTP second level proxy**  
@@ -264,18 +283,85 @@ Http first level proxy(VPS,IP:22.22.22.22)
 Http second level proxy(os is Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
+#### **1.9.HTTP reverse proxy** 
+Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
-#### **1.9.view help**  
+How to use:  
+On the last level proxy computer, because proxy is disguised as all websites and the default port of HTTP is 80, HTTPS is 443, the proxy listens to 80 and 443 port. Parameters -p multiple addresses are separated by commas.  
+`./proxy http -t tcp -p :80,:443`    
+
+This command starts a proxy on the computer, and listens to 80 and 443 ports. It can be used as a common proxy and it can directly resolve the domain that needs proxy to the IP of the computer. 
+
+If a parent proxy exist, you can refer to the above tutorial to set up a parent. The way of use is exactly the same.  
+`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
+
+Notice:  
+The result of the DNS parsing of the server in which proxy is located can not affected by a custom parsing, if not, it is dead cycle.  
+  
+#### **1.10.HTTP transparent proxy** 
+The mode needs a certain network knowledge, if the related concepts don't understand, you must search it by yourself.  
+Assuming that proxy is now running on the router, the boot command is as follows:  
+`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`   
+
+Then the iptables rule is added, and the following rule is a reference rule:  
+```shell
+#IP of parent proxy:
+proxy_server_ip=2.2.2.2
+
+#Proxy that the router runs monitor the port:
+proxy_local_port=33080
+
+#The following don't need to be modified
+#create a new chain named PROXY
+iptables -t nat -N PROXY
+
+# Ignore your PROXY server's addresses
+# It's very IMPORTANT, just be careful.
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN
+
+# Ignore LANs IP address
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN
+
+# Anything to port 80 443 should be redirected to PROXY's local port
+iptables -t nat -A PROXY -p tcp --dport 80 -j REDIRECT --to-ports $proxy_local_port
+iptables -t nat -A PROXY -p tcp --dport 443 -j REDIRECT --to-ports $proxy_local_port
+
+# Apply the rules to nat client
+iptables -t nat -A PREROUTING -p tcp -j PROXY
+# Apply the rules to localhost
+iptables -t nat -A OUTPUT -p tcp -j PROXY
+```
+- Clearing the whole chain command is iptables -F chain name, such as iptables -t NAT -F PROXY
+- Deleting the specified chain that user defined command is iptables -X chain name, such as iptables -t NAT -X PROXY
+- Deleting the rules of the chain command is iptables -D chain name from the selected chain, such as  iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
+
+#### **1.11.Custom DNS** 
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain.  
+they also can specify dns result cache time (--dns-ttl) which unit is second. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+for example:  
+`./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+#### **1.12.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
   
 #### **2.1.Common TCP first level proxy**  
+![2.1](/docs/images/2.1.png)
 Local execution:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -L 0`  
 Then access to the local 33080 port is the 22 port of access to 192.168.22.33.  
   
 #### **2.2.Common TCP second level proxy**  
+![2.2](/docs/images/2.2.png)
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0`  
 local execution:  
@@ -354,7 +440,7 @@ Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8
   
 ### **4.Nat forward**  
 #### **4.1、Principle explanation**  
-Nat forward, divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommended "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
+Nat forward, is divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommende "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
 1. Multilink version, the corresponding subcommand is tserver，tclient，tbridge。  
 1. Multiplexed version, the corresponding subcommand is server，client，bridge。  
 1. the parameters and use of Multilink version and multiplexed is exactly the same.  
@@ -497,6 +583,7 @@ Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and sup
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
    
 #### **5.2.Common SOCKS5 second level proxy**  
+![5.2](/docs/images/5.2.png)
 Using local port 8090, assume that the parent SOCKS5 proxy is `22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 We can also specify the black and white list files of the domain name, one line for one domain name. The matching rule is the most right-hand matching. For example, baidu.com is *.*.baidu.com, the domain name of the blacklist is directly accessed by the parent proxy, and the domain name of the white list does not access to the parent proxy.  
@@ -550,7 +637,7 @@ You can also be placed in a file, which is a line, a ‘username: password’, a
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
-Then when the user is connected, the proxy GET request this url, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+Then when the user is connected, the proxy request this url by get way, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
 In other cases, the authentication fails.  
 for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
@@ -564,23 +651,87 @@ ip: user's IP, for example: 192.168.1.200
 If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
 #### **5.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter to set a password to encrypt and decrypt data.  
+The KCP protocol requires a -B parameter which can set a password to encrypt and decrypt data.  
 
 HTTP first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t kcp -p ":38080" -B mypassword`  
   
 HTTP two level proxy(local os is Linux)  
 `./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
-Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
+Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.
 
-#### **5.9.view help**  
+#### **5.9.Custom DNS** 
+--dns-address and --dns-ttl parameters can be used to specify DNS（--dns-address） when you use proxy to access to a domain.  
+they also can specify dns result cache time (--dns-ttl) which unit is second. they can avoid the interference of system DNS to proxy. cache can reduce DNS resolution time and increase access speed.  
+for example:  
+`./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+
+
+#### **5.10.view help**  
 `./proxy help socks`  
 
+### **6.Proxy protocol conversion** 
+
+#### **6.1.Functional introduction** 
+The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is conversed does not support UDP. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
+
+#### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
+Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+command：  
+`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+command：  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.3.SOCKS5 to HTTP(S) + SOCKS5** 
+Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+command：  
+`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+
+Suppose there is a TLS Socks5 proxy: 127.0.0.1:8080. Now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+command：  
+`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+
+Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+command：  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+
+#### **6.4.Chain style connection** 
+It is mentioned above that multiple SPS nodes can be connected to build encrypted channels, assuming you have the following VPS and a PC.  
+vps01：2.2.2.2  
+vps02：3.3.3.3  
+Now we want to use PC and vps01 and vps02 to build an encrypted channel. In this example, TLS is used. KCP also supports encryption in addition to TLS. and accessing to local 18080 port on PC is accessing to the local 8080 ports of vps01.  
+First, on vps01 (2.2.2.2), we run a HTTP (s) proxy that only can be accessed locally,excute：  
+`./proxy -t tcp -p 127.0.0.1:8080`  
+
+Then run a SPS node on vps01 (2.2.2.2)，excute：  
+`./proxy -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
+
+Then run a SPS node on vps02 (3.3.3.3)，excute：  
+`./proxy -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
+
+Then run a SPS node on the PC，excute：  
+`./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
+
+finish。  
+
+#### **6.5.Listening on multiple ports**   
+In general, listening one port is enough, but if you need to monitor 80 and 443 ports at the same time as a reverse proxy, the -p parameter can support it.  
+The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
+
+#### **6.6.view help** 
+`./proxy help sps`  
+
 ### TODO  
-- Welcome adding group feedback...
+- Welcome joining group feedback...
 
 ### How to use the source code?   
-use command cd to enter your go SRC directory and then git clone https://github.com/snail007/goproxy.git and execute ./proxy.   
+use command cd to enter your go SRC directory and then execute git clone https://github.com/snail007/goproxy.git ./proxy   
 Direct compilation: go build     
 execution: go run *.go    
 Utils is a toolkit, and service is a specific service class.  
