@@ -12,11 +12,13 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"snail007/proxy/services/kcpcfg"
 	"snail007/proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/miekg/dns"
 )
 
@@ -494,20 +496,18 @@ type OutPool struct {
 	typ       string
 	certBytes []byte
 	keyBytes  []byte
-	kcpMethod string
-	kcpKey    string
+	kcp       kcpcfg.KCPConfigArgs
 	address   string
 	timeout   int
 }
 
-func NewOutPool(dur int, typ, kcpMethod, kcpKey string, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
+func NewOutPool(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
 	op = OutPool{
 		dur:       dur,
 		typ:       typ,
 		certBytes: certBytes,
 		keyBytes:  keyBytes,
-		kcpMethod: kcpMethod,
-		kcpKey:    kcpKey,
+		kcp:       kcp,
 		address:   address,
 		timeout:   timeout,
 	}
@@ -548,7 +548,7 @@ func (op *OutPool) getConn() (conn interface{}, err error) {
 			conn = net.Conn(&_conn)
 		}
 	} else if op.typ == "kcp" {
-		conn, err = ConnectKCPHost(op.address, op.kcpMethod, op.kcpKey)
+		conn, err = ConnectKCPHost(op.address, op.kcp)
 	} else {
 		conn, err = ConnectHost(op.address, op.timeout)
 	}
@@ -923,4 +923,46 @@ func (a *DomainResolver) PrintData() {
 		d := item.(*DomainResolverItem)
 		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
 	}
+}
+func NewCompStream(conn net.Conn) *CompStream {
+	c := new(CompStream)
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return c
+}
+
+type CompStream struct {
+	conn net.Conn
+	w    *snappy.Writer
+	r    *snappy.Reader
+}
+
+func (c *CompStream) Read(p []byte) (n int, err error) {
+	return c.r.Read(p)
+}
+
+func (c *CompStream) Write(p []byte) (n int, err error) {
+	n, err = c.w.Write(p)
+	err = c.w.Flush()
+	return n, err
+}
+
+func (c *CompStream) Close() error {
+	return c.conn.Close()
+}
+func (c *CompStream) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+func (c *CompStream) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+func (c *CompStream) SetDeadline(t time.Time) error {
+	return c.conn.SetDeadline(t)
+}
+func (c *CompStream) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+func (c *CompStream) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }

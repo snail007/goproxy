@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
+	"snail007/proxy/services/kcpcfg"
 	"snail007/proxy/utils"
 	"strconv"
 	"strings"
@@ -208,7 +209,7 @@ func (s *UDP) InitOutConnPool() {
 		s.outPool = utils.NewOutPool(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
-			"", "",
+			kcpcfg.KCPConfigArgs{},
 			s.cfg.CertBytes, s.cfg.KeyBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,

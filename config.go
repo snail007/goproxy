@@ -2,14 +2,18 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha1"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"snail007/proxy/services"
+	"snail007/proxy/services/kcpcfg"
 	"snail007/proxy/utils"
 	"time"
 
+	kcp "github.com/xtaci/kcp-go"
+	"golang.org/x/crypto/pbkdf2"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -40,6 +44,7 @@ func initConfig() (err error) {
 	udpArgs := services.UDPArgs{}
 	socksArgs := services.SocksArgs{}
 	spsArgs := services.SPSArgs{}
+	kcpArgs := kcpcfg.KCPConfigArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
@@ -47,6 +52,23 @@ func initConfig() (err error) {
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
 	forever := app.Flag("forever", "run proxy in forever,fail and retry").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
+	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
+	kcpArgs.Crypt = app.Flag("kcp-method", "encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none").Default("aes").String()
+	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast").String()
+	kcpArgs.MTU = app.Flag("kcp-mtu", "set maximum transmission unit for UDP packets").Default("1350").Int()
+	kcpArgs.SndWnd = app.Flag("kcp-sndwnd", "set send window size(num of packets)").Default("1024").Int()
+	kcpArgs.RcvWnd = app.Flag("kcp-rcvwnd", "set receive window size(num of packets)").Default("1024").Int()
+	kcpArgs.DataShard = app.Flag("kcp-ds", "set reed-solomon erasure coding - datashard").Default("10").Int()
+	kcpArgs.ParityShard = app.Flag("kcp-ps", "set reed-solomon erasure coding - parityshard").Default("3").Int()
+	kcpArgs.DSCP = app.Flag("kcp-dscp", "set DSCP(6bit)").Default("0").Int()
+	kcpArgs.NoComp = app.Flag("kcp-nocomp", "disable compression").Default("false").Bool()
+	kcpArgs.AckNodelay = app.Flag("kcp-acknodelay", "be carefull! flush ack immediately when a packet is received").Default("true").Bool()
+	kcpArgs.NoDelay = app.Flag("kcp-nodelay", "be carefull!").Default("0").Int()
+	kcpArgs.Interval = app.Flag("kcp-interval", "be carefull!").Default("50").Int()
+	kcpArgs.Resend = app.Flag("kcp-resend", "be carefull!").Default("0").Int()
+	kcpArgs.NoCongestion = app.Flag("kcp-nc", "be carefull! no congestion").Default("0").Int()
+	kcpArgs.SockBuf = app.Flag("kcp-sockbuf", "be carefull!").Default("4194304").Int()
+	kcpArgs.KeepAlive = app.Flag("kcp-keepalive", "be carefull!").Default("10").Int()
 
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
@@ -70,8 +92,6 @@ func initConfig() (err error) {
 	httpArgs.SSHKeyFile = http.Flag("ssh-key", "private key file for ssh").Short('S').Default("").String()
 	httpArgs.SSHKeyFileSalt = http.Flag("ssh-keysalt", "salt of ssh private key").Short('s').Default("").String()
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
-	httpArgs.KCPKey = http.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
-	httpArgs.KCPMethod = http.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 	httpArgs.LocalIPS = http.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	httpArgs.AuthURL = http.Flag("auth-url", "http basic auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	httpArgs.AuthURLTimeout = http.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
@@ -91,8 +111,6 @@ func initConfig() (err error) {
 	tcpArgs.PoolSize = tcp.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Short('L').Default("0").Int()
 	tcpArgs.CheckParentInterval = tcp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	tcpArgs.Local = tcp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	tcpArgs.KCPKey = tcp.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
-	tcpArgs.KCPMethod = tcp.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 
 	//########udp#########
 	udp := app.Command("udp", "proxy on udp mode")
@@ -178,8 +196,6 @@ func initConfig() (err error) {
 	socksArgs.Direct = socks.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	socksArgs.AuthFile = socks.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
 	socksArgs.Auth = socks.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
-	socksArgs.KCPKey = socks.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
-	socksArgs.KCPMethod = socks.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 	socksArgs.LocalIPS = socks.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	socksArgs.AuthURL = socks.Flag("auth-url", "auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	socksArgs.AuthURLTimeout = socks.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
@@ -196,14 +212,56 @@ func initConfig() (err error) {
 	spsArgs.ParentType = sps.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
 	spsArgs.LocalType = sps.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	spsArgs.Local = sps.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
-	spsArgs.KCPKey = sps.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
-	spsArgs.KCPMethod = sps.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
 	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
 	spsArgs.DNSAddress = sps.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
 	spsArgs.DNSTTL = sps.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	//set kcp config
+
+	switch *kcpArgs.Mode {
+	case "normal":
+		*kcpArgs.NoDelay, *kcpArgs.Interval, *kcpArgs.Resend, *kcpArgs.NoCongestion = 0, 40, 2, 1
+	case "fast":
+		*kcpArgs.NoDelay, *kcpArgs.Interval, *kcpArgs.Resend, *kcpArgs.NoCongestion = 0, 30, 2, 1
+	case "fast2":
+		*kcpArgs.NoDelay, *kcpArgs.Interval, *kcpArgs.Resend, *kcpArgs.NoCongestion = 1, 20, 2, 1
+	case "fast3":
+		*kcpArgs.NoDelay, *kcpArgs.Interval, *kcpArgs.Resend, *kcpArgs.NoCongestion = 1, 10, 2, 1
+	}
+	pass := pbkdf2.Key([]byte(*kcpArgs.Key), []byte("snail007-goproxy"), 4096, 32, sha1.New)
+
+	switch *kcpArgs.Crypt {
+	case "sm4":
+		kcpArgs.Block, _ = kcp.NewSM4BlockCrypt(pass[:16])
+	case "tea":
+		kcpArgs.Block, _ = kcp.NewTEABlockCrypt(pass[:16])
+	case "xor":
+		kcpArgs.Block, _ = kcp.NewSimpleXORBlockCrypt(pass)
+	case "none":
+		kcpArgs.Block, _ = kcp.NewNoneBlockCrypt(pass)
+	case "aes-128":
+		kcpArgs.Block, _ = kcp.NewAESBlockCrypt(pass[:16])
+	case "aes-192":
+		kcpArgs.Block, _ = kcp.NewAESBlockCrypt(pass[:24])
+	case "blowfish":
+		kcpArgs.Block, _ = kcp.NewBlowfishBlockCrypt(pass)
+	case "twofish":
+		kcpArgs.Block, _ = kcp.NewTwofishBlockCrypt(pass)
+	case "cast5":
+		kcpArgs.Block, _ = kcp.NewCast5BlockCrypt(pass[:16])
+	case "3des":
+		kcpArgs.Block, _ = kcp.NewTripleDESBlockCrypt(pass[:24])
+	case "xtea":
+		kcpArgs.Block, _ = kcp.NewXTEABlockCrypt(pass[:16])
+	case "salsa20":
+		kcpArgs.Block, _ = kcp.NewSalsa20BlockCrypt(pass)
+	default:
+		*kcpArgs.Crypt = "aes"
+		kcpArgs.Block, _ = kcp.NewAESBlockCrypt(pass)
+	}
 	flags := log.Ldate
 	if *debug {
 		flags |= log.Lshortfile | log.Lmicroseconds

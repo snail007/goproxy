@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"snail007/proxy/services/kcpcfg"
 
 	"golang.org/x/crypto/pbkdf2"
 
@@ -147,17 +148,23 @@ func ConnectHost(hostAndPort string, timeout int) (conn net.Conn, err error) {
 	conn, err = net.DialTimeout("tcp", hostAndPort, time.Duration(timeout)*time.Millisecond)
 	return
 }
-func ConnectKCPHost(hostAndPort, method, key string) (conn net.Conn, err error) {
-	kcpconn, err := kcp.DialWithOptions(hostAndPort, GetKCPBlock(method, key), 10, 3)
+func ConnectKCPHost(hostAndPort string, config kcpcfg.KCPConfigArgs) (conn net.Conn, err error) {
+	kcpconn, err := kcp.DialWithOptions(hostAndPort, config.Block, *config.DataShard, *config.ParityShard)
 	if err != nil {
 		return
 	}
-	kcpconn.SetNoDelay(1, 10, 2, 1)
-	kcpconn.SetWindowSize(1024, 1024)
-	kcpconn.SetMtu(1400)
-	kcpconn.SetACKNoDelay(false)
-	return kcpconn, err
+	kcpconn.SetStreamMode(true)
+	kcpconn.SetWriteDelay(true)
+	kcpconn.SetNoDelay(*config.NoDelay, *config.Interval, *config.Resend, *config.NoCongestion)
+	kcpconn.SetMtu(*config.MTU)
+	kcpconn.SetWindowSize(*config.SndWnd, *config.RcvWnd)
+	kcpconn.SetACKNoDelay(*config.AckNodelay)
+	if *config.NoComp {
+		return kcpconn, err
+	}
+	return NewCompStream(kcpconn), err
 }
+
 func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listener, err error) {
 	block, _ := pem.Decode(certBytes)
 	if block == nil {

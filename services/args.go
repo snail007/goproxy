@@ -1,6 +1,10 @@
 package services
 
-import "golang.org/x/crypto/ssh"
+import (
+	"snail007/proxy/services/kcpcfg"
+
+	"golang.org/x/crypto/ssh"
+)
 
 // tcp := app.Command("tcp", "proxy on tcp mode")
 // t := tcp.Flag("tcp-timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
@@ -102,8 +106,7 @@ type TCPArgs struct {
 	Timeout             *int
 	PoolSize            *int
 	CheckParentInterval *int
-	KCPMethod           *string
-	KCPKey              *string
+	KCP                 kcpcfg.KCPConfigArgs
 }
 
 type HTTPArgs struct {
@@ -135,8 +138,7 @@ type HTTPArgs struct {
 	SSHUser             *string
 	SSHKeyBytes         []byte
 	SSHAuthMethod       ssh.AuthMethod
-	KCPMethod           *string
-	KCPKey              *string
+	KCP                 kcpcfg.KCPConfigArgs
 	LocalIPS            *[]string
 	DNSAddress          *string
 	DNSTTL              *int
@@ -179,8 +181,7 @@ type SocksArgs struct {
 	AuthURLOkCode  *int
 	AuthURLTimeout *int
 	AuthURLRetry   *int
-	KCPMethod      *string
-	KCPKey         *string
+	KCP            kcpcfg.KCPConfigArgs
 	UDPParent      *string
 	UDPLocal       *string
 	LocalIPS       *[]string
@@ -197,8 +198,7 @@ type SPSArgs struct {
 	ParentType        *string
 	LocalType         *string
 	Timeout           *int
-	KCPMethod         *string
-	KCPKey            *string
+	KCP               kcpcfg.KCPConfigArgs
 	ParentServiceType *string
 	DNSAddress        *string
 	DNSTTL            *int

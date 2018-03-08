@@ -130,7 +130,7 @@ func (s *HTTP) Start(args interface{}) (err error) {
 			} else if *s.cfg.LocalType == TYPE_TLS {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
-				err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
+				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}
 			if err != nil {
 				return
@@ -320,8 +320,7 @@ func (s *HTTP) InitOutConnPool() {
 		s.outPool = utils.NewOutPool(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
-			*s.cfg.KCPMethod,
-			*s.cfg.KCPKey,
+			s.cfg.KCP,
 			s.cfg.CertBytes, s.cfg.KeyBytes,
 			s.Resolve(*s.cfg.Parent),
 			*s.cfg.Timeout,

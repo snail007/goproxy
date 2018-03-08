@@ -140,7 +140,7 @@ func (s *Socks) Start(args interface{}) (err error) {
 	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.socksConnCallback)
 	} else if *s.cfg.LocalType == TYPE_KCP {
-		err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.socksConnCallback)
+		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback)
 	}
 	if err != nil {
 		return
@@ -474,7 +474,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			_outConn, err = utils.TlsConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
 			outConn = net.Conn(&_outConn)
 		} else if *s.cfg.ParentType == "kcp" {
-			outConn, err = utils.ConnectKCPHost(s.Resolve(*s.cfg.Parent), *s.cfg.KCPMethod, *s.cfg.KCPKey)
+			outConn, err = utils.ConnectKCPHost(s.Resolve(*s.cfg.Parent), s.cfg.KCP)
 		} else {
 			outConn, err = utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout)
 		}
