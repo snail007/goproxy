@@ -5,16 +5,19 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/url"
-	"proxy/utils/sni"
+	"snail007/proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type Checker struct {
@@ -52,7 +55,10 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 	if !ch.directMap.IsEmpty() {
 		log.Printf("direct file loaded , domains : %d", ch.directMap.Count())
 	}
-	ch.start()
+	if interval > 0 {
+		ch.start()
+	}
+
 	return ch
 }
 
@@ -171,11 +177,13 @@ type BasicAuth struct {
 	authOkCode  int
 	authTimeout int
 	authRetry   int
+	dns         *DomainResolver
 }
 
-func NewBasicAuth() BasicAuth {
+func NewBasicAuth(dns *DomainResolver) BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
+		dns:  dns,
 	}
 }
 func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
@@ -239,18 +247,27 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 	if len(u) != 2 {
 		return
 	}
+
 	URL := ba.authURL
 	if strings.Contains(URL, "?") {
 		URL += "&"
 	} else {
 		URL += "?"
 	}
-	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, target)
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, url.QueryEscape(target))
+	getURL := URL
+	var domain string
+	if ba.dns != nil {
+		_url, _ := url.Parse(ba.authURL)
+		domain = _url.Host
+		domainIP := ba.dns.MustResolve(domain)
+		getURL = strings.Replace(URL, domain, domainIP, 1)
+	}
 	var code int
 	var tryCount = 0
 	var body []byte
 	for tryCount <= ba.authRetry {
-		body, code, err = HttpGet(URL, ba.authTimeout)
+		body, code, err = HttpGet(getURL, ba.authTimeout, domain)
 		if err == nil && code == ba.authOkCode {
 			break
 		} else if err != nil {
@@ -292,21 +309,27 @@ type HTTPRequest struct {
 	basicAuth   *BasicAuth
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
-	len := 0
+	n := 0
 	req = HTTPRequest{
 		conn: inConn,
 	}
-	len, err = (*inConn).Read(buf[:])
-	if err != nil {
-		if err != io.EOF {
-			err = fmt.Errorf("http decoder read err:%s", err)
+	if len(header) == 1 {
+		buf = header[0]
+		n = len(header[0])
+	} else {
+		n, err = (*inConn).Read(buf[:])
+		if err != nil {
+			if err != io.EOF {
+				err = fmt.Errorf("http decoder read err:%s", err)
+			}
+			CloseConn(inConn)
+			return
 		}
-		CloseConn(inConn)
-		return
 	}
-	req.HeadBuf = buf[:len]
+
+	req.HeadBuf = buf[:n]
 	//fmt.Println(string(req.HeadBuf))
 	//try sni
 	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
@@ -348,16 +371,14 @@ func (req *HTTPRequest) HTTP() (err error) {
 			return
 		}
 	}
-	req.URL, err = req.getHTTPURL()
-	if err == nil {
-		var u *url.URL
-		u, err = url.Parse(req.URL)
-		if err != nil {
-			return
-		}
-		req.Host = u.Host
-		req.addPortIfNot()
+	req.URL = req.getHTTPURL()
+	var u *url.URL
+	u, err = url.Parse(req.URL)
+	if err != nil {
+		return
 	}
+	req.Host = u.Host
+	req.addPortIfNot()
 	return
 }
 func (req *HTTPRequest) HTTPS() (err error) {
@@ -369,7 +390,6 @@ func (req *HTTPRequest) HTTPS() (err error) {
 	}
 	req.Host = req.hostOrURL
 	req.addPortIfNot()
-	//_, err = fmt.Fprint(*req.conn, "HTTP/1.1 200 Connection established\r\n\r\n")
 	return
 }
 func (req *HTTPRequest) HTTPSReply() (err error) {
@@ -382,24 +402,20 @@ func (req *HTTPRequest) IsHTTPS() bool {
 
 func (req *HTTPRequest) BasicAuth() (err error) {
 
-	//log.Printf("request :%s", string(b[:n]))authorization
-	isProxyAuthorization := false
-	authorization, err := req.getHeader("Authorization")
-	if err != nil {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
+	// log.Printf("request :%s", string(req.HeadBuf))
+	code := "407"
+	authorization := req.getHeader("Proxy-Authorization")
+	// if authorization == "" {
+	// 	authorization = req.getHeader("Authorization")
+	// 	code = "401"
+	// }
+	if authorization == "" {
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
+		err = errors.New("require auth header data")
 		return
 	}
-	if authorization == "" {
-		authorization, err = req.getHeader("Proxy-Authorization")
-		if err != nil {
-			fmt.Fprint((*req.conn), "HTTP/1.1 407 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
-			CloseConn(req.conn)
-			return
-		}
-		isProxyAuthorization = true
-	}
-	//log.Printf("Authorization:%s", authorization)
+	//log.Printf("Authorization:%authorization = req.getHeader("Authorization")
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
 		err = fmt.Errorf("authorization data error,ERR:%s", authorization)
@@ -417,15 +433,11 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	if req.IsHTTPS() {
 		URL = "https://" + req.Host
 	} else {
-		URL, _ = req.getHTTPURL()
+		URL = req.getHTTPURL()
 	}
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		code := "401"
-		if isProxyAuthorization {
-			code = "407"
-		}
 		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
@@ -433,18 +445,18 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	}
 	return
 }
-func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
+func (req *HTTPRequest) getHTTPURL() (URL string) {
 	if !strings.HasPrefix(req.hostOrURL, "/") {
-		return req.hostOrURL, nil
+		return req.hostOrURL
 	}
-	_host, err := req.getHeader("host")
-	if err != nil {
+	_host := req.getHeader("host")
+	if _host == "" {
 		return
 	}
 	URL = fmt.Sprintf("http://%s%s", _host, req.hostOrURL)
 	return
 }
-func (req *HTTPRequest) getHeader(key string) (val string, err error) {
+func (req *HTTPRequest) getHeader(key string) (val string) {
 	key = strings.ToUpper(key)
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
 	//log.Println(lines)
@@ -771,5 +783,144 @@ func (cm *ConnManager) RemoveOne(key string, ID string) {
 func (cm *ConnManager) RemoveAll() {
 	for _, k := range cm.pool.Keys() {
 		cm.Remove(k)
+	}
+}
+
+type ClientKeyRouter struct {
+	keyChan chan string
+	ctrl    *ConcurrentMap
+	lock    *sync.Mutex
+}
+
+func NewClientKeyRouter(ctrl *ConcurrentMap, size int) ClientKeyRouter {
+	return ClientKeyRouter{
+		keyChan: make(chan string, size),
+		ctrl:    ctrl,
+		lock:    &sync.Mutex{},
+	}
+}
+func (c *ClientKeyRouter) GetKey() string {
+	defer c.lock.Unlock()
+	c.lock.Lock()
+	if len(c.keyChan) == 0 {
+	EXIT:
+		for _, k := range c.ctrl.Keys() {
+			select {
+			case c.keyChan <- k:
+			default:
+				goto EXIT
+			}
+		}
+	}
+	for {
+		if len(c.keyChan) == 0 {
+			return "*"
+		}
+		select {
+		case key := <-c.keyChan:
+			if c.ctrl.Has(key) {
+				return key
+			}
+		default:
+			return "*"
+		}
+	}
+
+}
+
+type DomainResolver struct {
+	ttl         int
+	dnsAddrress string
+	data        ConcurrentMap
+}
+type DomainResolverItem struct {
+	ip        string
+	domain    string
+	expiredAt int64
+}
+
+func NewDomainResolver(dnsAddrress string, ttl int) DomainResolver {
+
+	return DomainResolver{
+		ttl:         ttl,
+		dnsAddrress: dnsAddrress,
+		data:        NewConcurrentMap(),
+	}
+}
+func (a *DomainResolver) MustResolve(address string) (ip string) {
+	ip, _ = a.Resolve(address)
+	return
+}
+func (a *DomainResolver) Resolve(address string) (ip string, err error) {
+	domain := address
+	port := ""
+	fromCache := "false"
+	defer func() {
+		if port != "" {
+			ip = net.JoinHostPort(ip, port)
+		}
+		log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
+		//a.PrintData()
+	}()
+	if strings.Contains(domain, ":") {
+		domain, port, err = net.SplitHostPort(domain)
+		if err != nil {
+			return
+		}
+	}
+	if net.ParseIP(domain) != nil {
+		ip = domain
+		fromCache = "ip ignore"
+		return
+	}
+	item, ok := a.data.Get(domain)
+	if ok {
+		//log.Println("find ", domain)
+		if (*item.(*DomainResolverItem)).expiredAt > time.Now().Unix() {
+			ip = (*item.(*DomainResolverItem)).ip
+			fromCache = "true"
+			//log.Println("from cache ", domain)
+			return
+		}
+	} else {
+		item = &DomainResolverItem{
+			domain: domain,
+		}
+
+	}
+	c := new(dns.Client)
+	c.DialTimeout = time.Millisecond * 5000
+	c.ReadTimeout = time.Millisecond * 5000
+	c.WriteTimeout = time.Millisecond * 5000
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+	m.RecursionDesired = true
+	r, _, err := c.Exchange(m, a.dnsAddrress)
+	if r == nil {
+		return
+	}
+	if r.Rcode != dns.RcodeSuccess {
+		err = fmt.Errorf(" *** invalid answer name %s after A query for %s", domain, a.dnsAddrress)
+		return
+	}
+	for _, answer := range r.Answer {
+		if answer.Header().Rrtype == dns.TypeA {
+			info := strings.Fields(answer.String())
+			if len(info) >= 5 {
+				ip = info[4]
+				_item := item.(*DomainResolverItem)
+				(*_item).expiredAt = time.Now().Unix() + int64(a.ttl)
+				(*_item).ip = ip
+				a.data.Set(domain, item)
+				return
+			}
+		}
+	}
+	return
+}
+func (a *DomainResolver) PrintData() {
+	for k, item := range a.data.Items() {
+		d := item.(*DomainResolverItem)
+		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
 	}
 }

@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"proxy/utils"
-	"proxy/utils/aes"
-	"proxy/utils/socks"
 	"runtime/debug"
+	"snail007/proxy/utils"
+	"snail007/proxy/utils/aes"
+	"snail007/proxy/utils/socks"
 	"strings"
 	"time"
 
@@ -17,12 +17,13 @@ import (
 )
 
 type Socks struct {
-	cfg       SocksArgs
-	checker   utils.Checker
-	basicAuth utils.BasicAuth
-	sshClient *ssh.Client
-	lockChn   chan bool
-	udpSC     utils.ServerChannel
+	cfg            SocksArgs
+	checker        utils.Checker
+	basicAuth      utils.BasicAuth
+	sshClient      *ssh.Client
+	lockChn        chan bool
+	udpSC          utils.ServerChannel
+	domainResolver utils.DomainResolver
 }
 
 func NewSocks() Service {
@@ -41,7 +42,7 @@ func (s *Socks) CheckArgs() {
 	}
 	if *s.cfg.Parent != "" {
 		if *s.cfg.ParentType == "" {
-			log.Fatalf("parent type unkown,use -T <tls|tcp|ssh>")
+			log.Fatalf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 		}
 		if *s.cfg.ParentType == "tls" {
 			s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
@@ -77,6 +78,9 @@ func (s *Socks) CheckArgs() {
 }
 func (s *Socks) InitService() {
 	s.InitBasicAuth()
+	if *s.cfg.DNSAddress != "" {
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+	}
 	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
 	if *s.cfg.ParentType == "ssh" {
 		err := s.ConnectSSH()
@@ -86,7 +90,7 @@ func (s *Socks) InitService() {
 		go func() {
 			//循环检查ssh网络连通性
 			for {
-				conn, err := utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout*2)
+				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					_, err = conn.Write([]byte{0})
 				}
@@ -106,7 +110,6 @@ func (s *Socks) InitService() {
 	if *s.cfg.ParentType == "ssh" {
 		log.Println("warn: socks udp not suppored for ssh")
 	} else {
-
 		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal)
 		err := s.udpSC.ListenUDP(s.udpCallback)
 		if err != nil {
@@ -188,7 +191,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		if parent == "" {
 			parent = *s.cfg.Parent
 		}
-		dstAddr, err := net.ResolveUDPAddr("udp", parent)
+		dstAddr, err := net.ResolveUDPAddr("udp", s.Resolve(parent))
 		if err != nil {
 			log.Printf("can't resolve address: %s", err)
 			return
@@ -244,7 +247,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 
 	} else {
 		//本地代理
-		dstAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(p.Host(), p.Port()))
+		dstAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(s.Resolve(p.Host()), p.Port()))
 		if err != nil {
 			log.Printf("can't resolve address: %s", err)
 			return
@@ -421,16 +424,17 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 				if utils.IsIternalIP(host) {
 					useProxy = false
 				} else {
-					s.checker.Add(request.Addr())
-					useProxy, _, _ = s.checker.IsBlocked(request.Addr())
+					k := s.Resolve(request.Addr())
+					s.checker.Add(k)
+					useProxy, _, _ = s.checker.IsBlocked(k)
 				}
 				if useProxy {
 					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
 				} else {
-					outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
+					outConn, err = utils.ConnectHost(s.Resolve(request.Addr()), *s.cfg.Timeout)
 				}
 			} else {
-				outConn, err = utils.ConnectHost(request.Addr(), *s.cfg.Timeout)
+				outConn, err = utils.ConnectHost(s.Resolve(request.Addr()), *s.cfg.Timeout)
 				useProxy = false
 			}
 		}
@@ -467,12 +471,12 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 	case "tcp":
 		if *s.cfg.ParentType == "tls" {
 			var _outConn tls.Conn
-			_outConn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+			_outConn, err = utils.TlsConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
 			outConn = net.Conn(&_outConn)
 		} else if *s.cfg.ParentType == "kcp" {
-			outConn, err = utils.ConnectKCPHost(*s.cfg.Parent, *s.cfg.KCPMethod, *s.cfg.KCPKey)
+			outConn, err = utils.ConnectKCPHost(s.Resolve(*s.cfg.Parent), *s.cfg.KCPMethod, *s.cfg.KCPKey)
 		} else {
-			outConn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+			outConn, err = utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout)
 		}
 		if err != nil {
 			err = fmt.Errorf("connect fail,%s", err)
@@ -562,12 +566,16 @@ func (s *Socks) ConnectSSH() (err error) {
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
-	s.sshClient, err = ssh.Dial("tcp", *s.cfg.Parent, &config)
+	s.sshClient, err = ssh.Dial("tcp", s.Resolve(*s.cfg.Parent), &config)
 	<-s.lockChn
 	return
 }
 func (s *Socks) InitBasicAuth() (err error) {
-	s.basicAuth = utils.NewBasicAuth()
+	if *s.cfg.DNSAddress != "" {
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+	} else {
+		s.basicAuth = utils.NewBasicAuth(nil)
+	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
 		log.Printf("auth from %s", *s.cfg.AuthURL)
@@ -601,7 +609,11 @@ func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
 	}
 	if inPort == outPort {
 		var outIPs []net.IP
-		outIPs, err = net.LookupIP(outDomain)
+		if *s.cfg.DNSAddress != "" {
+			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
+		} else {
+			outIPs, err = net.LookupIP(outDomain)
+		}
 		if err == nil {
 			for _, ip := range outIPs {
 				if ip.String() == inIP {
@@ -624,4 +636,14 @@ func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
 		}
 	}
 	return false
+}
+func (s *Socks) Resolve(address string) string {
+	if *s.cfg.DNSAddress == "" {
+		return address
+	}
+	ip, err := s.domainResolver.Resolve(address)
+	if err != nil {
+		log.Printf("dns error %s , ERR:%s", address, err)
+	}
+	return ip
 }
