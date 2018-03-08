@@ -133,6 +133,7 @@ func initConfig() (err error) {
 	muxServerArgs.Key = muxServer.Flag("k", "client key").Default("default").String()
 	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp mode").Default("false").Bool()
+	muxServerArgs.SessionCount = muxServer.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
 
 	//########mux-client#########
 	muxClient := app.Command("client", "proxy on mux client mode")
@@ -142,6 +143,7 @@ func initConfig() (err error) {
 	muxClientArgs.Timeout = muxClient.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	muxClientArgs.Key = muxClient.Flag("k", "key same with server").Default("default").String()
 	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp mode").Default("false").Bool()
+	muxClientArgs.SessionCount = muxClient.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
 
 	//########mux-bridge#########
 	muxBridge := app.Command("bridge", "proxy on mux bridge mode")

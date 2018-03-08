@@ -25,29 +25,31 @@ const (
 )
 
 type MuxServerArgs struct {
-	Parent     *string
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Local      *string
-	IsUDP      *bool
-	Key        *string
-	Remote     *string
-	Timeout    *int
-	Route      *[]string
-	Mgr        *MuxServerManager
-	IsCompress *bool
+	Parent       *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Local        *string
+	IsUDP        *bool
+	Key          *string
+	Remote       *string
+	Timeout      *int
+	Route        *[]string
+	Mgr          *MuxServerManager
+	IsCompress   *bool
+	SessionCount *int
 }
 type MuxClientArgs struct {
-	Parent     *string
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Key        *string
-	Timeout    *int
-	IsCompress *bool
+	Parent       *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Key          *string
+	Timeout      *int
+	IsCompress   *bool
+	SessionCount *int
 }
 type MuxBridgeArgs struct {
 	Parent     *string

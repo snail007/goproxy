@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -45,57 +46,75 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 	s.CheckArgs()
 	s.InitService()
 	log.Printf("proxy on mux client mode, compress %v", *s.cfg.IsCompress)
-	for {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
-		if err != nil {
-			log.Printf("connection err: %s, retrying...", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		conn := net.Conn(&_conn)
-		_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, *s.cfg.Key))
-		if err != nil {
-			conn.Close()
-			log.Printf("connection err: %s, retrying...", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		session, err := smux.Server(conn, nil)
-		if err != nil {
-			log.Printf("session err: %s, retrying...", err)
-			conn.Close()
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		for {
-			stream, err := session.AcceptStream()
-			if err != nil {
-				log.Printf("accept stream err: %s, retrying...", err)
-				session.Close()
-				time.Sleep(time.Second * 3)
-				break
-			}
-			go func() {
-				var ID, clientLocalAddr, serverID string
-				err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
-				if err != nil {
-					log.Printf("read stream signal err: %s", err)
-					stream.Close()
-					return
-				}
-				log.Printf("signal revecived,server %s stream %s %s", serverID, ID, clientLocalAddr)
-				protocol := clientLocalAddr[:3]
-				localAddr := clientLocalAddr[4:]
-				if protocol == "udp" {
-					s.ServeUDP(stream, localAddr, ID)
-				} else {
-					s.ServeConn(stream, localAddr, ID)
+	for i := 1; i <= *s.cfg.SessionCount; i++ {
+		log.Printf("session worker[%d] started", i)
+		go func(i int) {
+			defer func() {
+				e := recover()
+				if e != nil {
+					log.Printf("session worker crashed: %s", e)
 				}
 			}()
-		}
-	}
+			for {
+				var _conn tls.Conn
+				_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+				if err != nil {
+					log.Printf("connection err: %s, retrying...", err)
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				conn := net.Conn(&_conn)
+				_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, fmt.Sprintf("%s-%d", *s.cfg.Key, i)))
+				if err != nil {
+					conn.Close()
+					log.Printf("connection err: %s, retrying...", err)
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				session, err := smux.Server(conn, nil)
+				if err != nil {
+					log.Printf("session err: %s, retrying...", err)
+					conn.Close()
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				for {
+					stream, err := session.AcceptStream()
+					if err != nil {
+						log.Printf("accept stream err: %s, retrying...", err)
+						session.Close()
+						time.Sleep(time.Second * 3)
+						break
+					}
+					go func() {
+						defer func() {
+							e := recover()
+							if e != nil {
+								log.Printf("stream handler crashed: %s", e)
+							}
+						}()
+						var ID, clientLocalAddr, serverID string
+						err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
+						if err != nil {
+							log.Printf("read stream signal err: %s", err)
+							stream.Close()
+							return
+						}
+						log.Printf("worker[%d] signal revecived,server %s stream %s %s", i, serverID, ID, clientLocalAddr)
+						protocol := clientLocalAddr[:3]
+						localAddr := clientLocalAddr[4:]
+						if protocol == "udp" {
+							s.ServeUDP(stream, localAddr, ID)
+						} else {
+							s.ServeConn(stream, localAddr, ID)
+						}
+					}()
+				}
+			}
 
+		}(i)
+	}
+	return
 }
 func (s *MuxClient) Clean() {
 	s.StopService()

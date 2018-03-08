@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"runtime/debug"
 	"snail007/proxy/utils"
@@ -17,11 +18,11 @@ import (
 )
 
 type MuxServer struct {
-	cfg     MuxServerArgs
-	udpChn  chan MuxUDPItem
-	sc      utils.ServerChannel
-	session *smux.Session
-	lockChn chan bool
+	cfg      MuxServerArgs
+	udpChn   chan MuxUDPItem
+	sc       utils.ServerChannel
+	sessions utils.ConcurrentMap
+	lockChn  chan bool
 }
 
 type MuxServerManager struct {
@@ -74,18 +75,19 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 			remote = fmt.Sprintf("127.0.0.1%s", remote)
 		}
 		err = server.Start(MuxServerArgs{
-			CertBytes:  s.cfg.CertBytes,
-			KeyBytes:   s.cfg.KeyBytes,
-			Parent:     s.cfg.Parent,
-			CertFile:   s.cfg.CertFile,
-			KeyFile:    s.cfg.KeyFile,
-			Local:      &local,
-			IsUDP:      &IsUDP,
-			Remote:     &remote,
-			Key:        &KEY,
-			Timeout:    s.cfg.Timeout,
-			Mgr:        s,
-			IsCompress: s.cfg.IsCompress,
+			CertBytes:    s.cfg.CertBytes,
+			KeyBytes:     s.cfg.KeyBytes,
+			Parent:       s.cfg.Parent,
+			CertFile:     s.cfg.CertFile,
+			KeyFile:      s.cfg.KeyFile,
+			Local:        &local,
+			IsUDP:        &IsUDP,
+			Remote:       &remote,
+			Key:          &KEY,
+			Timeout:      s.cfg.Timeout,
+			Mgr:          s,
+			IsCompress:   s.cfg.IsCompress,
+			SessionCount: s.cfg.SessionCount,
 		})
 
 		if err != nil {
@@ -110,9 +112,10 @@ func (s *MuxServerManager) InitService() {
 
 func NewMuxServer() Service {
 	return &MuxServer{
-		cfg:     MuxServerArgs{},
-		udpChn:  make(chan MuxUDPItem, 50000),
-		lockChn: make(chan bool, 1),
+		cfg:      MuxServerArgs{},
+		udpChn:   make(chan MuxUDPItem, 50000),
+		lockChn:  make(chan bool, 1),
+		sessions: utils.NewConcurrentMap(),
 	}
 }
 
@@ -206,7 +209,7 @@ func (s *MuxServer) Clean() {
 
 }
 func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
-	outConn, err = s.GetConn()
+	outConn, err = s.GetConn(fmt.Sprintf("%d", rand.Intn(*s.cfg.SessionCount)))
 	if err != nil {
 		log.Printf("connection err: %s", err)
 		return
@@ -224,7 +227,7 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	}
 	return
 }
-func (s *MuxServer) GetConn() (conn net.Conn, err error) {
+func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 	select {
 	case s.lockChn <- true:
 	default:
@@ -234,32 +237,35 @@ func (s *MuxServer) GetConn() (conn net.Conn, err error) {
 	defer func() {
 		<-s.lockChn
 	}()
-	if s.session == nil {
+	var session *smux.Session
+	_session, ok := s.sessions.Get(index)
+	if !ok {
 		var _conn tls.Conn
 		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
 		if err != nil {
-			s.session = nil
 			return
 		}
 		c := net.Conn(&_conn)
 		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key, s.cfg.Mgr.serverID))
 		if err != nil {
 			c.Close()
-			s.session = nil
 			return
 		}
 		if err == nil {
-			s.session, err = smux.Client(c, nil)
+			session, err = smux.Client(c, nil)
 			if err != nil {
-				s.session = nil
 				return
 			}
 		}
+		s.sessions.Set(index, session)
+		log.Printf("session[%s] created", index)
+	} else {
+		session = _session.(*smux.Session)
 	}
-	conn, err = s.session.OpenStream()
+	conn, err = session.OpenStream()
 	if err != nil {
-		s.session.Close()
-		s.session = nil
+		session.Close()
+		s.sessions.Remove(index)
 	}
 
 	return
