@@ -53,14 +53,19 @@ type Request struct {
 	rw          io.ReadWriter
 }
 
-func NewRequest(rw io.ReadWriter) (req Request, err interface{}) {
-	var b [1024]byte
+func NewRequest(rw io.ReadWriter, header ...[]byte) (req Request, err interface{}) {
+	var b = make([]byte, 1024)
 	var n int
 	req = Request{rw: rw}
-	n, err = rw.Read(b[:])
-	if err != nil {
-		err = fmt.Errorf("read req data fail,ERR: %s", err)
-		return
+	if len(header) == 1 {
+		b = header[0]
+		n = len(header[0])
+	} else {
+		n, err = rw.Read(b[:])
+		if err != nil {
+			err = fmt.Errorf("read req data fail,ERR: %s", err)
+			return
+		}
 	}
 	req.ver = uint8(b[0])
 	req.cmd = uint8(b[1])
@@ -150,7 +155,7 @@ type MethodsRequest struct {
 	rw           *io.ReadWriter
 }
 
-func NewMethodsRequest(r io.ReadWriter) (s MethodsRequest, err interface{}) {
+func NewMethodsRequest(r io.ReadWriter, header ...[]byte) (s MethodsRequest, err interface{}) {
 	defer func() {
 		if err == nil {
 			err = recover()
@@ -160,9 +165,14 @@ func NewMethodsRequest(r io.ReadWriter) (s MethodsRequest, err interface{}) {
 	s.rw = &r
 	var buf = make([]byte, 300)
 	var n int
-	n, err = r.Read(buf)
-	if err != nil {
-		return
+	if len(header) == 1 {
+		buf = header[0]
+		n = len(header[0])
+	} else {
+		n, err = r.Read(buf)
+		if err != nil {
+			return
+		}
 	}
 	if buf[0] != 0x05 {
 		err = fmt.Errorf("socks version not supported")

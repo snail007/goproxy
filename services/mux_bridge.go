@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
-	"proxy/utils"
+	"snail007/proxy/utils"
 	"strconv"
 	"time"
 
@@ -15,13 +15,16 @@ import (
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
 	clientControlConns utils.ConcurrentMap
+	router             utils.ClientKeyRouter
 }
 
 func NewMuxBridge() Service {
-	return &MuxBridge{
+	b := &MuxBridge{
 		cfg:                MuxBridgeArgs{},
 		clientControlConns: utils.NewConcurrentMap(),
 	}
+	b.router = utils.NewClientKeyRouter(&b.clientControlConns, 50000)
+	return b
 }
 
 func (s *MuxBridge) InitService() {
@@ -117,6 +120,9 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		try--
 		if try == 0 {
 			break
+		}
+		if key == "*" {
+			key = s.router.GetKey()
 		}
 		session, ok := s.clientControlConns.Get(key)
 		if !ok {

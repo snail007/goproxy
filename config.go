@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"proxy/services"
-	"proxy/utils"
+	"snail007/proxy/services"
+	"snail007/proxy/utils"
 	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -39,6 +39,7 @@ func initConfig() (err error) {
 	muxBridgeArgs := services.MuxBridgeArgs{}
 	udpArgs := services.UDPArgs{}
 	socksArgs := services.SocksArgs{}
+	spsArgs := services.SPSArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
@@ -76,6 +77,8 @@ func initConfig() (err error) {
 	httpArgs.AuthURLTimeout = http.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	httpArgs.AuthURLOkCode = http.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
 	httpArgs.AuthURLRetry = http.Flag("auth-retry", "access 'auth-url' fail and retry count").Default("1").Int()
+	httpArgs.DNSAddress = http.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
+	httpArgs.DNSTTL = http.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
 
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
@@ -182,6 +185,22 @@ func initConfig() (err error) {
 	socksArgs.AuthURLTimeout = socks.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	socksArgs.AuthURLOkCode = socks.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
 	socksArgs.AuthURLRetry = socks.Flag("auth-retry", "access 'auth-url' fail and retry count").Default("0").Int()
+	socksArgs.DNSAddress = socks.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
+	socksArgs.DNSTTL = socks.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
+	//########socks+http(s)#########
+	sps := app.Command("sps", "proxy on socks+http(s) mode")
+	spsArgs.Parent = sps.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	spsArgs.CertFile = sps.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
+	spsArgs.KeyFile = sps.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	spsArgs.Timeout = sps.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('i').Default("2000").Int()
+	spsArgs.ParentType = sps.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
+	spsArgs.LocalType = sps.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
+	spsArgs.Local = sps.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
+	spsArgs.KCPKey = sps.Flag("kcp-key", "key for kcp encrypt/decrypt data").Short('B').Default("encrypt").String()
+	spsArgs.KCPMethod = sps.Flag("kcp-method", "kcp encrypt/decrypt method").Short('M').Default("3des").String()
+	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
+	spsArgs.DNSAddress = sps.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
+	spsArgs.DNSTTL = sps.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -281,6 +300,7 @@ func initConfig() (err error) {
 	services.Regist("client", services.NewMuxClient(), muxClientArgs)
 	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
 	services.Regist("socks", services.NewSocks(), socksArgs)
+	services.Regist("sps", services.NewSPS(), spsArgs)
 	service, err = services.Run(serviceName)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", serviceName, err)

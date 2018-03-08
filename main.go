@@ -4,11 +4,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"proxy/services"
+	"snail007/proxy/services"
 	"syscall"
 )
 
-const APP_VERSION = "4.2"
+const APP_VERSION = "4.4"
 
 func main() {
 	err := initConfig()

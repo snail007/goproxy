@@ -138,6 +138,8 @@ type HTTPArgs struct {
 	KCPMethod           *string
 	KCPKey              *string
 	LocalIPS            *[]string
+	DNSAddress          *string
+	DNSTTL              *int
 }
 type UDPArgs struct {
 	Parent              *string
@@ -182,8 +184,37 @@ type SocksArgs struct {
 	UDPParent      *string
 	UDPLocal       *string
 	LocalIPS       *[]string
+	DNSAddress     *string
+	DNSTTL         *int
+}
+type SPSArgs struct {
+	Parent            *string
+	CertFile          *string
+	KeyFile           *string
+	CertBytes         []byte
+	KeyBytes          []byte
+	Local             *string
+	ParentType        *string
+	LocalType         *string
+	Timeout           *int
+	KCPMethod         *string
+	KCPKey            *string
+	ParentServiceType *string
+	DNSAddress        *string
+	DNSTTL            *int
 }
 
+func (a *SPSArgs) Protocol() string {
+	switch *a.LocalType {
+	case TYPE_TLS:
+		return TYPE_TLS
+	case TYPE_TCP:
+		return TYPE_TCP
+	case TYPE_KCP:
+		return TYPE_KCP
+	}
+	return "unknown"
+}
 func (a *TCPArgs) Protocol() string {
 	switch *a.LocalType {
 	case TYPE_TLS:

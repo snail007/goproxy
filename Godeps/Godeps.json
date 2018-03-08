@@ -1,5 +1,5 @@
 {
-	"ImportPath": "proxy",
+	"ImportPath": "snail007/proxy",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Packages": [
@@ -21,6 +21,11 @@
 		{
 			"ImportPath": "github.com/golang/snappy",
 			"Rev": "553a641470496b2327abcac10b36396bd98e45c9"
+		},
+		{
+			"ImportPath": "github.com/miekg/dns",
+			"Comment": "v1.0.4",
+			"Rev": "5364553f1ee9cddc7ac8b62dce148309c386695b"
 		},
 		{
 			"ImportPath": "github.com/pkg/errors",
@@ -58,71 +63,75 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/blowfish",
-			"Rev": "f899cbd3df85058aa20d1cf129473b18f2a2b49f"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/cast5",
-			"Rev": "86e16787bfd59cb4db9e278c51a95488c141a5d6"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/curve25519",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ed25519",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ed25519/internal/edwards25519",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/pbkdf2",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/salsa20",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ssh",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/tea",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/twofish",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/xtea",
-			"Rev": "1843fabd21d7180cf65e36759986d00c13dbb0fd"
+			"Rev": "0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8"
 		},
 		{
 			"ImportPath": "golang.org/x/net/bpf",
-			"Rev": "114479435b31b5077a087cc5303a45cb5d355dc4"
+			"Rev": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 		},
 		{
 			"ImportPath": "golang.org/x/net/internal/iana",
-			"Rev": "114479435b31b5077a087cc5303a45cb5d355dc4"
+			"Rev": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 		},
 		{
 			"ImportPath": "golang.org/x/net/internal/socket",
-			"Rev": "114479435b31b5077a087cc5303a45cb5d355dc4"
+			"Rev": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 		},
 		{
 			"ImportPath": "golang.org/x/net/ipv4",
-			"Rev": "114479435b31b5077a087cc5303a45cb5d355dc4"
+			"Rev": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
+		},
+		{
+			"ImportPath": "golang.org/x/net/ipv6",
+			"Rev": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 		},
 		{
 			"ImportPath": "golang.org/x/time/rate",
-			"Rev": "8be79e1e0910c292df4e79c241bb7e8f7e725959"
+			"Rev": "6dc17368e09b0e8634d71cac8168d853e869a0c7"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",

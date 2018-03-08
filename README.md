@@ -1,5 +1,6 @@
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
 Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
+
   
 ---  
   
@@ -49,8 +50,9 @@ This page is the v4.4 manual, and the other version of the manual can be checked
 - [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
 
 ### How to find the organization?  
-[Click to join the communication organization gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)   
-[Click to join the communication organization TG](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)  
+[Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
+[Click to join the proxy group of telegram](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)    
+
 
 ### Installation
 - [Quick installation](#quick-installation)
@@ -142,7 +144,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.0/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.4/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -575,7 +577,7 @@ Procedure:
 #### **4.8.view help**  
 `./proxy help bridge`  
 `./proxy help server`  
-`./proxy help server`  
+`./proxy help client`  
   
 ### **5.SOCKS5 proxy**  
 Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and support username password authentication.  
@@ -731,10 +733,13 @@ The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by 
 - Welcome joining group feedback...
 
 ### How to use the source code?   
-use command cd to enter your go SRC directory and then execute git clone https://github.com/snail007/goproxy.git ./proxy   
-Direct compilation: go build     
-execution: go run *.go    
-Utils is a toolkit, and service is a specific service class.  
+use command cd to enter your go SRC directory and then  
+mkdir snail007  
+cd snail007   
+execute `git clone https://github.com/snail007/goproxy.git ./proxy`     
+Direct compilation: `go build`    
+execution: `go run *.go`    
+`utils` is a toolkit, and `service` is a specific service class.  
 
 ### License  
 Proxy is licensed under GPLv3 license.  
