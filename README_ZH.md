@@ -126,6 +126,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [6.4 链式连接](#64-链式连接)
     - [6.5 监听多个端口](#65-监听多个端口)
     - [6.6 查看帮助](#66-查看帮助)
+- [7. KCP配置](#7kcp配置)
+    - [7.1 配置介绍](#71-配置介绍)
+    - [7.2 详细配置](#72-详细配置)
 
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -733,7 +736,36 @@ vps02：3.3.3.3
 #### **6.6 查看帮助** 
 `./proxy help sps`  
 
+### **7.KCP配置**   
 
+#### **7.1 配置介绍**   
+proxy的很多功能都支持kcp协议，凡是使用了kcp协议的功能都支持这里介绍的配置参数。  
+所以这里统一对KCP配置参数进行介绍。  
+
+#### **7.2 详细配置**   
+所有的KCP配置参数共有17个，你可以都不用设置，他们都有默认值，如果为了或者最好的效果，  
+就需要自己根据自己根据网络情况对参数进行配置。由于kcp配置很复杂需要一定的网络基础知识，  
+如果想获得kcp参数更详细的配置和解说，请自行搜索。每个参数的命令行名称以及默认值和简单的功能说明如下：  
+```
+--kcp-key="secrect"        pre-shared secret between client and server
+--kcp-method="aes"         encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none
+--kcp-mode="secrect"       profiles: fast3, fast2, fast, normal, manual
+--kcp-mtu=1350             set maximum transmission unit for UDP packets
+--kcp-sndwnd=1024          set send window size(num of packets)
+--kcp-rcvwnd=1024          set receive window size(num of packets)
+--kcp-ds=10                set reed-solomon erasure coding - datashard
+--kcp-ps=3                 set reed-solomon erasure coding - parityshard
+--kcp-dscp=0               set DSCP(6bit)
+--kcp-nocomp               disable compression
+--kcp-acknodelay           be carefull! flush ack immediately when a packet is received
+--kcp-nodelay=0            be carefull!
+--kcp-interval=50          be carefull!
+--kcp-resend=0             be carefull!
+--kcp-nc=0                 be carefull! no congestion
+--kcp-sockbuf=4194304      be carefull!
+--kcp-keepalive=10         be carefull!
+```
+    
 ### TODO  
 - http,socks代理多个上级负载均衡?
 - http(s)代理增加pac支持?
