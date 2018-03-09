@@ -142,15 +142,19 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn)) (err error) {
 	lis, err := kcp.ListenWithOptions(fmt.Sprintf("%s:%d", sc.ip, sc.port), config.Block, *config.DataShard, *config.ParityShard)
 	if err == nil {
-		if err := lis.SetDSCP(*config.DSCP); err != nil {
+		if err = lis.SetDSCP(*config.DSCP); err != nil {
 			log.Println("SetDSCP:", err)
+			return
 		}
-		if err := lis.SetReadBuffer(*config.SockBuf); err != nil {
+		if err = lis.SetReadBuffer(*config.SockBuf); err != nil {
 			log.Println("SetReadBuffer:", err)
+			return
 		}
-		if err := lis.SetWriteBuffer(*config.SockBuf); err != nil {
+		if err = lis.SetWriteBuffer(*config.SockBuf); err != nil {
 			log.Println("SetWriteBuffer:", err)
+			return
 		}
+		sc.Listener = new(net.Listener)
 		*sc.Listener = lis
 		go func() {
 			defer func() {

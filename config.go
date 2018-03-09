@@ -264,6 +264,12 @@ func initConfig() (err error) {
 		*kcpArgs.Crypt = "aes"
 		kcpArgs.Block, _ = kcp.NewAESBlockCrypt(pass)
 	}
+	//attach kcp config
+	tcpArgs.KCP = kcpArgs
+	httpArgs.KCP = kcpArgs
+	socksArgs.KCP = kcpArgs
+	spsArgs.KCP = kcpArgs
+
 	flags := log.Ldate
 	if *debug {
 		flags |= log.Lshortfile | log.Lmicroseconds
