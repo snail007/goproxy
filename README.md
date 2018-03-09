@@ -281,13 +281,13 @@ Local HTTP (S) proxy use 28080 port,excute:
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter to set a password which can encrypt and decrypt data.  
+The KCP protocol requires a --kcp-key parameter to set a password which can encrypt and decrypt data.  
 
 Http first level proxy(VPS,IP:22.22.22.22)  
-`./proxy http -t kcp -p ":38080" -B mypassword`  
+`./proxy http -t kcp -p ":38080" --kcp-key mypassword`  
   
 Http second level proxy(os is Linux)  
-`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
 #### **1.9.HTTP reverse proxy** 
 Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
@@ -657,13 +657,13 @@ ip: user's IP, for example: 192.168.1.200
 If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
 #### **5.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter which can set a password to encrypt and decrypt data.  
+The KCP protocol requires a --kcp-key parameter which can set a password to encrypt and decrypt data.  
 
 HTTP first level proxy(VPS,IP:22.22.22.22)  
-`./proxy socks -t kcp -p ":38080" -B mypassword`  
+`./proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
   
 HTTP two level proxy(local os is Linux)  
-`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.
 
 #### **5.9.Custom DNS** 
@@ -692,7 +692,7 @@ command：
 
 Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
 command：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.3.SOCKS5 to HTTP(S) + SOCKS5** 
 Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
@@ -705,7 +705,7 @@ command：
 
 Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
 command：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.4.Chain style connection** 
 It is mentioned above that multiple SPS nodes can be connected to build encrypted channels, assuming you have the following VPS and a PC.  

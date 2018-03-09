@@ -93,6 +93,11 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 				return
 			}
 			keyInfo := strings.Split(key, "-")
+			if len(keyInfo) != 2 {
+				utils.CloseConn(&inConn)
+				log.Printf("client key format error,key:%s", key)
+				return
+			}
 			groupKey := keyInfo[0]
 			index := keyInfo[1]
 			if !s.clientControlConns.Has(groupKey) {

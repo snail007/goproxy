@@ -281,13 +281,13 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP协议传输**  
-KCP协议需要-B参数设置一个密码用于加密解密数据  
+KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
-`./proxy http -t kcp -p ":38080" -B mypassword`  
+`./proxy http -t kcp -p ":38080" --kcp-key mypassword`  
   
 二级HTTP代理(本地Linux)  
-`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
 #### **1.9 HTTP(S)反向代理** 
@@ -661,13 +661,13 @@ ip:用户的IP,比如:192.168.1.200
 如果没有-a或-F或--auth-url参数,就是关闭认证.    
 
 #### **5.8.KCP协议传输**  
-KCP协议需要-B参数设置一个密码用于加密解密数据  
+KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
-`./proxy socks -t kcp -p ":38080" -B mypassword`  
+`./proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
   
 二级HTTP代理(本地Linux)  
-`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
 #### **5.9.自定义DNS** 
@@ -695,7 +695,7 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 
 假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
 命令如下：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.3 SOCKS5转HTTP(S)+SOCKS5** 
 假设已经存在一个普通的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
@@ -708,7 +708,7 @@ KCP协议需要-B参数设置一个密码用于加密解密数据
 
 假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
 命令如下：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.4 链式连接** 
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
