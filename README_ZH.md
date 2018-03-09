@@ -750,7 +750,7 @@ proxy的很多功能都支持kcp协议，凡是使用了kcp协议的功能都支
 --kcp-key="secrect"        pre-shared secret between client and server
 --kcp-method="aes"         encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, 
                            twofish, cast5, 3des, tea, xtea, xor, sm4, none
---kcp-mode="secrect"       profiles: fast3, fast2, fast, normal, manual
+--kcp-mode="fast"       profiles: fast3, fast2, fast, normal, manual
 --kcp-mtu=1350             set maximum transmission unit for UDP packets
 --kcp-sndwnd=1024          set send window size(num of packets)
 --kcp-rcvwnd=1024          set receive window size(num of packets)
@@ -766,19 +766,26 @@ proxy的很多功能都支持kcp协议，凡是使用了kcp协议的功能都支
 --kcp-sockbuf=4194304      be carefull!
 --kcp-keepalive=10         be carefull!
 ```
-    
+提示：  
+参数：--kcp-mode中的四种fast3, fast2, fast, normal模式，  
+相当于设置了下面四个参数：  
+normal：`--nodelay=0 --interval=40 --resend=2 --nc=1`  
+fast ：`--nodelay=0 --interval=30 --resend=2 --nc=1`  
+fast2：`--nodelay=1 --interval=20 --resend=2 --nc=1`  
+fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`  
+
 ### TODO  
 - http,socks代理多个上级负载均衡?
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
-### 如何使用源码? 
-建议go1.8.5,不保证>=1.9能用.   
-cd进入你的go src目录,新建文件夹snail007,
-cd进入snail007,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.   
-编译直接:go build     
-运行: go run *.go    
-utils是工具包,service是具体的每个服务类.   
+### 如何使用源码?   
+建议go1.8.5,不保证>=1.9能用.    
+cd进入你的go src目录,新建文件夹snail007,   
+cd进入snail007,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.     
+编译直接:go build       
+运行: go run *.go      
+utils是工具包,service是具体的每个服务类.     
 
 ### License  
 Proxy is licensed under GPLv3 license.  
