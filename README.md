@@ -127,6 +127,10 @@ This page is the v4.4 manual, and the other version of the manual can be checked
     - [6.4 Chain style connection](#64chain-style-connection)
     - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
     - [6.6 View Help](#56transfer-through-ssh)
+- [7.KCP Configuration](#7kcp-configuration)
+    - [7.1 Configuration introduction](#71configuration-introduction)
+    - [7.2 Configuration details](#72configuration-details)
+
 
 ### Fast Start  
 tips:all operations require root permissions.   
@@ -727,7 +731,38 @@ In general, listening one port is enough, but if you need to monitor 80 and 443 
 The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
 
 #### **6.6.view help** 
-`./proxy help sps`  
+`./proxy help sps` 
+
+### **7.KCP Configuration**   
+
+#### **7.1.Configuration introduction**   
+Many functions of the proxy support the KCP protocol, and all the functions that can use the KCP protocol support the configuration parameters introduced here.  
+So here is a unified introduction to the KCP configuration parameters.  
+
+#### **7.2.Configuration details**   
+The number of KCP configuration parameters is 17, you don't have to set up them. they all have the default value, if for the best effect,  
+You need to configure the parameters according to your own network conditions. Due to the complexity of KCP configuration, a certain network basic knowledge is required,  
+If you want to get a more detailed configuration and explanation of the KCP parameters, search for yourself. The command line name for each parameter, as well as the default and simple functions, are described as follows：  
+```
+--kcp-key="secrect"        pre-shared secret between client and server
+--kcp-method="aes"         encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, 
+                           twofish, cast5, 3des, tea, xtea, xor, sm4, none
+--kcp-mode="secrect"       profiles: fast3, fast2, fast, normal, manual
+--kcp-mtu=1350             set maximum transmission unit for UDP packets
+--kcp-sndwnd=1024          set send window size(num of packets)
+--kcp-rcvwnd=1024          set receive window size(num of packets)
+--kcp-ds=10                set reed-solomon erasure coding - datashard
+--kcp-ps=3                 set reed-solomon erasure coding - parityshard
+--kcp-dscp=0               set DSCP(6bit)
+--kcp-nocomp               disable compression
+--kcp-acknodelay           be carefull! flush ack immediately when a packet is received
+--kcp-nodelay=0            be carefull!
+--kcp-interval=50          be carefull!
+--kcp-resend=0             be carefull!
+--kcp-nc=0                 be carefull! no congestion
+--kcp-sockbuf=4194304      be carefull!
+--kcp-keepalive=10         be carefull!
+```
 
 ### TODO  
 - Welcome joining group feedback...
