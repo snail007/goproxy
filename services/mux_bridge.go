@@ -56,7 +56,7 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.handler)
 	} else if *s.cfg.LocalType == TYPE_TLS {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.handler)
+		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.handler)
 	} else if *s.cfg.LocalType == TYPE_KCP {
 		err = sc.ListenKCP(s.cfg.KCP, s.handler)
 	}

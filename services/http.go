@@ -41,6 +41,12 @@ func (s *HTTP) CheckArgs() {
 	}
 	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if *s.cfg.CaCertFile != "" {
+			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
+			if err != nil {
+				log.Fatalf("read ca file error,ERR:%s", err)
+			}
+		}
 	}
 	if *s.cfg.ParentType == "ssh" {
 		if *s.cfg.SSHUser == "" {
@@ -128,7 +134,7 @@ func (s *HTTP) Start(args interface{}) (err error) {
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}
@@ -321,7 +327,7 @@ func (s *HTTP) InitOutConnPool() {
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
 			s.Resolve(*s.cfg.Parent),
 			*s.cfg.Timeout,
 			*s.cfg.PoolSize,

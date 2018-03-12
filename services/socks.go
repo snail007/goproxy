@@ -37,16 +37,28 @@ func NewSocks() Service {
 
 func (s *Socks) CheckArgs() {
 	var err error
-	if *s.cfg.LocalType == "tls" {
+	if *s.cfg.LocalType == "tls" || (*s.cfg.Parent != "" && *s.cfg.ParentType == "tls") {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if *s.cfg.CaCertFile != "" {
+			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
+			if err != nil {
+				log.Fatalf("read ca file error,ERR:%s", err)
+			}
+		}
 	}
 	if *s.cfg.Parent != "" {
 		if *s.cfg.ParentType == "" {
 			log.Fatalf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 		}
-		if *s.cfg.ParentType == "tls" {
-			s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
-		}
+		// if *s.cfg.ParentType == "tls" {
+		// 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		// 	if *s.cfg.CaCertFile != "" {
+		// 		s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
+		// 		if err != nil {
+		// 			log.Fatalf("read ca file error,ERR:%s", err)
+		// 		}
+		// 	}
+		// }
 		if *s.cfg.ParentType == "ssh" {
 			if *s.cfg.SSHUser == "" {
 				log.Fatalf("ssh user required")
@@ -138,7 +150,7 @@ func (s *Socks) Start(args interface{}) (err error) {
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.socksConnCallback)
 	} else if *s.cfg.LocalType == TYPE_TLS {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.socksConnCallback)
+		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.socksConnCallback)
 	} else if *s.cfg.LocalType == TYPE_KCP {
 		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback)
 	}
@@ -471,7 +483,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 	case "tcp":
 		if *s.cfg.ParentType == "tls" {
 			var _outConn tls.Conn
-			_outConn, err = utils.TlsConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+			_outConn, err = utils.TlsConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 			outConn = net.Conn(&_outConn)
 		} else if *s.cfg.ParentType == "kcp" {
 			outConn, err = utils.ConnectKCPHost(s.Resolve(*s.cfg.Parent), s.cfg.KCP)

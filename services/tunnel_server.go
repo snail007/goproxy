@@ -174,7 +174,7 @@ func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string
 }
 func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
 	}
@@ -280,7 +280,7 @@ func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err e
 }
 func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
 	}

@@ -51,7 +51,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
 
-	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, func(inConn net.Conn) {
+	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, func(inConn net.Conn) {
 		//log.Printf("connection from %s ", inConn.RemoteAddr())
 
 		reader := bufio.NewReader(inConn)

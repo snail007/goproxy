@@ -126,7 +126,7 @@ func (s *MuxClient) Clean() {
 func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
 		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 		if err == nil {
 			conn = net.Conn(&_conn)
 		}

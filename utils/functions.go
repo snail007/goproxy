@@ -86,14 +86,14 @@ func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
 		}
 	}
 }
-func TlsConnectHost(host string, timeout int, certBytes, keyBytes []byte) (conn tls.Conn, err error) {
+func TlsConnectHost(host string, timeout int, certBytes, keyBytes, caCertBytes []byte) (conn tls.Conn, err error) {
 	h := strings.Split(host, ":")
 	port, _ := strconv.Atoi(h[1])
-	return TlsConnect(h[0], port, timeout, certBytes, keyBytes)
+	return TlsConnect(h[0], port, timeout, certBytes, keyBytes, caCertBytes)
 }
 
-func TlsConnect(host string, port, timeout int, certBytes, keyBytes []byte) (conn tls.Conn, err error) {
-	conf, err := getRequestTlsConfig(certBytes, keyBytes)
+func TlsConnect(host string, port, timeout int, certBytes, keyBytes, caCertBytes []byte) (conn tls.Conn, err error) {
+	conf, err := getRequestTlsConfig(certBytes, keyBytes, caCertBytes)
 	if err != nil {
 		return
 	}
@@ -103,8 +103,24 @@ func TlsConnect(host string, port, timeout int, certBytes, keyBytes []byte) (con
 	}
 	return *tls.Client(_conn, conf), err
 }
-func getRequestTlsConfig(certBytes, keyBytes []byte) (conf *tls.Config, err error) {
-	block, _ := pem.Decode(certBytes)
+func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Config, err error) {
+
+	var cert tls.Certificate
+	cert, err = tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return
+	}
+	serverCertPool := x509.NewCertPool()
+	caBytes := certBytes
+	if caCertBytes != nil {
+		caBytes = caCertBytes
+
+	}
+	ok := serverCertPool.AppendCertsFromPEM(caBytes)
+	if !ok {
+		err = errors.New("failed to parse root certificate")
+	}
+	block, _ := pem.Decode(caBytes)
 	if block == nil {
 		panic("failed to parse certificate PEM")
 	}
@@ -112,34 +128,24 @@ func getRequestTlsConfig(certBytes, keyBytes []byte) (conf *tls.Config, err erro
 	if x509Cert == nil {
 		panic("failed to parse block")
 	}
-	var cert tls.Certificate
-	cert, err = tls.X509KeyPair(certBytes, keyBytes)
-	if err != nil {
-		return
-	}
-	serverCertPool := x509.NewCertPool()
-	ok := serverCertPool.AppendCertsFromPEM(certBytes)
-	if !ok {
-		err = errors.New("failed to parse root certificate")
-	}
 	conf = &tls.Config{
 		RootCAs:            serverCertPool,
 		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: false,
+		InsecureSkipVerify: true,
 		ServerName:         x509Cert.Subject.CommonName,
-		// VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-		// 	opts := x509.VerifyOptions{
-		// 		Roots: serverCertPool,
-		// 	}
-		// 	for _, rawCert := range rawCerts {
-		// 		cert, _ := x509.ParseCertificate(rawCert)
-		// 		_, err := cert.Verify(opts)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// 	return nil
-		// },
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			opts := x509.VerifyOptions{
+				Roots: serverCertPool,
+			}
+			for _, rawCert := range rawCerts {
+				cert, _ := x509.ParseCertificate(rawCert)
+				_, err := cert.Verify(opts)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
 	}
 	return
 }
@@ -165,22 +171,19 @@ func ConnectKCPHost(hostAndPort string, config kcpcfg.KCPConfigArgs) (conn net.C
 	return NewCompStream(kcpconn), err
 }
 
-func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listener, err error) {
-	block, _ := pem.Decode(certBytes)
-	if block == nil {
-		panic("failed to parse certificate PEM")
-	}
-	x509Cert, _ := x509.ParseCertificate(block.Bytes)
-	if x509Cert == nil {
-		panic("failed to parse block")
-	}
+func ListenTls(ip string, port int, certBytes, keyBytes, caCertBytes []byte) (ln *net.Listener, err error) {
+
 	var cert tls.Certificate
 	cert, err = tls.X509KeyPair(certBytes, keyBytes)
 	if err != nil {
 		return
 	}
 	clientCertPool := x509.NewCertPool()
-	ok := clientCertPool.AppendCertsFromPEM(certBytes)
+	caBytes := certBytes
+	if caCertBytes != nil {
+		caBytes = caCertBytes
+	}
+	ok := clientCertPool.AppendCertsFromPEM(caBytes)
 	if !ok {
 		err = errors.New("failed to parse root certificate")
 	}
@@ -188,21 +191,6 @@ func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listene
 		ClientCAs:    clientCertPool,
 		Certificates: []tls.Certificate{cert},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ServerName:   x509Cert.Subject.CommonName,
-		// VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-		// 	opts := x509.VerifyOptions{
-		// 		Roots: clientCertPool,
-		// 	}
-		// 	for _, rawCert := range rawCerts {
-		// 		cert, _ := x509.ParseCertificate(rawCert)
-		// 		_, err := cert.Verify(opts)
-		// 		fmt.Println("SERVER ERR:", err)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// 	return nil
-		// },
 	}
 	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
 	if err == nil {
@@ -245,27 +233,88 @@ func CloseConn(conn *net.Conn) {
 	}
 }
 func Keygen() (err error) {
-	cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("err:%s", err)
-		return
-	}
-	fmt.Println(string(out))
 	CList := []string{"AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AT", "AU", "AZ", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BR", "BS", "BW", "BY", "BZ", "CA", "CF", "CG", "CH", "CK", "CL", "CM", "CN", "CO", "CR", "CS", "CU", "CY", "CZ", "DE", "DJ", "DK", "DO", "DZ", "EC", "EE", "EG", "ES", "ET", "FI", "FJ", "FR", "GA", "GB", "GD", "GE", "GF", "GH", "GI", "GM", "GN", "GR", "GT", "GU", "GY", "HK", "HN", "HT", "HU", "ID", "IE", "IL", "IN", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KP", "KR", "KT", "KW", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "MG", "ML", "MM", "MN", "MO", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL", "NO", "NP", "NR", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PR", "PT", "PY", "QA", "RO", "RU", "SA", "SB", "SC", "SD", "SE", "SG", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "ST", "SV", "SY", "SZ", "TD", "TG", "TH", "TJ", "TM", "TN", "TO", "TR", "TT", "TW", "TZ", "UA", "UG", "US", "UY", "UZ", "VC", "VE", "VN", "YE", "YU", "ZA", "ZM", "ZR", "ZW"}
 	domainSubfixList := []string{".com", ".edu", ".gov", ".int", ".mil", ".net", ".org", ".biz", ".info", ".pro", ".name", ".museum", ".coop", ".aero", ".xxx", ".idv", ".ac", ".ad", ".ae", ".af", ".ag", ".ai", ".al", ".am", ".an", ".ao", ".aq", ".ar", ".as", ".at", ".au", ".aw", ".az", ".ba", ".bb", ".bd", ".be", ".bf", ".bg", ".bh", ".bi", ".bj", ".bm", ".bn", ".bo", ".br", ".bs", ".bt", ".bv", ".bw", ".by", ".bz", ".ca", ".cc", ".cd", ".cf", ".cg", ".ch", ".ci", ".ck", ".cl", ".cm", ".cn", ".co", ".cr", ".cu", ".cv", ".cx", ".cy", ".cz", ".de", ".dj", ".dk", ".dm", ".do", ".dz", ".ec", ".ee", ".eg", ".eh", ".er", ".es", ".et", ".eu", ".fi", ".fj", ".fk", ".fm", ".fo", ".fr", ".ga", ".gd", ".ge", ".gf", ".gg", ".gh", ".gi", ".gl", ".gm", ".gn", ".gp", ".gq", ".gr", ".gs", ".gt", ".gu", ".gw", ".gy", ".hk", ".hm", ".hn", ".hr", ".ht", ".hu", ".id", ".ie", ".il", ".im", ".in", ".io", ".iq", ".ir", ".is", ".it", ".je", ".jm", ".jo", ".jp", ".ke", ".kg", ".kh", ".ki", ".km", ".kn", ".kp", ".kr", ".kw", ".ky", ".kz", ".la", ".lb", ".lc", ".li", ".lk", ".lr", ".ls", ".lt", ".lu", ".lv", ".ly", ".ma", ".mc", ".md", ".mg", ".mh", ".mk", ".ml", ".mm", ".mn", ".mo", ".mp", ".mq", ".mr", ".ms", ".mt", ".mu", ".mv", ".mw", ".mx", ".my", ".mz", ".na", ".nc", ".ne", ".nf", ".ng", ".ni", ".nl", ".no", ".np", ".nr", ".nu", ".nz", ".om", ".pa", ".pe", ".pf", ".pg", ".ph", ".pk", ".pl", ".pm", ".pn", ".pr", ".ps", ".pt", ".pw", ".py", ".qa", ".re", ".ro", ".ru", ".rw", ".sa", ".sb", ".sc", ".sd", ".se", ".sg", ".sh", ".si", ".sj", ".sk", ".sl", ".sm", ".sn", ".so", ".sr", ".st", ".sv", ".sy", ".sz", ".tc", ".td", ".tf", ".tg", ".th", ".tj", ".tk", ".tl", ".tm", ".tn", ".to", ".tp", ".tr", ".tt", ".tv", ".tw", ".tz", ".ua", ".ug", ".uk", ".um", ".us", ".uy", ".uz", ".va", ".vc", ".ve", ".vg", ".vi", ".vn", ".vu", ".wf", ".ws", ".ye", ".yt", ".yu", ".yr", ".za", ".zm", ".zw"}
 	C := CList[int(RandInt(4))%len(CList)]
 	ST := RandString(int(RandInt(4) % 10))
 	O := RandString(int(RandInt(4) % 10))
 	CN := strings.ToLower(RandString(int(RandInt(4)%10)) + domainSubfixList[int(RandInt(4))%len(domainSubfixList)])
-	cmdStr := fmt.Sprintf("openssl req -new -key proxy.key -x509 -days 36500 -out proxy.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, CN)
-	cmd = exec.Command("sh", "-c", cmdStr)
-	out, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("err:%s", err)
-		return
+	log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
+	var out []byte
+	if len(os.Args) == 3 && os.Args[2] == "ca" {
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -key ca.key -x509 -days 36500 -out ca.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, "*."+CN)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+	} else if len(os.Args) == 5 && os.Args[2] == "ca" && os.Args[3] != "" && os.Args[4] != "" {
+		certBytes, _ := ioutil.ReadFile("ca.crt")
+		block, _ := pem.Decode(certBytes)
+		if block == nil || certBytes == nil {
+			panic("failed to parse ca certificate PEM")
+		}
+		x509Cert, _ := x509.ParseCertificate(block.Bytes)
+		if x509Cert == nil {
+			panic("failed to parse block")
+		}
+		name := os.Args[3]
+		days := os.Args[4]
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -nodes -key %s.key -out %s.csr -days %s -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, days, C, ST, O, CN)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr = fmt.Sprintf("openssl x509 -req -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", name, name)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+
+		fmt.Println(string(out))
+	} else if len(os.Args) == 2 {
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -key proxy.key -x509 -days 36500 -out proxy.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, CN)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
 	}
-	fmt.Println(string(out))
+
 	return
 }
 func GetAllInterfaceAddr() ([]net.IP, error) {

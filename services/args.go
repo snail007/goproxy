@@ -120,6 +120,8 @@ type HTTPArgs struct {
 	Parent              *string
 	CertFile            *string
 	KeyFile             *string
+	CaCertFile          *string
+	CaCertBytes         []byte
 	CertBytes           []byte
 	KeyBytes            []byte
 	Local               *string
@@ -169,6 +171,8 @@ type SocksArgs struct {
 	LocalType      *string
 	CertFile       *string
 	KeyFile        *string
+	CaCertFile     *string
+	CaCertBytes    []byte
 	CertBytes      []byte
 	KeyBytes       []byte
 	SSHKeyFile     *string
@@ -199,6 +203,8 @@ type SPSArgs struct {
 	Parent            *string
 	CertFile          *string
 	KeyFile           *string
+	CaCertFile        *string
+	CaCertBytes       []byte
 	CertBytes         []byte
 	KeyBytes          []byte
 	Local             *string

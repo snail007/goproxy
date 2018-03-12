@@ -42,8 +42,8 @@ func NewServerChannelHost(host string) ServerChannel {
 func (sc *ServerChannel) SetErrAcceptHandler(fn func(err error)) {
 	sc.errAcceptHandler = fn
 }
-func (sc *ServerChannel) ListenTls(certBytes, keyBytes []byte, fn func(conn net.Conn)) (err error) {
-	sc.Listener, err = ListenTls(sc.ip, sc.port, certBytes, keyBytes)
+func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn func(conn net.Conn)) (err error) {
+	sc.Listener, err = ListenTls(sc.ip, sc.port, certBytes, keyBytes, caCertBytes)
 	if err == nil {
 		go func() {
 			defer func() {

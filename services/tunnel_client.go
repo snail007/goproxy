@@ -161,7 +161,7 @@ func (s *TunnelClient) GetInConn(typ uint8, data ...string) (outConn net.Conn, e
 }
 func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
 	}

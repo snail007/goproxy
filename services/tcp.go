@@ -56,7 +56,7 @@ func (s *TCP) Start(args interface{}) (err error) {
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.callback)
 	} else if *s.cfg.LocalType == TYPE_TLS {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	} else if *s.cfg.LocalType == TYPE_KCP {
 		err = sc.ListenKCP(s.cfg.KCP, s.callback)
 	}
@@ -172,7 +172,7 @@ func (s *TCP) InitOutConnPool() {
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
 			*s.cfg.PoolSize,

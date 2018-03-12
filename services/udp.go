@@ -210,7 +210,7 @@ func (s *UDP) InitOutConnPool() {
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			kcpcfg.KCPConfigArgs{},
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
 			*s.cfg.PoolSize,

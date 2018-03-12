@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"runtime/debug"
@@ -34,6 +35,13 @@ func (s *SPS) CheckArgs() {
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
 		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if *s.cfg.CaCertFile != "" {
+			var err error
+			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
+			if err != nil {
+				log.Fatalf("read ca file error,ERR:%s", err)
+			}
+		}
 	}
 }
 func (s *SPS) InitService() {
@@ -47,7 +55,7 @@ func (s *SPS) InitOutConnPool() {
 			0,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
 			0,
@@ -75,7 +83,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}

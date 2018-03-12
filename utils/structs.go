@@ -491,25 +491,27 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 }
 
 type OutPool struct {
-	Pool      ConnPool
-	dur       int
-	typ       string
-	certBytes []byte
-	keyBytes  []byte
-	kcp       kcpcfg.KCPConfigArgs
-	address   string
-	timeout   int
+	Pool        ConnPool
+	dur         int
+	typ         string
+	certBytes   []byte
+	keyBytes    []byte
+	caCertBytes []byte
+	kcp         kcpcfg.KCPConfigArgs
+	address     string
+	timeout     int
 }
 
-func NewOutPool(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
+func NewOutPool(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes, caCertBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
 	op = OutPool{
-		dur:       dur,
-		typ:       typ,
-		certBytes: certBytes,
-		keyBytes:  keyBytes,
-		kcp:       kcp,
-		address:   address,
-		timeout:   timeout,
+		dur:         dur,
+		typ:         typ,
+		certBytes:   certBytes,
+		keyBytes:    keyBytes,
+		caCertBytes: caCertBytes,
+		kcp:         kcp,
+		address:     address,
+		timeout:     timeout,
 	}
 	var err error
 	op.Pool, err = NewConnPool(poolConfig{
@@ -543,7 +545,7 @@ func NewOutPool(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyByt
 func (op *OutPool) getConn() (conn interface{}, err error) {
 	if op.typ == "tls" {
 		var _conn tls.Conn
-		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes)
+		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes, op.caCertBytes)
 		if err == nil {
 			conn = net.Conn(&_conn)
 		}
