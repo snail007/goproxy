@@ -386,16 +386,16 @@ VPS(IP:22.22.22.33)执行:
   
 #### **2.4.加密二级TCP代理**  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
 `./proxy tcp -p ":23080" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口.  
   
 #### **2.5.加密三级TCP代理**  
 一级TCP代理VPS_01,IP:22.22.22.22  
-`./proxy tcp -t tcp -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
-`./proxy tcp -t tcp -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级TCP代理(本地)  
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
@@ -428,16 +428,16 @@ VPS(IP:22.22.22.33)执行:
   
 #### **3.4.加密二级UDP代理**  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tcp -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
 `./proxy udp -p ":5353" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 那么访问本地UDP:5353端口就是通过加密TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.5.加密三级UDP代理**  
 一级TCP代理VPS_01,IP:22.22.22.22  
-`./proxy tcp -t tcp -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
-`./proxy tcp -t tcp -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`./proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级TCP代理(本地)  
 `./proxy udp -p ":5353" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地5353端口就是通过加密TCP隧道,通过VPS_01访问8.8.8.8的53端口.  
