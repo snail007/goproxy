@@ -239,7 +239,7 @@ func Keygen() (err error) {
 	ST := RandString(int(RandInt(4) % 10))
 	O := RandString(int(RandInt(4) % 10))
 	CN := strings.ToLower(RandString(int(RandInt(4)%10)) + domainSubfixList[int(RandInt(4))%len(domainSubfixList)])
-	log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
+	//log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
 	var out []byte
 	if len(os.Args) == 3 && os.Args[2] == "ca" {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
@@ -278,7 +278,8 @@ func Keygen() (err error) {
 		}
 		fmt.Println(string(out))
 
-		cmdStr := fmt.Sprintf("openssl req -new -nodes -key %s.key -out %s.csr -days %s -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, days, C, ST, O, CN)
+		cmdStr := fmt.Sprintf("openssl req -new -key %s.key -out %s.csr -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, C, ST, O, CN)
+		fmt.Printf("%s", cmdStr)
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
@@ -287,7 +288,8 @@ func Keygen() (err error) {
 		}
 		fmt.Println(string(out))
 
-		cmdStr = fmt.Sprintf("openssl x509 -req -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", name, name)
+		cmdStr = fmt.Sprintf("openssl x509 -req -days %s -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", days, name, name)
+		fmt.Printf("%s", cmdStr)
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
@@ -296,6 +298,11 @@ func Keygen() (err error) {
 		}
 
 		fmt.Println(string(out))
+	} else if len(os.Args) == 3 && os.Args[2] == "usage" {
+		fmt.Println(`proxy keygen //generate proxy.crt and proxy.key
+proxy keygen ca //generate ca.crt and ca.key
+proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sign it with 30 days
+	`)
 	} else if len(os.Args) == 2 {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
 		out, err = cmd.CombinedOutput()
