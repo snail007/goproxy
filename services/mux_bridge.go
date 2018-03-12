@@ -120,14 +120,14 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		}
 		groupKey := keyInfo[0]
 		index := keyInfo[1]
+		s.l.Lock()
+		defer s.l.Unlock()
 		if !s.clientControlConns.Has(groupKey) {
 			item := utils.NewConcurrentMap()
 			s.clientControlConns.Set(groupKey, &item)
 		}
 		_group, _ := s.clientControlConns.Get(groupKey)
 		group := _group.(*utils.ConcurrentMap)
-		s.l.Lock()
-		defer s.l.Unlock()
 		group.Set(index, session)
 		// s.clientControlConns.Set(key, session)
 		go func() {
