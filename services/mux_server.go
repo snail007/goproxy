@@ -43,7 +43,7 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxServerArgs)
 	s.CheckArgs()
 	if *s.cfg.Parent != "" {
-		log.Printf("use tls parent %s", *s.cfg.Parent)
+		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	} else {
 		log.Fatalf("parent required")
 	}
@@ -88,6 +88,8 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 			Mgr:          s,
 			IsCompress:   s.cfg.IsCompress,
 			SessionCount: s.cfg.SessionCount,
+			KCP:          s.cfg.KCP,
+			ParentType:   s.cfg.ParentType,
 		})
 
 		if err != nil {
@@ -105,7 +107,9 @@ func (s *MuxServerManager) CheckArgs() {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
 		log.Fatalf("cert and key file required")
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	if *s.cfg.ParentType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	}
 }
 func (s *MuxServerManager) InitService() {
 }
@@ -152,7 +156,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on udp mux server mode %s", (*s.sc.UDPListener).LocalAddr())
+		log.Printf("server on %s", (*s.sc.UDPListener).LocalAddr())
 	} else {
 		err = s.sc.ListenTCP(func(inConn net.Conn) {
 			defer func() {
@@ -201,7 +205,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on mux server mode %s, compress %v", (*s.sc.Listener).Addr(), *s.cfg.IsCompress)
+		log.Printf("%s server on %s", *s.cfg.ParentType, (*s.sc.Listener).Addr())
 	}
 	return
 }
@@ -209,7 +213,11 @@ func (s *MuxServer) Clean() {
 
 }
 func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
-	outConn, err = s.GetConn(fmt.Sprintf("%d", rand.Intn(*s.cfg.SessionCount)))
+	i := 1
+	if *s.cfg.SessionCount > 0 {
+		i = rand.Intn(*s.cfg.SessionCount)
+	}
+	outConn, err = s.GetConn(fmt.Sprintf("%d", i))
 	if err != nil {
 		log.Printf("connection err: %s", err)
 		return
@@ -240,12 +248,11 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 	var session *smux.Session
 	_session, ok := s.sessions.Get(index)
 	if !ok {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+		var c net.Conn
+		c, err = s.getParentConn()
 		if err != nil {
 			return
 		}
-		c := net.Conn(&_conn)
 		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key, s.cfg.Mgr.serverID))
 		if err != nil {
 			c.Close()
@@ -266,8 +273,32 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 	if err != nil {
 		session.Close()
 		s.sessions.Remove(index)
+	} else {
+		go func() {
+			for {
+				if session.IsClosed() {
+					s.sessions.Remove(index)
+					break
+				}
+				time.Sleep(time.Second * 5)
+			}
+		}()
 	}
 
+	return
+}
+func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else if *s.cfg.ParentType == "kcp" {
+		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+	} else {
+		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+	}
 	return
 }
 func (s *MuxServer) UDPConnDeamon() {

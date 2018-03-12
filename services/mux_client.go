@@ -36,7 +36,9 @@ func (s *MuxClient) CheckArgs() {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
 		log.Fatalf("cert and key file required")
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	if *s.cfg.ParentType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	}
 }
 func (s *MuxClient) StopService() {
 
@@ -45,8 +47,12 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
 	s.CheckArgs()
 	s.InitService()
-	log.Printf("proxy on mux client mode, compress %v", *s.cfg.IsCompress)
-	for i := 1; i <= *s.cfg.SessionCount; i++ {
+	log.Printf("%s client on %s", *s.cfg.ParentType, *s.cfg.Parent)
+	count := 1
+	if *s.cfg.SessionCount > 0 {
+		count = *s.cfg.SessionCount
+	}
+	for i := 1; i <= count; i++ {
 		log.Printf("session worker[%d] started", i)
 		go func(i int) {
 			defer func() {
@@ -56,14 +62,12 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 				}
 			}()
 			for {
-				var _conn tls.Conn
-				_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+				conn, err := s.getParentConn()
 				if err != nil {
 					log.Printf("connection err: %s, retrying...", err)
 					time.Sleep(time.Second * 3)
 					continue
 				}
-				conn := net.Conn(&_conn)
 				_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, fmt.Sprintf("%s-%d", *s.cfg.Key, i)))
 				if err != nil {
 					conn.Close()
@@ -119,7 +123,20 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 func (s *MuxClient) Clean() {
 	s.StopService()
 }
-
+func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else if *s.cfg.ParentType == "kcp" {
+		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+	} else {
+		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+	}
+	return
+}
 func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 
 	for {

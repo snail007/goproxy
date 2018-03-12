@@ -26,6 +26,7 @@ const (
 
 type MuxServerArgs struct {
 	Parent       *string
+	ParentType   *string
 	CertFile     *string
 	KeyFile      *string
 	CertBytes    []byte
@@ -39,9 +40,11 @@ type MuxServerArgs struct {
 	Mgr          *MuxServerManager
 	IsCompress   *bool
 	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
 }
 type MuxClientArgs struct {
 	Parent       *string
+	ParentType   *string
 	CertFile     *string
 	KeyFile      *string
 	CertBytes    []byte
@@ -50,16 +53,18 @@ type MuxClientArgs struct {
 	Timeout      *int
 	IsCompress   *bool
 	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
 }
 type MuxBridgeArgs struct {
-	Parent     *string
 	CertFile   *string
 	KeyFile    *string
 	CertBytes  []byte
 	KeyBytes   []byte
 	Local      *string
+	LocalType  *string
 	Timeout    *int
 	IsCompress *bool
+	KCP        kcpcfg.KCPConfigArgs
 }
 type TunnelServerArgs struct {
 	Parent    *string
