@@ -205,7 +205,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("%s server on %s", *s.cfg.ParentType, (*s.sc.Listener).Addr())
+		log.Printf("server on %s", (*s.sc.Listener).Addr())
 	}
 	return
 }

@@ -47,7 +47,7 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
 	s.CheckArgs()
 	s.InitService()
-	log.Printf("%s client on %s", *s.cfg.ParentType, *s.cfg.Parent)
+	log.Printf("client started")
 	count := 1
 	if *s.cfg.SessionCount > 0 {
 		count = *s.cfg.SessionCount

@@ -138,6 +138,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 					if sess, ok := group.Get(index); ok && sess.(*smux.Session).IsClosed() {
 						group.Remove(index)
 					}
+					if group.IsEmpty() {
+						s.clientControlConns.Remove(groupKey)
+					}
 					break
 				}
 				time.Sleep(time.Second * 5)
