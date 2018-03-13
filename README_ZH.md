@@ -35,7 +35,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.4手册,其他版本手册请点击下面链接查看. 
+本页是v4.5手册,其他版本手册请点击下面链接查看. 
+- [v4.4手册](https://github.com/snail007/goproxy/tree/v4.4) 
 - [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
 - [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
 - [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
@@ -187,7 +188,8 @@ http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,
 在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.  
 `./proxy keygen`  
 默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
-  
+更多用法:`proxy keygen usage`。    
+
 ### **后台运行**
 默认执行proxy之后,如果要保持proxy运行,不能关闭命令行.  
 如果想在后台运行proxy,命令行可以关闭,只需要在命令最后加上--daemon参数即可.  

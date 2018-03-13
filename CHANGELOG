@@ -1,8 +1,10 @@
 proxy更新日志
 v4.5
-1.优化了mux内网穿透连接管理逻辑,增强了稳定性.
-2.mux内网穿透增加了tcp和kcp协议支持,之前是tls,现在支持三种协议tcp,tls,kcp.
-
+1.优化了mux内网穿透连接管理逻辑,增强了稳定性.  
+2.mux内网穿透增加了tcp和kcp协议支持,之前是tls,现在支持三种协议tcp,tls,kcp.  
+3.keygen参数增加了用法: proxy keygen usage.  
+4.http(s)/socks5代理,tls增加了自签名证书支持.  
+5.建议升级.   
 v4.4
 1.增加了协议转换sps功能，代理协议转换使用的是sps子命令(socks+https的缩写)，
 sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理

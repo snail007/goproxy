@@ -34,7 +34,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.4 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.5 manual, and the other version of the manual can be checked by the following link.  
+- [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
 - [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
 - [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
 - [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
