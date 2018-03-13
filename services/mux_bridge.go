@@ -180,7 +180,9 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		index := keys[i]
 		log.Printf("select client : %s-%s", key, index)
 		session, _ := group.Get(index)
+		session.(*smux.Session).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		stream, err := session.(*smux.Session).OpenStream()
+		session.(*smux.Session).SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("%s client session open stream %s fail, err: %s, retrying...", key, serverID, err)
 			time.Sleep(time.Second * 3)
