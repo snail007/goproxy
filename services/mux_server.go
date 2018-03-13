@@ -266,14 +266,6 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		}
 		s.sessions.Set(index, session)
 		log.Printf("session[%s] created", index)
-	} else {
-		session = _session.(*smux.Session)
-	}
-	conn, err = session.OpenStream()
-	if err != nil {
-		session.Close()
-		s.sessions.Remove(index)
-	} else {
 		go func() {
 			for {
 				if session.IsClosed() {
@@ -283,8 +275,14 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 				time.Sleep(time.Second * 5)
 			}
 		}()
+	} else {
+		session = _session.(*smux.Session)
 	}
-
+	conn, err = session.OpenStream()
+	if err != nil {
+		session.Close()
+		s.sessions.Remove(index)
+	}
 	return
 }
 func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
