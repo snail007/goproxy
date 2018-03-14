@@ -11,7 +11,6 @@ import (
 	"snail007/proxy/utils"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/golang/snappy"
@@ -19,13 +18,11 @@ import (
 )
 
 type MuxServer struct {
-	cfg       MuxServerArgs
-	udpChn    chan MuxUDPItem
-	sc        utils.ServerChannel
-	sessions  utils.ConcurrentMap
-	userConns utils.ConcurrentMap
-	lockChn   chan bool
-	closeLock *sync.Mutex
+	cfg      MuxServerArgs
+	udpChn   chan MuxUDPItem
+	sc       utils.ServerChannel
+	sessions utils.ConcurrentMap
+	lockChn  chan bool
 }
 
 type MuxServerManager struct {
@@ -119,12 +116,10 @@ func (s *MuxServerManager) InitService() {
 
 func NewMuxServer() Service {
 	return &MuxServer{
-		cfg:       MuxServerArgs{},
-		udpChn:    make(chan MuxUDPItem, 50000),
-		lockChn:   make(chan bool, 1),
-		sessions:  utils.NewConcurrentMap(),
-		userConns: utils.NewConcurrentMap(),
-		closeLock: &sync.Mutex{},
+		cfg:      MuxServerArgs{},
+		udpChn:   make(chan MuxUDPItem, 50000),
+		lockChn:  make(chan bool, 1),
+		sessions: utils.NewConcurrentMap(),
 	}
 }
 
@@ -170,7 +165,6 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				}
 			}()
 			inConnRemoteAddr := inConn.RemoteAddr().String()
-			s.userConns.Set(inConnRemoteAddr, &inConn)
 			var outConn net.Conn
 			var ID string
 			for {
@@ -185,7 +179,6 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				}
 			}
 			outConnRemoteAddr := outConn.RemoteAddr().String()
-			s.userConns.Set(outConnRemoteAddr, &outConn)
 
 			log.Printf("%s stream %s created", *s.cfg.Key, ID)
 			if *s.cfg.IsCompress {
@@ -205,13 +198,9 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				}
 				outConn.Close()
 				inConn.Close()
-				s.userConns.Remove(inConnRemoteAddr)
-				s.userConns.Remove(outConnRemoteAddr)
 				log.Printf("%s stream %s released", *s.cfg.Key, ID)
 			} else {
 				utils.IoBind(inConn, outConn, func(err interface{}) {
-					s.userConns.Remove(inConnRemoteAddr)
-					s.userConns.Remove(outConnRemoteAddr)
 					log.Printf("%s stream %s released", *s.cfg.Key, ID)
 				})
 			}
@@ -284,15 +273,6 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 			for {
 				if session.IsClosed() {
 					s.sessions.Remove(index)
-					s.closeLock.Lock()
-					if len(s.userConns) > 0 {
-						for _, k := range s.userConns.Keys() {
-							c, _ := s.userConns.Get(k)
-							(*(c.(*net.Conn))).Close()
-							s.userConns.Remove(k)
-						}
-					}
-					s.closeLock.Unlock()
 					break
 				}
 				time.Sleep(time.Second * 5)
