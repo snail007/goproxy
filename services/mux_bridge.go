@@ -128,6 +128,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		}
 		_group, _ := s.clientControlConns.Get(groupKey)
 		group := _group.(*utils.ConcurrentMap)
+		if v, ok := group.Get(index); ok {
+			v.(*smux.Session).Close()
+		}
 		group.Set(index, session)
 		// s.clientControlConns.Set(key, session)
 		go func() {

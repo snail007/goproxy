@@ -164,7 +164,6 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 					log.Printf("connection handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 				}
 			}()
-			inConnRemoteAddr := inConn.RemoteAddr().String()
 			var outConn net.Conn
 			var ID string
 			for {
@@ -178,8 +177,6 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
-			outConnRemoteAddr := outConn.RemoteAddr().String()
-
 			log.Printf("%s stream %s created", *s.cfg.Key, ID)
 			if *s.cfg.IsCompress {
 				die1 := make(chan bool, 1)
