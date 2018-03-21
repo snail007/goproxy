@@ -75,7 +75,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	var err error
 	var connType uint8
 	var key string
+	inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	err = utils.ReadPacket(reader, &connType, &key)
+	inConn.SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("read error,ERR:%s", err)
 		return
@@ -83,7 +85,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	switch connType {
 	case CONN_SERVER:
 		var serverID string
+		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		err = utils.ReadPacketData(reader, &serverID)
+		inConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("read error,ERR:%s", err)
 			return
