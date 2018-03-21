@@ -411,6 +411,7 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	// 	authorization = req.getHeader("Authorization")
 	// 	code = "401"
 	// }
+	authorization = strings.Trim(authorization, " \r\n\t")
 	if authorization == "" {
 		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", code)
 		CloseConn(req.conn)
