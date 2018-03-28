@@ -744,6 +744,7 @@ sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:
 3:设置的连接上级使用的认证信息`parent-auth`。  
 4:最终发送给上级的认证信息`auth-info-to-parent`。  
 他们的情况关系如下:  
+
 | user-auth | local-auth | parent-auth | auth-info-to-paren 
 | ------ | ------ | ------ | ------  
 | 有/没有  | 有     |     有   |   来自parent-auth  
