@@ -23,7 +23,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
-- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能。
+- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
