@@ -769,7 +769,7 @@ sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:
 比如:  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
 用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
-带上user,pass,ip,三个参数:  
+带上user,pass,ip,target四个参数:  
 http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
 user:用户名   
 pass:密码   
