@@ -743,13 +743,14 @@ sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:
 2:设置的本地认证信息`local-auth`。  
 3:设置的连接上级使用的认证信息`parent-auth`。  
 4:最终发送给上级的认证信息`auth-info-to-parent`。  
-他们的情况关系如下:  
-| user-auth | local-auth |  parent-auth |   auth-info-to-parent
-| 有/没有  | 有     |     有   |   来自parent-auth
-| 有/没有  | 没有    |    有    |   来自parent-auth
-| 有/没有  | 有     |     没有  |   无
-| 没有   | 没有    |   没有    |   无
-| 有    | 没有    |   没有    |   来自user-auth
+他们的情况关系如下:    
+user-auth | local-auth |  parent-auth |   auth-info-to-parent  
+:-:| :-: | :-: |:-:
+有/没有  | 有     |     有   |   来自parent-auth  
+有/没有  | 没有    |    有    |   来自parent-auth  
+有/没有  | 有     |     没有  |   无  
+没有   | 没有    |   没有    |   无  
+有    | 没有    |   没有    |   来自user-auth  
 
 对于sps代理我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
