@@ -22,7 +22,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
-- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.Also support powerful cascading authentication.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -34,7 +34,9 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.4 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.6 manual, and the other version of the manual can be checked by the following link.  
+- [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
+- [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
 - [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
 - [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
 - [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
@@ -149,7 +151,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.4/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
