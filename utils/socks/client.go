@@ -63,7 +63,7 @@ func NewClientConn(conn *net.Conn, network, target string, timeout time.Duration
 // connect takes an existing connection to a socks5 proxy server,
 // and commands the server to extend that connection to target,
 // which must be a canonical address with a host and port.
-func (s *ClientConn) Connect() error {
+func (s *ClientConn) Handshake() error {
 	host, portStr, err := net.SplitHostPort(s.addr)
 	if err != nil {
 		return err

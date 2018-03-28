@@ -106,14 +106,15 @@ func (s *ServerConn) Handshake() (err error) {
 		err = fmt.Errorf("new methods request fail,ERR: %s", e)
 		return
 	}
-	if s.auth == nil {
-		if !methodReq.Select(Method_NO_AUTH) {
-			(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
-			methodReq.Reply(Method_NONE_ACCEPTABLE)
-			(*s.conn).SetReadDeadline(time.Time{})
-			err = fmt.Errorf("none method found : Method_NO_AUTH")
-			return
-		}
+	//log.Printf("%v,s.auth == %v && methodReq.Select(Method_NO_AUTH) %v", methodReq.methods, s.auth, methodReq.Select(Method_NO_AUTH))
+	if s.auth == nil && methodReq.Select(Method_NO_AUTH) && !methodReq.Select(Method_USER_PASS) {
+		// if !methodReq.Select(Method_NO_AUTH) {
+		// 	(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+		// 	methodReq.Reply(Method_NONE_ACCEPTABLE)
+		// 	(*s.conn).SetReadDeadline(time.Time{})
+		// 	err = fmt.Errorf("none method found : Method_NO_AUTH")
+		// 	return
+		// }
 		s.method = Method_NO_AUTH
 		//method select reply
 		(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
@@ -158,7 +159,7 @@ func (s *ServerConn) Handshake() (err error) {
 		//err = fmt.Errorf("user:%s,pass:%s", user, pass)
 		//auth
 		_addr := strings.Split(remoteAddr.String(), ":")
-		if s.auth.CheckUserPass(s.user, s.password, _addr[0], "") {
+		if s.auth == nil || s.auth.CheckUserPass(s.user, s.password, _addr[0], "") {
 			(*s.conn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(s.timeout)))
 			_, err = (*s.conn).Write([]byte{0x01, 0x00})
 			(*s.conn).SetDeadline(time.Time{})

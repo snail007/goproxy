@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,18 +13,21 @@ import (
 	"snail007/proxy/utils/socks"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SPS struct {
 	outPool        utils.OutPool
 	cfg            SPSArgs
 	domainResolver utils.DomainResolver
+	basicAuth      utils.BasicAuth
 }
 
 func NewSPS() Service {
 	return &SPS{
-		outPool: utils.OutPool{},
-		cfg:     SPSArgs{},
+		outPool:   utils.OutPool{},
+		cfg:       SPSArgs{},
+		basicAuth: utils.BasicAuth{},
 	}
 }
 func (s *SPS) CheckArgs() {
@@ -46,6 +50,10 @@ func (s *SPS) CheckArgs() {
 }
 func (s *SPS) InitService() {
 	s.InitOutConnPool()
+	if *s.cfg.DNSAddress != "" {
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+	}
+	s.InitBasicAuth()
 }
 func (s *SPS) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
@@ -117,7 +125,7 @@ func (s *SPS) callback(inConn net.Conn) {
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
 	}
 	if err != nil {
-		log.Printf("connect to %s parent %s fail, ERR:%s", *s.cfg.ParentType, *s.cfg.Parent, err)
+		log.Printf("connect to %s parent %s fail, ERR:%s from %s", *s.cfg.ParentType, *s.cfg.Parent, err, inConn.RemoteAddr())
 		utils.CloseConn(&inConn)
 	}
 }
@@ -131,51 +139,32 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		return
 	}
 	address := ""
+	var auth socks.Auth
 	var forwardBytes []byte
 	//fmt.Printf("%v", header)
 	if header[0] == socks.VERSION_V5 {
-		//socks
-		methodReq, e := socks.NewMethodsRequest(*inConn, header)
-		if e != nil {
-			log.Printf("new method request err:%s", e)
-			utils.CloseConn(inConn)
-			err = e.(error)
+		//socks5 server
+		var serverConn *socks.ServerConn
+		if s.IsBasicAuth() {
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", header)
+		} else {
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", header)
+		}
+		if err = serverConn.Handshake(); err != nil {
 			return
 		}
-		if !methodReq.Select(socks.Method_NO_AUTH) {
-			methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
-			utils.CloseConn(inConn)
-			log.Printf("none method found : Method_NO_AUTH")
-			return
-		}
-		//method select reply
-		err = methodReq.Reply(socks.Method_NO_AUTH)
-		if err != nil {
-			log.Printf("reply answer data fail,ERR: %s", err)
-			utils.CloseConn(inConn)
-			return
-		}
-		//request detail
-		request, e := socks.NewRequest(*inConn)
-		if e != nil {
-			log.Printf("read request data fail,ERR: %s", e)
-			utils.CloseConn(inConn)
-			err = e.(error)
-			return
-		}
-		if request.CMD() != socks.CMD_CONNECT {
-			//只支持tcp
-			request.TCPReply(socks.REP_UNKNOWN)
-			utils.CloseConn(inConn)
-			err = errors.New("cmd not supported")
-			return
-		}
-		address = request.Addr()
-		request.TCPReply(socks.REP_SUCCESS)
+		address = serverConn.Target()
+		auth = serverConn.AuthData()
 	} else if bytes.IndexByte(header, '\n') != -1 {
 		//http
 		var request utils.HTTPRequest
-		request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, header)
+		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+		if s.IsBasicAuth() {
+			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, header)
+		} else {
+			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, header)
+		}
+		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("new http request fail,ERR: %s", err)
 			utils.CloseConn(inConn)
@@ -189,6 +178,17 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			forwardBytes = request.HeadBuf
 		}
 		address = request.Host
+		var userpass string
+		if s.IsBasicAuth() {
+			userpass, err = request.GetAuthDataStr()
+			if err != nil {
+				return
+			}
+			userpassA := strings.Split(userpass, ":")
+			if len(userpassA) == 2 {
+				auth = socks.Auth{User: userpassA[0], Password: userpassA[1]}
+			}
+		}
 	} else {
 		log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(header))
 		utils.CloseConn(inConn)
@@ -207,12 +207,42 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		utils.CloseConn(inConn)
 		return
 	}
+
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
-		fmt.Fprintf(outConn, "CONNECT %s HTTP/1.1\r\n", address)
+		pb := new(bytes.Buffer)
+		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n", address)))
+		//Proxy-Authorization:\r\n
+		u := ""
+		if *s.cfg.ParentAuth != "" {
+			a := strings.Split(*s.cfg.ParentAuth, ":")
+			if len(a) != 2 {
+				err = fmt.Errorf("parent auth data format error")
+				return
+			}
+			u = fmt.Sprintf("%s:%s", a[0], a[1])
+		} else {
+			if !s.IsBasicAuth() && auth.Password != "" && auth.User != "" {
+				u = fmt.Sprintf("%s:%s", auth.User, auth.Password)
+			}
+		}
+		if u != "" {
+			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
+		}
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+		_, err = outConn.Write(pb.Bytes())
+		outConn.SetDeadline(time.Time{})
+		if err != nil {
+			log.Printf("write CONNECT to %s , err:%s", *s.cfg.Parent, err)
+			utils.CloseConn(inConn)
+			utils.CloseConn(&outConn)
+			return
+		}
 		reply := make([]byte, 100)
-		n, err = outConn.Read(reply)
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+		_, err = outConn.Read(reply)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)
@@ -222,53 +252,25 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		//log.Printf("reply: %s", string(reply[:n]))
 	} else {
 		log.Printf("connect %s", address)
-		//socks parent
-		//send auth type
-		_, err = outConn.Write([]byte{0x05, 0x01, 0x00})
-		if err != nil {
-			log.Printf("write method to %s fail, err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
+		//socks client
+		var clientConn *socks.ClientConn
+		if *s.cfg.ParentAuth != "" {
+			a := strings.Split(*s.cfg.ParentAuth, ":")
+			if len(a) != 2 {
+				err = fmt.Errorf("parent auth data format error")
+				return
+			}
+			clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, header)
+		} else {
+			if !s.IsBasicAuth() && auth.Password != "" && auth.User != "" {
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, header)
+			} else {
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, header)
+			}
+		}
+		if err = clientConn.Handshake(); err != nil {
 			return
 		}
-		//read reply
-		reply := make([]byte, 512)
-		n, err = outConn.Read(reply)
-		if err != nil {
-			log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
-		}
-		//log.Printf("method reply %v", reply[:n])
-
-		//build request
-		buf, err = s.buildRequest(address)
-		if err != nil {
-			log.Printf("build request to %s fail , err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
-		}
-		//send address request
-		_, err = outConn.Write(buf)
-		if err != nil {
-			log.Printf("write request to %s fail, err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
-		}
-		//read reply
-		reply = make([]byte, 512)
-		n, err = outConn.Read(reply)
-		if err != nil {
-			log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
-		}
-
-		//log.Printf("request reply %v", reply[:n])
 	}
 	//forward client data to target,if necessary.
 	if len(forwardBytes) > 0 {
@@ -282,6 +284,34 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
 	return
+}
+func (s *SPS) InitBasicAuth() (err error) {
+	if *s.cfg.DNSAddress != "" {
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+	} else {
+		s.basicAuth = utils.NewBasicAuth(nil)
+	}
+	if *s.cfg.AuthURL != "" {
+		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
+		log.Printf("auth from %s", *s.cfg.AuthURL)
+	}
+	if *s.cfg.AuthFile != "" {
+		var n = 0
+		n, err = s.basicAuth.AddFromFile(*s.cfg.AuthFile)
+		if err != nil {
+			err = fmt.Errorf("auth-file ERR:%s", err)
+			return
+		}
+		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
+	}
+	if len(*s.cfg.Auth) > 0 {
+		n := s.basicAuth.Add(*s.cfg.Auth)
+		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
+	}
+	return
+}
+func (s *SPS) IsBasicAuth() bool {
+	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0 || *s.cfg.AuthURL != ""
 }
 func (s *SPS) buildRequest(address string) (buf []byte, err error) {
 	host, portStr, err := net.SplitHostPort(address)

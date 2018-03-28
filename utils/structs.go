@@ -317,7 +317,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	req = HTTPRequest{
 		conn: inConn,
 	}
-	if len(header) == 1 {
+	if header != nil && len(header) == 1 && len(header[0]) > 1 {
 		buf = header[0]
 		n = len(header[0])
 	} else {
@@ -402,18 +402,13 @@ func (req *HTTPRequest) IsHTTPS() bool {
 	return req.Method == "CONNECT"
 }
 
-func (req *HTTPRequest) BasicAuth() (err error) {
-
+func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
 	// log.Printf("request :%s", string(req.HeadBuf))
-	code := "407"
 	authorization := req.getHeader("Proxy-Authorization")
-	// if authorization == "" {
-	// 	authorization = req.getHeader("Authorization")
-	// 	code = "401"
-	// }
+
 	authorization = strings.Trim(authorization, " \r\n\t")
 	if authorization == "" {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", code)
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
 		err = errors.New("require auth header data")
 		return
@@ -431,6 +426,10 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		CloseConn(req.conn)
 		return
 	}
+	basicInfo = string(user)
+	return
+}
+func (req *HTTPRequest) BasicAuth() (err error) {
 	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
 	URL := ""
 	if req.IsHTTPS() {
@@ -438,10 +437,14 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	} else {
 		URL = req.getHTTPURL()
 	}
+	user, err := req.GetAuthDataStr()
+	if err != nil {
+		return
+	}
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", code)
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return

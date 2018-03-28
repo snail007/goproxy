@@ -223,7 +223,14 @@ func initConfig() (err error) {
 	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
 	spsArgs.DNSAddress = sps.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
 	spsArgs.DNSTTL = sps.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
-
+	spsArgs.AuthFile = sps.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
+	spsArgs.Auth = sps.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
+	spsArgs.LocalIPS = sps.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	spsArgs.AuthURL = sps.Flag("auth-url", "auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
+	spsArgs.AuthURLTimeout = sps.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
+	spsArgs.AuthURLOkCode = sps.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
+	spsArgs.AuthURLRetry = sps.Flag("auth-retry", "access 'auth-url' fail and retry count").Default("0").Int()
+	spsArgs.ParentAuth = sps.Flag("parent-auth", "parent socks auth username and password, such as: -A user1:pass1").Short('A').String()
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
 
