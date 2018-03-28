@@ -741,7 +741,7 @@ The relationship between them is as follows:
 
 | user-auth | local-auth | parent-auth | auth-info-to-paren 
 | ------ | ------ | ------ | ------  
-| yes/no  | yes    |     yes   |   come from parent-auth  
+| yes/no  | yes    | yes   |  come from parent-auth  
 | yes/no  | no    |    yes    |   come from parent-auth  
 | yes/no  | yes     |     no  |   no  
 | no   | no    |   no    |   no  
