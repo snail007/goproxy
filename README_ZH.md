@@ -753,17 +753,17 @@ sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:
 | 没有   | 没有    |   没有    |   无  
 | 有    | 没有    |   没有    |   来自user-auth  
 
-对于sps代理我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定  
+对于sps代理我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定    
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 多个用户,重复-a参数即可.  
 也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
 
-如果上级有认证,下级可以通过-A参数设置认证信息,比如:
+如果上级有认证,下级可以通过-A参数设置认证信息,比如:  
 上级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 下级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
 
-另外,sps代理,本地认证集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
+另外,sps代理,本地认证集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,    
 然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
 其它情况认为认证失败.  
 比如:  
