@@ -227,7 +227,9 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 		remoteAddr = "udp:" + *s.cfg.Remote
 	}
 	ID = utils.Uniqueid()
+	outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	_, err = outConn.Write(utils.BuildPacketData(ID, remoteAddr, s.cfg.Mgr.serverID))
+	outConn.SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("write stream data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
@@ -253,7 +255,9 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		if err != nil {
 			return
 		}
+		c.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = c.Write(utils.BuildPacket(CONN_SERVER, *s.cfg.Key, s.cfg.Mgr.serverID))
+		c.SetDeadline(time.Time{})
 		if err != nil {
 			c.Close()
 			return
@@ -266,14 +270,6 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		}
 		s.sessions.Set(index, session)
 		log.Printf("session[%s] created", index)
-	} else {
-		session = _session.(*smux.Session)
-	}
-	conn, err = session.OpenStream()
-	if err != nil {
-		session.Close()
-		s.sessions.Remove(index)
-	} else {
 		go func() {
 			for {
 				if session.IsClosed() {
@@ -283,8 +279,14 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 				time.Sleep(time.Second * 5)
 			}
 		}()
+	} else {
+		session = _session.(*smux.Session)
 	}
-
+	conn, err = session.OpenStream()
+	if err != nil {
+		session.Close()
+		s.sessions.Remove(index)
+	}
 	return
 }
 func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
@@ -329,7 +331,9 @@ func (s *MuxServer) UDPConnDeamon() {
 								// outConn.Close()
 							}()
 							for {
+								outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
+								outConn.SetDeadline(time.Time{})
 								if err != nil {
 									log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
 									log.Printf("UDP deamon connection %s exited", ID)
@@ -343,7 +347,9 @@ func (s *MuxServer) UDPConnDeamon() {
 								}
 								port, _ := strconv.Atoi(_srcAddr[1])
 								dstAddr := &net.UDPAddr{IP: net.ParseIP(_srcAddr[0]), Port: port}
+								s.sc.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 								_, err = s.sc.UDPListener.WriteToUDP(body, dstAddr)
+								s.sc.UDPListener.SetDeadline(time.Time{})
 								if err != nil {
 									log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
 									continue

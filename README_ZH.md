@@ -23,7 +23,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
-- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能。
+- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
@@ -35,7 +35,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.5手册,其他版本手册请点击下面链接查看. 
+本页是v4.6手册,其他版本手册请点击下面链接查看. 
+- [v4.5手册](https://github.com/snail007/goproxy/tree/v4.5) 
 - [v4.4手册](https://github.com/snail007/goproxy/tree/v4.4) 
 - [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
 - [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
@@ -126,7 +127,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [6.3 SOCKS5转HTTP(S)+SOCKS5](#63-socks5转httpssocks5)
     - [6.4 链式连接](#64-链式连接)
     - [6.5 监听多个端口](#65-监听多个端口)
-    - [6.6 查看帮助](#66-查看帮助)
+    - [6.6 认证功能](#66-认证功能)
+    - [6.7 查看帮助](#67-查看帮助)
 - [7. KCP配置](#7kcp配置)
     - [7.1 配置介绍](#71-配置介绍)
     - [7.2 详细配置](#72-详细配置)
@@ -147,7 +149,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -598,7 +600,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 ![5.2](/docs/images/5.2.png)  
 使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
-我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
+我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理;如果域名即在黑名单又在白名单中,那么黑名单起作用.  
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **5.3.SOCKS二级代理(加密)**  
@@ -735,7 +737,49 @@ vps02：3.3.3.3
 一般情况下监听一个端口就可以，不过如果作为反向代理需要同时监听80和443两个端口，那么-p参数是支持的，  
 格式是：`-p 0.0.0.0:80,0.0.0.0:443`，多个绑定用逗号分隔即可。  
 
-#### **6.6 查看帮助** 
+#### **6.6 认证功能**   
+sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:  
+1:用户发送认证信息`user-auth`。   
+2:设置的本地认证信息`local-auth`。  
+3:设置的连接上级使用的认证信息`parent-auth`。  
+4:最终发送给上级的认证信息`auth-info-to-parent`。  
+他们的情况关系如下:  
+
+| user-auth | local-auth | parent-auth | auth-info-to-paren 
+| ------ | ------ | ------ | ------  
+| 有/没有  | 有     |     有   |   来自parent-auth  
+| 有/没有  | 没有    |    有    |   来自parent-auth  
+| 有/没有  | 有     |     没有  |   无  
+| 没有   | 没有    |   没有    |   无  
+| 有    | 没有    |   没有    |   来自user-auth  
+
+对于sps代理我们可以进行用户名密码认证,认证的用户名和密码可以在命令行指定    
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+多个用户,重复-a参数即可.  
+也可以放在文件中,格式是一行一个"用户名:密码",然后用-F指定.  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
+
+如果上级有认证,下级可以通过-A参数设置认证信息,比如:  
+上级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+下级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
+
+另外,sps代理,本地认证集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,    
+然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
+其它情况认为认证失败.  
+比如:  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
+用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
+带上user,pass,ip,target四个参数:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
+user:用户名   
+pass:密码   
+ip:用户的IP,比如:192.168.1.200   
+target:如果客户端是http(s)代理请求,这里代表的是请求的完整url,其它情况为空.  
+
+如果没有-a或-F或--auth-url参数,就是关闭本地认证.  
+如果没有-A参数,连接上级不使用认证.  
+
+#### **6.7 查看帮助** 
 `./proxy help sps`  
 
 ### **7.KCP配置**   

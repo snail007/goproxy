@@ -75,7 +75,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	var err error
 	var connType uint8
 	var key string
+	inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	err = utils.ReadPacket(reader, &connType, &key)
+	inConn.SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("read error,ERR:%s", err)
 		return
@@ -83,7 +85,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	switch connType {
 	case CONN_SERVER:
 		var serverID string
+		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		err = utils.ReadPacketData(reader, &serverID)
+		inConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("read error,ERR:%s", err)
 			return
@@ -128,6 +132,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		}
 		_group, _ := s.clientControlConns.Get(groupKey)
 		group := _group.(*utils.ConcurrentMap)
+		if v, ok := group.Get(index); ok {
+			v.(*smux.Session).Close()
+		}
 		group.Set(index, session)
 		// s.clientControlConns.Set(key, session)
 		go func() {
@@ -180,7 +187,9 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		index := keys[i]
 		log.Printf("select client : %s-%s", key, index)
 		session, _ := group.Get(index)
+		session.(*smux.Session).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		stream, err := session.(*smux.Session).OpenStream()
+		session.(*smux.Session).SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("%s client session open stream %s fail, err: %s, retrying...", key, serverID, err)
 			time.Sleep(time.Second * 3)

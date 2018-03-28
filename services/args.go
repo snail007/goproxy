@@ -215,6 +215,14 @@ type SPSArgs struct {
 	ParentServiceType *string
 	DNSAddress        *string
 	DNSTTL            *int
+	AuthFile          *string
+	Auth              *[]string
+	AuthURL           *string
+	AuthURLOkCode     *int
+	AuthURLTimeout    *int
+	AuthURLRetry      *int
+	LocalIPS          *[]string
+	ParentAuth        *string
 }
 
 func (a *SPSArgs) Protocol() string {

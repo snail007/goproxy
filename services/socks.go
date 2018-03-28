@@ -104,7 +104,9 @@ func (s *Socks) InitService() {
 			for {
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
+					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 					_, err = conn.Write([]byte{0})
+					conn.SetDeadline(time.Time{})
 				}
 				if err != nil {
 					if s.sshClient != nil {
@@ -216,6 +218,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		}
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*5)))
 		_, err = conn.Write(rawB)
+		conn.SetDeadline(time.Time{})
 		log.Printf("udp request:%v", len(rawB))
 		if err != nil {
 			log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
@@ -225,7 +228,9 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 
 		//log.Printf("send udp packet to %s success", dstAddr.String())
 		buf := make([]byte, 10*1024)
+		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		length, _, err := conn.ReadFromUDP(buf)
+		conn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
 			conn.Close()
@@ -250,10 +255,14 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 				conn.Close()
 				return
 			}
+			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
+			s.udpSC.UDPListener.SetDeadline(time.Time{})
 			log.Printf("udp reply:%v", len(d))
 		} else {
+			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(respBody, srcAddr)
+			s.udpSC.UDPListener.SetDeadline(time.Time{})
 			log.Printf("udp reply:%v", len(respBody))
 		}
 
@@ -272,6 +281,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		}
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*3)))
 		_, err = conn.Write(p.Data())
+		conn.SetDeadline(time.Time{})
 		log.Printf("udp send:%v", len(p.Data()))
 		if err != nil {
 			log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
@@ -280,7 +290,10 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		}
 		//log.Printf("send udp packet to %s success", dstAddr.String())
 		buf := make([]byte, 10*1024)
+		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		length, _, err := conn.ReadFromUDP(buf)
+		conn.SetDeadline(time.Time{})
+
 		if err != nil {
 			log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
 			conn.Close()
@@ -297,9 +310,13 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 				conn.Close()
 				return
 			}
+			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
+			s.udpSC.UDPListener.SetDeadline(time.Time{})
 		} else {
+			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(respPacket, srcAddr)
+			s.udpSC.UDPListener.SetDeadline(time.Time{})
 		}
 		log.Printf("udp reply:%v", len(respPacket))
 	}
@@ -371,9 +388,15 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		//auth
 		_addr := strings.Split(inConn.RemoteAddr().String(), ":")
 		if s.basicAuth.CheckUserPass(user, pass, _addr[0], "") {
+			inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			inConn.Write([]byte{0x01, 0x00})
+			inConn.SetDeadline(time.Time{})
+
 		} else {
+			inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			inConn.Write([]byte{0x01, 0x01})
+			inConn.SetDeadline(time.Time{})
+
 			utils.CloseConn(&inConn)
 			return
 		}
@@ -496,25 +519,32 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		}
 		var buf = make([]byte, 1024)
 		//var n int
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(methodBytes)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			err = fmt.Errorf("write method fail,%s", err)
 			return
 		}
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Read(buf)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			err = fmt.Errorf("read method reply fail,%s", err)
 			return
 		}
 		//resp := buf[:n]
 		//log.Printf("resp:%v", resp)
-
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(reqBytes)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			err = fmt.Errorf("write req detail fail,%s", err)
 			return
 		}
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Read(buf)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			err = fmt.Errorf("read req reply fail,%s", err)
 			return

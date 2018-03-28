@@ -94,7 +94,9 @@ func (s *HTTP) InitService() {
 			for {
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
+					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 					_, err = conn.Write([]byte{0})
+					conn.SetDeadline(time.Time{})
 				}
 				if err != nil {
 					if s.sshClient != nil {
@@ -215,7 +217,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			if *s.cfg.ParentType == "ssh" {
 				outConn, err = s.getSSHConn(address)
 			} else {
-				//log.Printf("%v", s.outPool)
+				// log.Printf("%v", s.outPool)
 				_outConn, err = s.outPool.Pool.Get()
 				if err == nil {
 					outConn = _outConn.(net.Conn)
@@ -237,16 +239,16 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		utils.CloseConn(inConn)
 		return
 	}
-
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
-
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
 		//https无上级或者上级非代理,proxy需要响应connect请求,并直连目标
 		err = req.HTTPSReply()
 	} else {
 		//https或者http,上级是代理,proxy需要转发
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(req.HeadBuf)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)

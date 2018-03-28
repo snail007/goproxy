@@ -22,7 +22,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
-- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.Also support powerful cascading authentication.  
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -34,7 +34,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.5 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.6 manual, and the other version of the manual can be checked by the following link.  
+- [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
 - [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
 - [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
 - [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
@@ -127,7 +128,8 @@ This page is the v4.5 manual, and the other version of the manual can be checked
     - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
     - [6.4 Chain style connection](#64chain-style-connection)
     - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
-    - [6.6 View Help](#56transfer-through-ssh)
+    - [6.6 Authentication](#66authentication)
+    - [6.7 View Help](#67view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
@@ -149,7 +151,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -731,7 +733,49 @@ finish。
 In general, listening one port is enough, but if you need to monitor 80 and 443 ports at the same time as a reverse proxy, the -p parameter can support it.  
 The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
 
-#### **6.6.view help** 
+#### **6.6.Authentication** 
+SPS supports HTTP(s)\socks5 proxy authentication, which can concatenate authentication, there are four important information:  
+1:Users send authentication information`user-auth`。   
+2:Local authentication information set up`local-auth`。  
+3:Set the authentication information accessing to the father proxy`parent-auth`。  
+4:The final authentication information sent to the father proxy`auth-info-to-parent`。  
+The relationship between them is as follows:   
+
+| user-auth | local-auth | parent-auth | auth-info-to-paren 
+| ------ | ------ | ------ | ------  
+| yes/no  | yes    | yes   |  come from parent-auth  
+| yes/no  | no    |    yes    |   come from parent-auth  
+| yes/no  | yes     |     no  |   no  
+| no   | no    |   no    |   no  
+| yes    | no    |   no    |   come from user-auth  
+
+For SPS proxy we can have username and password to authenticate, and the authentication username and password can be specified on the command line    
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+if there are multiple users, repeat the -a parameters.  
+It can also be placed in a file, which is a line to a username: password, and then specified in -F parameter.  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
+
+If the father proxy is authenticated, the lower level can set the authentication information through the -A parameters, such as:  
+father proxy:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+local proxy:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
+
+In addition, SPS proxy, local authentication is integrated with external HTTP API authentication, and we can specify a HTTP URL interface address through the --auth-url parameter,    
+Then, when there is a user connection, proxy will request this URL by GET way, with the following four parameters, and if the HTTP state code 204 is returned, the authentication is successful.  
+Other cases consider authentication failure.  
+for example:  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
+When the user is connected, proxy will request this URL by GET way("http://test.com/auth.php"),  
+Four parameters with user, pass, IP, and target:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
+user:username   
+pass:password   
+ip:user's ip,for example:192.168.1.200   
+target: if the client is the HTTP (s) proxy request, this represents the complete URL of the request, and the other cases are empty.  
+
+If there is no -a or -F or --auth-url parameters, local authentication is closed.  
+If there is no -A parameter, the connection to the father proxy does not use authentication.  
+
+#### **6.7.view help** 
 `./proxy help sps` 
 
 ### **7.KCP Configuration**   
