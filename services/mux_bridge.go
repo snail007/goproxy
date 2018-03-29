@@ -104,6 +104,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			if err != nil {
 				session.Close()
 				utils.CloseConn(&inConn)
+				log.Printf("server connection %s %s released", serverID, key)
 				return
 			}
 			go s.callback(stream, serverID, key)
@@ -144,6 +145,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 					defer s.l.Unlock()
 					if sess, ok := group.Get(index); ok && sess.(*smux.Session).IsClosed() {
 						group.Remove(index)
+						log.Printf("client connection %s released", key)
 					}
 					if group.IsEmpty() {
 						s.clientControlConns.Remove(groupKey)

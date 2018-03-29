@@ -230,6 +230,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		if u != "" {
 			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
 		}
+		pb.Write([]byte("\r\n"))
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
