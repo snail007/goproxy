@@ -240,7 +240,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(&outConn)
 			return
 		}
-		reply := make([]byte, 100)
+		reply := make([]byte, 1024)
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Read(reply)
 		outConn.SetDeadline(time.Time{})
