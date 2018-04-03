@@ -280,7 +280,11 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 			} else {
 				err = fmt.Errorf("token error")
 			}
-			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, string(body))
+			b := string(body)
+			if len(b) > 50 {
+				b = b[:50]
+			}
+			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
 		}
 		if err != nil && tryCount < ba.authRetry {
 			log.Print(err)
