@@ -1,6 +1,6 @@
 #/bin/bash
 VER="v4.7"
-rm -rf release-*
+rm -rf proxy-sdk-release-*
 #arm
 gomobile bind -v -target=android/arm 
 mkdir proxy-sdk-arm
