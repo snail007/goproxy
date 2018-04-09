@@ -30,30 +30,37 @@ func NewSPS() Service {
 		basicAuth: utils.BasicAuth{},
 	}
 }
-func (s *SPS) CheckArgs() {
+func (s *SPS) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		return
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|kcp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp>")
+		return
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 		if *s.cfg.CaCertFile != "" {
-			var err error
 			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
 			if err != nil {
-				log.Fatalf("read ca file error,ERR:%s", err)
+				err = fmt.Errorf("read ca file error,ERR:%s", err)
+				return
 			}
 		}
 	}
+	return
 }
-func (s *SPS) InitService() {
+func (s *SPS) InitService() (err error) {
 	s.InitOutConnPool()
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
 	}
-	s.InitBasicAuth()
+	err = s.InitBasicAuth()
+	return
 }
 func (s *SPS) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
@@ -79,10 +86,13 @@ func (s *SPS) StopService() {
 }
 func (s *SPS) Start(args interface{}) (err error) {
 	s.cfg = args.(SPSArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
-	s.InitService()
-
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)

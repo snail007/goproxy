@@ -2,6 +2,7 @@ package services
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -32,24 +33,34 @@ func NewMuxBridge() Service {
 	return b
 }
 
-func (s *MuxBridge) InitService() {
-
+func (s *MuxBridge) InitService() (err error) {
+	return
 }
-func (s *MuxBridge) CheckArgs() {
+func (s *MuxBridge) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 func (s *MuxBridge) StopService() {
 
 }
 func (s *MuxBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxBridgeArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
+
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)

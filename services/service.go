@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"runtime/debug"
 )
 
@@ -28,24 +27,21 @@ func Regist(name string, s Service, args interface{}) {
 func Run(name string, args ...interface{}) (service *ServiceItem, err error) {
 	service, ok := servicesMap[name]
 	if ok {
-		go func() {
-			defer func() {
-				err := recover()
-				if err != nil {
-					log.Fatalf("%s servcie crashed, ERR: %s\ntrace:%s", name, err, string(debug.Stack()))
-				}
-			}()
-			if len(args) == 1 {
-				err = service.S.Start(args[0])
-			} else {
-				err = service.S.Start(service.Args)
-			}
-			if err != nil {
-				log.Fatalf("%s servcie fail, ERR: %s", name, err)
+		defer func() {
+			e := recover()
+			if e != nil {
+				err = fmt.Errorf("%s servcie crashed, ERR: %s\ntrace:%s", name, e, string(debug.Stack()))
 			}
 		}()
-	}
-	if !ok {
+		if len(args) == 1 {
+			err = service.S.Start(args[0])
+		} else {
+			err = service.S.Start(service.Args)
+		}
+		if err != nil {
+			err = fmt.Errorf("%s servcie fail, ERR: %s", name, err)
+		}
+	} else {
 		err = fmt.Errorf("service %s not found", name)
 	}
 	return

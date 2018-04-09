@@ -524,15 +524,15 @@ func SubBytes(bytes []byte, start, end int) []byte {
 	}
 	return bytes[start:end]
 }
-func TlsBytes(cert, key string) (certBytes, keyBytes []byte) {
-	certBytes, err := ioutil.ReadFile(cert)
+func TlsBytes(cert, key string) (certBytes, keyBytes []byte, err error) {
+	certBytes, err = ioutil.ReadFile(cert)
 	if err != nil {
-		log.Fatalf("err : %s", err)
+		err = fmt.Errorf("err : %s", err)
 		return
 	}
 	keyBytes, err = ioutil.ReadFile(key)
 	if err != nil {
-		log.Fatalf("err : %s", err)
+		err = fmt.Errorf("err : %s", err)
 		return
 	}
 	return

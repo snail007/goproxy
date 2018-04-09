@@ -28,21 +28,28 @@ func NewUDP() Service {
 		p:       utils.NewConcurrentMap(),
 	}
 }
-func (s *UDP) CheckArgs() {
+func (s *UDP) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		log.Fatalf("parent required for udp %s", *s.cfg.Local)
+		err = fmt.Errorf("parent required for udp %s", *s.cfg.Local)
+		return
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp>")
+		return
 	}
 	if *s.cfg.ParentType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
-func (s *UDP) InitService() {
+func (s *UDP) InitService() (err error) {
 	if *s.cfg.ParentType != TYPE_UDP {
 		s.InitOutConnPool()
 	}
+	return
 }
 func (s *UDP) StopService() {
 	if s.outPool.Pool != nil {
@@ -51,10 +58,13 @@ func (s *UDP) StopService() {
 }
 func (s *UDP) Start(args interface{}) (err error) {
 	s.cfg = args.(UDPArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	s.InitService()
-
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)

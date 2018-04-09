@@ -41,14 +41,19 @@ func NewMuxServerManager() Service {
 }
 func (s *MuxServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxServerArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 
-	s.InitService()
+	if err = s.InitService(); err != nil {
+		return
+	}
 
 	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
@@ -103,15 +108,21 @@ func (s *MuxServerManager) Clean() {
 }
 func (s *MuxServerManager) StopService() {
 }
-func (s *MuxServerManager) CheckArgs() {
+func (s *MuxServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.ParentType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
-func (s *MuxServerManager) InitService() {
+func (s *MuxServerManager) InitService() (err error) {
+	return
 }
 
 func NewMuxServer() Service {
@@ -129,19 +140,26 @@ type MuxUDPItem struct {
 	srcAddr   *net.UDPAddr
 }
 
-func (s *MuxServer) InitService() {
+func (s *MuxServer) InitService() (err error) {
 	s.UDPConnDeamon()
+	return
 }
-func (s *MuxServer) CheckArgs() {
+func (s *MuxServer) CheckArgs() (err error) {
 	if *s.cfg.Remote == "" {
-		log.Fatalf("remote required")
+		err = fmt.Errorf("remote required")
+		return
 	}
+	return
 }
 
 func (s *MuxServer) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxServerArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p)

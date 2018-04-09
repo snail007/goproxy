@@ -2,6 +2,7 @@ package services
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
 	"snail007/proxy/utils"
@@ -31,22 +32,28 @@ func NewTunnelBridge() Service {
 	}
 }
 
-func (s *TunnelBridge) InitService() {
-
+func (s *TunnelBridge) InitService() (err error) {
+	return
 }
-func (s *TunnelBridge) CheckArgs() {
+func (s *TunnelBridge) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
 }
 func (s *TunnelBridge) StopService() {
 
 }
 func (s *TunnelBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelBridgeArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
@@ -135,102 +142,6 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 			}
 			s.clientControlConns.Set(key, &inConn)
 			log.Printf("set client %s control conn", key)
-
-			// case CONN_SERVER_HEARBEAT:
-			// 	var serverID string
-			// 	err = utils.ReadPacketData(reader, &serverID)
-			// 	if err != nil {
-			// 		log.Printf("read error,ERR:%s", err)
-			// 		return
-			// 	}
-			// 	log.Printf("server heartbeat connection, id: %s", serverID)
-			// 	writeDie := make(chan bool)
-			// 	readDie := make(chan bool)
-			// 	go func() {
-			// 		for {
-			// 			inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-			// 			_, err = inConn.Write([]byte{0x00})
-			// 			inConn.SetWriteDeadline(time.Time{})
-			// 			if err != nil {
-			// 				log.Printf("server heartbeat connection write err %s", err)
-			// 				break
-			// 			}
-			// 			time.Sleep(time.Second * 3)
-			// 		}
-			// 		close(writeDie)
-			// 	}()
-			// 	go func() {
-			// 		for {
-			// 			signal := make([]byte, 1)
-			// 			inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-			// 			_, err := inConn.Read(signal)
-			// 			inConn.SetReadDeadline(time.Time{})
-			// 			if err != nil {
-			// 				log.Printf("server heartbeat connection read err: %s", err)
-			// 				break
-			// 			} else {
-			// 				// log.Printf("heartbeat from server ,id:%s", serverID)
-			// 			}
-			// 		}
-			// 		close(readDie)
-			// 	}()
-			// 	select {
-			// 	case <-readDie:
-			// 	case <-writeDie:
-			// 	}
-			// 	utils.CloseConn(&inConn)
-			// 	s.cmServer.Remove(serverID)
-			// 	log.Printf("server heartbeat conn %s released", serverID)
-			// case CONN_CLIENT_HEARBEAT:
-			// 	var clientID string
-			// 	err = utils.ReadPacketData(reader, &clientID)
-			// 	if err != nil {
-			// 		log.Printf("read error,ERR:%s", err)
-			// 		return
-			// 	}
-			// 	log.Printf("client heartbeat connection, id: %s", clientID)
-			// 	writeDie := make(chan bool)
-			// 	readDie := make(chan bool)
-			// 	go func() {
-			// 		for {
-			// 			inConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-			// 			_, err = inConn.Write([]byte{0x00})
-			// 			inConn.SetWriteDeadline(time.Time{})
-			// 			if err != nil {
-			// 				log.Printf("client heartbeat connection write err %s", err)
-			// 				break
-			// 			}
-			// 			time.Sleep(time.Second * 3)
-			// 		}
-			// 		close(writeDie)
-			// 	}()
-			// 	go func() {
-			// 		for {
-			// 			signal := make([]byte, 1)
-			// 			inConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-			// 			_, err := inConn.Read(signal)
-			// 			inConn.SetReadDeadline(time.Time{})
-			// 			if err != nil {
-			// 				log.Printf("client control connection read err: %s", err)
-			// 				break
-			// 			} else {
-			// 				// log.Printf("heartbeat from client ,id:%s", clientID)
-			// 			}
-			// 		}
-			// 		close(readDie)
-			// 	}()
-			// 	select {
-			// 	case <-readDie:
-			// 	case <-writeDie:
-			// 	}
-			// 	utils.CloseConn(&inConn)
-			// 	s.cmClient.Remove(clientID)
-			// 	if s.clientControlConns.Has(clientID) {
-			// 		item, _ := s.clientControlConns.Get(clientID)
-			// 		(*item.(*net.Conn)).Close()
-			// 	}
-			// 	s.clientControlConns.Remove(clientID)
-			// 	log.Printf("client heartbeat conn %s released", clientID)
 		}
 	})
 	if err != nil {

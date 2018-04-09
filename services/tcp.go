@@ -24,19 +24,26 @@ func NewTCP() Service {
 		cfg:     TCPArgs{},
 	}
 }
-func (s *TCP) CheckArgs() {
+func (s *TCP) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		return
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|kcp|udp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp|udp>")
+		return
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
-func (s *TCP) InitService() {
+func (s *TCP) InitService() (err error) {
 	s.InitOutConnPool()
+	return
 }
 func (s *TCP) StopService() {
 	if s.outPool.Pool != nil {
@@ -45,10 +52,13 @@ func (s *TCP) StopService() {
 }
 func (s *TCP) Start(args interface{}) (err error) {
 	s.cfg = args.(TCPArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	s.InitService()
-
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)

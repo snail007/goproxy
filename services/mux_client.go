@@ -23,30 +23,40 @@ func NewMuxClient() Service {
 	}
 }
 
-func (s *MuxClient) InitService() {
-
+func (s *MuxClient) InitService() (err error) {
+	return
 }
 
-func (s *MuxClient) CheckArgs() {
+func (s *MuxClient) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.ParentType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 func (s *MuxClient) StopService() {
 
 }
 func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("client started")
 	count := 1
 	if *s.cfg.SessionCount > 0 {
@@ -119,7 +129,6 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 					}()
 				}
 			}
-
 		}(i)
 	}
 	return

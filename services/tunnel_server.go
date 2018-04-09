@@ -37,14 +37,19 @@ func NewTunnelServerManager() Service {
 }
 func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 
-	s.InitService()
+	if err = s.InitService(); err != nil {
+		return
+	}
 
 	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
@@ -93,70 +98,18 @@ func (s *TunnelServerManager) Clean() {
 func (s *TunnelServerManager) StopService() {
 	// s.cm.RemoveAll()
 }
-func (s *TunnelServerManager) CheckArgs() {
+func (s *TunnelServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
 }
-func (s *TunnelServerManager) InitService() {
-	// s.InitHeartbeatDeamon()
+func (s *TunnelServerManager) InitService() (err error) {
+	return
 }
 
-// func (s *TunnelServerManager) InitHeartbeatDeamon() {
-// 	log.Printf("heartbeat started")
-// 	go func() {
-// 		var heartbeatConn net.Conn
-// 		var ID string
-// 		for {
-// 			//close all connection
-// 			s.cm.Remove(ID)
-// 			utils.CloseConn(&heartbeatConn)
-// 			heartbeatConn, ID, err := s.GetOutConn(CONN_SERVER_HEARBEAT)
-// 			if err != nil {
-// 				log.Printf("heartbeat connection err: %s, retrying...", err)
-// 				time.Sleep(time.Second * 3)
-// 				utils.CloseConn(&heartbeatConn)
-// 				continue
-// 			}
-// 			log.Printf("heartbeat connection created,id:%s", ID)
-// 			writeDie := make(chan bool)
-// 			readDie := make(chan bool)
-// 			go func() {
-// 				for {
-// 					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-// 					_, err = heartbeatConn.Write([]byte{0x00})
-// 					heartbeatConn.SetWriteDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection write err %s", err)
-// 						break
-// 					}
-// 					time.Sleep(time.Second * 3)
-// 				}
-// 				close(writeDie)
-// 			}()
-// 			go func() {
-// 				for {
-// 					signal := make([]byte, 1)
-// 					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-// 					_, err := heartbeatConn.Read(signal)
-// 					heartbeatConn.SetReadDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection read err: %s", err)
-// 						break
-// 					} else {
-// 						// log.Printf("heartbeat from bridge")
-// 					}
-// 				}
-// 				close(readDie)
-// 			}()
-// 			select {
-// 			case <-readDie:
-// 			case <-writeDie:
-// 			}
-// 		}
-// 	}()
-// }
 func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
@@ -193,19 +146,26 @@ type UDPItem struct {
 	srcAddr   *net.UDPAddr
 }
 
-func (s *TunnelServer) InitService() {
+func (s *TunnelServer) InitService() (err error) {
 	s.UDPConnDeamon()
+	return
 }
-func (s *TunnelServer) CheckArgs() {
+func (s *TunnelServer) CheckArgs() (err error) {
 	if *s.cfg.Remote == "" {
-		log.Fatalf("remote required")
+		err = fmt.Errorf("remote required")
+		return
 	}
+	return
 }
 
 func (s *TunnelServer) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p)
