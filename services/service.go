@@ -18,10 +18,16 @@ type ServiceItem struct {
 var servicesMap = map[string]*ServiceItem{}
 
 func Regist(name string, s Service, args interface{}) {
+
 	servicesMap[name] = &ServiceItem{
 		S:    s,
 		Args: args,
 		Name: name,
+	}
+}
+func Stop(name string) {
+	if s, ok := servicesMap[name]; ok && s.S != nil {
+		s.S.Clean()
 	}
 }
 func Run(name string, args ...interface{}) (service *ServiceItem, err error) {

@@ -21,6 +21,8 @@ type MuxBridge struct {
 	clientControlConns utils.ConcurrentMap
 	router             utils.ClientKeyRouter
 	l                  *sync.Mutex
+	isStop             bool
+	sc                 *utils.ServerChannel
 }
 
 func NewMuxBridge() Service {
@@ -28,6 +30,7 @@ func NewMuxBridge() Service {
 		cfg:                MuxBridgeArgs{},
 		clientControlConns: utils.NewConcurrentMap(),
 		l:                  &sync.Mutex{},
+		isStop:             false,
 	}
 	b.router = utils.NewClientKeyRouter(&b.clientControlConns, 50000)
 	return b
@@ -50,7 +53,23 @@ func (s *MuxBridge) CheckArgs() (err error) {
 	return
 }
 func (s *MuxBridge) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop bridge service crashed,%s", e)
+		} else {
+			log.Printf("service bridge stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	if s.sc != nil && (*s.sc).Listener != nil {
+		(*(*s.sc).Listener).Close()
+	}
+	for _, g := range s.clientControlConns.Items() {
+		for _, session := range g.(utils.ConcurrentMap).Items() {
+			(session.(*smux.Session)).Close()
+		}
+	}
 }
 func (s *MuxBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxBridgeArgs)
@@ -74,6 +93,7 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 	if err != nil {
 		return
 	}
+	s.sc = &sc
 	log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
@@ -111,6 +131,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			return
 		}
 		for {
+			if s.isStop {
+				return
+			}
 			stream, err := session.AcceptStream()
 			if err != nil {
 				session.Close()
@@ -118,7 +141,14 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 				log.Printf("server connection %s %s released", serverID, key)
 				return
 			}
-			go s.callback(stream, serverID, key)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						log.Printf("bridge callback crashed,err: %s", e)
+					}
+				}()
+				s.callback(stream, serverID, key)
+			}()
 		}
 	case CONN_CLIENT:
 		log.Printf("client connection %s connected", key)
@@ -151,6 +181,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		// s.clientControlConns.Set(key, session)
 		go func() {
 			for {
+				if s.isStop {
+					return
+				}
 				if session.IsClosed() {
 					s.l.Lock()
 					defer s.l.Unlock()
@@ -173,6 +206,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 	try := 20
 	for {
+		if s.isStop {
+			return
+		}
 		try--
 		if try == 0 {
 			break

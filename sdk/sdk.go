@@ -299,17 +299,30 @@ func Start(argsStr string) (errStr string) {
 	}
 
 	//regist services and run service
-	services.Regist("http", services.NewHTTP(), httpArgs)
-	services.Regist("tcp", services.NewTCP(), tcpArgs)
-	services.Regist("udp", services.NewUDP(), udpArgs)
-	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
-	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
-	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
-	services.Regist("server", services.NewMuxServerManager(), muxServerArgs)
-	services.Regist("client", services.NewMuxClient(), muxClientArgs)
-	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
-	services.Regist("socks", services.NewSocks(), socksArgs)
-	services.Regist("sps", services.NewSPS(), spsArgs)
+	switch serviceName {
+	case "http":
+		services.Regist("http", services.NewHTTP(), httpArgs)
+	case "tcp":
+		services.Regist("tcp", services.NewTCP(), tcpArgs)
+	case "udp":
+		services.Regist("udp", services.NewUDP(), udpArgs)
+	case "tserver":
+		services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
+	case "tclient":
+		services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
+	case "tbridge":
+		services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
+	case "server":
+		services.Regist("server", services.NewMuxServerManager(), muxServerArgs)
+	case "client":
+		services.Regist("client", services.NewMuxClient(), muxClientArgs)
+	case "bridge":
+		services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
+	case "socks":
+		services.Regist("socks", services.NewSocks(), socksArgs)
+	case "sps":
+		services.Regist("sps", services.NewSPS(), spsArgs)
+	}
 
 	service, err = services.Run(serviceName)
 	if err != nil {

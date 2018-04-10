@@ -18,8 +18,7 @@ type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
 	serverConns        utils.ConcurrentMap
 	clientControlConns utils.ConcurrentMap
-	// cmServer           utils.ConnManager
-	// cmClient           utils.ConnManager
+	isStop             bool
 }
 
 func NewTunnelBridge() Service {
@@ -27,8 +26,7 @@ func NewTunnelBridge() Service {
 		cfg:                TunnelBridgeArgs{},
 		serverConns:        utils.NewConcurrentMap(),
 		clientControlConns: utils.NewConcurrentMap(),
-		// cmServer:           utils.NewConnManager(),
-		// cmClient:           utils.NewConnManager(),
+		isStop:             false,
 	}
 }
 
@@ -44,7 +42,21 @@ func (s *TunnelBridge) CheckArgs() (err error) {
 	return
 }
 func (s *TunnelBridge) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tbridge service crashed,%s", e)
+		} else {
+			log.Printf("service tbridge stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	for _, sess := range s.clientControlConns.Items() {
+		(*sess.(*net.Conn)).Close()
+	}
+	for _, sess := range s.serverConns.Items() {
+		(*sess.(ServerConn).Conn).Close()
+	}
 }
 func (s *TunnelBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelBridgeArgs)
@@ -85,6 +97,9 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 				Conn: &inConn,
 			})
 			for {
+				if s.isStop {
+					return
+				}
 				item, ok := s.clientControlConns.Get(key)
 				if !ok {
 					log.Printf("client %s control conn not exists", key)

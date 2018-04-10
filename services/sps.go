@@ -17,17 +17,19 @@ import (
 )
 
 type SPS struct {
-	outPool        utils.OutPool
+	outPool        utils.OutConn
 	cfg            SPSArgs
 	domainResolver utils.DomainResolver
 	basicAuth      utils.BasicAuth
+	serverChannels []*utils.ServerChannel
 }
 
 func NewSPS() Service {
 	return &SPS{
-		outPool:   utils.OutPool{},
-		cfg:       SPSArgs{},
-		basicAuth: utils.BasicAuth{},
+		outPool:        utils.OutConn{},
+		cfg:            SPSArgs{},
+		basicAuth:      utils.BasicAuth{},
+		serverChannels: []*utils.ServerChannel{},
 	}
 }
 func (s *SPS) CheckArgs() (err error) {
@@ -66,7 +68,7 @@ func (s *SPS) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			0,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
@@ -80,8 +82,21 @@ func (s *SPS) InitOutConnPool() {
 }
 
 func (s *SPS) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop sps service crashed,%s", e)
+		} else {
+			log.Printf("service sps stoped,%s", e)
+		}
+	}()
+	for _, sc := range s.serverChannels {
+		if sc.Listener != nil && *sc.Listener != nil {
+			(*sc.Listener).Close()
+		}
+		if sc.UDPListener != nil {
+			(*sc.UDPListener).Close()
+		}
 	}
 }
 func (s *SPS) Start(args interface{}) (err error) {
@@ -109,6 +124,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 				return
 			}
 			log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
 	return
@@ -207,11 +223,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	}
 	//connect to parent
 	var outConn net.Conn
-	var _outConn interface{}
-	_outConn, err = s.outPool.Pool.Get()
-	if err == nil {
-		outConn = _outConn.(net.Conn)
-	}
+	outConn, err = s.outPool.Get()
 	if err != nil {
 		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)

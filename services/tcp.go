@@ -14,14 +14,17 @@ import (
 )
 
 type TCP struct {
-	outPool utils.OutPool
+	outPool utils.OutConn
 	cfg     TCPArgs
+	sc      *utils.ServerChannel
+	isStop  bool
 }
 
 func NewTCP() Service {
 	return &TCP{
-		outPool: utils.OutPool{},
+		outPool: utils.OutConn{},
 		cfg:     TCPArgs{},
+		isStop:  false,
 	}
 }
 func (s *TCP) CheckArgs() (err error) {
@@ -46,8 +49,20 @@ func (s *TCP) InitService() (err error) {
 	return
 }
 func (s *TCP) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tcp service crashed,%s", e)
+		} else {
+			log.Printf("service tcp stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	if s.sc.Listener != nil && *s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
+	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
 	}
 }
 func (s *TCP) Start(args interface{}) (err error) {
@@ -74,6 +89,7 @@ func (s *TCP) Start(args interface{}) (err error) {
 		return
 	}
 	log.Printf("%s proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+	s.sc = &sc
 	return
 }
 
@@ -106,11 +122,7 @@ func (s *TCP) callback(inConn net.Conn) {
 }
 func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	var outConn net.Conn
-	var _outConn interface{}
-	_outConn, err = s.outPool.Pool.Get()
-	if err == nil {
-		outConn = _outConn.(net.Conn)
-	}
+	outConn, err = s.outPool.Get()
 	if err != nil {
 		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
@@ -129,6 +141,9 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	log.Printf("conn created , remote : %s ", (*inConn).RemoteAddr())
 	for {
+		if s.isStop {
+			return
+		}
 		srcAddr, body, err := utils.ReadUDPPacket(bufio.NewReader(*inConn))
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			//log.Printf("connection %s released", srcAddr)
@@ -178,7 +193,7 @@ func (s *TCP) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			s.cfg.KCP,

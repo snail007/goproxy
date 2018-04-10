@@ -14,12 +14,14 @@ type TunnelClient struct {
 	cfg TunnelClientArgs
 	// cm       utils.ConnManager
 	ctrlConn net.Conn
+	isStop   bool
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
 		cfg: TunnelClientArgs{},
 		// cm:  utils.NewConnManager(),
+		isStop: false,
 	}
 }
 
@@ -42,7 +44,18 @@ func (s *TunnelClient) CheckArgs() (err error) {
 	return
 }
 func (s *TunnelClient) StopService() {
-	// s.cm.RemoveAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tclient service crashed,%s", e)
+		} else {
+			log.Printf("service tclient stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	if s.ctrlConn != nil {
+		s.ctrlConn.Close()
+	}
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
@@ -55,8 +68,9 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 	log.Printf("proxy on tunnel client mode")
 
 	for {
-		//close all conn
-		// s.cm.Remove(*s.cfg.Key)
+		if s.isStop {
+			return
+		}
 		if s.ctrlConn != nil {
 			s.ctrlConn.Close()
 		}
@@ -71,6 +85,9 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 			continue
 		}
 		for {
+			if s.isStop {
+				return
+			}
 			var ID, clientLocalAddr, serverID string
 			err = utils.ReadPacketData(s.ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
@@ -121,6 +138,9 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	var err error
 	// for {
 	for {
+		if s.isStop {
+			return
+		}
 		// s.cm.RemoveOne(*s.cfg.Key, ID)
 		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
@@ -136,6 +156,9 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	log.Printf("conn %s created", ID)
 
 	for {
+		if s.isStop {
+			return
+		}
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			log.Printf("connection %s released", ID)
@@ -192,6 +215,9 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	var inConn, outConn net.Conn
 	var err error
 	for {
+		if s.isStop {
+			return
+		}
 		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
@@ -205,6 +231,9 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 
 	i := 0
 	for {
+		if s.isStop {
+			return
+		}
 		i++
 		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {

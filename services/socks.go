@@ -23,7 +23,9 @@ type Socks struct {
 	sshClient      *ssh.Client
 	lockChn        chan bool
 	udpSC          utils.ServerChannel
+	sc             *utils.ServerChannel
 	domainResolver utils.DomainResolver
+	isStop         bool
 }
 
 func NewSocks() Service {
@@ -32,6 +34,7 @@ func NewSocks() Service {
 		checker:   utils.Checker{},
 		basicAuth: utils.BasicAuth{},
 		lockChn:   make(chan bool, 1),
+		isStop:    false,
 	}
 }
 
@@ -103,6 +106,9 @@ func (s *Socks) InitService() (err error) {
 		go func() {
 			//循环检查ssh网络连通性
 			for {
+				if s.isStop {
+					return
+				}
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -136,11 +142,24 @@ func (s *Socks) InitService() (err error) {
 	return
 }
 func (s *Socks) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop socks service crashed,%s", e)
+		} else {
+			log.Printf("service socks stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	s.checker.Stop()
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
 	if s.udpSC.UDPListener != nil {
 		s.udpSC.UDPListener.Close()
+	}
+	if s.sc != nil && (*s.sc).Listener != nil {
+		(*(*s.sc).Listener).Close()
 	}
 }
 func (s *Socks) Start(args interface{}) (err error) {
@@ -166,6 +185,7 @@ func (s *Socks) Start(args interface{}) (err error) {
 	if err != nil {
 		return
 	}
+	s.sc = &sc
 	log.Printf("%s socks proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
@@ -457,6 +477,9 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		return
 	}
 	for {
+		if s.isStop {
+			return
+		}
 		if *s.cfg.Always {
 			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
 		} else {
@@ -563,7 +586,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		maxTryCount := 1
 		tryCount := 0
 	RETRY:
-		if tryCount >= maxTryCount {
+		if tryCount >= maxTryCount || s.isStop {
 			return
 		}
 		wait := make(chan bool, 1)

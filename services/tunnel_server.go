@@ -14,17 +14,18 @@ import (
 )
 
 type TunnelServer struct {
-	cfg    TunnelServerArgs
-	udpChn chan UDPItem
-	sc     utils.ServerChannel
+	cfg     TunnelServerArgs
+	udpChn  chan UDPItem
+	sc      utils.ServerChannel
+	isStop  bool
+	udpConn *net.Conn
 }
 
 type TunnelServerManager struct {
 	cfg      TunnelServerArgs
 	udpChn   chan UDPItem
-	sc       utils.ServerChannel
 	serverID string
-	// cm       utils.ConnManager
+	servers  []*Service
 }
 
 func NewTunnelServerManager() Service {
@@ -32,7 +33,7 @@ func NewTunnelServerManager() Service {
 		cfg:      TunnelServerArgs{},
 		udpChn:   make(chan UDPItem, 50000),
 		serverID: utils.Uniqueid(),
-		// cm:       utils.NewConnManager(),
+		servers:  []*Service{},
 	}
 }
 func (s *TunnelServerManager) Start(args interface{}) (err error) {
@@ -89,6 +90,7 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
+		s.servers = append(s.servers, &server)
 	}
 	return
 }
@@ -96,7 +98,9 @@ func (s *TunnelServerManager) Clean() {
 	s.StopService()
 }
 func (s *TunnelServerManager) StopService() {
-	// s.cm.RemoveAll()
+	for _, server := range s.servers {
+		(*server).Clean()
+	}
 }
 func (s *TunnelServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
@@ -137,6 +141,7 @@ func NewTunnelServer() Service {
 	return &TunnelServer{
 		cfg:    TunnelServerArgs{},
 		udpChn: make(chan UDPItem, 50000),
+		isStop: false,
 	}
 }
 
@@ -146,6 +151,27 @@ type UDPItem struct {
 	srcAddr   *net.UDPAddr
 }
 
+func (s *TunnelServer) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop server service crashed,%s", e)
+		} else {
+			log.Printf("service server stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+
+	if s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
+	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
+	}
+	if s.udpConn != nil {
+		(*s.udpConn).Close()
+	}
+}
 func (s *TunnelServer) InitService() (err error) {
 	s.UDPConnDeamon()
 	return
@@ -191,6 +217,9 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			var outConn net.Conn
 			var ID string
 			for {
+				if s.isStop {
+					return
+				}
 				outConn, ID, err = s.GetOutConn(CONN_SERVER)
 				if err != nil {
 					utils.CloseConn(&outConn)
@@ -259,10 +288,19 @@ func (s *TunnelServer) UDPConnDeamon() {
 		// var cmdChn = make(chan bool, 1000)
 		var err error
 		for {
+			if s.isStop {
+				return
+			}
 			item := <-s.udpChn
 		RETRY:
+			if s.isStop {
+				return
+			}
 			if outConn == nil {
 				for {
+					if s.isStop {
+						return
+					}
 					outConn, ID, err = s.GetOutConn(CONN_SERVER)
 					if err != nil {
 						// cmdChn <- true
@@ -273,11 +311,14 @@ func (s *TunnelServer) UDPConnDeamon() {
 						continue
 					} else {
 						go func(outConn net.Conn, ID string) {
-							go func() {
-								// <-cmdChn
-								// outConn.Close()
-							}()
+							if s.udpConn != nil {
+								(*s.udpConn).Close()
+							}
+							s.udpConn = &outConn
 							for {
+								if s.isStop {
+									return
+								}
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
 								if err == io.EOF || err == io.ErrUnexpectedEOF {
 									log.Printf("UDP deamon connection %s exited", ID)

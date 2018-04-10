@@ -16,22 +16,26 @@ import (
 )
 
 type HTTP struct {
-	outPool        utils.OutPool
+	outPool        utils.OutConn
 	cfg            HTTPArgs
 	checker        utils.Checker
 	basicAuth      utils.BasicAuth
 	sshClient      *ssh.Client
 	lockChn        chan bool
 	domainResolver utils.DomainResolver
+	isStop         bool
+	serverChannels []*utils.ServerChannel
 }
 
 func NewHTTP() Service {
 	return &HTTP{
-		outPool:   utils.OutPool{},
-		cfg:       HTTPArgs{},
-		checker:   utils.Checker{},
-		basicAuth: utils.BasicAuth{},
-		lockChn:   make(chan bool, 1),
+		outPool:        utils.OutConn{},
+		cfg:            HTTPArgs{},
+		checker:        utils.Checker{},
+		basicAuth:      utils.BasicAuth{},
+		lockChn:        make(chan bool, 1),
+		isStop:         false,
+		serverChannels: []*utils.ServerChannel{},
 	}
 }
 func (s *HTTP) CheckArgs() (err error) {
@@ -102,6 +106,9 @@ func (s *HTTP) InitService() (err error) {
 		go func() {
 			//循环检查ssh网络连通性
 			for {
+				if s.isStop {
+					return
+				}
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -127,8 +134,26 @@ func (s *HTTP) InitService() (err error) {
 	return
 }
 func (s *HTTP) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop http(s) service crashed,%s", e)
+		} else {
+			log.Printf("service http(s) stoped,%s", e)
+		}
+	}()
+	s.isStop = true
+	s.checker.Stop()
+	if s.sshClient != nil {
+		s.sshClient.Close()
+	}
+	for _, sc := range s.serverChannels {
+		if sc.Listener != nil && *sc.Listener != nil {
+			(*sc.Listener).Close()
+		}
+		if sc.UDPListener != nil {
+			(*sc.UDPListener).Close()
+		}
 	}
 }
 func (s *HTTP) Start(args interface{}) (err error) {
@@ -159,6 +184,7 @@ func (s *HTTP) Start(args interface{}) (err error) {
 				return
 			}
 			log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
 	return
@@ -224,19 +250,18 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		return
 	}
 	var outConn net.Conn
-	var _outConn interface{}
 	tryCount := 0
 	maxTryCount := 5
 	for {
+		if s.isStop {
+			return
+		}
 		if useProxy {
 			if *s.cfg.ParentType == "ssh" {
 				outConn, err = s.getSSHConn(address)
 			} else {
 				// log.Printf("%v", s.outPool)
-				_outConn, err = s.outPool.Pool.Get()
-				if err == nil {
-					outConn = _outConn.(net.Conn)
-				}
+				outConn, err = s.outPool.Get()
 			}
 		} else {
 			outConn, err = utils.ConnectHost(s.Resolve(address), *s.cfg.Timeout)
@@ -283,7 +308,7 @@ func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err interface{}) {
 	maxTryCount := 1
 	tryCount := 0
 RETRY:
-	if tryCount >= maxTryCount {
+	if tryCount >= maxTryCount || s.isStop {
 		return
 	}
 	wait := make(chan bool, 1)
@@ -340,7 +365,7 @@ func (s *HTTP) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
