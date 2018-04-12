@@ -75,3 +75,4 @@ tclient
 ```
 每个服务只能启动一个,如果相同的服务启动多次,那么之前的服务会被停掉,后面启动的服务覆盖之前的服务.  
 上面这些服务的具体使用方式和具体参数,可以参考[proxy手册](https://github.com/snail007/goproxy/blob/master/README_ZH.md)  
+sdk里面的服务不支持手册里面的：--daemon和--forever参数.  
