@@ -14,11 +14,12 @@ import (
 )
 
 type TunnelServer struct {
-	cfg     TunnelServerArgs
-	udpChn  chan UDPItem
-	sc      utils.ServerChannel
-	isStop  bool
-	udpConn *net.Conn
+	cfg       TunnelServerArgs
+	udpChn    chan UDPItem
+	sc        utils.ServerChannel
+	isStop    bool
+	udpConn   *net.Conn
+	userConns utils.ConcurrentMap
 }
 
 type TunnelServerManager struct {
@@ -139,9 +140,10 @@ func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
 }
 func NewTunnelServer() Service {
 	return &TunnelServer{
-		cfg:    TunnelServerArgs{},
-		udpChn: make(chan UDPItem, 50000),
-		isStop: false,
+		cfg:       TunnelServerArgs{},
+		udpChn:    make(chan UDPItem, 50000),
+		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
 
@@ -157,7 +159,7 @@ func (s *TunnelServer) StopService() {
 		if e != nil {
 			log.Printf("stop server service crashed,%s", e)
 		} else {
-			log.Printf("service server stoped,%s", e)
+			log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -170,6 +172,9 @@ func (s *TunnelServer) StopService() {
 	}
 	if s.udpConn != nil {
 		(*s.udpConn).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *TunnelServer) InitService() (err error) {
@@ -230,12 +235,15 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
+			inAddr := inConn.RemoteAddr().String()
 			utils.IoBind(inConn, outConn, func(err interface{}) {
-				// s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
+				s.userConns.Remove(inAddr)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			})
-			//add conn
-			// s.cfg.Mgr.cm.Add(s.cfg.Mgr.serverID, ID, &inConn)
+			if c, ok := s.userConns.Get(inAddr); ok {
+				(*c.(*net.Conn)).Close()
+			}
+			s.userConns.Set(inAddr, &inConn)
 			log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {

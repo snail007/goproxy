@@ -1,13 +1,13 @@
 proxy更新日志
 v4.7
-1.优化了bridge的日志,增加了client和server的掉线日志.
-2.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
+1.增加了基于gomobile的sdk,对安卓/IOS提供SDK支持.
+2.优化了bridge的日志,增加了client和server的掉线日志.
+3.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
  避免了某些代理服务器返回过多数据导致不能正常通讯的问题.
-3.去除了鸡肋连接池功能.
-4.增加了gomobile sdk,对安卓/IOS提供支持.
+4.去除了鸡肋连接池功能.
 5.优化了所有服务代码,方便对sdk提供支持.
-
-
+6.增加了SDK手册.
+7.增加了GUI客户端(windows/web/android/ios)介绍主页.
 
 v4.6
 1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.

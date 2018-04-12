@@ -59,7 +59,7 @@ func (s *UDP) StopService() {
 		if e != nil {
 			log.Printf("stop udp service crashed,%s", e)
 		} else {
-			log.Printf("service udp stoped,%s", e)
+			log.Printf("service udp stoped")
 		}
 	}()
 	s.isStop = true
@@ -133,7 +133,7 @@ func (s *UDP) GetConn(connKey string) (conn net.Conn, isNew bool, err error) {
 func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err error) {
 	numLocal := crc32.ChecksumIEEE([]byte(localAddr.String()))
 	numSrc := crc32.ChecksumIEEE([]byte(srcAddr.String()))
-	mod := uint32(*s.cfg.PoolSize)
+	mod := uint32(10)
 	if mod == 0 {
 		mod = 10
 	}
@@ -153,6 +153,7 @@ func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err erro
 			log.Printf("conn %d created , local: %s", connKey, srcAddr.String())
 			for {
 				if s.isStop {
+					conn.Close()
 					return
 				}
 				srcAddrFromConn, body, err := utils.ReadUDPPacket(bufio.NewReader(conn))
@@ -240,8 +241,6 @@ func (s *UDP) InitOutConnPool() {
 			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

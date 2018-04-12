@@ -155,7 +155,7 @@ func (s *MuxServer) StopService() {
 		if e != nil {
 			log.Printf("stop server service crashed,%s", e)
 		} else {
-			log.Printf("service server stoped,%s", e)
+			log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true

@@ -14,17 +14,19 @@ import (
 )
 
 type TCP struct {
-	outPool utils.OutConn
-	cfg     TCPArgs
-	sc      *utils.ServerChannel
-	isStop  bool
+	outPool   utils.OutConn
+	cfg       TCPArgs
+	sc        *utils.ServerChannel
+	isStop    bool
+	userConns utils.ConcurrentMap
 }
 
 func NewTCP() Service {
 	return &TCP{
-		outPool: utils.OutConn{},
-		cfg:     TCPArgs{},
-		isStop:  false,
+		outPool:   utils.OutConn{},
+		cfg:       TCPArgs{},
+		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
 func (s *TCP) CheckArgs() (err error) {
@@ -54,7 +56,7 @@ func (s *TCP) StopService() {
 		if e != nil {
 			log.Printf("stop tcp service crashed,%s", e)
 		} else {
-			log.Printf("service tcp stoped,%s", e)
+			log.Printf("service tcp stoped")
 		}
 	}()
 	s.isStop = true
@@ -63,6 +65,9 @@ func (s *TCP) StopService() {
 	}
 	if s.sc.UDPListener != nil {
 		(*s.sc.UDPListener).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *TCP) Start(args interface{}) (err error) {
@@ -134,14 +139,20 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	//outLocalAddr := outConn.LocalAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	return
 }
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	log.Printf("conn created , remote : %s ", (*inConn).RemoteAddr())
 	for {
 		if s.isStop {
+			(*inConn).Close()
 			return
 		}
 		srcAddr, body, err := utils.ReadUDPPacket(bufio.NewReader(*inConn))
@@ -200,8 +211,6 @@ func (s *TCP) InitOutConnPool() {
 			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

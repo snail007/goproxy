@@ -11,17 +11,17 @@ import (
 )
 
 type TunnelClient struct {
-	cfg TunnelClientArgs
-	// cm       utils.ConnManager
-	ctrlConn net.Conn
-	isStop   bool
+	cfg       TunnelClientArgs
+	ctrlConn  net.Conn
+	isStop    bool
+	userConns utils.ConcurrentMap
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
-		cfg: TunnelClientArgs{},
-		// cm:  utils.NewConnManager(),
-		isStop: false,
+		cfg:       TunnelClientArgs{},
+		userConns: utils.NewConcurrentMap(),
+		isStop:    false,
 	}
 }
 
@@ -49,12 +49,15 @@ func (s *TunnelClient) StopService() {
 		if e != nil {
 			log.Printf("stop tclient service crashed,%s", e)
 		} else {
-			log.Printf("service tclient stoped,%s", e)
+			log.Printf("service tclient stoped")
 		}
 	}()
 	s.isStop = true
 	if s.ctrlConn != nil {
 		s.ctrlConn.Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
@@ -139,6 +142,9 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	// for {
 	for {
 		if s.isStop {
+			if inConn != nil {
+				inConn.Close()
+			}
 			return
 		}
 		// s.cm.RemoveOne(*s.cfg.Key, ID)
@@ -252,10 +258,14 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
+	inAddr := inConn.RemoteAddr().String()
 	utils.IoBind(inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s released", ID)
-		// s.cm.RemoveOne(*s.cfg.Key, ID)
+		s.userConns.Remove(inAddr)
 	})
-	// s.cm.Add(*s.cfg.Key, ID, &inConn)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	log.Printf("conn %s created", ID)
 }

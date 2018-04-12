@@ -111,7 +111,6 @@ type TCPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 	KCP                 kcpcfg.KCPConfigArgs
 }
@@ -139,7 +138,6 @@ type HTTPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 	SSHKeyFile          *string
 	SSHKeyFileSalt      *string
@@ -161,7 +159,6 @@ type UDPArgs struct {
 	Local               *string
 	ParentType          *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 }
 type SocksArgs struct {

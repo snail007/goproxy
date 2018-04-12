@@ -1,13 +1,16 @@
-package sdk
+package proxy
 
 import (
 	"crypto/sha1"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"snail007/proxy/services"
 	"snail007/proxy/services/kcpcfg"
+	"strconv"
 	"strings"
+	"time"
 
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
@@ -15,8 +18,7 @@ import (
 )
 
 var (
-	app     *kingpin.Application
-	service *services.ServiceItem
+	app *kingpin.Application
 )
 
 //Start argsStr: is the whole command line args string
@@ -47,7 +49,7 @@ func Start(argsStr string) (errStr string) {
 	logfile := app.Flag("log", "log file path").Default("").String()
 	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
 	kcpArgs.Crypt = app.Flag("kcp-method", "encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none").Default("aes").Enum("aes", "aes-128", "aes-192", "salsa20", "blowfish", "twofish", "cast5", "3des", "tea", "xtea", "xor", "sm4", "none")
-	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast").Enum("fast3", "fast2", "fast", "normal", "manual")
+	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast3").Enum("fast3", "fast2", "fast", "normal", "manual")
 	kcpArgs.MTU = app.Flag("kcp-mtu", "set maximum transmission unit for UDP packets").Default("1350").Int()
 	kcpArgs.SndWnd = app.Flag("kcp-sndwnd", "set send window size(num of packets)").Default("1024").Int()
 	kcpArgs.RcvWnd = app.Flag("kcp-rcvwnd", "set receive window size(num of packets)").Default("1024").Int()
@@ -79,7 +81,6 @@ func Start(argsStr string) (errStr string) {
 	httpArgs.Direct = http.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	httpArgs.AuthFile = http.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
 	httpArgs.Auth = http.Flag("auth", "http basic auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
-	httpArgs.PoolSize = http.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Short('L').Default("0").Int()
 	httpArgs.CheckParentInterval = http.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	httpArgs.Local = http.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
 	httpArgs.SSHUser = http.Flag("ssh-user", "user for ssh").Short('u').Default("").String()
@@ -102,7 +103,6 @@ func Start(argsStr string) (errStr string) {
 	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('e').Default("2000").Int()
 	tcpArgs.ParentType = tcp.Flag("parent-type", "parent protocol type <tls|tcp|kcp|udp>").Short('T').Enum("tls", "tcp", "udp", "kcp")
 	tcpArgs.LocalType = tcp.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
-	tcpArgs.PoolSize = tcp.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Short('L').Default("0").Int()
 	tcpArgs.CheckParentInterval = tcp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	tcpArgs.Local = tcp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
@@ -113,7 +113,6 @@ func Start(argsStr string) (errStr string) {
 	udpArgs.KeyFile = udp.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	udpArgs.Timeout = udp.Flag("timeout", "tcp timeout milliseconds when connect to parent proxy").Short('t').Default("2000").Int()
 	udpArgs.ParentType = udp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
-	udpArgs.PoolSize = udp.Flag("pool-size", "conn pool size , which connect to parent proxy, zero: means turn off pool").Short('L').Default("0").Int()
 	udpArgs.CheckParentInterval = udp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	udpArgs.Local = udp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
@@ -225,7 +224,11 @@ func Start(argsStr string) (errStr string) {
 	spsArgs.AuthURLRetry = sps.Flag("auth-retry", "access 'auth-url' fail and retry count").Default("0").Int()
 	spsArgs.ParentAuth = sps.Flag("parent-auth", "parent socks auth username and password, such as: -A user1:pass1").Short('A').String()
 	//parse args
-	args := strings.Fields(strings.Trim(argsStr, " "))
+	_args := strings.Fields(strings.Trim(argsStr, " "))
+	args := []string{}
+	for _, a := range _args {
+		args = append(args, strings.Trim(a, "\""))
+	}
 	serviceName, err := app.Parse(args)
 	if err != nil {
 		return fmt.Sprintf("parse args fail,err: %s", err)
@@ -323,16 +326,120 @@ func Start(argsStr string) (errStr string) {
 	case "sps":
 		services.Regist("sps", services.NewSPS(), spsArgs)
 	}
-
-	service, err = services.Run(serviceName)
+	_, err = services.Run(serviceName)
 	if err != nil {
 		return fmt.Sprintf("run service [%s] fail, ERR:%s", serviceName, err)
 	}
 	return
 }
 
-func Stop() {
-	if service != nil && service.S != nil {
-		service.S.Clean()
+func Stop(service string) {
+	s := getServiceName(service)
+	if s == "" {
+		return
 	}
+	services.Stop(s)
+}
+
+func IsRunning(service string) bool {
+	s := getServiceName(service)
+	if s == "" {
+		return false
+	}
+	srv := services.GetService(s)
+	if srv == nil {
+		return false
+	}
+	typ := "tcp"
+	addr := ""
+	route := ""
+	switch srv.Name {
+	case "http":
+		addr = *srv.Args.(services.HTTPArgs).Local
+	case "socks":
+		addr = *srv.Args.(services.SocksArgs).Local
+	case "sps":
+		addr = *srv.Args.(services.SPSArgs).Local
+	case "tcp":
+		addr = *srv.Args.(services.TCPArgs).Local
+	case "bridge":
+		addr = *srv.Args.(services.MuxBridgeArgs).Local
+
+	case "tbridge":
+		addr = *srv.Args.(services.TunnelBridgeArgs).Local
+	case "server":
+		if len(*srv.Args.(services.MuxServerArgs).Route) > 0 {
+			route = (*srv.Args.(services.MuxServerArgs).Route)[0]
+		}
+	case "tserver":
+		if len(*srv.Args.(services.TunnelServerArgs).Route) > 0 {
+			route = (*srv.Args.(services.TunnelServerArgs).Route)[0]
+		}
+	case "client":
+	case "tclient":
+	case "udp":
+		typ = "udp"
+	}
+	if route != "" {
+		if strings.HasPrefix(route, "udp://") {
+			typ = "udp"
+		}
+		info := strings.TrimPrefix(route, "udp://")
+		info = strings.TrimPrefix(info, "tcp://")
+		_routeInfo := strings.Split(info, "@")
+		addr = _routeInfo[0]
+	}
+	a := strings.Split(addr, ",")
+	if len(a) > 0 {
+		return PortIsAlive(a[0], typ) == ""
+	}
+	return false
+}
+
+func getServiceName(args string) string {
+	s := strings.Fields(strings.Trim(args, " \t"))
+	if len(s) == 0 {
+		return ""
+	}
+	return s[0]
+}
+
+func PortIsAlive(address string, network ...string) string {
+	time.Sleep(time.Second)
+	n := "tcp"
+	if len(network) == 1 {
+		n = network[0]
+	}
+	if n == "tcp" {
+		conn, err := net.DialTimeout(n, address, time.Second)
+		if err != nil {
+			return fmt.Sprintf("connect %s is failed!,err:%v\n", address, err)
+		}
+		conn.Close()
+	} else {
+		ip, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return err.Error()
+		}
+		portI, _ := strconv.Atoi(port)
+		dstAddr := &net.UDPAddr{IP: net.ParseIP(ip), Port: portI}
+		conn, err := net.DialUDP(n, &net.UDPAddr{IP: net.IPv4zero, Port: 0}, dstAddr)
+		if err != nil {
+			return err.Error()
+		}
+		conn.SetDeadline(time.Now().Add(time.Millisecond * 200))
+		_, err = conn.Write([]byte{0x00})
+		conn.SetDeadline(time.Now().Add(time.Millisecond * 200))
+		b := make([]byte, 1)
+		_, err = conn.Read(b)
+
+		if err != nil {
+			if strings.Contains(err.Error(), "refused") {
+				return err.Error()
+			}
+		} else {
+			conn.Close()
+		}
+	}
+	return ""
 }

@@ -516,7 +516,7 @@ type OutConn struct {
 	timeout     int
 }
 
-func NewOutConn(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes, caCertBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutConn) {
+func NewOutConn(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes, caCertBytes []byte, address string, timeout int) (op OutConn) {
 	return OutConn{
 		dur:         dur,
 		typ:         typ,

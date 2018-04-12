@@ -26,6 +26,7 @@ type Socks struct {
 	sc             *utils.ServerChannel
 	domainResolver utils.DomainResolver
 	isStop         bool
+	userConns      utils.ConcurrentMap
 }
 
 func NewSocks() Service {
@@ -35,6 +36,7 @@ func NewSocks() Service {
 		basicAuth: utils.BasicAuth{},
 		lockChn:   make(chan bool, 1),
 		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
 
@@ -147,7 +149,7 @@ func (s *Socks) StopService() {
 		if e != nil {
 			log.Printf("stop socks service crashed,%s", e)
 		} else {
-			log.Printf("service socks stoped,%s", e)
+			log.Printf("service socks stoped")
 		}
 	}()
 	s.isStop = true
@@ -160,6 +162,9 @@ func (s *Socks) StopService() {
 	}
 	if s.sc != nil && (*s.sc).Listener != nil {
 		(*(*s.sc).Listener).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *Socks) Start(args interface{}) (err error) {
@@ -526,6 +531,11 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, request.Addr())
 	})
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+		s.userConns.Remove(inAddr)
+	}
+	s.userConns.Set(inAddr, inConn)
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {

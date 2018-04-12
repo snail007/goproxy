@@ -56,7 +56,7 @@ func (s *MuxClient) StopService() {
 		if e != nil {
 			log.Printf("stop client service crashed,%s", e)
 		} else {
-			log.Printf("service client stoped,%s", e)
+			log.Printf("service client stoped")
 		}
 	}()
 	s.isStop = true

@@ -25,6 +25,7 @@ type HTTP struct {
 	domainResolver utils.DomainResolver
 	isStop         bool
 	serverChannels []*utils.ServerChannel
+	userConns      utils.ConcurrentMap
 }
 
 func NewHTTP() Service {
@@ -36,6 +37,7 @@ func NewHTTP() Service {
 		lockChn:        make(chan bool, 1),
 		isStop:         false,
 		serverChannels: []*utils.ServerChannel{},
+		userConns:      utils.NewConcurrentMap(),
 	}
 }
 func (s *HTTP) CheckArgs() (err error) {
@@ -139,7 +141,7 @@ func (s *HTTP) StopService() {
 		if e != nil {
 			log.Printf("stop http(s) service crashed,%s", e)
 		} else {
-			log.Printf("service http(s) stoped,%s", e)
+			log.Printf("service http(s) stoped")
 		}
 	}()
 	s.isStop = true
@@ -230,7 +232,6 @@ func (s *HTTP) callback(inConn net.Conn) {
 	log.Printf("use proxy : %v, %s", useProxy, address)
 
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
-
 	if err != nil {
 		if *s.cfg.Parent == "" {
 			log.Printf("connect to %s fail, ERR:%s", address, err)
@@ -298,9 +299,13 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
-
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, inConn)
 	return
 }
 
@@ -372,8 +377,6 @@ func (s *HTTP) InitOutConnPool() {
 			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
 			s.Resolve(*s.cfg.Parent),
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

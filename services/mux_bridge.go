@@ -19,6 +19,7 @@ import (
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
 	clientControlConns utils.ConcurrentMap
+	serverConns        utils.ConcurrentMap
 	router             utils.ClientKeyRouter
 	l                  *sync.Mutex
 	isStop             bool
@@ -29,6 +30,7 @@ func NewMuxBridge() Service {
 	b := &MuxBridge{
 		cfg:                MuxBridgeArgs{},
 		clientControlConns: utils.NewConcurrentMap(),
+		serverConns:        utils.NewConcurrentMap(),
 		l:                  &sync.Mutex{},
 		isStop:             false,
 	}
@@ -58,7 +60,7 @@ func (s *MuxBridge) StopService() {
 		if e != nil {
 			log.Printf("stop bridge service crashed,%s", e)
 		} else {
-			log.Printf("service bridge stoped,%s", e)
+			log.Printf("service bridge stoped")
 		}
 	}()
 	s.isStop = true
@@ -69,6 +71,9 @@ func (s *MuxBridge) StopService() {
 		for _, session := range g.(utils.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()
 		}
+	}
+	for _, c := range s.serverConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *MuxBridge) Start(args interface{}) (err error) {
@@ -116,6 +121,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	switch connType {
 	case CONN_SERVER:
 		var serverID string
+		inAddr := inConn.RemoteAddr().String()
 		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		err = utils.ReadPacketData(reader, &serverID)
 		inConn.SetDeadline(time.Time{})
@@ -124,6 +130,10 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			return
 		}
 		log.Printf("server connection %s %s connected", serverID, key)
+		if c, ok := s.serverConns.Get(inAddr); ok {
+			(*c.(*net.Conn)).Close()
+		}
+		s.serverConns.Set(inAddr, &inConn)
 		session, err := smux.Server(inConn, nil)
 		if err != nil {
 			utils.CloseConn(&inConn)
@@ -138,6 +148,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			if err != nil {
 				session.Close()
 				utils.CloseConn(&inConn)
+				s.serverConns.Remove(inAddr)
 				log.Printf("server connection %s %s released", serverID, key)
 				return
 			}

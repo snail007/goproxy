@@ -24,7 +24,7 @@ func NewServerChannel(ip string, port int) ServerChannel {
 		ip:   ip,
 		port: port,
 		errAcceptHandler: func(err error) {
-			fmt.Printf("accept error , ERR:%s", err)
+			log.Printf("accept error , ERR:%s", err)
 		},
 	}
 }

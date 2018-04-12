@@ -22,6 +22,7 @@ type SPS struct {
 	domainResolver utils.DomainResolver
 	basicAuth      utils.BasicAuth
 	serverChannels []*utils.ServerChannel
+	userConns      utils.ConcurrentMap
 }
 
 func NewSPS() Service {
@@ -30,6 +31,7 @@ func NewSPS() Service {
 		cfg:            SPSArgs{},
 		basicAuth:      utils.BasicAuth{},
 		serverChannels: []*utils.ServerChannel{},
+		userConns:      utils.NewConcurrentMap(),
 	}
 }
 func (s *SPS) CheckArgs() (err error) {
@@ -75,8 +77,6 @@ func (s *SPS) InitOutConnPool() {
 			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			0,
-			0,
 		)
 	}
 }
@@ -87,7 +87,7 @@ func (s *SPS) StopService() {
 		if e != nil {
 			log.Printf("stop sps service crashed,%s", e)
 		} else {
-			log.Printf("service sps stoped,%s", e)
+			log.Printf("service sps stoped")
 		}
 	}()
 	for _, sc := range s.serverChannels {
@@ -97,6 +97,9 @@ func (s *SPS) StopService() {
 		if sc.UDPListener != nil {
 			(*sc.UDPListener).Close()
 		}
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *SPS) Start(args interface{}) (err error) {
@@ -304,8 +307,13 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	outAddr := outConn.RemoteAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	return
 }
 func (s *SPS) InitBasicAuth() (err error) {

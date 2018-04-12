@@ -47,7 +47,7 @@ func (s *TunnelBridge) StopService() {
 		if e != nil {
 			log.Printf("stop tbridge service crashed,%s", e)
 		} else {
-			log.Printf("service tbridge stoped,%s", e)
+			log.Printf("service tbridge stoped")
 		}
 	}()
 	s.isStop = true
