@@ -42,6 +42,9 @@ if(isRunning){
     //没有运行
 }
 ```
+
+由于tclient和client服务的特性,目前这个方法对于服务tclient和client永远返回false.  
+
 #### 4.停止一个服务
 
 ```java
