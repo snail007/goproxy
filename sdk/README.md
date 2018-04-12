@@ -22,11 +22,11 @@ import snail007.proxy.Porxy
 
 #### 2.启动一个服务
 ```java
-String args="http -p :8080"
-String err=Proxy.start(args)
+String args="http -p :8080";
+String err=Proxy.start(args);
 if (err.isEmpty()){
     //启动失败
-    System.out.println("start fail,error:"+err)
+    System.out.println("start fail,error:"+err);
 }else{
     //启动成功
 }
@@ -34,8 +34,8 @@ if (err.isEmpty()){
 #### 3.判断一个服务是否在运行
 
 ```java
-String args="http -p :8080"
-boolean isRunning=Proxy.isRunning(args)//这里传递http也可以,最终使用的就是args里面的第一个参数http
+String args="http -p :8080";
+boolean isRunning=Proxy.isRunning(args);//这里传递http也可以,最终使用的就是args里面的第一个参数http
 if(isRunning){
     //正在运行
 }else{
@@ -45,8 +45,8 @@ if(isRunning){
 #### 4.停止一个服务
 
 ```java
-String args="http -p :8080"
-Proxy.stop(args)//这里传递http也可以,最终使用的就是args里面的第一个参数http
+String args="http -p :8080";
+Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的第一个参数http
 //停止完毕
 
 ```
