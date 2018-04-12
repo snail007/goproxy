@@ -24,7 +24,7 @@ import snail007.proxy.Porxy
 ```java
 String args="http -p :8080";
 String err=Proxy.start(args);
-if (err.isEmpty()){
+if (!err.isEmpty()){
     //启动失败
     System.out.println("start fail,error:"+err);
 }else{
