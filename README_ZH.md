@@ -24,6 +24,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
 - 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
+- 自定义底层加密传输，http(s)\sps\socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之前进行自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可。
+- 底层压缩高效传输，http(s)\sps\socks代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在加密之前还可以对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
