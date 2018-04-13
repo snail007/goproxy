@@ -8,6 +8,11 @@ v4.7
 5.优化了所有服务代码,方便对sdk提供支持.
 6.增加了SDK手册.
 7.增加了GUI客户端(windows/web/android/ios)介绍主页.
+8.SPS\HTTP(s)\Socks代理增加了自定义加密传输,只需要通过参数-z和-Z设置一个密码即可.
+9.SPS\HTTP(s)\Socks代理增加了压缩传输,只需要通过参数-m和-M设置即可.
+10.手册增加了SPS\HTTP(s)\Socks自定义加密的使用示例.
+11.手册增加了SPS\HTTP(s)\Socks压缩传输的使用示例.
+
 
 v4.6
 1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.

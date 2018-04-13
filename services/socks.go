@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"snail007/proxy/utils"
 	"snail007/proxy/utils/aes"
+	"snail007/proxy/utils/conncrypt"
 	"snail007/proxy/utils/socks"
 	"strings"
 	"time"
@@ -361,6 +362,14 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 			inConn.Close()
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	//协商开始
 
 	//method select request
@@ -521,6 +530,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		request.TCPReply(socks.REP_NETWOR_UNREACHABLE)
 		return
 	}
+
 	log.Printf("use proxy %v : %s", useProxy, request.Addr())
 
 	request.TCPReply(socks.REP_SUCCESS)
@@ -556,6 +566,14 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		if err != nil {
 			err = fmt.Errorf("connect fail,%s", err)
 			return
+		}
+		if *s.cfg.ParentCompress {
+			outConn = utils.NewCompConn(outConn)
+		}
+		if *s.cfg.ParentKey != "" {
+			outConn = conncrypt.New(outConn, &conncrypt.Config{
+				Password: *s.cfg.ParentKey,
+			})
 		}
 		var buf = make([]byte, 1024)
 		//var n int

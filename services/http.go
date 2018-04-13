@@ -8,6 +8,7 @@ import (
 	"net"
 	"runtime/debug"
 	"snail007/proxy/utils"
+	"snail007/proxy/utils/conncrypt"
 	"strconv"
 	"strings"
 	"time"
@@ -201,6 +202,14 @@ func (s *HTTP) callback(inConn net.Conn) {
 			log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	var err interface{}
 	var req utils.HTTPRequest
 	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
@@ -280,6 +289,15 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		utils.CloseConn(inConn)
 		return
 	}
+	if *s.cfg.ParentCompress {
+		outConn = utils.NewCompConn(outConn)
+	}
+	if *s.cfg.ParentKey != "" {
+		outConn = conncrypt.New(outConn, &conncrypt.Config{
+			Password: *s.cfg.ParentKey,
+		})
+	}
+
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {

@@ -749,8 +749,16 @@ func NewCompStream(conn net.Conn) *CompStream {
 	c.r = snappy.NewReader(conn)
 	return c
 }
+func NewCompConn(conn net.Conn) net.Conn {
+	c := CompStream{}
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return &c
+}
 
 type CompStream struct {
+	net.Conn
 	conn net.Conn
 	w    *snappy.Writer
 	r    *snappy.Reader

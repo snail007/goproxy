@@ -10,6 +10,7 @@ import (
 	"net"
 	"runtime/debug"
 	"snail007/proxy/utils"
+	"snail007/proxy/utils/conncrypt"
 	"snail007/proxy/utils/socks"
 	"strconv"
 	"strings"
@@ -142,6 +143,14 @@ func (s *SPS) callback(inConn net.Conn) {
 			log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	var err error
 	switch *s.cfg.ParentType {
 	case TYPE_KCP:
@@ -232,7 +241,14 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		utils.CloseConn(inConn)
 		return
 	}
-
+	if *s.cfg.ParentCompress {
+		outConn = utils.NewCompConn(outConn)
+	}
+	if *s.cfg.ParentKey != "" {
+		outConn = conncrypt.New(outConn, &conncrypt.Config{
+			Password: *s.cfg.ParentKey,
+		})
+	}
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent

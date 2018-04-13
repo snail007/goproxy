@@ -149,6 +149,10 @@ type HTTPArgs struct {
 	LocalIPS            *[]string
 	DNSAddress          *string
 	DNSTTL              *int
+	LocalKey            *string
+	ParentKey           *string
+	LocalCompress       *bool
+	ParentCompress      *bool
 }
 type UDPArgs struct {
 	Parent              *string
@@ -195,6 +199,10 @@ type SocksArgs struct {
 	LocalIPS       *[]string
 	DNSAddress     *string
 	DNSTTL         *int
+	LocalKey       *string
+	ParentKey      *string
+	LocalCompress  *bool
+	ParentCompress *bool
 }
 type SPSArgs struct {
 	Parent            *string
@@ -220,6 +228,10 @@ type SPSArgs struct {
 	AuthURLRetry      *int
 	LocalIPS          *[]string
 	ParentAuth        *string
+	LocalKey          *string
+	ParentKey         *string
+	LocalCompress     *bool
+	ParentCompress    *bool
 }
 
 func (a *SPSArgs) Protocol() string {
