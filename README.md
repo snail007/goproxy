@@ -23,6 +23,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
 - Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.Also support powerful cascading authentication.  
+- Custom underlying encrypted transmission, HTTP(s)\sps\socks proxy can encrypt TCP data through TLS standard encryption and KCP protocol encryption. In addition, it also supports custom encryption after TLS and KCP. That is to say, custom encryption and tls|kcp can be used together. The internal uses AES256 encryption, and it only needs to define one password by yourself when is used.   
+- Low level compression and efficient transmission，The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -86,7 +88,7 @@ This page is the v4.7 manual, and the other version of the manual can be checked
     - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
     - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
     - [1.11 Custom DNS](#111custom-dns)
-    - [1.12 Custom encryption](#112-custom-encryption)
+    - [1.12 Custom encryption](#112-custom-encryption)
     - [1.13 Compressed transmission](#113-compressed-transmission)
     - [1.14 View help](#112view-help)
 - [2.TCP proxy](#2tcp-proxy)
@@ -401,7 +403,7 @@ through this way, When you visits the website by local proxy 8080, it visits the
 **three level example**  
 First level VPS (ip:2.2.2.2) execution:  
 `proxy http -t tcp -m -p :7777`  
-Second level VPS (ip:2.2.2.2) execution:  
+Second level VPS (ip:3.3.3.3) execution:  
 `proxy http -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
 Local third level execution:  
 `proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
@@ -724,6 +726,47 @@ they also can specify dns result cache time (--dns-ttl) which unit is second. th
 for example:  
 `./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
+#### **5.10 自定义加密**  
+HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.
+Custom encryption requires both ends are proxy. Next, we use two level example and three level example as examples:  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy socks -t tcp -z demo_password -p :7777`  
+Local second level execution:  
+`proxy socks -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy socks -t tcp -z demo_password -p :7777`  
+Second level VPS (ip:2.2.2.2) execution:  
+`proxy socks -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+Local third level execution:  
+`proxy socks -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+#### **5.11 Compressed transmission**  
+HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.
+That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.
+The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy socks -t tcp -m -p :7777`  
+Local second level execution:  
+`proxy socks -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy socks -t tcp -m -p :7777`  
+Second level VPS (ip:3.3.3.3) execution:  
+`proxy socks -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+Local third level execution:  
+`proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
 
 #### **5.12.view help**  
 `./proxy help socks`  
@@ -823,6 +866,48 @@ target: if the client is the HTTP (s) proxy request, this represents the complet
 
 If there is no -a or -F or --auth-url parameters, local authentication is closed.  
 If there is no -A parameter, the connection to the father proxy does not use authentication.  
+
+#### **6.7 Custom encryption**  
+HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.
+Custom encryption requires both ends are proxy. Next, we use two level example and three level example as examples:  
+Suppose there is already a HTTP (s) proxy:`6.6.6.6:6666`  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy sps -S http -T tcp -P 6.6.6.6:6666 -t tcp -z demo_password -p :7777`  
+Local second level execution:  
+`proxy sps -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy sps -S http -T tcp -P 6.6.6.6:6666 -t tcp -z demo_password -p :7777`  
+Second level VPS (ip:2.2.2.2) execution:  
+`proxy sps -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+Local third level execution:  
+`proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+#### **6.8 Compressed transmission**  
+HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.
+That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.
+The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy sps -t tcp -m -p :7777`  
+Local second level execution:  
+`proxy sps -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy sps -t tcp -m -p :7777`  
+Second level VPS (ip:3.3.3.3) execution::  
+`proxy sps -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+Local third level execution:  
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.
 
 #### **6.7.view help** 
 `./proxy help sps` 
