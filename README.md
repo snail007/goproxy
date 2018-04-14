@@ -34,7 +34,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.6 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.7 manual, and the other version of the manual can be checked by the following link.  
+- [v4.6 manual](https://github.com/snail007/goproxy/tree/v4.6)
 - [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
 - [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
 - [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
@@ -85,7 +86,9 @@ This page is the v4.6 manual, and the other version of the manual can be checked
     - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
     - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
     - [1.11 Custom DNS](#111custom-dns)
-    - [1.12 View help](#112view-help)
+    - [1.12 Custom encryption](#112-custom-encryption)
+    - [1.13 Compressed transmission](#113-compressed-transmission)
+    - [1.14 View help](#112view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -121,7 +124,9 @@ This page is the v4.6 manual, and the other version of the manual can be checked
     - [5.7 Authentication](#57authentication)
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
     - [5.9 Custom DNS](#59custom-dns)
-    - [5.10 View help](#510view-help)
+    - [5.10 Custom encryption](#510-custom-encryption)
+    - [5.11 Compressed transmission](#511-compressed-transmission)
+    - [5.12 View help](#510view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
@@ -129,7 +134,9 @@ This page is the v4.6 manual, and the other version of the manual can be checked
     - [6.4 Chain style connection](#64chain-style-connection)
     - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
     - [6.6 Authentication](#66authentication)
-    - [6.7 View Help](#67view-help)
+    - [6.7 Custom encryption](#67-custom-encryption)
+    - [6.8 Compressed transmission](#68-compressed-transmission)
+    - [6.9 View Help](#69view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
@@ -151,7 +158,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.7/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -358,7 +365,49 @@ they also can specify dns result cache time (--dns-ttl) which unit is second. th
 for example:  
 `./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
-#### **1.12.view help**  
+#### **1.12 Custom encryption**  
+HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.    
+Custom encryption requires both ends are proxy. Next, we use two level example and three level example as examples:  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy http -t tcp -z demo_password -p :7777`  
+Local second level execution:  
+`proxy http -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy http -t tcp -z demo_password -p :7777`  
+Second level VPS (ip:2.2.2.2) execution:  
+`proxy http -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+Local third level execution:  
+`proxy http -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
+
+#### **1.13 Compressed transmission**  
+HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.  
+That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.     
+The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
+
+**two level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy http -t tcp -m -p :7777`  
+Local second level execution:  
+`proxy http -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+
+
+**three level example**  
+First level VPS (ip:2.2.2.2) execution:  
+`proxy http -t tcp -m -p :7777`  
+Second level VPS (ip:2.2.2.2) execution:  
+`proxy http -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+Local third level execution:  
+`proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+
+#### **1.14.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
@@ -676,7 +725,7 @@ for example:
 `./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
 
-#### **5.10.view help**  
+#### **5.12.view help**  
 `./proxy help socks`  
 
 ### **6.Proxy protocol conversion** 
