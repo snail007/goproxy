@@ -90,7 +90,7 @@ This page is the v4.7 manual, and the other version of the manual can be checked
     - [1.11 Custom DNS](#111custom-dns)
     - [1.12 Custom encryption](#112-custom-encryption)
     - [1.13 Compressed transmission](#113-compressed-transmission)
-    - [1.14 View help](#112view-help)
+    - [1.14 View help](#114view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -126,9 +126,9 @@ This page is the v4.7 manual, and the other version of the manual can be checked
     - [5.7 Authentication](#57authentication)
     - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
     - [5.9 Custom DNS](#59custom-dns)
-    - [5.10 Custom encryption](#510-custom-encryption)
-    - [5.11 Compressed transmission](#511-compressed-transmission)
-    - [5.12 View help](#510view-help)
+    - [5.10 Custom encryption](#510custom-encryption)
+    - [5.11 Compressed transmission](#511compressed-transmission)
+    - [5.12 View help](#512view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
@@ -382,7 +382,7 @@ through this way, When you visits the website by local proxy 8080, it visits the
 First level VPS (ip:2.2.2.2) execution:  
 `proxy http -t tcp -z demo_password -p :7777`  
 Second level VPS (ip:2.2.2.2) execution:  
-`proxy http -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+`proxy http -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888`    
 Local third level execution:  
 `proxy http -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
@@ -726,7 +726,7 @@ they also can specify dns result cache time (--dns-ttl) which unit is second. th
 for example:  
 `./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
-#### **5.10 自定义加密**  
+#### **5.10.Custom encryption**  
 HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.
 Custom encryption requires both ends are proxy. Next, we use two level example and three level example as examples:  
 
@@ -746,7 +746,7 @@ Local third level execution:
 `proxy socks -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
 
-#### **5.11 Compressed transmission**  
+#### **5.11.Compressed transmission**  
 HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.
 That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.
 The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
@@ -909,7 +909,7 @@ Local third level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.
 
-#### **6.7.view help** 
+#### **6.9.view help** 
 `./proxy help sps` 
 
 ### **7.KCP Configuration**   
