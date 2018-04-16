@@ -5,11 +5,17 @@ rm -rf ios
 mkdir android
 mkdir ios
 
-#all-in-one
+#android
 gomobile bind -v -target=android -javapkg=snail007 -ldflags="-s -w"
 mv proxy.aar android/snail007.goproxy.sdk.aar
 mv proxy-sources.jar android/snail007.goproxy.sdk-sources.jar
-cp README.md android
+cp ../README.md android
 tar zcfv sdk-android-${VER}.tar.gz android
 rm -rf android
+
+#ios  XCode required
+#gomobile bind -v -target=ios -ldflags="-s -w"
+#proxy
+
+
 echo "done."

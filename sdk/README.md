@@ -1,12 +1,18 @@
 
 # Proxy SDK 使用说明  
 
-proxy使用gombile实现了一份go代码编译为android和ios平台下面可以直接调用的sdk类库,  
+支持以下平台:  
+- Android,.arr库
+- IOS,
+- Windows,.dll库
+- Linux,.so库
+
+proxy使用gombile实现了一份go代码编译为android和ios和windows平台下面可以直接调用的sdk类库,  
 基于这些类库,APP开发者可以轻松的开发出各种形式的代理工具.  
 
-### 下面分平台介绍SDK的用法  
+# 下面分平台介绍SDK的用法  
 
-#### Android SDK
+## Android SDK
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
@@ -53,11 +59,60 @@ Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的�
 //停止完毕
 
 ```
-
+## IOS SDK
+  
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
+  
+[点击下载IOS-SDK](https://github.com/snail007/goproxy-sdk-ios/releases)  
+在IOS系统提供的sdk形式是一个后缀为.framework的类库文件夹,开发的时候只需要把类库文件引入项目,然后调用方法即可.  
 
 ### IOS-SDK使用实例
 
 #### todo
+
+## Windows SDK
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
+  
+[点击下载Windows-SDK](https://github.com/snail007/goproxy-sdk-windows/releases)  
+在Windows系统提供的sdk形式是一个后缀为.dll的类库文件,开发的时候只需要把dll类库文件加载,然后调用方法即可.  
+
+### Windows-SDK使用实例  
+
+#### todo  
+
+## Linux SDK
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
+  
+[点击下载Linux-SDK](https://github.com/snail007/goproxy-sdk-linux/releases)  
+在Linux系统提供的sdk形式是一个后缀为.so的类库文件,开发的时候只需要把so类库加载,调用方法即可.  
+
+### Linux-SDK使用实例
+Linux下面使用的sdk是so文件即proxy-sdk.so,下面写一个简单的C程序示例,调用so库里面的方法.  
+
+`vi test-proxy.c`  
+
+```c
+#include <stdio.h>
+#include "proxy-sdk.h"
+
+int main() {
+     printf("This is demo application.\n");
+     char *str = "http -t tcp -p :38080";
+     //启动服务,返回空字符串说明启动成功;返回非空字符串说明启动失败,返回的字符串是错误原因
+     printf("start result %s\n",Start(str));
+     //停止服务,没有返回值
+     Stop(str);
+     //服务是否在运行,返回0是没有运行,返回1正在运行
+     printf("is running result %d\n",IsRunning(str));
+     return 0;
+}
+```
+
+#### 编译test-proxy.c ####  
+`export LD_LIBRARY_PATH=./ && gcc -o test-proxy test.c proxy-sdk.so`  
+
+#### 执行 ####  
+`./test-proxy`  
 
 
 ### 关于服务  
