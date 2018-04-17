@@ -14,8 +14,9 @@ tar zcfv sdk-android-${VER}.tar.gz android
 rm -rf android
 
 #ios  XCode required
-#gomobile bind -v -target=ios -ldflags="-s -w"
-tar zcfv sdk-ios-${VER}.tar.gz Proxy.framework
-rm -rf Proxy.framework
+gomobile bind -v -target=ios -ldflags="-s -w"
+mv Proxy.framework ios
+tar zcfv sdk-ios-${VER}.tar.gz ios
+rm -rf ios
 
 echo "done."
