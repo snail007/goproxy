@@ -21,14 +21,16 @@ var (
 	app *kingpin.Application
 )
 
-//Start argsStr: is the whole command line args string
+//Start
+//serviceID : is service identify id,different service's id should be difference
+//serviceArgsStr: is the whole command line args string
 //such as :
 //1."http -t tcp -p :8989"
 //2."socks -t tcp -p :8989"
 //and so on.
 //if an error occured , errStr will be the error reason
 //if start success, errStr is empty.
-func Start(argsStr string) (errStr string) {
+func Start(serviceID,serviceArgsStr string) (errStr string) {
 	//define  args
 	tcpArgs := services.TCPArgs{}
 	httpArgs := services.HTTPArgs{}
@@ -238,7 +240,7 @@ func Start(argsStr string) (errStr string) {
 	spsArgs.ParentCompress = sps.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
 
 	//parse args
-	_args := strings.Fields(strings.Trim(argsStr, " "))
+	_args := strings.Fields(strings.Trim(serviceArgsStr, " "))
 	args := []string{}
 	for _, a := range _args {
 		args = append(args, strings.Trim(a, "\""))
@@ -318,49 +320,41 @@ func Start(argsStr string) (errStr string) {
 	//regist services and run service
 	switch serviceName {
 	case "http":
-		services.Regist("http", services.NewHTTP(), httpArgs)
+		services.Regist(serviceID, services.NewHTTP(), httpArgs)
 	case "tcp":
-		services.Regist("tcp", services.NewTCP(), tcpArgs)
+		services.Regist(serviceID, services.NewTCP(), tcpArgs)
 	case "udp":
-		services.Regist("udp", services.NewUDP(), udpArgs)
+		services.Regist(serviceID, services.NewUDP(), udpArgs)
 	case "tserver":
-		services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
+		services.Regist(serviceID, services.NewTunnelServerManager(), tunnelServerArgs)
 	case "tclient":
-		services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
+		services.Regist(serviceID, services.NewTunnelClient(), tunnelClientArgs)
 	case "tbridge":
-		services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
+		services.Regist(serviceID, services.NewTunnelBridge(), tunnelBridgeArgs)
 	case "server":
-		services.Regist("server", services.NewMuxServerManager(), muxServerArgs)
+		services.Regist(serviceID, services.NewMuxServerManager(), muxServerArgs)
 	case "client":
-		services.Regist("client", services.NewMuxClient(), muxClientArgs)
+		services.Regist(serviceID, services.NewMuxClient(), muxClientArgs)
 	case "bridge":
-		services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
+		services.Regist(serviceID, services.NewMuxBridge(), muxBridgeArgs)
 	case "socks":
-		services.Regist("socks", services.NewSocks(), socksArgs)
+		services.Regist(serviceID, services.NewSocks(), socksArgs)
 	case "sps":
-		services.Regist("sps", services.NewSPS(), spsArgs)
+		services.Regist(serviceID, services.NewSPS(), spsArgs)
 	}
-	_, err = services.Run(serviceName)
+	_, err = services.Run(serviceID)
 	if err != nil {
-		return fmt.Sprintf("run service [%s] fail, ERR:%s", serviceName, err)
+		return fmt.Sprintf("run service [%s:%s] fail, ERR:%s",serviceID, serviceName, err)
 	}
 	return
 }
 
-func Stop(service string) {
-	s := getServiceName(service)
-	if s == "" {
-		return
-	}
-	services.Stop(s)
+func Stop(serviceID string) {
+	services.Stop(serviceID)
 }
 
-func IsRunning(service string) bool {
-	s := getServiceName(service)
-	if s == "" {
-		return false
-	}
-	srv := services.GetService(s)
+func IsRunning(serviceID string) bool {
+	srv := services.GetService(serviceID)
 	if srv == nil {
 		return false
 	}
@@ -408,14 +402,6 @@ func IsRunning(service string) bool {
 		return PortIsAlive(a[0], typ) == ""
 	}
 	return false
-}
-
-func getServiceName(args string) string {
-	s := strings.Fields(strings.Trim(args, " \t"))
-	if len(s) == 0 {
-		return ""
-	}
-	return s[0]
 }
 
 func PortIsAlive(address string, network ...string) string {
