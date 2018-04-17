@@ -15,7 +15,7 @@ rm -rf android
 
 #ios  XCode required
 #gomobile bind -v -target=ios -ldflags="-s -w"
-#proxy
-
+tar zcfv sdk-ios-${VER}.tar.gz Proxy.framework
+rm -rf Proxy.framework
 
 echo "done."
