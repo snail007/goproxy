@@ -211,6 +211,8 @@ int main()
 #endif
 ```
 
+C++示例2，请移步：[GoProxyForC](https://github.com/SuperPowerLF2/GoProxyForC)   
+
 ## Linux SDK
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy-sdk-linux/) [![license](https://img.shields.io/github/license/snail007/goproxy-sdk-linux.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy-sdk-linux/total.svg?style=plastic)](https://github.com/snail007/goproxy-sdk-linux/releases) [![download](https://img.shields.io/github/release/snail007/goproxy-sdk-linux.svg?style=plastic)](https://github.com/snail007/goproxy-sdk-linux/releases)  
   
