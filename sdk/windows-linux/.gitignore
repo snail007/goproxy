@@ -1,0 +1,6 @@
+proxy-sdk.dll
+proxy-sdk.h
+proxy-sdk.so
+proxy-sdk.a
+*.tar.gz
+test.c
