@@ -30,8 +30,9 @@ import snail007.proxy.Porxy
 #### 2.启动一个服务
 
 ```java
-String args="http -p :8080";
-String err=Proxy.start(args);
+String serviceID="http01";//这里serviceID是自定义的唯一标识字符串,保证每个启动的服务不一样即可
+String serviceArgs="http -p :8080";
+String err=Proxy.start(serviceID,serviceArgs);
 if (!err.isEmpty()){
     //启动失败
     System.out.println("start fail,error:"+err);
@@ -42,8 +43,8 @@ if (!err.isEmpty()){
 #### 3.判断一个服务是否在运行
 
 ```java
-String args="http -p :8080";
-boolean isRunning=Proxy.isRunning(args);//这里传递http也可以,最终使用的就是args里面的第一个参数http
+String serviceID="http01";
+boolean isRunning=Proxy.isRunning(serviceID);
 if(isRunning){
     //正在运行
 }else{
@@ -56,8 +57,8 @@ if(isRunning){
 #### 4.停止一个服务
 
 ```java
-String args="http -p :8080";
-Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的第一个参数http
+String serviceID="http01";
+Proxy.stop(serviceID);
 //停止完毕
 
 ```
@@ -82,8 +83,10 @@ Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的�
 ```objc
 -(IBAction)doStart:(id)sender
 {
-    NSString *args = @"http -p :8080";
-    NSString *error = ProxyStart(args);
+	//这里serviceID是自定义的唯一标识字符串,保证每个启动的服务不一样
+	NSString *serviceID = @"http01";
+    NSString *serviceArgs = @"http -p :8080";
+    NSString *error = ProxyStart(serviceID,serviceArgs);
     
     if (error != nil && error.length > 0)
     {
@@ -99,8 +102,8 @@ Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的�
 ```objc
 -(IBAction)hasRunning:(id)sender;
 {
-    NSString *args = @"http -p :8080";
-    if (ProxyIsRunning(args))//这里传递http也可以,最终使用的就是args里面的第一个参数http
+    NSString *serviceID = @"http01";
+    if (ProxyIsRunning(serviceID))
     {
         NSLog(@"正在运行");
     }else{
@@ -116,8 +119,8 @@ Proxy.stop(args);//这里传递http也可以,最终使用的就是args里面的�
 ```objc
 -(IBAction)doStop:(id)sender
 {
-    NSString *args = @"http -p :8080";
-    ProxyStop(args);//这里传递http也可以,最终使用的就是args里面的第一个参数http
+    NSString *serviceID = @"http01";
+    ProxyStop(serviceID);
     //停止完毕
 }
 ```
@@ -149,14 +152,14 @@ typedef char *(*GOSTOP)(char *s);
 typedef int(*GOISRUN)(char *s);
 HMODULE GODLL = LoadLibrary("proxy-sdk.dll");
 
-char * Start(char * p)
+char * Start(char * p0,char * p1)
 {
 	if (GODLL != NULL)
 	{
 		GOSTART gostart = *(GOSTART)(GetProcAddress(GODLL, "Start"));
 		if (gostart != NULL){
-			printf("%s\n", p);
-			char *ret = gostart(p);
+			printf("%s:%s\n",p0, p1);
+			char *ret = gostart(p0,p1);
 			return ret;
 		}
 	}
@@ -193,15 +196,16 @@ int IsRunning(char * p)
 
 int main()
 {
-	char *p = "http -t tcp -p :38080";
+	//这里p0是自定义的唯一标识字符串,保证每个启动的服务不一样
+	char *p0 = "http01";
+	char *p1 = "http -t tcp -p :38080";
 	printf("This is demo application.\n");
-	char *str = "http -t tcp -p :38080";
 	//启动服务,返回空字符串说明启动成功;返回非空字符串说明启动失败,返回的字符串是错误原因
-	printf("start result %s\n", Start(str));
+	printf("start result %s\n", Start(p0,p1));
 	//停止服务,没有返回值
-	Stop(str);
+	Stop(p0);
 	//服务是否在运行,返回0是没有运行,返回1正在运行
-	printf("is running result %d\n", IsRunning(str));
+	printf("is running result %d\n", IsRunning(p0));
 	return 0;
 }
 
@@ -230,13 +234,15 @@ Linux下面使用的sdk是so文件即proxy-sdk.so,下面写一个简单的C程�
 
 int main() {
      printf("This is demo application.\n");
-     char *str = "http -t tcp -p :38080";
+	 //这里p0是自定义的唯一标识字符串,保证每个启动的服务不一样
+	 char *p0 = "http01";
+     char *p1 = "http -t tcp -p :38080";
      //启动服务,返回空字符串说明启动成功;返回非空字符串说明启动失败,返回的字符串是错误原因
-     printf("start result %s\n",Start(str));
+     printf("start result %s\n",Start(p0,p1));
      //停止服务,没有返回值
-     Stop(str);
+     Stop(p0);
      //服务是否在运行,返回0是没有运行,返回1正在运行
-     printf("is running result %d\n",IsRunning(str));
+     printf("is running result %d\n",IsRunning(p0));
      return 0;
 }
 ```
