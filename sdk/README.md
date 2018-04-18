@@ -6,6 +6,7 @@
 - IOS,`.framework`库
 - Windows,`.dll`库
 - Linux,`.so`库
+- MacOS,`.dylib`库
 
 proxy使用gombile实现了一份go代码编译为android和ios平台下面可以直接调用的sdk类库, 
 另外还为linux和windows提供sdk支持，基于这些类库,APP开发者可以轻松的开发出各种形式的代理工具。    
@@ -253,6 +254,18 @@ int main() {
 #### 执行 ####  
 `./test-proxy`  
 
+## MacOS SDK
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy-sdk-mac/) [![license](https://img.shields.io/github/license/snail007/goproxy-sdk-mac.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy-sdk-mac/total.svg?style=plastic)](https://github.com/snail007/goproxy-sdk-mac/releases) [![download](https://img.shields.io/github/release/snail007/goproxy-sdk-mac.svg?style=plastic)](https://github.com/snail007/goproxy-sdk-mac/releases)  
+  
+[点击下载MacOS-SDK](https://github.com/snail007/goproxy-sdk-mac/releases)  
+在MacOS系统提供的sdk形式是一个后缀为.dylib的类库文件,开发的时候只需要把so类库加载,调用方法即可.  
+
+### MacOS-SDK使用实例
+MacOS下面使用的sdk是dylib文件即proxy-sdk.dylib,下面写一个简单的C程序示例,调用dylib库里面的方法.  
+
+```objc
+
+```
 
 ### 关于服务  
 proxy的服务有11种,分别是:  
@@ -270,7 +283,8 @@ tbridge
 tserver  
 tclient  
 ```
-每个服务只能启动一个,如果相同的服务启动多次,那么之前的服务会被停掉,后面启动的服务覆盖之前的服务.  
+服务启动时,如果存在正在运行的相同ID的服务,那么之前的服务会被停掉,后面启动的服务覆盖之前的服务.  
+所以要保证每次启动服务的时候,第一个ID参数唯一.  
 上面这些服务的具体使用方式和具体参数,可以参考[proxy手册](https://github.com/snail007/goproxy/blob/master/README_ZH.md)  
 sdk里面的服务不支持手册里面的：--daemon和--forever参数.  
 
