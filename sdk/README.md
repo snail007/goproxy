@@ -261,10 +261,37 @@ int main() {
 在MacOS系统提供的sdk形式是一个后缀为.dylib的类库文件,开发的时候只需要把so类库加载,调用方法即可.  
 
 ### MacOS-SDK使用实例
-MacOS下面使用的sdk是dylib文件即proxy-sdk.dylib,下面写一个简单的C程序示例,调用dylib库里面的方法.  
+MacOS下面使用的sdk是dylib文件即proxy-sdk.dylib,下面写一个简单的Obj-C程序示例,调用dylib库里面的方法.  
 
 ```objc
+#import "proxy-sdk.h"
+-(IBAction)doStart:(id)sender
+{
+    char *result =  Start("http01", "http -t tcp -p :38080");
+    
+    if (result)
+    {
+        printf("started");
+    }else{
+        printf("not started");
+    }
+  
+}
+-(IBAction)doStop:(id)sender
+{
+     Stop("http01");
 
+}
+-(IBAction)doCheck:(id)sender
+{
+    if (IsRunning("http01"))
+    {
+        printf("running");
+    }else{
+        printf("not running");
+
+    }
+}
 ```
 
 ### 关于服务  
