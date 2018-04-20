@@ -41,21 +41,8 @@ if (!err.isEmpty()){
     //启动成功
 }
 ```
-#### 3.判断一个服务是否在运行
 
-```java
-String serviceID="http01";
-boolean isRunning=Proxy.isRunning(serviceID);
-if(isRunning){
-    //正在运行
-}else{
-    //没有运行
-}
-```
-
-由于tclient和client服务的特性,目前这个方法对于服务tclient和client永远返回false.  
-
-#### 4.停止一个服务
+#### 3.停止一个服务
 
 ```java
 String serviceID="http01";
@@ -98,24 +85,7 @@ Proxy.stop(serviceID);
 }
 ```
 
-#### 3.判断一个服务是否在运行
-
-```objc
--(IBAction)hasRunning:(id)sender;
-{
-    NSString *serviceID = @"http01";
-    if (ProxyIsRunning(serviceID))
-    {
-        NSLog(@"正在运行");
-    }else{
-        NSLog(@"没有运行");
-    }
-}
-```
-
-由于tclient和client服务的特性,目前这个方法对于服务tclient和client永远返回false.  
-
-#### 4.停止一个服务
+#### 3.停止一个服务
 
 ```objc
 -(IBAction)doStop:(id)sender
@@ -180,21 +150,6 @@ char * Stop(char * p)
 	return "Cannot Find dll";
 }
 
-int IsRunning(char * p)
-{
-	
-	if (GODLL != NULL)
-	{
-		GOISRUN isrun = *(GOISRUN)(GetProcAddress(GODLL, "IsRunning"));
-		if (isrun != NULL){
-			int ret = isrun(p);
-			return ret;
-		}
-		FreeLibrary(GODLL);
-	}
-	return 0;
-}
-
 int main()
 {
 	//这里p0是自定义的唯一标识字符串,保证每个启动的服务不一样
@@ -205,8 +160,6 @@ int main()
 	printf("start result %s\n", Start(p0,p1));
 	//停止服务,没有返回值
 	Stop(p0);
-	//服务是否在运行,返回0是没有运行,返回1正在运行
-	printf("is running result %d\n", IsRunning(p0));
 	return 0;
 }
 
@@ -242,8 +195,6 @@ int main() {
      printf("start result %s\n",Start(p0,p1));
      //停止服务,没有返回值
      Stop(p0);
-     //服务是否在运行,返回0是没有运行,返回1正在运行
-     printf("is running result %d\n",IsRunning(p0));
      return 0;
 }
 ```
@@ -281,16 +232,6 @@ MacOS下面使用的sdk是dylib文件即proxy-sdk.dylib,下面写一个简单的
 {
      Stop("http01");
 
-}
--(IBAction)doCheck:(id)sender
-{
-    if (IsRunning("http01"))
-    {
-        printf("running");
-    }else{
-        printf("not running");
-
-    }
 }
 ```
 
