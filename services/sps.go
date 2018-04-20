@@ -75,7 +75,7 @@ func (s *SPS) InitOutConnPool() {
 			0,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
+			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
 		)
@@ -120,7 +120,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}
