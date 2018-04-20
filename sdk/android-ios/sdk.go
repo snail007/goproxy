@@ -4,13 +4,10 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"snail007/proxy/services"
 	"snail007/proxy/services/kcpcfg"
-	"strconv"
 	"strings"
-	"time"
 
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
@@ -30,7 +27,7 @@ var (
 //and so on.
 //if an error occured , errStr will be the error reason
 //if start success, errStr is empty.
-func Start(serviceID,serviceArgsStr string) (errStr string) {
+func Start(serviceID, serviceArgsStr string) (errStr string) {
 	//define  args
 	tcpArgs := services.TCPArgs{}
 	httpArgs := services.HTTPArgs{}
@@ -344,102 +341,11 @@ func Start(serviceID,serviceArgsStr string) (errStr string) {
 	}
 	_, err = services.Run(serviceID)
 	if err != nil {
-		return fmt.Sprintf("run service [%s:%s] fail, ERR:%s",serviceID, serviceName, err)
+		return fmt.Sprintf("run service [%s:%s] fail, ERR:%s", serviceID, serviceName, err)
 	}
 	return
 }
 
 func Stop(serviceID string) {
 	services.Stop(serviceID)
-}
-
-func IsRunning(serviceID string) bool {
-	srv := services.GetService(serviceID)
-	if srv == nil {
-		return false
-	}
-	typ := "tcp"
-	addr := ""
-	route := ""
-	switch srv.Name {
-	case "http":
-		addr = *srv.Args.(services.HTTPArgs).Local
-	case "socks":
-		addr = *srv.Args.(services.SocksArgs).Local
-	case "sps":
-		addr = *srv.Args.(services.SPSArgs).Local
-	case "tcp":
-		addr = *srv.Args.(services.TCPArgs).Local
-	case "bridge":
-		addr = *srv.Args.(services.MuxBridgeArgs).Local
-
-	case "tbridge":
-		addr = *srv.Args.(services.TunnelBridgeArgs).Local
-	case "server":
-		if len(*srv.Args.(services.MuxServerArgs).Route) > 0 {
-			route = (*srv.Args.(services.MuxServerArgs).Route)[0]
-		}
-	case "tserver":
-		if len(*srv.Args.(services.TunnelServerArgs).Route) > 0 {
-			route = (*srv.Args.(services.TunnelServerArgs).Route)[0]
-		}
-	case "client":
-	case "tclient":
-	case "udp":
-		typ = "udp"
-	}
-	if route != "" {
-		if strings.HasPrefix(route, "udp://") {
-			typ = "udp"
-		}
-		info := strings.TrimPrefix(route, "udp://")
-		info = strings.TrimPrefix(info, "tcp://")
-		_routeInfo := strings.Split(info, "@")
-		addr = _routeInfo[0]
-	}
-	a := strings.Split(addr, ",")
-	if len(a) > 0 {
-		return PortIsAlive(a[0], typ) == ""
-	}
-	return false
-}
-
-func PortIsAlive(address string, network ...string) string {
-	time.Sleep(time.Second)
-	n := "tcp"
-	if len(network) == 1 {
-		n = network[0]
-	}
-	if n == "tcp" {
-		conn, err := net.DialTimeout(n, address, time.Second)
-		if err != nil {
-			return fmt.Sprintf("connect %s is failed!,err:%v\n", address, err)
-		}
-		conn.Close()
-	} else {
-		ip, port, err := net.SplitHostPort(address)
-		if err != nil {
-			return err.Error()
-		}
-		portI, _ := strconv.Atoi(port)
-		dstAddr := &net.UDPAddr{IP: net.ParseIP(ip), Port: portI}
-		conn, err := net.DialUDP(n, &net.UDPAddr{IP: net.IPv4zero, Port: 0}, dstAddr)
-		if err != nil {
-			return err.Error()
-		}
-		conn.SetDeadline(time.Now().Add(time.Millisecond * 200))
-		_, err = conn.Write([]byte{0x00})
-		conn.SetDeadline(time.Now().Add(time.Millisecond * 200))
-		b := make([]byte, 1)
-		_, err = conn.Read(b)
-
-		if err != nil {
-			if strings.Contains(err.Error(), "refused") {
-				return err.Error()
-			}
-		} else {
-			conn.Close()
-		}
-	}
-	return ""
 }

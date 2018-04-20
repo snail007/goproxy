@@ -15,12 +15,5 @@ func Stop(serviceID *C.char) {
 	sdk.Stop(C.GoString(serviceID))
 }
 
-//export IsRunning
-func IsRunning(serviceID *C.char) C.int {
-	if sdk.IsRunning(C.GoString(serviceID)) {
-		return 1
-	}
-	return 0
-}
 func main() {
 }
