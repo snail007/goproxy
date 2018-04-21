@@ -178,13 +178,13 @@ C++示例2，请移步：[GoProxyForC](https://github.com/SuperPowerLF2/GoProxyF
 在Linux系统提供的sdk形式是一个后缀为.so的类库文件,开发的时候只需要把so类库加载,调用方法即可.  
 
 ### Linux-SDK使用实例
-Linux下面使用的sdk是so文件即proxy-sdk.so,下面写一个简单的C程序示例,调用so库里面的方法.  
+Linux下面使用的sdk是so文件即libproxy-sdk.so,下面写一个简单的C程序示例,调用so库里面的方法.  
 
 `vi test-proxy.c`  
 
 ```c
 #include <stdio.h>
-#include "proxy-sdk.h"
+#include "libproxy-sdk.h"
 
 int main() {
      printf("This is demo application.\n");
@@ -200,7 +200,7 @@ int main() {
 ```
 
 #### 编译test-proxy.c ####  
-`export LD_LIBRARY_PATH=./ && gcc -o test-proxy test.c proxy-sdk.so`  
+`export LD_LIBRARY_PATH=./ && gcc -o test-proxy test.c libproxy-sdk.so`  
 
 #### 执行 ####  
 `./test-proxy`  
@@ -212,10 +212,10 @@ int main() {
 在MacOS系统提供的sdk形式是一个后缀为.dylib的类库文件,开发的时候只需要把so类库加载,调用方法即可.  
 
 ### MacOS-SDK使用实例
-MacOS下面使用的sdk是dylib文件即proxy-sdk.dylib,下面写一个简单的Obj-C程序示例,调用dylib库里面的方法.  
+MacOS下面使用的sdk是dylib文件即libproxy-sdk.dylib,下面写一个简单的Obj-C程序示例,调用dylib库里面的方法.  
 
 ```objc
-#import "proxy-sdk.h"
+#import "libproxy-sdk.h"
 -(IBAction)doStart:(id)sender
 {
     char *result =  Start("http01", "http -t tcp -p :38080");
