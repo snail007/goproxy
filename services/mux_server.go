@@ -23,13 +23,15 @@ type MuxServer struct {
 	sc       utils.ServerChannel
 	sessions utils.ConcurrentMap
 	lockChn  chan bool
+	isStop   bool
+	udpConn  *net.Conn
 }
 
 type MuxServerManager struct {
 	cfg      MuxServerArgs
 	udpChn   chan MuxUDPItem
-	sc       utils.ServerChannel
 	serverID string
+	servers  []*Service
 }
 
 func NewMuxServerManager() Service {
@@ -37,18 +39,25 @@ func NewMuxServerManager() Service {
 		cfg:      MuxServerArgs{},
 		udpChn:   make(chan MuxUDPItem, 50000),
 		serverID: utils.Uniqueid(),
+		servers:  []*Service{},
 	}
 }
+
 func (s *MuxServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxServerArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 
-	s.InitService()
+	if err = s.InitService(); err != nil {
+		return
+	}
 
 	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
@@ -95,6 +104,7 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
+		s.servers = append(s.servers, &server)
 	}
 	return
 }
@@ -102,16 +112,25 @@ func (s *MuxServerManager) Clean() {
 	s.StopService()
 }
 func (s *MuxServerManager) StopService() {
+	for _, server := range s.servers {
+		(*server).Clean()
+	}
 }
-func (s *MuxServerManager) CheckArgs() {
+func (s *MuxServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.ParentType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
-func (s *MuxServerManager) InitService() {
+func (s *MuxServerManager) InitService() (err error) {
+	return
 }
 
 func NewMuxServer() Service {
@@ -120,6 +139,7 @@ func NewMuxServer() Service {
 		udpChn:   make(chan MuxUDPItem, 50000),
 		lockChn:  make(chan bool, 1),
 		sessions: utils.NewConcurrentMap(),
+		isStop:   false,
 	}
 }
 
@@ -129,19 +149,49 @@ type MuxUDPItem struct {
 	srcAddr   *net.UDPAddr
 }
 
-func (s *MuxServer) InitService() {
-	s.UDPConnDeamon()
-}
-func (s *MuxServer) CheckArgs() {
-	if *s.cfg.Remote == "" {
-		log.Fatalf("remote required")
+func (s *MuxServer) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop server service crashed,%s", e)
+		} else {
+			log.Printf("service server stoped")
+		}
+	}()
+	s.isStop = true
+	for _, sess := range s.sessions.Items() {
+		sess.(*smux.Session).Close()
 	}
+	if s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
+	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
+	}
+	if s.udpConn != nil {
+		(*s.udpConn).Close()
+	}
+}
+func (s *MuxServer) InitService() (err error) {
+	s.UDPConnDeamon()
+	return
+}
+func (s *MuxServer) CheckArgs() (err error) {
+	if *s.cfg.Remote == "" {
+		err = fmt.Errorf("remote required")
+		return
+	}
+	return
 }
 
 func (s *MuxServer) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxServerArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p)
@@ -167,6 +217,9 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 			var outConn net.Conn
 			var ID string
 			for {
+				if s.isStop {
+					return
+				}
 				outConn, ID, err = s.GetOutConn()
 				if err != nil {
 					utils.CloseConn(&outConn)
@@ -210,7 +263,7 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 	return
 }
 func (s *MuxServer) Clean() {
-
+	s.StopService()
 }
 func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	i := 1
@@ -268,10 +321,16 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 				return
 			}
 		}
+		if _sess, ok := s.sessions.Get(index); ok {
+			_sess.(*smux.Session).Close()
+		}
 		s.sessions.Set(index, session)
 		log.Printf("session[%s] created", index)
 		go func() {
 			for {
+				if s.isStop {
+					return
+				}
 				if session.IsClosed() {
 					s.sessions.Remove(index)
 					break
@@ -314,10 +373,19 @@ func (s *MuxServer) UDPConnDeamon() {
 		var ID string
 		var err error
 		for {
+			if s.isStop {
+				return
+			}
 			item := <-s.udpChn
 		RETRY:
+			if s.isStop {
+				return
+			}
 			if outConn == nil {
 				for {
+					if s.isStop {
+						return
+					}
 					outConn, ID, err = s.GetOutConn()
 					if err != nil {
 						outConn = nil
@@ -327,10 +395,14 @@ func (s *MuxServer) UDPConnDeamon() {
 						continue
 					} else {
 						go func(outConn net.Conn, ID string) {
-							go func() {
-								// outConn.Close()
-							}()
+							if s.udpConn != nil {
+								(*s.udpConn).Close()
+							}
+							s.udpConn = &outConn
 							for {
+								if s.isStop {
+									return
+								}
 								outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
 								outConn.SetDeadline(time.Time{})

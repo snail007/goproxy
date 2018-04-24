@@ -14,46 +14,72 @@ import (
 )
 
 type MuxClient struct {
-	cfg MuxClientArgs
+	cfg      MuxClientArgs
+	isStop   bool
+	sessions utils.ConcurrentMap
 }
 
 func NewMuxClient() Service {
 	return &MuxClient{
-		cfg: MuxClientArgs{},
+		cfg:      MuxClientArgs{},
+		isStop:   false,
+		sessions: utils.NewConcurrentMap(),
 	}
 }
 
-func (s *MuxClient) InitService() {
-
+func (s *MuxClient) InitService() (err error) {
+	return
 }
 
-func (s *MuxClient) CheckArgs() {
+func (s *MuxClient) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.ParentType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 func (s *MuxClient) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop client service crashed,%s", e)
+		} else {
+			log.Printf("service client stoped")
+		}
+	}()
+	s.isStop = true
+	for _, sess := range s.sessions.Items() {
+		sess.(*smux.Session).Close()
+	}
 }
 func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("client started")
 	count := 1
 	if *s.cfg.SessionCount > 0 {
 		count = *s.cfg.SessionCount
 	}
 	for i := 1; i <= count; i++ {
-		log.Printf("session worker[%d] started", i)
+		key := fmt.Sprintf("worker[%d]", i)
+		log.Printf("session %s started", key)
 		go func(i int) {
 			defer func() {
 				e := recover()
@@ -62,6 +88,9 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 				}
 			}()
 			for {
+				if s.isStop {
+					return
+				}
 				conn, err := s.getParentConn()
 				if err != nil {
 					log.Printf("connection err: %s, retrying...", err)
@@ -84,7 +113,14 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 					time.Sleep(time.Second * 3)
 					continue
 				}
+				if _sess, ok := s.sessions.Get(key); ok {
+					_sess.(*smux.Session).Close()
+				}
+				s.sessions.Set(key, session)
 				for {
+					if s.isStop {
+						return
+					}
 					stream, err := session.AcceptStream()
 					if err != nil {
 						log.Printf("accept stream err: %s, retrying...", err)
@@ -119,7 +155,6 @@ func (s *MuxClient) Start(args interface{}) (err error) {
 					}()
 				}
 			}
-
 		}(i)
 	}
 	return
@@ -144,6 +179,9 @@ func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 
 	for {
+		if s.isStop {
+			return
+		}
 		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
 		inConn.SetDeadline(time.Time{})
@@ -154,7 +192,15 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 			break
 		} else {
 			//log.Printf("udp packet revecived:%s,%v", srcAddr, body)
-			go s.processUDPPacket(inConn, srcAddr, localAddr, body)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						log.Printf("client processUDPPacket crashed,err: %s", e)
+					}
+				}()
+				s.processUDPPacket(inConn, srcAddr, localAddr, body)
+			}()
+
 		}
 
 	}
@@ -207,6 +253,9 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 	var outConn net.Conn
 	i := 0
 	for {
+		if s.isStop {
+			return
+		}
 		i++
 		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {

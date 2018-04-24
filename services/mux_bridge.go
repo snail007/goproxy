@@ -2,6 +2,7 @@ package services
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -18,38 +19,72 @@ import (
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
 	clientControlConns utils.ConcurrentMap
+	serverConns        utils.ConcurrentMap
 	router             utils.ClientKeyRouter
 	l                  *sync.Mutex
+	isStop             bool
+	sc                 *utils.ServerChannel
 }
 
 func NewMuxBridge() Service {
 	b := &MuxBridge{
 		cfg:                MuxBridgeArgs{},
 		clientControlConns: utils.NewConcurrentMap(),
+		serverConns:        utils.NewConcurrentMap(),
 		l:                  &sync.Mutex{},
+		isStop:             false,
 	}
 	b.router = utils.NewClientKeyRouter(&b.clientControlConns, 50000)
 	return b
 }
 
-func (s *MuxBridge) InitService() {
-
+func (s *MuxBridge) InitService() (err error) {
+	return
 }
-func (s *MuxBridge) CheckArgs() {
+func (s *MuxBridge) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
 	if *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 func (s *MuxBridge) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop bridge service crashed,%s", e)
+		} else {
+			log.Printf("service bridge stoped")
+		}
+	}()
+	s.isStop = true
+	if s.sc != nil && (*s.sc).Listener != nil {
+		(*(*s.sc).Listener).Close()
+	}
+	for _, g := range s.clientControlConns.Items() {
+		for _, session := range g.(utils.ConcurrentMap).Items() {
+			(session.(*smux.Session)).Close()
+		}
+	}
+	for _, c := range s.serverConns.Items() {
+		(*c.(*net.Conn)).Close()
+	}
 }
 func (s *MuxBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxBridgeArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
+
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
@@ -63,6 +98,7 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 	if err != nil {
 		return
 	}
+	s.sc = &sc
 	log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
@@ -85,6 +121,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	switch connType {
 	case CONN_SERVER:
 		var serverID string
+		inAddr := inConn.RemoteAddr().String()
 		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		err = utils.ReadPacketData(reader, &serverID)
 		inConn.SetDeadline(time.Time{})
@@ -93,6 +130,10 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			return
 		}
 		log.Printf("server connection %s %s connected", serverID, key)
+		if c, ok := s.serverConns.Get(inAddr); ok {
+			(*c.(*net.Conn)).Close()
+		}
+		s.serverConns.Set(inAddr, &inConn)
 		session, err := smux.Server(inConn, nil)
 		if err != nil {
 			utils.CloseConn(&inConn)
@@ -100,13 +141,25 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			return
 		}
 		for {
+			if s.isStop {
+				return
+			}
 			stream, err := session.AcceptStream()
 			if err != nil {
 				session.Close()
 				utils.CloseConn(&inConn)
+				s.serverConns.Remove(inAddr)
+				log.Printf("server connection %s %s released", serverID, key)
 				return
 			}
-			go s.callback(stream, serverID, key)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						log.Printf("bridge callback crashed,err: %s", e)
+					}
+				}()
+				s.callback(stream, serverID, key)
+			}()
 		}
 	case CONN_CLIENT:
 		log.Printf("client connection %s connected", key)
@@ -139,11 +192,15 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		// s.clientControlConns.Set(key, session)
 		go func() {
 			for {
+				if s.isStop {
+					return
+				}
 				if session.IsClosed() {
 					s.l.Lock()
 					defer s.l.Unlock()
 					if sess, ok := group.Get(index); ok && sess.(*smux.Session).IsClosed() {
 						group.Remove(index)
+						log.Printf("client connection %s released", key)
 					}
 					if group.IsEmpty() {
 						s.clientControlConns.Remove(groupKey)
@@ -160,6 +217,9 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 	try := 20
 	for {
+		if s.isStop {
+			return
+		}
 		try--
 		if try == 0 {
 			break

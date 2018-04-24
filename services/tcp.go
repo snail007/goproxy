@@ -14,41 +14,71 @@ import (
 )
 
 type TCP struct {
-	outPool utils.OutPool
-	cfg     TCPArgs
+	outPool   utils.OutConn
+	cfg       TCPArgs
+	sc        *utils.ServerChannel
+	isStop    bool
+	userConns utils.ConcurrentMap
 }
 
 func NewTCP() Service {
 	return &TCP{
-		outPool: utils.OutPool{},
-		cfg:     TCPArgs{},
+		outPool:   utils.OutConn{},
+		cfg:       TCPArgs{},
+		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
-func (s *TCP) CheckArgs() {
+func (s *TCP) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		return
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|kcp|udp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp|udp>")
+		return
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
-func (s *TCP) InitService() {
+func (s *TCP) InitService() (err error) {
 	s.InitOutConnPool()
+	return
 }
 func (s *TCP) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tcp service crashed,%s", e)
+		} else {
+			log.Printf("service tcp stoped")
+		}
+	}()
+	s.isStop = true
+	if s.sc.Listener != nil && *s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
+	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *TCP) Start(args interface{}) (err error) {
 	s.cfg = args.(TCPArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	s.InitService()
-
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
@@ -64,6 +94,7 @@ func (s *TCP) Start(args interface{}) (err error) {
 		return
 	}
 	log.Printf("%s proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+	s.sc = &sc
 	return
 }
 
@@ -96,11 +127,7 @@ func (s *TCP) callback(inConn net.Conn) {
 }
 func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	var outConn net.Conn
-	var _outConn interface{}
-	_outConn, err = s.outPool.Pool.Get()
-	if err == nil {
-		outConn = _outConn.(net.Conn)
-	}
+	outConn, err = s.outPool.Get()
 	if err != nil {
 		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
@@ -112,13 +139,22 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	//outLocalAddr := outConn.LocalAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	return
 }
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	log.Printf("conn created , remote : %s ", (*inConn).RemoteAddr())
 	for {
+		if s.isStop {
+			(*inConn).Close()
+			return
+		}
 		srcAddr, body, err := utils.ReadUDPPacket(bufio.NewReader(*inConn))
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			//log.Printf("connection %s released", srcAddr)
@@ -168,15 +204,13 @@ func (s *TCP) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
 			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

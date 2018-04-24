@@ -10,6 +10,7 @@ import (
 	"net"
 	"runtime/debug"
 	"github.com/snail007/goproxy/utils"
+  "github.com/snail007/goproxy/utils/conncrypt
 	"github.com/snail007/goproxy/utils/socks"
 	"strconv"
 	"strings"
@@ -17,72 +18,100 @@ import (
 )
 
 type SPS struct {
-	outPool        utils.OutPool
+	outPool        utils.OutConn
 	cfg            SPSArgs
 	domainResolver utils.DomainResolver
 	basicAuth      utils.BasicAuth
+	serverChannels []*utils.ServerChannel
+	userConns      utils.ConcurrentMap
 }
 
 func NewSPS() Service {
 	return &SPS{
-		outPool:   utils.OutPool{},
-		cfg:       SPSArgs{},
-		basicAuth: utils.BasicAuth{},
+		outPool:        utils.OutConn{},
+		cfg:            SPSArgs{},
+		basicAuth:      utils.BasicAuth{},
+		serverChannels: []*utils.ServerChannel{},
+		userConns:      utils.NewConcurrentMap(),
 	}
 }
-func (s *SPS) CheckArgs() {
+func (s *SPS) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		log.Fatalf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		return
 	}
 	if *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|kcp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp>")
+		return
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 		if *s.cfg.CaCertFile != "" {
-			var err error
 			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
 			if err != nil {
-				log.Fatalf("read ca file error,ERR:%s", err)
+				err = fmt.Errorf("read ca file error,ERR:%s", err)
+				return
 			}
 		}
 	}
+	return
 }
-func (s *SPS) InitService() {
+func (s *SPS) InitService() (err error) {
 	s.InitOutConnPool()
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
 	}
-	s.InitBasicAuth()
+	err = s.InitBasicAuth()
+	return
 }
 func (s *SPS) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			0,
 			*s.cfg.ParentType,
 			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
+			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			0,
-			0,
 		)
 	}
 }
 
 func (s *SPS) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop sps service crashed,%s", e)
+		} else {
+			log.Printf("service sps stoped")
+		}
+	}()
+	for _, sc := range s.serverChannels {
+		if sc.Listener != nil && *sc.Listener != nil {
+			(*sc.Listener).Close()
+		}
+		if sc.UDPListener != nil {
+			(*sc.UDPListener).Close()
+		}
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
 	}
 }
 func (s *SPS) Start(args interface{}) (err error) {
 	s.cfg = args.(SPSArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
-	s.InitService()
-
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)
@@ -91,7 +120,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}
@@ -99,6 +128,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 				return
 			}
 			log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
 	return
@@ -113,6 +143,14 @@ func (s *SPS) callback(inConn net.Conn) {
 			log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	var err error
 	switch *s.cfg.ParentType {
 	case TYPE_KCP:
@@ -197,17 +235,20 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	}
 	//connect to parent
 	var outConn net.Conn
-	var _outConn interface{}
-	_outConn, err = s.outPool.Pool.Get()
-	if err == nil {
-		outConn = _outConn.(net.Conn)
-	}
+	outConn, err = s.outPool.Get()
 	if err != nil {
 		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
 		return
 	}
-
+	if *s.cfg.ParentCompress {
+		outConn = utils.NewCompConn(outConn)
+	}
+	if *s.cfg.ParentKey != "" {
+		outConn = conncrypt.New(outConn, &conncrypt.Config{
+			Password: *s.cfg.ParentKey,
+		})
+	}
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
@@ -230,6 +271,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		if u != "" {
 			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
 		}
+		pb.Write([]byte("\r\n"))
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
@@ -239,7 +281,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(&outConn)
 			return
 		}
-		reply := make([]byte, 100)
+		reply := make([]byte, 1024)
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Read(reply)
 		outConn.SetDeadline(time.Time{})
@@ -281,8 +323,13 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	outAddr := outConn.RemoteAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected", inAddr, outAddr)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	return
 }
 func (s *SPS) InitBasicAuth() (err error) {

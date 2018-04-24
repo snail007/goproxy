@@ -111,7 +111,6 @@ type TCPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 	KCP                 kcpcfg.KCPConfigArgs
 }
@@ -139,7 +138,6 @@ type HTTPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 	SSHKeyFile          *string
 	SSHKeyFileSalt      *string
@@ -151,6 +149,10 @@ type HTTPArgs struct {
 	LocalIPS            *[]string
 	DNSAddress          *string
 	DNSTTL              *int
+	LocalKey            *string
+	ParentKey           *string
+	LocalCompress       *bool
+	ParentCompress      *bool
 }
 type UDPArgs struct {
 	Parent              *string
@@ -161,7 +163,6 @@ type UDPArgs struct {
 	Local               *string
 	ParentType          *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 }
 type SocksArgs struct {
@@ -198,6 +199,10 @@ type SocksArgs struct {
 	LocalIPS       *[]string
 	DNSAddress     *string
 	DNSTTL         *int
+	LocalKey       *string
+	ParentKey      *string
+	LocalCompress  *bool
+	ParentCompress *bool
 }
 type SPSArgs struct {
 	Parent            *string
@@ -223,6 +228,10 @@ type SPSArgs struct {
 	AuthURLRetry      *int
 	LocalIPS          *[]string
 	ParentAuth        *string
+	LocalKey          *string
+	ParentKey         *string
+	LocalCompress     *bool
+	ParentCompress    *bool
 }
 
 func (a *SPSArgs) Protocol() string {

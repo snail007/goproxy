@@ -9,8 +9,8 @@ import (
 	"runtime/debug"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/aes"
-	"github.com/snail007/goproxy/utils/socks"
-	"strings"
+  "github.com/snail007/goproxy/utils/conncrypt"
+  "strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -23,7 +23,10 @@ type Socks struct {
 	sshClient      *ssh.Client
 	lockChn        chan bool
 	udpSC          utils.ServerChannel
+	sc             *utils.ServerChannel
 	domainResolver utils.DomainResolver
+	isStop         bool
+	userConns      utils.ConcurrentMap
 }
 
 func NewSocks() Service {
@@ -32,39 +35,39 @@ func NewSocks() Service {
 		checker:   utils.Checker{},
 		basicAuth: utils.BasicAuth{},
 		lockChn:   make(chan bool, 1),
+		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
 
-func (s *Socks) CheckArgs() {
-	var err error
+func (s *Socks) CheckArgs() (err error) {
+
 	if *s.cfg.LocalType == "tls" || (*s.cfg.Parent != "" && *s.cfg.ParentType == "tls") {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
 		if *s.cfg.CaCertFile != "" {
 			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
 			if err != nil {
-				log.Fatalf("read ca file error,ERR:%s", err)
+				err = fmt.Errorf("read ca file error,ERR:%s", err)
+				return
 			}
 		}
 	}
 	if *s.cfg.Parent != "" {
 		if *s.cfg.ParentType == "" {
-			log.Fatalf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
+			err = fmt.Errorf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
+			return
 		}
-		// if *s.cfg.ParentType == "tls" {
-		// 	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
-		// 	if *s.cfg.CaCertFile != "" {
-		// 		s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
-		// 		if err != nil {
-		// 			log.Fatalf("read ca file error,ERR:%s", err)
-		// 		}
-		// 	}
-		// }
 		if *s.cfg.ParentType == "ssh" {
 			if *s.cfg.SSHUser == "" {
-				log.Fatalf("ssh user required")
+				err = fmt.Errorf("ssh user required")
+				return
 			}
 			if *s.cfg.SSHKeyFile == "" && *s.cfg.SSHPassword == "" {
-				log.Fatalf("ssh password or key required")
+				err = fmt.Errorf("ssh password or key required")
+				return
 			}
 			if *s.cfg.SSHPassword != "" {
 				s.cfg.SSHAuthMethod = ssh.Password(*s.cfg.SSHPassword)
@@ -72,7 +75,8 @@ func (s *Socks) CheckArgs() {
 				var SSHSigner ssh.Signer
 				s.cfg.SSHKeyBytes, err = ioutil.ReadFile(*s.cfg.SSHKeyFile)
 				if err != nil {
-					log.Fatalf("read key file ERR: %s", err)
+					err = fmt.Errorf("read key file ERR: %s", err)
+					return
 				}
 				if *s.cfg.SSHKeyFileSalt != "" {
 					SSHSigner, err = ssh.ParsePrivateKeyWithPassphrase(s.cfg.SSHKeyBytes, []byte(*s.cfg.SSHKeyFileSalt))
@@ -80,28 +84,33 @@ func (s *Socks) CheckArgs() {
 					SSHSigner, err = ssh.ParsePrivateKey(s.cfg.SSHKeyBytes)
 				}
 				if err != nil {
-					log.Fatalf("parse ssh private key fail,ERR: %s", err)
+					err = fmt.Errorf("parse ssh private key fail,ERR: %s", err)
+					return
 				}
 				s.cfg.SSHAuthMethod = ssh.PublicKeys(SSHSigner)
 			}
 		}
 	}
-
+	return
 }
-func (s *Socks) InitService() {
+func (s *Socks) InitService() (err error) {
 	s.InitBasicAuth()
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
 	}
 	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
 	if *s.cfg.ParentType == "ssh" {
-		err := s.ConnectSSH()
-		if err != nil {
-			log.Fatalf("init service fail, ERR: %s", err)
+		e := s.ConnectSSH()
+		if e != nil {
+			err = fmt.Errorf("init service fail, ERR: %s", e)
+			return
 		}
 		go func() {
 			//循环检查ssh网络连通性
 			for {
+				if s.isStop {
+					return
+				}
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
 					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -125,26 +134,48 @@ func (s *Socks) InitService() {
 		log.Println("warn: socks udp not suppored for ssh")
 	} else {
 		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal)
-		err := s.udpSC.ListenUDP(s.udpCallback)
-		if err != nil {
-			log.Fatalf("init udp service fail, ERR: %s", err)
+		e := s.udpSC.ListenUDP(s.udpCallback)
+		if e != nil {
+			err = fmt.Errorf("init udp service fail, ERR: %s", e)
+			return
 		}
 		log.Printf("udp socks proxy on %s", s.udpSC.UDPListener.LocalAddr())
 	}
+	return
 }
 func (s *Socks) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop socks service crashed,%s", e)
+		} else {
+			log.Printf("service socks stoped")
+		}
+	}()
+	s.isStop = true
+	s.checker.Stop()
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
 	if s.udpSC.UDPListener != nil {
 		s.udpSC.UDPListener.Close()
 	}
+	if s.sc != nil && (*s.sc).Listener != nil {
+		(*(*s.sc).Listener).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
+	}
 }
 func (s *Socks) Start(args interface{}) (err error) {
 	//start()
 	s.cfg = args.(SocksArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		s.InitService()
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	}
@@ -159,6 +190,7 @@ func (s *Socks) Start(args interface{}) (err error) {
 	if err != nil {
 		return
 	}
+	s.sc = &sc
 	log.Printf("%s socks proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
@@ -329,6 +361,14 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 			inConn.Close()
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	//协商开始
 
 	//method select request
@@ -450,6 +490,9 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		return
 	}
 	for {
+		if s.isStop {
+			return
+		}
 		if *s.cfg.Always {
 			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
 		} else {
@@ -486,6 +529,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		request.TCPReply(socks.REP_NETWOR_UNREACHABLE)
 		return
 	}
+
 	log.Printf("use proxy %v : %s", useProxy, request.Addr())
 
 	request.TCPReply(socks.REP_SUCCESS)
@@ -496,6 +540,11 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released", inAddr, request.Addr())
 	})
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+		s.userConns.Remove(inAddr)
+	}
+	s.userConns.Set(inAddr, inConn)
 }
 func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
@@ -516,6 +565,14 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		if err != nil {
 			err = fmt.Errorf("connect fail,%s", err)
 			return
+		}
+		if *s.cfg.ParentCompress {
+			outConn = utils.NewCompConn(outConn)
+		}
+		if *s.cfg.ParentKey != "" {
+			outConn = conncrypt.New(outConn, &conncrypt.Config{
+				Password: *s.cfg.ParentKey,
+			})
 		}
 		var buf = make([]byte, 1024)
 		//var n int
@@ -556,7 +613,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 		maxTryCount := 1
 		tryCount := 0
 	RETRY:
-		if tryCount >= maxTryCount {
+		if tryCount >= maxTryCount || s.isStop {
 			return
 		}
 		wait := make(chan bool, 1)

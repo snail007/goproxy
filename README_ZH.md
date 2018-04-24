@@ -24,6 +24,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
 - 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
+- 自定义底层加密传输，http(s)\sps\socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可。
+- 底层压缩高效传输，http(s)\sps\socks代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在加密之后还可以对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
@@ -35,7 +37,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.6手册,其他版本手册请点击下面链接查看. 
+本页是v4.7手册,其他版本手册请点击下面链接查看. 
+- [v4.6手册](https://github.com/snail007/goproxy/tree/v4.6) 
 - [v4.5手册](https://github.com/snail007/goproxy/tree/v4.5) 
 - [v4.4手册](https://github.com/snail007/goproxy/tree/v4.4) 
 - [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
@@ -84,7 +87,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.9 HTTP(S)反向代理](#19-https反向代理)
     - [1.10 HTTP(S)透明代理](#110-https透明代理)
     - [1.11 自定义DNS](#111-自定义dns)
-    - [1.12 查看帮助](#112-查看帮助)
+    - [1.12 自定义加密](#112-自定义加密)
+    - [1.13 压缩传输](#113-压缩传输)
+    - [1.14 查看帮助](#114-查看帮助)
 - [2. TCP代理](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -120,7 +125,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [5.7 认证](#57认证)
     - [5.8 KCP协议传输](#58kcp协议传输)
     - [5.9 自定义DNS](#59自定义dns)
-    - [5.10 查看帮助](#510查看帮助)
+    - [5.10 自定义加密](#510-自定义加密)
+    - [5.11 压缩传输](#511-压缩传输)
+    - [5.12 查看帮助](#512查看帮助)
 - [6. 代理协议转换](#6代理协议转换)
     - [6.1 功能介绍](#61-功能介绍)
     - [6.2 HTTP(S)转HTTP(S)+SOCKS5](#62-https转httpssocks5)
@@ -128,7 +135,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [6.4 链式连接](#64-链式连接)
     - [6.5 监听多个端口](#65-监听多个端口)
     - [6.6 认证功能](#66-认证功能)
-    - [6.7 查看帮助](#67-查看帮助)
+    - [6.7 自定义加密](#67-自定义加密)
+    - [6.8 压缩传输](#68-压缩传输)
+    - [6.9 查看帮助](#69-查看帮助)
 - [7. KCP配置](#7kcp配置)
     - [7.1 配置介绍](#71-配置介绍)
     - [7.2 详细配置](#72-详细配置)
@@ -149,7 +158,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.7/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -211,20 +220,19 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 `./proxy http -g "23.23.23.23"`  
 
 ### **1.HTTP代理**  
-#### **1.1.普通HTTP代理**  
-![1.1](/docs/images/1.1.jpg)  
+#### **1.1.普通一级HTTP代理**  
+![1.1](/docs/images/http-1.png)  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.普通二级HTTP代理**  
+![1.2](/docs/images/http-2.png)  
 使用本地端口8090,假设上级HTTP代理是`22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
-默认关闭了连接池,如果要加快访问速度,-L可以开启连接池,10就是连接池大小,0为关闭,  
-开启连接池在网络不好的情况下,稳定不是很好.   
-`./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -L 10`  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **1.3.HTTP二级代理(加密)**  
+![1.3](/docs/images/http-tls-2.png)  
 一级HTTP代理(VPS,IP:22.22.22.22)  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -237,6 +245,7 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **1.4.HTTP三级代理(加密)**  
+![1.3](/docs/images/http-tls-3.png)  
 一级HTTP代理VPS_01,IP:22.22.22.22  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级HTTP代理VPS_02,IP:33.33.33.33  
@@ -272,6 +281,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **1.7.HTTP(S)通过SSH中转**  
+![1.7](/docs/images/http-ssh-1.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo  
@@ -285,6 +295,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP协议传输**  
+![1.8](/docs/images/http-kcp.png)  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
@@ -294,7 +305,8 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
-#### **1.9 HTTP(S)反向代理** 
+#### **1.9 HTTP(S)反向代理**   
+![1.9](/docs/images/fxdl.png)  
 proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
 
 使用方式:  
@@ -307,7 +319,7 @@ proxy不仅支持在其他软件里面通过设置代理的方式,为其他软�
 `./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
 
 注意:  
-proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
+proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了,proxy代理最好指定`--dns 8.8.8.8`参数.  
   
 #### **1.10 HTTP(S)透明代理** 
 该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
@@ -360,19 +372,65 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 比如：  
 `./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
-#### **1.12 查看帮助**  
+#### **1.12 自定义加密**  
+proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行自定义  
+加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可,  
+加密分为两个部分,一部分是本地(-z)是否加密解密,一部分是与上级(-Z)传输是否加密解密.    
+自定义加密要求两端都是proxy才可以,下面分别用二级,三级为例:  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy http -t tcp -z demo_password -p :7777`  
+本地二级执行:  
+`proxy http -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy http -t tcp -z demo_password -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy http -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+本地三级执行:  
+`proxy http -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+#### **1.13 压缩传输**  
+proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,在自定义加密之前还可以对数据进行压缩,  
+也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的,压缩分为两个部分,一部分是本地(-m)是否压缩传输,  
+一部分是与上级(-M)传输是否压缩.    
+压缩要求两端都是proxy才可以,压缩也在一定程度上保护了(加密)数据,下面分别用二级,三级为例:  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy http -t tcp -m -p :7777`  
+本地二级执行:  
+`proxy http -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy http -t tcp -m -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy http -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+本地三级执行:  
+`proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+#### **1.14 查看帮助**  
 `./proxy help http`  
   
 ### **2.TCP代理**  
   
 #### **2.1.普通一级TCP代理**  
-![2.1](/docs/images/2.1.png)  
+![2.1](/docs/images/tcp-1.png)  
 本地执行:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 那么访问本地33080端口就是访问192.168.22.33的22端口.  
   
 #### **2.2.普通二级TCP代理**  
-![2.2](/docs/images/2.2.png)  
+![2.2](/docs/images/tcp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 本地执行:  
@@ -380,6 +438,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是访问22.22.22.33的8080端口.  
   
 #### **2.3.普通三级TCP代理**  
+![2.3](/docs/images/tcp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -389,6 +448,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
   
 #### **2.4.加密二级TCP代理**  
+![2.4](/docs/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -396,6 +456,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口.  
   
 #### **2.5.加密三级TCP代理**  
+![2.5](/docs/images/tcp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -410,11 +471,13 @@ VPS(IP:22.22.22.33)执行:
 ### **3.UDP代理**  
   
 #### **3.1.普通一级UDP代理**  
+![3.1](/docs/images/udp-1.png)  
 本地执行:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口.  
   
 #### **3.2.普通二级UDP代理**  
+![3.2](/docs/images/udp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 本地执行:  
@@ -422,6 +485,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.3.普通三级UDP代理**  
+![3.3](/docs/images/udp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -431,6 +495,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的53端口.  
   
 #### **3.4.加密二级UDP代理**  
+![3.4](/docs/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -438,6 +503,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过加密TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.5.加密三级UDP代理**  
+![3.5](/docs/images/udp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -597,13 +663,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
 #### **5.2.普通二级SOCKS5代理**  
-![5.2](/docs/images/5.2.png)  
+![5.2](/docs/images/socks-2.png)  
 使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理;如果域名即在黑名单又在白名单中,那么黑名单起作用.  
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **5.3.SOCKS二级代理(加密)**  
+![5.3](/docs/images/socks-tls-2.png)  
 一级SOCKS代理(VPS,IP:22.22.22.22)  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -616,6 +683,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **5.4.SOCKS三级代理(加密)**  
+![5.4](/docs/images/socks-tls-3.png)  
 一级SOCKS代理VPS_01,IP:22.22.22.22  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级SOCKS代理VPS_02,IP:33.33.33.33  
@@ -629,6 +697,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **5.6.SOCKS通过SSH中转**  
+![5.6](/docs/images/socks-ssh.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
@@ -680,7 +749,58 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 比如：  
 `./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
-#### **5.10.查看帮助**  
+#### **5.10 自定义加密**  
+proxy的socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可,  
+加密分为两个部分,一部分是本地(-z)是否加密解密,一部分是与上级(-Z)传输是否加密解密.    
+
+自定义加密要求两端都是proxy才可以.  
+
+下面分别用二级,三级为例:  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy socks -t tcp -z demo_password -p :7777`  
+本地二级执行:  
+`proxy socks -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy socks -t tcp -z demo_password -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy socks -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+本地三级执行:  
+`proxy socks -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+#### **5.11 压缩传输**  
+proxy的socks代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在自定义加密之前还可以  
+对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的,压缩分为两个部分,   
+一部分是本地(-m)是否压缩传输,一部分是与上级(-M)传输是否压缩.    
+
+压缩要求两端都是proxy才可以,压缩也在一定程度上保护了(加密)数据.  
+
+下面分别用二级,三级为例:  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy socks -t tcp -m -p :7777`  
+本地二级执行:  
+`proxy socks -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy socks -t tcp -m -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy socks -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+本地三级执行:  
+`proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+#### **5.12.查看帮助**  
 `./proxy help socks`  
 
 ### **6.代理协议转换** 
@@ -714,7 +834,8 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 命令如下：  
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
-#### **6.4 链式连接** 
+#### **6.4 链式连接**   
+![6.4](/docs/images/sps-tls.png)  
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
 vps01：2.2.2.2  
 vps02：3.3.3.3  
@@ -779,7 +900,63 @@ target:如果客户端是http(s)代理请求,这里代表的是请求的完整ur
 如果没有-a或-F或--auth-url参数,就是关闭本地认证.  
 如果没有-A参数,连接上级不使用认证.  
 
-#### **6.7 查看帮助** 
+
+#### **6.7 自定义加密**  
+proxy的sps代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行  
+自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义  
+一个密码即可,加密分为两个部分,一部分是本地(-z)是否加密解密,一部分是与上级(-Z)传输是否加密解密.      
+
+自定义加密要求两端都是proxy才可以.  
+
+下面分别用二级,三级为例:  
+
+假设已经存在一个http(s)代理:`6.6.6.6:6666`  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy sps -S http -T tcp -P 6.6.6.6:6666 -t tcp -z demo_password -p :7777`  
+本地二级执行:  
+`proxy sps -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy sps -S http -T tcp -P 6.6.6.6:6666 -t tcp -z demo_password -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy sps -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888` 
+本地三级执行:  
+`proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
+
+#### **6.8 压缩传输**  
+proxy的sps代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在自定义加密之前还可以  
+对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的,压缩分为两个部分,   
+一部分是本地(-m)是否压缩传输,一部分是与上级(-M)传输是否压缩.    
+
+压缩要求两端都是proxy才可以,压缩也在一定程度上保护了(加密)数据.  
+
+下面分别用二级,三级为例:  
+
+**二级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy sps -t tcp -m -p :7777`  
+本地二级执行:  
+`proxy sps -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+
+**三级实例**  
+一级vps(ip:2.2.2.2)上执行:  
+`proxy sps -t tcp -m -p :7777`  
+二级vps(ip:3.3.3.3)上执行:  
+`proxy sps -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
+本地三级执行:  
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
+这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
+
+
+#### **6.9 查看帮助** 
 `./proxy help sps`  
 
 ### **7.KCP配置**   
