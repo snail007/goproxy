@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"snail007/proxy/utils"
+	"github.com/snail007/goproxy/utils"
 	"strconv"
 	"time"
 

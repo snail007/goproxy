@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
+	"github.com/snail007/goproxy/utils"
 	"strconv"
 	"strings"
 	"time"

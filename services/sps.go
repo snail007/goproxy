@@ -9,9 +9,9 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
-	"snail007/proxy/utils/conncrypt"
-	"snail007/proxy/utils/socks"
+	"github.com/snail007/goproxy/utils"
+  "github.com/snail007/goproxy/utils/conncrypt
+	"github.com/snail007/goproxy/utils/socks"
 	"strconv"
 	"strings"
 	"time"
