@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"github.com/snail007/goproxy/services"
+	"github.com/onetwotrip/goproxy/services"
 	"syscall"
 )
 

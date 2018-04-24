@@ -3,7 +3,7 @@ package socks
 import (
 	"fmt"
 	"net"
-	"github.com/snail007/goproxy/utils"
+	"github.com/onetwotrip/goproxy/utils"
 	"strings"
 	"time"
 )

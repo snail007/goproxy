@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
-	"github.com/snail007/goproxy/utils"
+	"github.com/onetwotrip/goproxy/utils"
 	"time"
 
 	"github.com/golang/snappy"

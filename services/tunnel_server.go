@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
-	"github.com/snail007/goproxy/utils"
+	"github.com/onetwotrip/goproxy/utils"
 	"strconv"
 	"strings"
 	"time"

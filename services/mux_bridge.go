@@ -6,7 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"github.com/snail007/goproxy/utils"
+	"github.com/onetwotrip/goproxy/utils"
 	"strconv"
 	"strings"
 	"sync"

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/snail007/goproxy",
+	"ImportPath": "github.com/onetwotrip/goproxy",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v80",
 	"Packages": [

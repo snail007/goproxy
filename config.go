@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
+	"github.com/onetwotrip/goproxy/services"
+	"github.com/onetwotrip/goproxy/services/kcpcfg"
+	"github.com/onetwotrip/goproxy/utils"
 	"time"
 
 	kcp "github.com/xtaci/kcp-go"

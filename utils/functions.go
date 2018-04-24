@@ -18,11 +18,11 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/onetwotrip/goproxy/services/kcpcfg"
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/snail007/goproxy/utils/id"
+	"github.com/onetwotrip/goproxy/utils/id"
 	"strconv"
 	"strings"
 	"time"
