@@ -3,10 +3,10 @@ package proxy
 import (
 	"crypto/sha1"
 	"fmt"
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"log"
 	"os"
-	"snail007/proxy/services"
-	"snail007/proxy/services/kcpcfg"
 	"strings"
 
 	kcp "github.com/xtaci/kcp-go"

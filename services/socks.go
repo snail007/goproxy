@@ -3,14 +3,14 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/aes"
+	"github.com/snail007/goproxy/utils/socks"
+	"github.com/snail007/goproxy/utils/conncrypt"
 	"io/ioutil"
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
-	"snail007/proxy/utils/aes"
-	"snail007/proxy/utils/conncrypt"
-	"snail007/proxy/utils/socks"
 	"strings"
 	"time"
 

@@ -2,13 +2,13 @@ package services
 
 import (
 	"fmt"
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/conncrypt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
-	"snail007/proxy/utils/conncrypt"
 	"strconv"
 	"strings"
 	"time"

@@ -3,11 +3,11 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/snail007/goproxy/utils"
 	"io"
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
 	"strconv"
 	"strings"
 	"time"
