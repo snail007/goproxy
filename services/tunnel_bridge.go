@@ -85,7 +85,12 @@ func (s *TunnelBridge) Clean() {
 func (s *TunnelBridge) callback(inConn net.Conn) {
 	var err error
 	//log.Printf("connection from %s ", inConn.RemoteAddr())
-	sess, err := smux.Server(inConn, nil)
+	sess, err := smux.Server(inConn, &smux.Config{
+		KeepAliveInterval: 10 * time.Second,
+		KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
+		MaxFrameSize:      4096,
+		MaxReceiveBuffer:  4194304,
+	})
 	if err != nil {
 		log.Printf("new mux server conn error,ERR:%s", err)
 		return
