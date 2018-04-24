@@ -2,6 +2,7 @@ proxy
 *.exe
 *.exe~
 .*
+!.gitignore
 release-*
 proxy.crt
 proxy.key

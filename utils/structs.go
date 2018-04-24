@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -12,11 +11,13 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"snail007/proxy/services/kcpcfg"
 	"snail007/proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/miekg/dns"
 )
 
@@ -26,6 +27,7 @@ type Checker struct {
 	directMap  ConcurrentMap
 	interval   int64
 	timeout    int
+	isStop     bool
 }
 type CheckerItem struct {
 	IsHTTPS      bool
@@ -46,6 +48,7 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 		data:     NewConcurrentMap(),
 		interval: interval,
 		timeout:  timeout,
+		isStop:   false,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -79,6 +82,9 @@ func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 	}
 	return
 }
+func (c *Checker) Stop() {
+	c.isStop = true
+}
 func (c *Checker) start() {
 	go func() {
 		//log.Printf("checker started")
@@ -105,6 +111,9 @@ func (c *Checker) start() {
 				}(v.(CheckerItem))
 			}
 			time.Sleep(time.Second * time.Duration(c.interval))
+			if c.isStop {
+				return
+			}
 		}
 	}()
 }
@@ -278,7 +287,11 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 			} else {
 				err = fmt.Errorf("token error")
 			}
-			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, string(body))
+			b := string(body)
+			if len(b) > 50 {
+				b = b[:50]
+			}
+			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
 		}
 		if err != nil && tryCount < ba.authRetry {
 			log.Print(err)
@@ -315,7 +328,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	req = HTTPRequest{
 		conn: inConn,
 	}
-	if len(header) == 1 {
+	if header != nil && len(header) == 1 && len(header[0]) > 1 {
 		buf = header[0]
 		n = len(header[0])
 	} else {
@@ -400,17 +413,13 @@ func (req *HTTPRequest) IsHTTPS() bool {
 	return req.Method == "CONNECT"
 }
 
-func (req *HTTPRequest) BasicAuth() (err error) {
-
+func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
 	// log.Printf("request :%s", string(req.HeadBuf))
-	code := "407"
 	authorization := req.getHeader("Proxy-Authorization")
-	// if authorization == "" {
-	// 	authorization = req.getHeader("Authorization")
-	// 	code = "401"
-	// }
+
+	authorization = strings.Trim(authorization, " \r\n\t")
 	if authorization == "" {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", code)
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
 		err = errors.New("require auth header data")
 		return
@@ -428,6 +437,10 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		CloseConn(req.conn)
 		return
 	}
+	basicInfo = string(user)
+	return
+}
+func (req *HTTPRequest) BasicAuth() (err error) {
 	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
 	URL := ""
 	if req.IsHTTPS() {
@@ -435,10 +448,14 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	} else {
 		URL = req.getHTTPURL()
 	}
+	user, err := req.GetAuthDataStr()
+	if err != nil {
+		return
+	}
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", code)
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
@@ -488,239 +505,40 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 	return
 }
 
-type OutPool struct {
-	Pool      ConnPool
-	dur       int
-	typ       string
-	certBytes []byte
-	keyBytes  []byte
-	kcpMethod string
-	kcpKey    string
-	address   string
-	timeout   int
+type OutConn struct {
+	dur         int
+	typ         string
+	certBytes   []byte
+	keyBytes    []byte
+	caCertBytes []byte
+	kcp         kcpcfg.KCPConfigArgs
+	address     string
+	timeout     int
 }
 
-func NewOutPool(dur int, typ, kcpMethod, kcpKey string, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
-	op = OutPool{
-		dur:       dur,
-		typ:       typ,
-		certBytes: certBytes,
-		keyBytes:  keyBytes,
-		kcpMethod: kcpMethod,
-		kcpKey:    kcpKey,
-		address:   address,
-		timeout:   timeout,
+func NewOutConn(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes, caCertBytes []byte, address string, timeout int) (op OutConn) {
+	return OutConn{
+		dur:         dur,
+		typ:         typ,
+		certBytes:   certBytes,
+		keyBytes:    keyBytes,
+		caCertBytes: caCertBytes,
+		kcp:         kcp,
+		address:     address,
+		timeout:     timeout,
 	}
-	var err error
-	op.Pool, err = NewConnPool(poolConfig{
-		IsActive: func(conn interface{}) bool { return true },
-		Release: func(conn interface{}) {
-			if conn != nil {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-				// log.Println("conn released")
-			}
-		},
-		InitialCap: InitialCap,
-		MaxCap:     MaxCap,
-		Factory: func() (conn interface{}, err error) {
-			conn, err = op.getConn()
-			return
-		},
-	})
-	if err != nil {
-		log.Fatalf("init conn pool fail ,%s", err)
-	} else {
-		if InitialCap > 0 {
-			log.Printf("init conn pool success")
-			op.initPoolDeamon()
-		} else {
-			log.Printf("conn pool closed")
-		}
-	}
-	return
 }
-func (op *OutPool) getConn() (conn interface{}, err error) {
+func (op *OutConn) Get() (conn net.Conn, err error) {
 	if op.typ == "tls" {
 		var _conn tls.Conn
-		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes)
+		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes, op.caCertBytes)
 		if err == nil {
 			conn = net.Conn(&_conn)
 		}
 	} else if op.typ == "kcp" {
-		conn, err = ConnectKCPHost(op.address, op.kcpMethod, op.kcpKey)
+		conn, err = ConnectKCPHost(op.address, op.kcp)
 	} else {
 		conn, err = ConnectHost(op.address, op.timeout)
-	}
-	return
-}
-
-func (op *OutPool) initPoolDeamon() {
-	go func() {
-		if op.dur <= 0 {
-			return
-		}
-		log.Printf("pool deamon started")
-		for {
-			time.Sleep(time.Second * time.Duration(op.dur))
-			conn, err := op.getConn()
-			if err != nil {
-				log.Printf("pool deamon err %s , release pool", err)
-				op.Pool.ReleaseAll()
-			} else {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-			}
-		}
-	}()
-}
-
-type HeartbeatData struct {
-	Data  []byte
-	N     int
-	Error error
-}
-type HeartbeatReadWriter struct {
-	conn *net.Conn
-	// rchn       chan HeartbeatData
-	l          *sync.Mutex
-	dur        int
-	errHandler func(err error, hb *HeartbeatReadWriter)
-	once       *sync.Once
-	datachn    chan byte
-	// rbuf       bytes.Buffer
-	// signal     chan bool
-	rerrchn chan error
-}
-
-func NewHeartbeatReadWriter(conn *net.Conn, dur int, fn func(err error, hb *HeartbeatReadWriter)) (hrw HeartbeatReadWriter) {
-	hrw = HeartbeatReadWriter{
-		conn: conn,
-		l:    &sync.Mutex{},
-		dur:  dur,
-		// rchn:       make(chan HeartbeatData, 10000),
-		// signal:     make(chan bool, 1),
-		errHandler: fn,
-		datachn:    make(chan byte, 4*1024),
-		once:       &sync.Once{},
-		rerrchn:    make(chan error, 1),
-		// rbuf:       bytes.Buffer{},
-	}
-	hrw.heartbeat()
-	hrw.reader()
-	return
-}
-
-func (rw *HeartbeatReadWriter) Close() {
-	CloseConn(rw.conn)
-}
-func (rw *HeartbeatReadWriter) reader() {
-	go func() {
-		//log.Printf("heartbeat read started")
-		for {
-			n, data, err := rw.read()
-			if n == -1 {
-				continue
-			}
-			//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
-			if err == nil {
-				//fmt.Printf("write data %s\n", string(data))
-				for _, b := range data {
-					rw.datachn <- b
-				}
-			}
-			if err != nil {
-				//log.Printf("heartbeat reader err: %s", err)
-				select {
-				case rw.rerrchn <- err:
-				default:
-				}
-				rw.once.Do(func() {
-					rw.errHandler(err, rw)
-				})
-				break
-			}
-		}
-		//log.Printf("heartbeat read exited")
-	}()
-}
-func (rw *HeartbeatReadWriter) read() (n int, data []byte, err error) {
-	var typ uint8
-	err = binary.Read((*rw.conn), binary.LittleEndian, &typ)
-	if err != nil {
-		return
-	}
-	if typ == 0 {
-		// log.Printf("heartbeat revecived")
-		n = -1
-		return
-	}
-	var dataLength uint32
-	binary.Read((*rw.conn), binary.LittleEndian, &dataLength)
-	_data := make([]byte, dataLength)
-	// log.Printf("dataLength:%d , data:%s", dataLength, string(data))
-	n, err = (*rw.conn).Read(_data)
-	//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
-	if err != nil {
-		return
-	}
-	if uint32(n) != dataLength {
-		err = fmt.Errorf("read short data body")
-		return
-	}
-	data = _data[:n]
-	return
-}
-func (rw *HeartbeatReadWriter) heartbeat() {
-	go func() {
-		//log.Printf("heartbeat started")
-		for {
-			if rw.conn == nil || *rw.conn == nil {
-				//log.Printf("heartbeat err: conn nil")
-				break
-			}
-			rw.l.Lock()
-			_, err := (*rw.conn).Write([]byte{0})
-			rw.l.Unlock()
-			if err != nil {
-				//log.Printf("heartbeat err: %s", err)
-				rw.once.Do(func() {
-					rw.errHandler(err, rw)
-				})
-				break
-			} else {
-				// log.Printf("heartbeat send ok")
-			}
-			time.Sleep(time.Second * time.Duration(rw.dur))
-		}
-		//log.Printf("heartbeat exited")
-	}()
-}
-func (rw *HeartbeatReadWriter) Read(p []byte) (n int, err error) {
-	data := make([]byte, cap(p))
-	for i := 0; i < cap(p); i++ {
-		data[i] = <-rw.datachn
-		n++
-		//fmt.Printf("read  %d %v\n", i, data[:n])
-		if len(rw.datachn) == 0 {
-			n = i + 1
-			copy(p, data[:n])
-			return
-		}
-	}
-	return
-}
-func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
-	defer rw.l.Unlock()
-	rw.l.Lock()
-	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, uint8(1))
-	binary.Write(pkg, binary.LittleEndian, uint32(len(p)))
-	binary.Write(pkg, binary.LittleEndian, p)
-	bs := pkg.Bytes()
-	n, err = (*rw.conn).Write(bs)
-	if err == nil {
-		n = len(p)
 	}
 	return
 }
@@ -923,4 +741,54 @@ func (a *DomainResolver) PrintData() {
 		d := item.(*DomainResolverItem)
 		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
 	}
+}
+func NewCompStream(conn net.Conn) *CompStream {
+	c := new(CompStream)
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return c
+}
+func NewCompConn(conn net.Conn) net.Conn {
+	c := CompStream{}
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return &c
+}
+
+type CompStream struct {
+	net.Conn
+	conn net.Conn
+	w    *snappy.Writer
+	r    *snappy.Reader
+}
+
+func (c *CompStream) Read(p []byte) (n int, err error) {
+	return c.r.Read(p)
+}
+
+func (c *CompStream) Write(p []byte) (n int, err error) {
+	n, err = c.w.Write(p)
+	err = c.w.Flush()
+	return n, err
+}
+
+func (c *CompStream) Close() error {
+	return c.conn.Close()
+}
+func (c *CompStream) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+func (c *CompStream) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+func (c *CompStream) SetDeadline(t time.Time) error {
+	return c.conn.SetDeadline(t)
+}
+func (c *CompStream) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+func (c *CompStream) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }

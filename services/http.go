@@ -8,6 +8,7 @@ import (
 	"net"
 	"runtime/debug"
 	"snail007/proxy/utils"
+	"snail007/proxy/utils/conncrypt"
 	"strconv"
 	"strings"
 	"time"
@@ -16,38 +17,56 @@ import (
 )
 
 type HTTP struct {
-	outPool        utils.OutPool
+	outPool        utils.OutConn
 	cfg            HTTPArgs
 	checker        utils.Checker
 	basicAuth      utils.BasicAuth
 	sshClient      *ssh.Client
 	lockChn        chan bool
 	domainResolver utils.DomainResolver
+	isStop         bool
+	serverChannels []*utils.ServerChannel
+	userConns      utils.ConcurrentMap
 }
 
 func NewHTTP() Service {
 	return &HTTP{
-		outPool:   utils.OutPool{},
-		cfg:       HTTPArgs{},
-		checker:   utils.Checker{},
-		basicAuth: utils.BasicAuth{},
-		lockChn:   make(chan bool, 1),
+		outPool:        utils.OutConn{},
+		cfg:            HTTPArgs{},
+		checker:        utils.Checker{},
+		basicAuth:      utils.BasicAuth{},
+		lockChn:        make(chan bool, 1),
+		isStop:         false,
+		serverChannels: []*utils.ServerChannel{},
+		userConns:      utils.NewConcurrentMap(),
 	}
 }
-func (s *HTTP) CheckArgs() {
-	var err error
+func (s *HTTP) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
-		log.Fatalf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
+		return
 	}
 	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
+		if *s.cfg.CaCertFile != "" {
+			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
+			if err != nil {
+				err = fmt.Errorf("read ca file error,ERR:%s", err)
+				return
+			}
+		}
 	}
 	if *s.cfg.ParentType == "ssh" {
 		if *s.cfg.SSHUser == "" {
-			log.Fatalf("ssh user required")
+			err = fmt.Errorf("ssh user required")
+			return
 		}
 		if *s.cfg.SSHKeyFile == "" && *s.cfg.SSHPassword == "" {
-			log.Fatalf("ssh password or key required")
+			err = fmt.Errorf("ssh password or key required")
+			return
 		}
 
 		if *s.cfg.SSHPassword != "" {
@@ -56,7 +75,8 @@ func (s *HTTP) CheckArgs() {
 			var SSHSigner ssh.Signer
 			s.cfg.SSHKeyBytes, err = ioutil.ReadFile(*s.cfg.SSHKeyFile)
 			if err != nil {
-				log.Fatalf("read key file ERR: %s", err)
+				err = fmt.Errorf("read key file ERR: %s", err)
+				return
 			}
 			if *s.cfg.SSHKeyFileSalt != "" {
 				SSHSigner, err = ssh.ParsePrivateKeyWithPassphrase(s.cfg.SSHKeyBytes, []byte(*s.cfg.SSHKeyFileSalt))
@@ -64,13 +84,15 @@ func (s *HTTP) CheckArgs() {
 				SSHSigner, err = ssh.ParsePrivateKey(s.cfg.SSHKeyBytes)
 			}
 			if err != nil {
-				log.Fatalf("parse ssh private key fail,ERR: %s", err)
+				err = fmt.Errorf("parse ssh private key fail,ERR: %s", err)
+				return
 			}
 			s.cfg.SSHAuthMethod = ssh.PublicKeys(SSHSigner)
 		}
 	}
+	return
 }
-func (s *HTTP) InitService() {
+func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
 	if *s.cfg.Parent != "" {
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
@@ -79,16 +101,22 @@ func (s *HTTP) InitService() {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
 	}
 	if *s.cfg.ParentType == "ssh" {
-		err := s.ConnectSSH()
+		err = s.ConnectSSH()
 		if err != nil {
-			log.Fatalf("init service fail, ERR: %s", err)
+			err = fmt.Errorf("init service fail, ERR: %s", err)
+			return
 		}
 		go func() {
 			//循环检查ssh网络连通性
 			for {
+				if s.isStop {
+					return
+				}
 				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
 				if err == nil {
+					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 					_, err = conn.Write([]byte{0})
+					conn.SetDeadline(time.Time{})
 				}
 				if err != nil {
 					if s.sshClient != nil {
@@ -106,20 +134,43 @@ func (s *HTTP) InitService() {
 			}
 		}()
 	}
+	return
 }
 func (s *HTTP) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop http(s) service crashed,%s", e)
+		} else {
+			log.Printf("service http(s) stoped")
+		}
+	}()
+	s.isStop = true
+	s.checker.Stop()
+	if s.sshClient != nil {
+		s.sshClient.Close()
+	}
+	for _, sc := range s.serverChannels {
+		if sc.Listener != nil && *sc.Listener != nil {
+			(*sc.Listener).Close()
+		}
+		if sc.UDPListener != nil {
+			(*sc.UDPListener).Close()
+		}
 	}
 }
 func (s *HTTP) Start(args interface{}) (err error) {
 	s.cfg = args.(HTTPArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 		s.InitOutConnPool()
 	}
-	s.InitService()
+	if err = s.InitService(); err != nil {
+		return
+	}
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
@@ -128,14 +179,15 @@ func (s *HTTP) Start(args interface{}) (err error) {
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.callback)
+				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
-				err = sc.ListenKCP(*s.cfg.KCPMethod, *s.cfg.KCPKey, s.callback)
+				err = sc.ListenKCP(s.cfg.KCP, s.callback)
 			}
 			if err != nil {
 				return
 			}
 			log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
 	return
@@ -150,6 +202,14 @@ func (s *HTTP) callback(inConn net.Conn) {
 			log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 		}
 	}()
+	if *s.cfg.LocalCompress {
+		inConn = utils.NewCompConn(inConn)
+	}
+	if *s.cfg.LocalKey != "" {
+		inConn = conncrypt.New(inConn, &conncrypt.Config{
+			Password: *s.cfg.LocalKey,
+		})
+	}
 	var err interface{}
 	var req utils.HTTPRequest
 	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
@@ -181,7 +241,6 @@ func (s *HTTP) callback(inConn net.Conn) {
 	log.Printf("use proxy : %v, %s", useProxy, address)
 
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
-
 	if err != nil {
 		if *s.cfg.Parent == "" {
 			log.Printf("connect to %s fail, ERR:%s", address, err)
@@ -201,19 +260,18 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		return
 	}
 	var outConn net.Conn
-	var _outConn interface{}
 	tryCount := 0
 	maxTryCount := 5
 	for {
+		if s.isStop {
+			return
+		}
 		if useProxy {
 			if *s.cfg.ParentType == "ssh" {
 				outConn, err = s.getSSHConn(address)
 			} else {
-				//log.Printf("%v", s.outPool)
-				_outConn, err = s.outPool.Pool.Get()
-				if err == nil {
-					outConn = _outConn.(net.Conn)
-				}
+				// log.Printf("%v", s.outPool)
+				outConn, err = s.outPool.Get()
 			}
 		} else {
 			outConn, err = utils.ConnectHost(s.Resolve(address), *s.cfg.Timeout)
@@ -231,16 +289,25 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		utils.CloseConn(inConn)
 		return
 	}
+	if *s.cfg.ParentCompress {
+		outConn = utils.NewCompConn(outConn)
+	}
+	if *s.cfg.ParentKey != "" {
+		outConn = conncrypt.New(outConn, &conncrypt.Config{
+			Password: *s.cfg.ParentKey,
+		})
+	}
 
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
-
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
 		//https无上级或者上级非代理,proxy需要响应connect请求,并直连目标
 		err = req.HTTPSReply()
 	} else {
 		//https或者http,上级是代理,proxy需要转发
+		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(req.HeadBuf)
+		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)
@@ -250,9 +317,13 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
+		s.userConns.Remove(inAddr)
 	})
 	log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
-
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, inConn)
 	return
 }
 
@@ -260,7 +331,7 @@ func (s *HTTP) getSSHConn(host string) (outConn net.Conn, err interface{}) {
 	maxTryCount := 1
 	tryCount := 0
 RETRY:
-	if tryCount >= maxTryCount {
+	if tryCount >= maxTryCount || s.isStop {
 		return
 	}
 	wait := make(chan bool, 1)
@@ -317,16 +388,13 @@ func (s *HTTP) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			*s.cfg.CheckParentInterval,
 			*s.cfg.ParentType,
-			*s.cfg.KCPMethod,
-			*s.cfg.KCPKey,
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			s.cfg.KCP,
+			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
 			s.Resolve(*s.cfg.Parent),
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

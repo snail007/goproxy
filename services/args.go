@@ -1,6 +1,10 @@
 package services
 
-import "golang.org/x/crypto/ssh"
+import (
+	"snail007/proxy/services/kcpcfg"
+
+	"golang.org/x/crypto/ssh"
+)
 
 // tcp := app.Command("tcp", "proxy on tcp mode")
 // t := tcp.Flag("tcp-timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Default("2000").Int()
@@ -21,39 +25,46 @@ const (
 )
 
 type MuxServerArgs struct {
-	Parent     *string
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Local      *string
-	IsUDP      *bool
-	Key        *string
-	Remote     *string
-	Timeout    *int
-	Route      *[]string
-	Mgr        *MuxServerManager
-	IsCompress *bool
+	Parent       *string
+	ParentType   *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Local        *string
+	IsUDP        *bool
+	Key          *string
+	Remote       *string
+	Timeout      *int
+	Route        *[]string
+	Mgr          *MuxServerManager
+	IsCompress   *bool
+	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
 }
 type MuxClientArgs struct {
-	Parent     *string
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Key        *string
-	Timeout    *int
-	IsCompress *bool
+	Parent       *string
+	ParentType   *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Key          *string
+	Timeout      *int
+	IsCompress   *bool
+	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
 }
 type MuxBridgeArgs struct {
-	Parent     *string
 	CertFile   *string
 	KeyFile    *string
 	CertBytes  []byte
 	KeyBytes   []byte
 	Local      *string
+	LocalType  *string
 	Timeout    *int
 	IsCompress *bool
+	KCP        kcpcfg.KCPConfigArgs
 }
 type TunnelServerArgs struct {
 	Parent    *string
@@ -100,16 +111,16 @@ type TCPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
-	KCPMethod           *string
-	KCPKey              *string
+	KCP                 kcpcfg.KCPConfigArgs
 }
 
 type HTTPArgs struct {
 	Parent              *string
 	CertFile            *string
 	KeyFile             *string
+	CaCertFile          *string
+	CaCertBytes         []byte
 	CertBytes           []byte
 	KeyBytes            []byte
 	Local               *string
@@ -127,7 +138,6 @@ type HTTPArgs struct {
 	ParentType          *string
 	LocalType           *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 	SSHKeyFile          *string
 	SSHKeyFileSalt      *string
@@ -135,11 +145,14 @@ type HTTPArgs struct {
 	SSHUser             *string
 	SSHKeyBytes         []byte
 	SSHAuthMethod       ssh.AuthMethod
-	KCPMethod           *string
-	KCPKey              *string
+	KCP                 kcpcfg.KCPConfigArgs
 	LocalIPS            *[]string
 	DNSAddress          *string
 	DNSTTL              *int
+	LocalKey            *string
+	ParentKey           *string
+	LocalCompress       *bool
+	ParentCompress      *bool
 }
 type UDPArgs struct {
 	Parent              *string
@@ -150,7 +163,6 @@ type UDPArgs struct {
 	Local               *string
 	ParentType          *string
 	Timeout             *int
-	PoolSize            *int
 	CheckParentInterval *int
 }
 type SocksArgs struct {
@@ -160,6 +172,8 @@ type SocksArgs struct {
 	LocalType      *string
 	CertFile       *string
 	KeyFile        *string
+	CaCertFile     *string
+	CaCertBytes    []byte
 	CertBytes      []byte
 	KeyBytes       []byte
 	SSHKeyFile     *string
@@ -179,29 +193,45 @@ type SocksArgs struct {
 	AuthURLOkCode  *int
 	AuthURLTimeout *int
 	AuthURLRetry   *int
-	KCPMethod      *string
-	KCPKey         *string
+	KCP            kcpcfg.KCPConfigArgs
 	UDPParent      *string
 	UDPLocal       *string
 	LocalIPS       *[]string
 	DNSAddress     *string
 	DNSTTL         *int
+	LocalKey       *string
+	ParentKey      *string
+	LocalCompress  *bool
+	ParentCompress *bool
 }
 type SPSArgs struct {
 	Parent            *string
 	CertFile          *string
 	KeyFile           *string
+	CaCertFile        *string
+	CaCertBytes       []byte
 	CertBytes         []byte
 	KeyBytes          []byte
 	Local             *string
 	ParentType        *string
 	LocalType         *string
 	Timeout           *int
-	KCPMethod         *string
-	KCPKey            *string
+	KCP               kcpcfg.KCPConfigArgs
 	ParentServiceType *string
 	DNSAddress        *string
 	DNSTTL            *int
+	AuthFile          *string
+	Auth              *[]string
+	AuthURL           *string
+	AuthURLOkCode     *int
+	AuthURLTimeout    *int
+	AuthURLRetry      *int
+	LocalIPS          *[]string
+	ParentAuth        *string
+	LocalKey          *string
+	ParentKey         *string
+	LocalCompress     *bool
+	ParentCompress    *bool
 }
 
 func (a *SPSArgs) Protocol() string {
