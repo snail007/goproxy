@@ -1,4 +1,47 @@
 proxy更新日志
+v4.7
+1.增加了基于gomobile的sdk,对安卓/IOS提供SDK支持.
+2.优化了bridge的日志,增加了client和server的掉线日志.
+3.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
+ 避免了某些代理服务器返回过多数据导致不能正常通讯的问题.
+4.去除了鸡肋连接池功能.
+5.优化了所有服务代码,方便对sdk提供支持.
+6.增加了SDK手册.
+7.增加了GUI客户端(windows/web/android/ios)介绍主页.
+8.SPS\HTTP(s)\Socks代理增加了自定义加密传输,只需要通过参数-z和-Z设置一个密码即可.
+9.SPS\HTTP(s)\Socks代理增加了压缩传输,只需要通过参数-m和-M设置即可.
+10.手册增加了SPS\HTTP(s)\Socks自定义加密的使用示例.
+11.手册增加了SPS\HTTP(s)\Socks压缩传输的使用示例.
+12.优化了多链接版本的内网穿透,融合了多链接和smux的优点,即能够拥有大的吞吐量,
+ 同时又具备mux的心跳机制保证了链接的稳定性.
+13.手册增加了大量配图.
+
+v4.6
+1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.
+2.sps增加了强大的树形级联认证支持,可以轻松构建你的认证代理网络.
+3.手册增加了6.6对sps认证功能的介绍.
+
+
+v4.5
+1.优化了mux内网穿透连接管理逻辑,增强了稳定性.  
+2.mux内网穿透增加了tcp和kcp协议支持,之前是tls,现在支持三种协议tcp,tls,kcp.  
+3.keygen参数增加了用法: proxy keygen usage.  
+4.http(s)/socks5代理,tls增加了自签名证书支持.  
+5.建议升级.   
+v4.4
+1.增加了协议转换sps功能，代理协议转换使用的是sps子命令(socks+https的缩写)，
+sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理
+或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口
+同时支持http(s)和socks5代理，而且http(s)代理支持正向代理和反向代理(SNI)，转
+换后的SOCKS5代理不支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，
+支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建
+加密通道。
+2.增加了对KCP传输参数的配置，多达17个参数可以自由的配置对kcp传输效率调优。
+3.内网穿透功能，server和client增加了--session-count参数，可以设置server每个
+监听端口到bridge打开的session数量，可以设置client到bridge打开的session数量，
+之前都是1个，现在性能提升N倍，N就是你自己设置的--session-count，这个参数很大
+程度上解决了多路复用的拥塞问题，v4.4开始默认10个。
+
 v4.3
 1.优化了参数keygen生成证书逻辑，避免证书出现特征。
 2.http(s)和socks代理增加了--dns-address和--dns-ttl参数。

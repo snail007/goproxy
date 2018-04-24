@@ -8,106 +8,74 @@ import (
 	"net"
 	"snail007/proxy/utils"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type TunnelClient struct {
-	cfg TunnelClientArgs
-	// cm       utils.ConnManager
-	ctrlConn net.Conn
+	cfg       TunnelClientArgs
+	ctrlConn  net.Conn
+	isStop    bool
+	userConns utils.ConcurrentMap
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
-		cfg: TunnelClientArgs{},
-		// cm:  utils.NewConnManager(),
+		cfg:       TunnelClientArgs{},
+		userConns: utils.NewConcurrentMap(),
+		isStop:    false,
 	}
 }
 
-func (s *TunnelClient) InitService() {
-	// s.InitHeartbeatDeamon()
+func (s *TunnelClient) InitService() (err error) {
+	return
 }
 
-// func (s *TunnelClient) InitHeartbeatDeamon() {
-// 	log.Printf("heartbeat started")
-// 	go func() {
-// 		var heartbeatConn net.Conn
-// 		var ID = *s.cfg.Key
-// 		for {
-
-// 			//close all connection
-// 			s.cm.RemoveAll()
-// 			if s.ctrlConn != nil {
-// 				s.ctrlConn.Close()
-// 			}
-// 			utils.CloseConn(&heartbeatConn)
-// 			heartbeatConn, err := s.GetInConn(CONN_CLIENT_HEARBEAT, ID)
-// 			if err != nil {
-// 				log.Printf("heartbeat connection err: %s, retrying...", err)
-// 				time.Sleep(time.Second * 3)
-// 				utils.CloseConn(&heartbeatConn)
-// 				continue
-// 			}
-// 			log.Printf("heartbeat connection created,id:%s", ID)
-// 			writeDie := make(chan bool)
-// 			readDie := make(chan bool)
-// 			go func() {
-// 				for {
-// 					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-// 					_, err = heartbeatConn.Write([]byte{0x00})
-// 					heartbeatConn.SetWriteDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection write err %s", err)
-// 						break
-// 					}
-// 					time.Sleep(time.Second * 3)
-// 				}
-// 				close(writeDie)
-// 			}()
-// 			go func() {
-// 				for {
-// 					signal := make([]byte, 1)
-// 					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-// 					_, err := heartbeatConn.Read(signal)
-// 					heartbeatConn.SetReadDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection read err: %s", err)
-// 						break
-// 					} else {
-// 						//log.Printf("heartbeat from bridge")
-// 					}
-// 				}
-// 				close(readDie)
-// 			}()
-// 			select {
-// 			case <-readDie:
-// 			case <-writeDie:
-// 			}
-// 		}
-// 	}()
-// }
-func (s *TunnelClient) CheckArgs() {
+func (s *TunnelClient) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
 }
 func (s *TunnelClient) StopService() {
-	// s.cm.RemoveAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tclient service crashed,%s", e)
+		} else {
+			log.Printf("service tclient stoped")
+		}
+	}()
+	s.isStop = true
+	if s.ctrlConn != nil {
+		s.ctrlConn.Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
+	}
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("proxy on tunnel client mode")
 
 	for {
-		//close all conn
-		// s.cm.Remove(*s.cfg.Key)
+		if s.isStop {
+			return
+		}
 		if s.ctrlConn != nil {
 			s.ctrlConn.Close()
 		}
@@ -122,6 +90,9 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 			continue
 		}
 		for {
+			if s.isStop {
+				return
+			}
 			var ID, clientLocalAddr, serverID string
 			err = utils.ReadPacketData(s.ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
@@ -161,9 +132,26 @@ func (s *TunnelClient) GetInConn(typ uint8, data ...string) (outConn net.Conn, e
 }
 func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
+		c, e := smux.Client(conn, &smux.Config{
+			KeepAliveInterval: 10 * time.Second,
+			KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
+			MaxFrameSize:      4096,
+			MaxReceiveBuffer:  4194304,
+		})
+		if e != nil {
+			log.Printf("new mux client conn error,ERR:%s", e)
+			err = e
+			return
+		}
+		conn, e = c.OpenStream()
+		if e != nil {
+			log.Printf("mux client conn open stream error,ERR:%s", e)
+			err = e
+			return
+		}
 	}
 	return
 }
@@ -172,6 +160,12 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	var err error
 	// for {
 	for {
+		if s.isStop {
+			if inConn != nil {
+				inConn.Close()
+			}
+			return
+		}
 		// s.cm.RemoveOne(*s.cfg.Key, ID)
 		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
@@ -187,6 +181,9 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	log.Printf("conn %s created", ID)
 
 	for {
+		if s.isStop {
+			return
+		}
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			log.Printf("connection %s released", ID)
@@ -243,6 +240,9 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	var inConn, outConn net.Conn
 	var err error
 	for {
+		if s.isStop {
+			return
+		}
 		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
@@ -256,6 +256,9 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 
 	i := 0
 	for {
+		if s.isStop {
+			return
+		}
 		i++
 		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {
@@ -274,10 +277,14 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
+	inAddr := inConn.RemoteAddr().String()
 	utils.IoBind(inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s released", ID)
-		// s.cm.RemoveOne(*s.cfg.Key, ID)
+		s.userConns.Remove(inAddr)
 	})
-	// s.cm.Add(*s.cfg.Key, ID, &inConn)
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	log.Printf("conn %s created", ID)
 }

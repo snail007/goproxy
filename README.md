@@ -298,13 +298,13 @@ Local HTTP (S) proxy use 28080 port,excute:
 
 #### **1.8.KCP protocol transmission**  
 ![1.8](/docs/images/http-kcp.png)  
-The KCP protocol requires a -B parameter to set a password which can encrypt and decrypt data.  
+The KCP protocol requires a --kcp-key parameter to set a password which can encrypt and decrypt data.   
 
 Http first level proxy(VPS,IP:22.22.22.22)  
-`./proxy http -t kcp -p ":38080" -B mypassword`  
+`./proxy http -t kcp -p ":38080" --kcp-key mypassword`  
   
 Http second level proxy(os is Linux)  
-`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
 #### **1.9.HTTP reverse proxy** 
 ![1.9](/docs/images/fxdl.png)  
@@ -729,13 +729,13 @@ ip: user's IP, for example: 192.168.1.200
 If there is no -a or -F or --auth-url parameters, it means to turn off the authentication.    
 
 #### **5.8.KCP protocol transmission**  
-The KCP protocol requires a -B parameter which can set a password to encrypt and decrypt data.  
+The KCP protocol requires a --kcp-key parameter which can set a password to encrypt and decrypt data.  
 
 HTTP first level proxy(VPS,IP:22.22.22.22)  
-`./proxy socks -t kcp -p ":38080" -B mypassword`  
+`./proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
   
 HTTP two level proxy(local os is Linux)  
-`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
+`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access to the local 8080 port is access to the proxy port 38080 on the VPS, and the data is transmitted through the KCP protocol.
 
 #### **5.9.Custom DNS** 
@@ -805,7 +805,7 @@ command：
 
 Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
 command：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.3.SOCKS5 to HTTP(S) + SOCKS5** 
 Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
@@ -818,7 +818,7 @@ command：
 
 Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
 command：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
 #### **6.4.Chain style connection** 
 ![6.4](/docs/images/sps-tls.png)  

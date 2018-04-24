@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -13,98 +14,177 @@ import (
 )
 
 type MuxClient struct {
-	cfg MuxClientArgs
+	cfg      MuxClientArgs
+	isStop   bool
+	sessions utils.ConcurrentMap
 }
 
 func NewMuxClient() Service {
 	return &MuxClient{
-		cfg: MuxClientArgs{},
+		cfg:      MuxClientArgs{},
+		isStop:   false,
+		sessions: utils.NewConcurrentMap(),
 	}
 }
 
-func (s *MuxClient) InitService() {
-
+func (s *MuxClient) InitService() (err error) {
+	return
 }
 
-func (s *MuxClient) CheckArgs() {
+func (s *MuxClient) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	if *s.cfg.ParentType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 func (s *MuxClient) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop client service crashed,%s", e)
+		} else {
+			log.Printf("service client stoped")
+		}
+	}()
+	s.isStop = true
+	for _, sess := range s.sessions.Items() {
+		sess.(*smux.Session).Close()
+	}
 }
 func (s *MuxClient) Start(args interface{}) (err error) {
 	s.cfg = args.(MuxClientArgs)
-	s.CheckArgs()
-	s.InitService()
-	log.Printf("proxy on mux client mode, compress %v", *s.cfg.IsCompress)
-	for {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
-		if err != nil {
-			log.Printf("connection err: %s, retrying...", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		conn := net.Conn(&_conn)
-		_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, *s.cfg.Key))
-		if err != nil {
-			conn.Close()
-			log.Printf("connection err: %s, retrying...", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		session, err := smux.Server(conn, nil)
-		if err != nil {
-			log.Printf("session err: %s, retrying...", err)
-			conn.Close()
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		for {
-			stream, err := session.AcceptStream()
-			if err != nil {
-				log.Printf("accept stream err: %s, retrying...", err)
-				session.Close()
-				time.Sleep(time.Second * 3)
-				break
-			}
-			go func() {
-				var ID, clientLocalAddr, serverID string
-				err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
-				if err != nil {
-					log.Printf("read stream signal err: %s", err)
-					stream.Close()
-					return
-				}
-				log.Printf("signal revecived,server %s stream %s %s", serverID, ID, clientLocalAddr)
-				protocol := clientLocalAddr[:3]
-				localAddr := clientLocalAddr[4:]
-				if protocol == "udp" {
-					s.ServeUDP(stream, localAddr, ID)
-				} else {
-					s.ServeConn(stream, localAddr, ID)
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
+	log.Printf("client started")
+	count := 1
+	if *s.cfg.SessionCount > 0 {
+		count = *s.cfg.SessionCount
+	}
+	for i := 1; i <= count; i++ {
+		key := fmt.Sprintf("worker[%d]", i)
+		log.Printf("session %s started", key)
+		go func(i int) {
+			defer func() {
+				e := recover()
+				if e != nil {
+					log.Printf("session worker crashed: %s", e)
 				}
 			}()
-		}
+			for {
+				if s.isStop {
+					return
+				}
+				conn, err := s.getParentConn()
+				if err != nil {
+					log.Printf("connection err: %s, retrying...", err)
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+				_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, fmt.Sprintf("%s-%d", *s.cfg.Key, i)))
+				conn.SetDeadline(time.Time{})
+				if err != nil {
+					conn.Close()
+					log.Printf("connection err: %s, retrying...", err)
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				session, err := smux.Server(conn, nil)
+				if err != nil {
+					log.Printf("session err: %s, retrying...", err)
+					conn.Close()
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				if _sess, ok := s.sessions.Get(key); ok {
+					_sess.(*smux.Session).Close()
+				}
+				s.sessions.Set(key, session)
+				for {
+					if s.isStop {
+						return
+					}
+					stream, err := session.AcceptStream()
+					if err != nil {
+						log.Printf("accept stream err: %s, retrying...", err)
+						session.Close()
+						time.Sleep(time.Second * 3)
+						break
+					}
+					go func() {
+						defer func() {
+							e := recover()
+							if e != nil {
+								log.Printf("stream handler crashed: %s", e)
+							}
+						}()
+						var ID, clientLocalAddr, serverID string
+						stream.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+						err = utils.ReadPacketData(stream, &ID, &clientLocalAddr, &serverID)
+						stream.SetDeadline(time.Time{})
+						if err != nil {
+							log.Printf("read stream signal err: %s", err)
+							stream.Close()
+							return
+						}
+						log.Printf("worker[%d] signal revecived,server %s stream %s %s", i, serverID, ID, clientLocalAddr)
+						protocol := clientLocalAddr[:3]
+						localAddr := clientLocalAddr[4:]
+						if protocol == "udp" {
+							s.ServeUDP(stream, localAddr, ID)
+						} else {
+							s.ServeConn(stream, localAddr, ID)
+						}
+					}()
+				}
+			}
+		}(i)
 	}
-
+	return
 }
 func (s *MuxClient) Clean() {
 	s.StopService()
 }
-
+func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else if *s.cfg.ParentType == "kcp" {
+		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+	} else {
+		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+	}
+	return
+}
 func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 
 	for {
+		if s.isStop {
+			return
+		}
+		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
+		inConn.SetDeadline(time.Time{})
 		if err != nil {
 			log.Printf("udp packet revecived fail, err: %s", err)
 			log.Printf("connection %s released", ID)
@@ -112,7 +192,15 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 			break
 		} else {
 			//log.Printf("udp packet revecived:%s,%v", srcAddr, body)
-			go s.processUDPPacket(inConn, srcAddr, localAddr, body)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						log.Printf("client processUDPPacket crashed,err: %s", e)
+					}
+				}()
+				s.processUDPPacket(inConn, srcAddr, localAddr, body)
+			}()
+
 		}
 
 	}
@@ -133,13 +221,16 @@ func (s *MuxClient) processUDPPacket(inConn *smux.Stream, srcAddr, localAddr str
 	}
 	conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	_, err = conn.Write(body)
+	conn.SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
 		return
 	}
 	//log.Printf("send udp packet to %s success", dstAddr.String())
 	buf := make([]byte, 1024)
+	conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	length, _, err := conn.ReadFromUDP(buf)
+	conn.SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
 		return
@@ -147,7 +238,9 @@ func (s *MuxClient) processUDPPacket(inConn *smux.Stream, srcAddr, localAddr str
 	respBody := buf[0:length]
 	//log.Printf("revecived udp packet from %s , %v", dstAddr.String(), respBody)
 	bs := utils.UDPPacket(srcAddr, respBody)
+	(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 	_, err = (*inConn).Write(bs)
+	(*inConn).SetDeadline(time.Time{})
 	if err != nil {
 		log.Printf("send udp response fail ,ERR:%s", err)
 		inConn.Close()
@@ -160,6 +253,9 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 	var outConn net.Conn
 	i := 0
 	for {
+		if s.isStop {
+			return
+		}
 		i++
 		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {

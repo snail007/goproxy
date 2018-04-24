@@ -11,20 +11,24 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type TunnelServer struct {
-	cfg    TunnelServerArgs
-	udpChn chan UDPItem
-	sc     utils.ServerChannel
+	cfg       TunnelServerArgs
+	udpChn    chan UDPItem
+	sc        utils.ServerChannel
+	isStop    bool
+	udpConn   *net.Conn
+	userConns utils.ConcurrentMap
 }
 
 type TunnelServerManager struct {
 	cfg      TunnelServerArgs
 	udpChn   chan UDPItem
-	sc       utils.ServerChannel
 	serverID string
-	// cm       utils.ConnManager
+	servers  []*Service
 }
 
 func NewTunnelServerManager() Service {
@@ -32,19 +36,24 @@ func NewTunnelServerManager() Service {
 		cfg:      TunnelServerArgs{},
 		udpChn:   make(chan UDPItem, 50000),
 		serverID: utils.Uniqueid(),
-		// cm:       utils.NewConnManager(),
+		servers:  []*Service{},
 	}
 }
 func (s *TunnelServerManager) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
-	s.CheckArgs()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
 
-	s.InitService()
+	if err = s.InitService(); err != nil {
+		return
+	}
 
 	log.Printf("server id: %s", s.serverID)
 	//log.Printf("route:%v", *s.cfg.Route)
@@ -84,6 +93,7 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
+		s.servers = append(s.servers, &server)
 	}
 	return
 }
@@ -91,72 +101,22 @@ func (s *TunnelServerManager) Clean() {
 	s.StopService()
 }
 func (s *TunnelServerManager) StopService() {
-	// s.cm.RemoveAll()
-}
-func (s *TunnelServerManager) CheckArgs() {
-	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
-		log.Fatalf("cert and key file required")
+	for _, server := range s.servers {
+		(*server).Clean()
 	}
-	s.cfg.CertBytes, s.cfg.KeyBytes = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 }
-func (s *TunnelServerManager) InitService() {
-	// s.InitHeartbeatDeamon()
+func (s *TunnelServerManager) CheckArgs() (err error) {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
+		err = fmt.Errorf("cert and key file required")
+		return
+	}
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
+}
+func (s *TunnelServerManager) InitService() (err error) {
+	return
 }
 
-// func (s *TunnelServerManager) InitHeartbeatDeamon() {
-// 	log.Printf("heartbeat started")
-// 	go func() {
-// 		var heartbeatConn net.Conn
-// 		var ID string
-// 		for {
-// 			//close all connection
-// 			s.cm.Remove(ID)
-// 			utils.CloseConn(&heartbeatConn)
-// 			heartbeatConn, ID, err := s.GetOutConn(CONN_SERVER_HEARBEAT)
-// 			if err != nil {
-// 				log.Printf("heartbeat connection err: %s, retrying...", err)
-// 				time.Sleep(time.Second * 3)
-// 				utils.CloseConn(&heartbeatConn)
-// 				continue
-// 			}
-// 			log.Printf("heartbeat connection created,id:%s", ID)
-// 			writeDie := make(chan bool)
-// 			readDie := make(chan bool)
-// 			go func() {
-// 				for {
-// 					heartbeatConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-// 					_, err = heartbeatConn.Write([]byte{0x00})
-// 					heartbeatConn.SetWriteDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection write err %s", err)
-// 						break
-// 					}
-// 					time.Sleep(time.Second * 3)
-// 				}
-// 				close(writeDie)
-// 			}()
-// 			go func() {
-// 				for {
-// 					signal := make([]byte, 1)
-// 					heartbeatConn.SetReadDeadline(time.Now().Add(time.Second * 6))
-// 					_, err := heartbeatConn.Read(signal)
-// 					heartbeatConn.SetReadDeadline(time.Time{})
-// 					if err != nil {
-// 						log.Printf("heartbeat connection read err: %s", err)
-// 						break
-// 					} else {
-// 						// log.Printf("heartbeat from bridge")
-// 					}
-// 				}
-// 				close(readDie)
-// 			}()
-// 			select {
-// 			case <-readDie:
-// 			case <-writeDie:
-// 			}
-// 		}
-// 	}()
-// }
 func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
@@ -174,7 +134,7 @@ func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string
 }
 func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
 	}
@@ -182,8 +142,10 @@ func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
 }
 func NewTunnelServer() Service {
 	return &TunnelServer{
-		cfg:    TunnelServerArgs{},
-		udpChn: make(chan UDPItem, 50000),
+		cfg:       TunnelServerArgs{},
+		udpChn:    make(chan UDPItem, 50000),
+		isStop:    false,
+		userConns: utils.NewConcurrentMap(),
 	}
 }
 
@@ -193,19 +155,50 @@ type UDPItem struct {
 	srcAddr   *net.UDPAddr
 }
 
-func (s *TunnelServer) InitService() {
-	s.UDPConnDeamon()
-}
-func (s *TunnelServer) CheckArgs() {
-	if *s.cfg.Remote == "" {
-		log.Fatalf("remote required")
+func (s *TunnelServer) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop server service crashed,%s", e)
+		} else {
+			log.Printf("service server stoped")
+		}
+	}()
+	s.isStop = true
+
+	if s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
 	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
+	}
+	if s.udpConn != nil {
+		(*s.udpConn).Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
+	}
+}
+func (s *TunnelServer) InitService() (err error) {
+	s.UDPConnDeamon()
+	return
+}
+func (s *TunnelServer) CheckArgs() (err error) {
+	if *s.cfg.Remote == "" {
+		err = fmt.Errorf("remote required")
+		return
+	}
+	return
 }
 
 func (s *TunnelServer) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelServerArgs)
-	s.CheckArgs()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p)
@@ -231,6 +224,9 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			var outConn net.Conn
 			var ID string
 			for {
+				if s.isStop {
+					return
+				}
 				outConn, ID, err = s.GetOutConn(CONN_SERVER)
 				if err != nil {
 					utils.CloseConn(&outConn)
@@ -241,12 +237,15 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 					break
 				}
 			}
+			inAddr := inConn.RemoteAddr().String()
 			utils.IoBind(inConn, outConn, func(err interface{}) {
-				// s.cfg.Mgr.cm.RemoveOne(s.cfg.Mgr.serverID, ID)
+				s.userConns.Remove(inAddr)
 				log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			})
-			//add conn
-			// s.cfg.Mgr.cm.Add(s.cfg.Mgr.serverID, ID, &inConn)
+			if c, ok := s.userConns.Get(inAddr); ok {
+				(*c.(*net.Conn)).Close()
+			}
+			s.userConns.Set(inAddr, &inConn)
 			log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {
@@ -280,9 +279,26 @@ func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err e
 }
 func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
+		c, e := smux.Client(conn, &smux.Config{
+			KeepAliveInterval: 10 * time.Second,
+			KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
+			MaxFrameSize:      4096,
+			MaxReceiveBuffer:  4194304,
+		})
+		if e != nil {
+			log.Printf("new mux client conn error,ERR:%s", e)
+			err = e
+			return
+		}
+		conn, e = c.OpenStream()
+		if e != nil {
+			log.Printf("mux client conn open stream error,ERR:%s", e)
+			err = e
+			return
+		}
 	}
 	return
 }
@@ -299,10 +315,19 @@ func (s *TunnelServer) UDPConnDeamon() {
 		// var cmdChn = make(chan bool, 1000)
 		var err error
 		for {
+			if s.isStop {
+				return
+			}
 			item := <-s.udpChn
 		RETRY:
+			if s.isStop {
+				return
+			}
 			if outConn == nil {
 				for {
+					if s.isStop {
+						return
+					}
 					outConn, ID, err = s.GetOutConn(CONN_SERVER)
 					if err != nil {
 						// cmdChn <- true
@@ -313,11 +338,14 @@ func (s *TunnelServer) UDPConnDeamon() {
 						continue
 					} else {
 						go func(outConn net.Conn, ID string) {
-							go func() {
-								// <-cmdChn
-								// outConn.Close()
-							}()
+							if s.udpConn != nil {
+								(*s.udpConn).Close()
+							}
+							s.udpConn = &outConn
 							for {
+								if s.isStop {
+									return
+								}
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
 								if err == io.EOF || err == io.ErrUnexpectedEOF {
 									log.Printf("UDP deamon connection %s exited", ID)
