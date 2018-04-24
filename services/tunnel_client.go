@@ -8,6 +8,8 @@ import (
 	"net"
 	"snail007/proxy/utils"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type TunnelClient struct {
@@ -133,6 +135,18 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
+		c, e := smux.Client(conn, nil)
+		if e != nil {
+			log.Printf("new mux client conn error,ERR:%s", e)
+			err = e
+			return
+		}
+		conn, e = c.OpenStream()
+		if e != nil {
+			log.Printf("mux client conn open stream error,ERR:%s", e)
+			err = e
+			return
+		}
 	}
 	return
 }

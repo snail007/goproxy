@@ -221,16 +221,18 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 
 ### **1.HTTP代理**  
 #### **1.1.普通HTTP代理**  
-![1.1](/docs/images/1.1.jpg)  
+![1.1](/docs/images/http-1.png)  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.普通二级HTTP代理**  
+![1.2](/docs/images/http-2.png)  
 使用本地端口8090,假设上级HTTP代理是`22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理.  
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **1.3.HTTP二级代理(加密)**  
+![1.3](/docs/images/http-tls-2.png)  
 一级HTTP代理(VPS,IP:22.22.22.22)  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -243,6 +245,7 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **1.4.HTTP三级代理(加密)**  
+![1.3](/docs/images/http-tls-3.png)  
 一级HTTP代理VPS_01,IP:22.22.22.22  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级HTTP代理VPS_02,IP:33.33.33.33  
@@ -278,6 +281,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **1.7.HTTP(S)通过SSH中转**  
+![1.7](/docs/images/http-ssh-1.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo  
@@ -291,6 +295,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP协议传输**  
+![1.8](/docs/images/http-kcp.png)  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
@@ -300,7 +305,8 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
 
-#### **1.9 HTTP(S)反向代理** 
+#### **1.9 HTTP(S)反向代理**   
+![1.9](/docs/images/fxdl.png)  
 proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
 
 使用方式:  
@@ -313,7 +319,7 @@ proxy不仅支持在其他软件里面通过设置代理的方式,为其他软�
 `./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`   
 
 注意:  
-proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了.  
+proxy所在的服务器的DNS解析结果不能受到自定义的解析影响,不然就死循环了,proxy代理最好指定`--dns 8.8.8.8`参数.  
   
 #### **1.10 HTTP(S)透明代理** 
 该模式需要具有一定的网络基础,相关概念不懂的请自行搜索解决.  
@@ -418,13 +424,13 @@ proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加�
 ### **2.TCP代理**  
   
 #### **2.1.普通一级TCP代理**  
-![2.1](/docs/images/2.1.png)  
+![2.1](/docs/images/tcp-1.png)  
 本地执行:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 那么访问本地33080端口就是访问192.168.22.33的22端口.  
   
 #### **2.2.普通二级TCP代理**  
-![2.2](/docs/images/2.2.png)  
+![2.2](/docs/images/tcp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 本地执行:  
@@ -432,6 +438,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是访问22.22.22.33的8080端口.  
   
 #### **2.3.普通三级TCP代理**  
+![2.3](/docs/images/tcp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -441,6 +448,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
   
 #### **2.4.加密二级TCP代理**  
+![2.4](/docs/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -448,6 +456,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口.  
   
 #### **2.5.加密三级TCP代理**  
+![2.5](/docs/images/tcp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -462,11 +471,13 @@ VPS(IP:22.22.22.33)执行:
 ### **3.UDP代理**  
   
 #### **3.1.普通一级UDP代理**  
+![3.1](/docs/images/udp-1.png)  
 本地执行:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口.  
   
 #### **3.2.普通二级UDP代理**  
+![3.2](/docs/images/udp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 本地执行:  
@@ -474,6 +485,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.3.普通三级UDP代理**  
+![3.3](/docs/images/udp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -483,6 +495,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的53端口.  
   
 #### **3.4.加密二级UDP代理**  
+![3.4](/docs/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -490,6 +503,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过加密TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.5.加密三级UDP代理**  
+![3.5](/docs/images/udp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -649,13 +663,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
 #### **5.2.普通二级SOCKS5代理**  
-![5.2](/docs/images/5.2.png)  
+![5.2](/docs/images/socks-2.png)  
 使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理;如果域名即在黑名单又在白名单中,那么黑名单起作用.  
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **5.3.SOCKS二级代理(加密)**  
+![5.3](/docs/images/socks-tls-2.png)  
 一级SOCKS代理(VPS,IP:22.22.22.22)  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -668,6 +683,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **5.4.SOCKS三级代理(加密)**  
+![5.4](/docs/images/socks-tls-3.png)  
 一级SOCKS代理VPS_01,IP:22.22.22.22  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级SOCKS代理VPS_02,IP:33.33.33.33  
@@ -681,6 +697,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **5.6.SOCKS通过SSH中转**  
+![5.6](/docs/images/socks-ssh.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
@@ -817,7 +834,8 @@ proxy的socks代理在tcp之上可以通过自定义加密和tls标准加密以�
 命令如下：  
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
 
-#### **6.4 链式连接** 
+#### **6.4 链式连接**   
+![6.4](/docs/images/sps-tls.png)  
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
 vps01：2.2.2.2  
 vps02：3.3.3.3  

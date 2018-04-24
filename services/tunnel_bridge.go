@@ -1,13 +1,15 @@
 package services
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
 	"log"
 	"net"
 	"snail007/proxy/utils"
 	"strconv"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type ServerConn struct {
@@ -81,10 +83,24 @@ func (s *TunnelBridge) Clean() {
 	s.StopService()
 }
 func (s *TunnelBridge) callback(inConn net.Conn) {
-	//log.Printf("connection from %s ", inConn.RemoteAddr())
-
-	reader := bufio.NewReader(inConn)
 	var err error
+	//log.Printf("connection from %s ", inConn.RemoteAddr())
+	sess, err := smux.Server(inConn, nil)
+	if err != nil {
+		log.Printf("new mux server conn error,ERR:%s", err)
+		return
+	}
+	inConn, err = sess.AcceptStream()
+	if err != nil {
+		log.Printf("mux server conn accept error,ERR:%s", err)
+		return
+	}
+
+	var buf = make([]byte, 1024)
+	n, _ := inConn.Read(buf)
+	reader := bytes.NewReader(buf[:n])
+	//reader := bufio.NewReader(inConn)
+
 	var connType uint8
 	err = utils.ReadPacket(reader, &connType)
 	if err != nil {
