@@ -220,7 +220,7 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 `./proxy http -g "23.23.23.23"`  
 
 ### **1.HTTP代理**  
-#### **1.1.普通HTTP代理**  
+#### **1.1.普通一级HTTP代理**  
 ![1.1](/docs/images/http-1.png)  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
