@@ -7,9 +7,9 @@ import (
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/utils"
-	"snail007/proxy/utils/aes"
-	"snail007/proxy/utils/socks"
+	"github.com/onetwotrip/goproxy/utils"
+	"github.com/onetwotrip/goproxy/utils/aes"
+	"github.com/onetwotrip/goproxy/utils/socks"
 	"strings"
 	"time"
 

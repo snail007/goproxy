@@ -1,11 +1,11 @@
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
+<img src="https://github.com/onetwotrip/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
 Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输，协议转换。
 
-[点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
+[点击下载](https://github.com/onetwotrip/goproxy/releases) 官方QQ交流群:189618940  
 
 ---  
   
-[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/onetwotrip/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/onetwotrip/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/onetwotrip/goproxy/releases)  
   
 [English Manual](/README.md) 
 
@@ -36,21 +36,21 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 
  
 本页是v4.6手册,其他版本手册请点击下面链接查看. 
-- [v4.5手册](https://github.com/snail007/goproxy/tree/v4.5) 
-- [v4.4手册](https://github.com/snail007/goproxy/tree/v4.4) 
-- [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
-- [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
-- [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2手册](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1手册](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)  
+- [v4.5手册](https://github.com/onetwotrip/goproxy/tree/v4.5) 
+- [v4.4手册](https://github.com/onetwotrip/goproxy/tree/v4.4) 
+- [v4.3手册](https://github.com/onetwotrip/goproxy/tree/v4.3) 
+- [v4.2手册](https://github.com/onetwotrip/goproxy/tree/v4.2) 
+- [v4.0-v4.1手册](https://github.com/onetwotrip/goproxy/tree/v4.1)
+- [v3.9手册](https://github.com/onetwotrip/goproxy/tree/v3.9)
+- [v3.8手册](https://github.com/onetwotrip/goproxy/tree/v3.8)
+- [v3.6-v3.7手册](https://github.com/onetwotrip/goproxy/tree/v3.6)
+- [v3.5手册](https://github.com/onetwotrip/goproxy/tree/v3.5)
+- [v3.4手册](https://github.com/onetwotrip/goproxy/tree/v3.4)
+- [v3.3手册](https://github.com/onetwotrip/goproxy/tree/v3.3)
+- [v3.2手册](https://github.com/onetwotrip/goproxy/tree/v3.2)
+- [v3.1手册](https://github.com/onetwotrip/goproxy/tree/v3.1)
+- [v3.0手册](https://github.com/onetwotrip/goproxy/tree/v3.0)
+- [v2.x手册](https://github.com/onetwotrip/goproxy/tree/v2.2)  
 
 ### 怎么找到组织?  
 [点击加入交流组织gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -146,10 +146,10 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 #### 手动安装  
 
 #### **1.下载proxy**  
-下载地址:https://github.com/snail007/goproxy/releases  
+下载地址:https://github.com/onetwotrip/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
+wget https://github.com/onetwotrip/goproxy/releases/download/v4.6/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -828,7 +828,7 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 ### 如何使用源码?   
 建议go1.8.5,不保证>=1.9能用.    
 cd进入你的go src目录,新建文件夹snail007,   
-cd进入snail007,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.     
+cd进入snail007,然后git clone https://github.com/onetwotrip/goproxy.git ./proxy 即可.     
 编译直接:go build       
 运行: go run *.go      
 utils是工具包,service是具体的每个服务类.     
@@ -841,7 +841,7 @@ QQ交流群:189618940
   
 ### Donation  
 如果proxy帮助你解决了很多问题,你可以通过下面的捐赠更好的支持proxy.  
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/onetwotrip/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/onetwotrip/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
 
   
