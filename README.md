@@ -219,10 +219,11 @@ Assuming that your VPS outer external network IP is 23.23.23.23, the following c
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
-![1.1](/docs/images/1.1.jpg)
+![1.1](/docs/images/http-1.png)  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.Common HTTP second level proxy**  
+![1.2](/docs/images/http-2.png)  
 Using local port 8090, assume the parent HTTP proxy is: `22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 The connection pool is closed by default. If you want to speed up access speed, -L can open the connection pool, the 10 is the size of the connection pool, and the 0 is closed.  
@@ -232,6 +233,7 @@ We can also specify the black and white list files of the domain name, one line 
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **1.3.HTTP second level encrypted proxy**  
+![1.3](/docs/images/http-tls-2.png)  
 HTTP first level proxy(VPS,IP:22.22.22.22)    
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -244,6 +246,7 @@ HTTP second level proxy(local windows)
 In your windos system, the mode of the program that needs to surf the Internet by proxy is setted up as HTTP mode, the address is 127.0.0.1, the port is: 8080, the program can go through the encrypted channel through VPS to surf on the internet.  
   
 #### **1.4.HTTP third level encrypted proxy**  
+![1.4](/docs/images/http-tls-3.png)  
 HTTP first level proxy VPS_01,IP:22.22.22.22    
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 HTTP second level proxy VPS_02,IP:33.33.33.33   
@@ -280,6 +283,7 @@ Through --always, all HTTP proxy traffic can be coercion to the parent HTTP prox
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **1.7.Transfer through SSH**  
+![1.7](/docs/images/http-ssh-1.png)  
 Explanation: the principle of SSH transfer is to take advantage of SSH's forwarding function, which is, after you connect to SSH, you can access to the target address through the SSH proxy.  
 Suppose there is a vps  
 - IP is 2.2.2.2, ssh port is 22, ssh username is user, ssh password is demo  
@@ -293,6 +297,7 @@ Local HTTP (S) proxy use 28080 port,excute:
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP protocol transmission**  
+![1.8](/docs/images/http-kcp.png)  
 The KCP protocol requires a -B parameter to set a password which can encrypt and decrypt data.  
 
 Http first level proxy(VPS,IP:22.22.22.22)  
@@ -302,6 +307,7 @@ Http second level proxy(os is Linux)
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" -B mypassword`  
 Then access to the local 8080 port is access to the proxy's port 38080 on the VPS, and the data is transmitted through the KCP protocol.  
 #### **1.9.HTTP reverse proxy** 
+![1.9](/docs/images/fxdl.png)  
 Proxy supports not only set up a proxy through in other software, to provide services for other software, but support the request directly to the website domain to proxy monitor IP when proxy monitors 80 and 443 ports, then proxy will automatically access to the HTTP proxy access website for you.  
 
 How to use:  
@@ -415,13 +421,13 @@ through this way, When you visits the website by local proxy 8080, it visits the
 ### **2.TCP proxy**  
   
 #### **2.1.Common TCP first level proxy**  
-![2.1](/docs/images/2.1.png)
+![2.1](/docs/images/tcp-1.png)  
 Local execution:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -L 0`  
 Then access to the local 33080 port is the 22 port of access to 192.168.22.33.  
   
 #### **2.2.Common TCP second level proxy**  
-![2.2](/docs/images/2.2.png)
+![2.2](/docs/images/tcp-2.png)  
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0`  
 local execution:  
@@ -429,6 +435,7 @@ local execution:  
 Then access to the local 23080 port is the 8080 port of access to 22.22.22.33.  
   
 #### **2.3.Common TCP third level proxy**  
+![2.3](/docs/images/tcp-3.png)  
 TCP first level proxy VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080" -L 0`  
 TCP second level proxy VPS_02,IP:33.33.33.33  
@@ -438,6 +445,7 @@ TCP third level proxy (local)
 Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66 by encrypting the TCP tunnel.  
   
 #### **2.4.TCP second level encrypted proxy**  
+![2.4](/docs/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp --tls -p ":33080" -T tcp -P "127.0.0.1:8080" -L 0 -C proxy.crt -K proxy.key`  
 local execution:  
@@ -445,6 +453,7 @@ local execution:
 Then access to the local 23080 port is to access the 8080 port of the 22.22.22.33 by encrypting the TCP tunnel.  
   
 #### **2.5.TCP third level encrypted proxy**  
+![2.5](/docs/images/tcp-tls-3.png)  
 TCP first level proxy VPS_01,IP:22.22.22.22  
 `./proxy tcp --tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 TCP second level proxy VPS_02,IP:33.33.33.33  
@@ -459,11 +468,13 @@ Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66
 ### **3.UDP proxy**  
   
 #### **3.1.Common UDP first level proxy**  
+![3.1](/docs/images/udp-1.png)  
 local execution:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8.  
   
 #### **3.2.Common UDP second level proxy**  
+![3.2](/docs/images/udp-2.png)  
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 local execution:  
@@ -471,6 +482,7 @@ local execution:
 Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8 through the TCP tunnel.  
   
 #### **3.3.Common UDP third level proxy**  
+![3.3](/docs/images/udp-3.png)  
 TCP first level proxy VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 TCP second level proxy VPS_02,IP:33.33.33.33  
@@ -480,6 +492,7 @@ TCP third level proxy (local)
 Then access to the local 5353 port is access to the 53 port of the 8.8.8.8 through the TCP tunnel.  
   
 #### **3.4.UDP second level encrypted proxy**  
+![3.4](/docs/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33) execute:  
 `./proxy tcp --tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 local execution:  
@@ -487,6 +500,7 @@ local execution:
 Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8.8 by the encrypting TCP tunnel. 
   
 #### **3.5.UDP third level encrypted proxy**  
+![3.5](/docs/images/udp-tls-3.png)  
 TCP first level proxy VPS_01,IP:22.22.22.22  
 `./proxy tcp --tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 TCP second level proxy VPS_02,IP:33.33.33.33  
@@ -643,6 +657,7 @@ Tips: SOCKS5 proxy, support CONNECT, UDP protocol and don't support BIND and sup
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
    
 #### **5.2.Common SOCKS5 second level proxy**  
+![5.2](/docs/images/socks-2.png)  
 ![5.2](/docs/images/5.2.png)
 Using local port 8090, assume that the parent SOCKS5 proxy is `22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
@@ -650,6 +665,7 @@ We can also specify the black and white list files of the domain name, one line 
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **5.3.SOCKS second level encrypted proxy**  
+![5.3](/docs/images/socks-tls-2.png)  
 SOCKS5 first level proxy(VPS,IP:22.22.22.22)  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -662,6 +678,7 @@ SOCKS5 second level proxy(local windows)
 Then set up your windows system, the proxy that needs to surf the Internet by proxy is Socks5 mode, the address is: 127.0.0.1, the port is: 8080. the program can surf the Internet through the encrypted channel which is running on VPS.  
   
 #### **5.4.SOCKS third level encrypted proxy**  
+![5.4](/docs/images/socks-tls-3.png)  
 SOCKS5 first level proxy VPS_01,IP:22.22.22.22  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 SOCKS5 second level proxy VPS_02,IP:33.33.33.33  
@@ -675,6 +692,7 @@ By default, proxy will intelligently judge whether a domain name can be accessed
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **5.6.Transfer through SSH**  
+![5.6](/docs/images/socks-ssh.png)  
 Explanation: the principle of SSH transfer is to take advantage of SSH's forwarding function, which is, after you connect to SSH, you can access the target address by the SSH.  
 Suppose there is a vps  
 - IP is 2.2.2.2, SSH port is 22, SSH username is user, SSH password is Demo
@@ -803,6 +821,7 @@ command：
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 -B demo123`  
 
 #### **6.4.Chain style connection** 
+![6.4](/docs/images/sps-tls.png)  
 It is mentioned above that multiple SPS nodes can be connected to build encrypted channels, assuming you have the following VPS and a PC.  
 vps01：2.2.2.2  
 vps02：3.3.3.3  
