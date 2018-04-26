@@ -965,13 +965,13 @@ If you want to get a more detailed configuration and explanation of the KCP para
 ### TODO  
 - Welcome joining group feedback...
 
-### How to use the source code?   
-use command cd to enter your go SRC directory and then  
-mkdir snail007  
-cd snail007   
-execute `git clone https://github.com/snail007/goproxy.git ./proxy`     
-Direct compilation: `go build`    
-execution: `go run *.go`    
+### How to use the source code?    
+Recommend go1.8.5, which does not guarantee that version >=1.9 can be used.   
+`go get github.com/snail007/goproxy`   
+use command cd to enter your go SRC directory   
+then cd to enter `github.com/snail007/goproxy`.    
+Direct compilation:`go build -o proxy`        
+execution: `go run *.go`       
 `utils` is a toolkit, and `service` is a specific service class.  
 
 ### License  
