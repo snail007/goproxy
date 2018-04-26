@@ -2,10 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"log"
 	"net"
 	"runtime/debug"
-	"snail007/proxy/services/kcpcfg"
 	"strconv"
 
 	kcp "github.com/xtaci/kcp-go"

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/snail007/goproxy/services"
 	"log"
 	"os"
 	"os/signal"
-	"snail007/proxy/services"
 	"syscall"
 )
 
