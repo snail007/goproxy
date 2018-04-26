@@ -61,6 +61,17 @@ func (s *Socks) CheckArgs() (err error) {
 			err = fmt.Errorf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 			return
 		}
+		host, _, e := net.SplitHostPort(*s.cfg.Parent)
+		if e != nil {
+			err = fmt.Errorf("parent format error : %s", e)
+			return
+		}
+		if *s.cfg.UDPParent == "" {
+			*s.cfg.UDPParent = net.JoinHostPort(host, "33090")
+		}
+		if strings.HasPrefix(*s.cfg.UDPParent, ":") {
+			*s.cfg.UDPParent = net.JoinHostPort(host, strings.TrimLeft(*s.cfg.UDPParent, ":"))
+		}
 		if *s.cfg.ParentType == "ssh" {
 			if *s.cfg.SSHUser == "" {
 				err = fmt.Errorf("ssh user required")
@@ -179,6 +190,9 @@ func (s *Socks) Start(args interface{}) (err error) {
 	}
 	if *s.cfg.Parent != "" {
 		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+	}
+	if *s.cfg.UDPParent != "" {
+		log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
 	}
 	sc := utils.NewServerChannelHost(*s.cfg.Local)
 	if *s.cfg.LocalType == TYPE_TCP {

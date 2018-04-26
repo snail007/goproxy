@@ -6,7 +6,7 @@ sudo ln -s /usr/local/go1.10.1 /usr/local/go
 rm -rf sdk-windows-*.tar.gz
 rm -rf README.md proxy-sdk.h proxy-sdk.dll
 
-#windows 64bit
+
 #apt-get install gcc-multilib 
 #apt-get install gcc-mingw-w64
 

@@ -1,6 +1,6 @@
 proxy更新日志
 v4.7
-1.增加了基于gomobile的sdk,对安卓/IOS提供SDK支持.
+1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.
 2.优化了bridge的日志,增加了client和server的掉线日志.
 3.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
  避免了某些代理服务器返回过多数据导致不能正常通讯的问题.
@@ -15,6 +15,7 @@ v4.7
 12.优化了多链接版本的内网穿透,融合了多链接和smux的优点,即能够拥有大的吞吐量,
  同时又具备mux的心跳机制保证了链接的稳定性.
 13.手册增加了大量配图.
+14.优化了socks代理udp上级的设置逻辑,智能判断parent上级填充udp parent.
 
 v4.6
 1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.
