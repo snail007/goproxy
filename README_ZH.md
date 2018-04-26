@@ -1003,12 +1003,13 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 - 欢迎加群反馈...
 
 ### 如何使用源码?   
-建议go1.8.5,不保证>=1.9能用.    
-cd进入你的go src目录,新建文件夹snail007,   
-cd进入snail007,然后git clone https://github.com/snail007/goproxy.git ./proxy 即可.     
-编译直接:go build       
-运行: go run *.go      
-utils是工具包,service是具体的每个服务类.     
+建议go1.8.5,不保证>=1.9能用.       
+`go get github.com/snail007/goproxy`   
+cd进入你的go src目录  
+cd进入`github.com/snail007/goproxy`即可.    
+编译直接:`go build -o proxy`        
+运行: `go run *.go`       
+utils是工具包,service是具体的每个服务类. 
 
 ### License  
 Proxy is licensed under GPLv3 license.  
