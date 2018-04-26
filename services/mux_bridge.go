@@ -3,11 +3,11 @@ package services
 import (
 	"bufio"
 	"fmt"
+	"github.com/snail007/goproxy/utils"
 	"io"
 	"log"
 	"math/rand"
 	"net"
-	"snail007/proxy/utils"
 	"strconv"
 	"strings"
 	"sync"

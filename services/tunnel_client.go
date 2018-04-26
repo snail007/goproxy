@@ -3,10 +3,10 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/snail007/goproxy/utils"
 	"io"
 	"log"
 	"net"
-	"snail007/proxy/utils"
 	"time"
 
 	"github.com/xtaci/smux"

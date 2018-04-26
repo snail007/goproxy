@@ -1,5 +1,5 @@
 {
-	"ImportPath": "snail007/proxy",
+	"ImportPath": "github.com/snail007/goproxy",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v80",
 	"Packages": [
