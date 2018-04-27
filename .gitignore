@@ -1,4 +1,5 @@
 proxy
+goproxy
 *.exe
 *.exe~
 .*

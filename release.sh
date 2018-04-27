@@ -3,7 +3,7 @@ VER="4.7"
 RELEASE="release-${VER}"
 rm -rf .cert
 mkdir .cert
-go build 
+go build -o proxy 
 cd .cert
 ../proxy keygen
 cd ..
