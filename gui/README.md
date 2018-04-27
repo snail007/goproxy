@@ -21,3 +21,7 @@
 ## IOS
 
 - Coming Soon ...
+
+## 跨平台
+
+- proxy-web,一个跨平台的web UI版本,项目主页:[proxy-web](https://github.com/yincongcyincong/proxy-web)
