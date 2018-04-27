@@ -9,7 +9,7 @@
 - MacOS,`.dylib`库
 
 proxy使用gombile实现了一份go代码编译为android和ios平台下面可以直接调用的sdk类库, 
-另外还为linux和windows提供sdk支持，基于这些类库,APP开发者可以轻松的开发出各种形式的代理工具。    
+另外还为linux和windows,MacOS提供sdk支持，基于这些类库,APP开发者可以轻松的开发出各种形式的代理工具。    
 
 # 下面分平台介绍SDK的用法  
 
