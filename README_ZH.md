@@ -303,7 +303,7 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
   
 二级HTTP代理(本地Linux)  
 `./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
-那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输.  
+那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输,注意kcp走的是udp协议协议,所以防火墙需放开38080的udp协议.   
 
 #### **1.9 HTTP(S)反向代理**   
 ![1.9](/docs/images/fxdl.png)  
