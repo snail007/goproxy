@@ -1002,6 +1002,11 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
+### 如何贡献代码?  
+首先需要clone本项目为到自己的帐号下面,然后在dev分支上面修改代码,  
+最后发Pull Request到goproxy项目的dev分支即可,为了高效贡献代码,  
+pr的时候需要说明做了什么变更,原因是什么.  
+
 ### 如何使用源码?   
 建议go1.8.5,不保证>=1.9能用.       
 `go get github.com/snail007/goproxy`   
