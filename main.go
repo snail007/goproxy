@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/snail007/goproxy/services"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/snail007/goproxy/services"
 )
 
-const APP_VERSION = "4.7"
+const APP_VERSION = "4.8"
 
 func main() {
 	err := initConfig()
