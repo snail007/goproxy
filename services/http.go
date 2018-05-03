@@ -2,16 +2,17 @@ package services
 
 import (
 	"fmt"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/conncrypt"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/conncrypt"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -27,6 +28,7 @@ type HTTP struct {
 	isStop         bool
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
+	log            *logger.Logger
 }
 
 func NewHTTP() Service {
@@ -125,7 +127,7 @@ func (s *HTTP) InitService() (err error) {
 							s.sshClient.Conn.Close()
 						}
 					}
-					log.Printf("ssh offline, retrying...")
+					s.log.Printf("ssh offline, retrying...")
 					s.ConnectSSH()
 				} else {
 					conn.Close()
@@ -140,9 +142,9 @@ func (s *HTTP) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop http(s) service crashed,%s", e)
+			s.log.Printf("stop http(s) service crashed,%s", e)
 		} else {
-			log.Printf("service http(s) stoped")
+			s.log.Printf("service http(s) stoped")
 		}
 	}()
 	s.isStop = true
@@ -159,13 +161,14 @@ func (s *HTTP) StopService() {
 		}
 	}
 }
-func (s *HTTP) Start(args interface{}) (err error) {
+func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(HTTPArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
 	}
 	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 		s.InitOutConnPool()
 	}
 	if err = s.InitService(); err != nil {
@@ -186,7 +189,7 @@ func (s *HTTP) Start(args interface{}) (err error) {
 			if err != nil {
 				return
 			}
-			log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+			s.log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
@@ -199,7 +202,7 @@ func (s *HTTP) Clean() {
 func (s *HTTP) callback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+			s.log.Printf("http(s) conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 		}
 	}()
 	if *s.cfg.LocalCompress {
@@ -215,7 +218,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
 	if err != nil {
 		if err != io.EOF {
-			log.Printf("decoder error , from %s, ERR:%s", inConn.RemoteAddr(), err)
+			s.log.Printf("decoder error , from %s, ERR:%s", inConn.RemoteAddr(), err)
 		}
 		utils.CloseConn(&inConn)
 		return
@@ -234,18 +237,18 @@ func (s *HTTP) callback(inConn net.Conn) {
 			s.checker.Add(k)
 			//var n, m uint
 			useProxy, _, _ = s.checker.IsBlocked(k)
-			//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
+			//s.log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 		}
 	}
 
-	log.Printf("use proxy : %v, %s", useProxy, address)
+	s.log.Printf("use proxy : %v, %s", useProxy, address)
 
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
 	if err != nil {
 		if *s.cfg.Parent == "" {
-			log.Printf("connect to %s fail, ERR:%s", address, err)
+			s.log.Printf("connect to %s fail, ERR:%s", address, err)
 		} else {
-			log.Printf("connect to %s parent %s fail", *s.cfg.ParentType, *s.cfg.Parent)
+			s.log.Printf("connect to %s parent %s fail", *s.cfg.ParentType, *s.cfg.Parent)
 		}
 		utils.CloseConn(&inConn)
 	}
@@ -270,7 +273,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			if *s.cfg.ParentType == "ssh" {
 				outConn, err = s.getSSHConn(address)
 			} else {
-				// log.Printf("%v", s.outPool)
+				// s.log.Printf("%v", s.outPool)
 				outConn, err = s.outPool.Get()
 			}
 		} else {
@@ -280,12 +283,12 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		if err == nil || tryCount > maxTryCount {
 			break
 		} else {
-			log.Printf("connect to %s , err:%s,retrying...", *s.cfg.Parent, err)
+			s.log.Printf("connect to %s , err:%s,retrying...", *s.cfg.Parent, err)
 			time.Sleep(time.Second * 2)
 		}
 	}
 	if err != nil {
-		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
+		s.log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
 		return
 	}
@@ -309,17 +312,17 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		_, err = outConn.Write(req.HeadBuf)
 		outConn.SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
+			s.log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)
 			return
 		}
 	}
 
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
-		log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
+		s.log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
 		s.userConns.Remove(inAddr)
 	})
-	log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
+	s.log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
@@ -350,7 +353,7 @@ RETRY:
 		err = fmt.Errorf("ssh dial %s timeout", host)
 	}
 	if err != nil {
-		log.Printf("connect ssh fail, ERR: %s, retrying...", err)
+		s.log.Printf("connect ssh fail, ERR: %s, retrying...", err)
 		e := s.ConnectSSH()
 		if e == nil {
 			tryCount++
@@ -406,7 +409,7 @@ func (s *HTTP) InitBasicAuth() (err error) {
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
-		log.Printf("auth from %s", *s.cfg.AuthURL)
+		s.log.Printf("auth from %s", *s.cfg.AuthURL)
 	}
 	if *s.cfg.AuthFile != "" {
 		var n = 0
@@ -415,11 +418,11 @@ func (s *HTTP) InitBasicAuth() (err error) {
 			err = fmt.Errorf("auth-file ERR:%s", err)
 			return
 		}
-		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
 	}
 	if len(*s.cfg.Auth) > 0 {
 		n := s.basicAuth.Add(*s.cfg.Auth)
-		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
 	}
 	return
 }
@@ -471,7 +474,7 @@ func (s *HTTP) Resolve(address string) string {
 	}
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
-		log.Printf("dns error %s , ERR:%s", address, err)
+		s.log.Printf("dns error %s , ERR:%s", address, err)
 	}
 	return ip
 }

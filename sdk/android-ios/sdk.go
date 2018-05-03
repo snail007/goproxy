@@ -3,16 +3,19 @@ package proxy
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"log"
+	logger "log"
 	"os"
 	"strings"
+
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
+
+const SDK_VERSION = "4.8"
 
 var (
 	app *kingpin.Application
@@ -43,7 +46,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
-	app.Author("snail").Version("4.7")
+	app.Author("snail").Version(SDK_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
 	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
@@ -298,11 +301,12 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	muxServerArgs.KCP = kcpArgs
 	muxClientArgs.KCP = kcpArgs
 
-	flags := log.Ldate
+	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
+	flags := logger.Ldate
 	if *debug {
-		flags |= log.Lshortfile | log.Lmicroseconds
+		flags |= logger.Lshortfile | logger.Lmicroseconds
 	} else {
-		flags |= log.Ltime
+		flags |= logger.Ltime
 	}
 	log.SetFlags(flags)
 
@@ -317,29 +321,29 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	//regist services and run service
 	switch serviceName {
 	case "http":
-		services.Regist(serviceID, services.NewHTTP(), httpArgs)
+		services.Regist(serviceID, services.NewHTTP(), httpArgs, log)
 	case "tcp":
-		services.Regist(serviceID, services.NewTCP(), tcpArgs)
+		services.Regist(serviceID, services.NewTCP(), tcpArgs, log)
 	case "udp":
-		services.Regist(serviceID, services.NewUDP(), udpArgs)
+		services.Regist(serviceID, services.NewUDP(), udpArgs, log)
 	case "tserver":
-		services.Regist(serviceID, services.NewTunnelServerManager(), tunnelServerArgs)
+		services.Regist(serviceID, services.NewTunnelServerManager(), tunnelServerArgs, log)
 	case "tclient":
-		services.Regist(serviceID, services.NewTunnelClient(), tunnelClientArgs)
+		services.Regist(serviceID, services.NewTunnelClient(), tunnelClientArgs, log)
 	case "tbridge":
-		services.Regist(serviceID, services.NewTunnelBridge(), tunnelBridgeArgs)
+		services.Regist(serviceID, services.NewTunnelBridge(), tunnelBridgeArgs, log)
 	case "server":
-		services.Regist(serviceID, services.NewMuxServerManager(), muxServerArgs)
+		services.Regist(serviceID, services.NewMuxServerManager(), muxServerArgs, log)
 	case "client":
-		services.Regist(serviceID, services.NewMuxClient(), muxClientArgs)
+		services.Regist(serviceID, services.NewMuxClient(), muxClientArgs, log)
 	case "bridge":
-		services.Regist(serviceID, services.NewMuxBridge(), muxBridgeArgs)
+		services.Regist(serviceID, services.NewMuxBridge(), muxBridgeArgs, log)
 	case "socks":
-		services.Regist(serviceID, services.NewSocks(), socksArgs)
+		services.Regist(serviceID, services.NewSocks(), socksArgs, log)
 	case "sps":
-		services.Regist(serviceID, services.NewSPS(), spsArgs)
+		services.Regist(serviceID, services.NewSPS(), spsArgs, log)
 	}
-	_, err = services.Run(serviceID)
+	_, err = services.Run(serviceID, nil)
 	if err != nil {
 		return fmt.Sprintf("run service [%s:%s] fail, ERR:%s", serviceID, serviceName, err)
 	}
@@ -348,4 +352,8 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 
 func Stop(serviceID string) {
 	services.Stop(serviceID)
+}
+
+func Version() string {
+	return SDK_VERSION
 }

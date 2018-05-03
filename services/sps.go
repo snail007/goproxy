@@ -5,16 +5,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/socks"
-	"github.com/snail007/goproxy/utils/conncrypt"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/conncrypt"
+	"github.com/snail007/goproxy/utils/socks"
 )
 
 type SPS struct {
@@ -24,6 +25,7 @@ type SPS struct {
 	basicAuth      utils.BasicAuth
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
+	log            *logger.Logger
 }
 
 func NewSPS() Service {
@@ -86,9 +88,9 @@ func (s *SPS) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop sps service crashed,%s", e)
+			s.log.Printf("stop sps service crashed,%s", e)
 		} else {
-			log.Printf("service sps stoped")
+			s.log.Printf("service sps stoped")
 		}
 	}()
 	for _, sc := range s.serverChannels {
@@ -103,7 +105,8 @@ func (s *SPS) StopService() {
 		(*c.(*net.Conn)).Close()
 	}
 }
-func (s *SPS) Start(args interface{}) (err error) {
+func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(SPSArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
@@ -111,7 +114,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 	if err = s.InitService(); err != nil {
 		return
 	}
-	log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
+	s.log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)
@@ -127,7 +130,7 @@ func (s *SPS) Start(args interface{}) (err error) {
 			if err != nil {
 				return
 			}
-			log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+			s.log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
 			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
@@ -140,7 +143,7 @@ func (s *SPS) Clean() {
 func (s *SPS) callback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
+			s.log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
 		}
 	}()
 	if *s.cfg.LocalCompress {
@@ -163,7 +166,7 @@ func (s *SPS) callback(inConn net.Conn) {
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
 	}
 	if err != nil {
-		log.Printf("connect to %s parent %s fail, ERR:%s from %s", *s.cfg.ParentType, *s.cfg.Parent, err, inConn.RemoteAddr())
+		s.log.Printf("connect to %s parent %s fail, ERR:%s from %s", *s.cfg.ParentType, *s.cfg.Parent, err, inConn.RemoteAddr())
 		utils.CloseConn(&inConn)
 	}
 }
@@ -172,7 +175,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	n, err := (*inConn).Read(buf)
 	header := buf[:n]
 	if err != nil {
-		log.Printf("ERR:%s", err)
+		s.log.Printf("ERR:%s", err)
 		utils.CloseConn(inConn)
 		return
 	}
@@ -204,14 +207,14 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		}
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("new http request fail,ERR: %s", err)
+			s.log.Printf("new http request fail,ERR: %s", err)
 			utils.CloseConn(inConn)
 			return
 		}
 		if len(header) >= 7 && strings.ToLower(string(header[:7])) == "connect" {
 			//https
 			request.HTTPSReply()
-			//log.Printf("https reply: %s", request.Host)
+			//s.log.Printf("https reply: %s", request.Host)
 		} else {
 			forwardBytes = request.HeadBuf
 		}
@@ -228,7 +231,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 		}
 	} else {
-		log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(header))
+		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(header))
 		utils.CloseConn(inConn)
 		err = errors.New("unknown request")
 		return
@@ -237,7 +240,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	var outConn net.Conn
 	outConn, err = s.outPool.Get()
 	if err != nil {
-		log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
+		s.log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
 		return
 	}
@@ -276,7 +279,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("write CONNECT to %s , err:%s", *s.cfg.Parent, err)
+			s.log.Printf("write CONNECT to %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)
 			utils.CloseConn(&outConn)
 			return
@@ -286,14 +289,14 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		_, err = outConn.Read(reply)
 		outConn.SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
+			s.log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
 			utils.CloseConn(inConn)
 			utils.CloseConn(&outConn)
 			return
 		}
-		//log.Printf("reply: %s", string(reply[:n]))
+		//s.log.Printf("reply: %s", string(reply[:n]))
 	} else {
-		log.Printf("connect %s", address)
+		s.log.Printf("connect %s", address)
 		//socks client
 		var clientConn *socks.ClientConn
 		if *s.cfg.ParentAuth != "" {
@@ -322,10 +325,10 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	inAddr := (*inConn).RemoteAddr().String()
 	outAddr := outConn.RemoteAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
-		log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.log.Printf("conn %s - %s released", inAddr, outAddr)
 		s.userConns.Remove(inAddr)
 	})
-	log.Printf("conn %s - %s connected", inAddr, outAddr)
+	s.log.Printf("conn %s - %s connected", inAddr, outAddr)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
@@ -340,7 +343,7 @@ func (s *SPS) InitBasicAuth() (err error) {
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
-		log.Printf("auth from %s", *s.cfg.AuthURL)
+		s.log.Printf("auth from %s", *s.cfg.AuthURL)
 	}
 	if *s.cfg.AuthFile != "" {
 		var n = 0
@@ -349,11 +352,11 @@ func (s *SPS) InitBasicAuth() (err error) {
 			err = fmt.Errorf("auth-file ERR:%s", err)
 			return
 		}
-		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
 	}
 	if len(*s.cfg.Auth) > 0 {
 		n := s.basicAuth.Add(*s.cfg.Auth)
-		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
 	}
 	return
 }
@@ -404,7 +407,7 @@ func (s *SPS) Resolve(address string) string {
 	}
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
-		log.Printf("dns error %s , ERR:%s", address, err)
+		s.log.Printf("dns error %s , ERR:%s", address, err)
 	}
 	return ip
 }

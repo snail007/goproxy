@@ -3,16 +3,17 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/aes"
-	"github.com/snail007/goproxy/utils/socks"
-	"github.com/snail007/goproxy/utils/conncrypt"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/aes"
+	"github.com/snail007/goproxy/utils/conncrypt"
+	"github.com/snail007/goproxy/utils/socks"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -28,6 +29,7 @@ type Socks struct {
 	domainResolver utils.DomainResolver
 	isStop         bool
 	userConns      utils.ConcurrentMap
+	log            *logger.Logger
 }
 
 func NewSocks() Service {
@@ -133,7 +135,7 @@ func (s *Socks) InitService() (err error) {
 					if s.sshClient != nil {
 						s.sshClient.Close()
 					}
-					log.Printf("ssh offline, retrying...")
+					s.log.Printf("ssh offline, retrying...")
 					s.ConnectSSH()
 				} else {
 					conn.Close()
@@ -143,7 +145,7 @@ func (s *Socks) InitService() (err error) {
 		}()
 	}
 	if *s.cfg.ParentType == "ssh" {
-		log.Println("warn: socks udp not suppored for ssh")
+		s.log.Printf("warn: socks udp not suppored for ssh")
 	} else {
 		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal)
 		e := s.udpSC.ListenUDP(s.udpCallback)
@@ -151,7 +153,7 @@ func (s *Socks) InitService() (err error) {
 			err = fmt.Errorf("init udp service fail, ERR: %s", e)
 			return
 		}
-		log.Printf("udp socks proxy on %s", s.udpSC.UDPListener.LocalAddr())
+		s.log.Printf("udp socks proxy on %s", s.udpSC.UDPListener.LocalAddr())
 	}
 	return
 }
@@ -159,9 +161,9 @@ func (s *Socks) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop socks service crashed,%s", e)
+			s.log.Printf("stop socks service crashed,%s", e)
 		} else {
-			log.Printf("service socks stoped")
+			s.log.Printf("service socks stoped")
 		}
 	}()
 	s.isStop = true
@@ -179,7 +181,8 @@ func (s *Socks) StopService() {
 		(*c.(*net.Conn)).Close()
 	}
 }
-func (s *Socks) Start(args interface{}) (err error) {
+func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	//start()
 	s.cfg = args.(SocksArgs)
 	if err = s.CheckArgs(); err != nil {
@@ -189,10 +192,10 @@ func (s *Socks) Start(args interface{}) (err error) {
 		s.InitService()
 	}
 	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	}
 	if *s.cfg.UDPParent != "" {
-		log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
+		s.log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
 	}
 	sc := utils.NewServerChannelHost(*s.cfg.Local)
 	if *s.cfg.LocalType == TYPE_TCP {
@@ -206,7 +209,7 @@ func (s *Socks) Start(args interface{}) (err error) {
 		return
 	}
 	s.sc = &sc
-	log.Printf("%s socks proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+	s.log.Printf("%s socks proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
 func (s *Socks) Clean() {
@@ -222,29 +225,29 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		//decode b
 		rawB, err = goaes.Decrypt(s.UDPKey(), b)
 		if err != nil {
-			log.Printf("decrypt udp packet fail from %s", srcAddr.String())
+			s.log.Printf("decrypt udp packet fail from %s", srcAddr.String())
 			return
 		}
 	}
 	p, err := socks.ParseUDPPacket(rawB)
-	log.Printf("udp revecived:%v", len(p.Data()))
+	s.log.Printf("udp revecived:%v", len(p.Data()))
 	if err != nil {
-		log.Printf("parse udp packet fail, ERR:%s", err)
+		s.log.Printf("parse udp packet fail, ERR:%s", err)
 		return
 	}
 	//防止死循环
 	if s.IsDeadLoop((*localAddr).String(), p.Host()) {
-		log.Printf("dead loop detected , %s", p.Host())
+		s.log.Printf("dead loop detected , %s", p.Host())
 		return
 	}
-	//log.Printf("##########udp to -> %s:%s###########", p.Host(), p.Port())
+	//s.log.Printf("##########udp to -> %s:%s###########", p.Host(), p.Port())
 	if *s.cfg.Parent != "" {
 		//有上级代理,转发给上级
 		if *s.cfg.ParentType == "tls" {
 			//encode b
 			rawB, err = goaes.Encrypt(s.UDPKey(), rawB)
 			if err != nil {
-				log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
+				s.log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
 				return
 			}
 		}
@@ -254,43 +257,43 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		}
 		dstAddr, err := net.ResolveUDPAddr("udp", s.Resolve(parent))
 		if err != nil {
-			log.Printf("can't resolve address: %s", err)
+			s.log.Printf("can't resolve address: %s", err)
 			return
 		}
 		clientSrcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
 		conn, err := net.DialUDP("udp", clientSrcAddr, dstAddr)
 		if err != nil {
-			log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
 			return
 		}
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*5)))
 		_, err = conn.Write(rawB)
 		conn.SetDeadline(time.Time{})
-		log.Printf("udp request:%v", len(rawB))
+		s.log.Printf("udp request:%v", len(rawB))
 		if err != nil {
-			log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
 			conn.Close()
 			return
 		}
 
-		//log.Printf("send udp packet to %s success", dstAddr.String())
+		//s.log.Printf("send udp packet to %s success", dstAddr.String())
 		buf := make([]byte, 10*1024)
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		length, _, err := conn.ReadFromUDP(buf)
 		conn.SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
 			conn.Close()
 			return
 		}
 		respBody := buf[0:length]
-		log.Printf("udp response:%v", len(respBody))
-		//log.Printf("revecived udp packet from %s", dstAddr.String())
+		s.log.Printf("udp response:%v", len(respBody))
+		//s.log.Printf("revecived udp packet from %s", dstAddr.String())
 		if *s.cfg.ParentType == "tls" {
 			//decode b
 			respBody, err = goaes.Decrypt(s.UDPKey(), respBody)
 			if err != nil {
-				log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
+				s.log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
 				conn.Close()
 				return
 			}
@@ -298,62 +301,62 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 		if *s.cfg.LocalType == "tls" {
 			d, err := goaes.Encrypt(s.UDPKey(), respBody)
 			if err != nil {
-				log.Printf("encrypt udp data fail from %s", dstAddr.String())
+				s.log.Printf("encrypt udp data fail from %s", dstAddr.String())
 				conn.Close()
 				return
 			}
 			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
 			s.udpSC.UDPListener.SetDeadline(time.Time{})
-			log.Printf("udp reply:%v", len(d))
+			s.log.Printf("udp reply:%v", len(d))
 		} else {
 			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(respBody, srcAddr)
 			s.udpSC.UDPListener.SetDeadline(time.Time{})
-			log.Printf("udp reply:%v", len(respBody))
+			s.log.Printf("udp reply:%v", len(respBody))
 		}
 
 	} else {
 		//本地代理
 		dstAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(s.Resolve(p.Host()), p.Port()))
 		if err != nil {
-			log.Printf("can't resolve address: %s", err)
+			s.log.Printf("can't resolve address: %s", err)
 			return
 		}
 		clientSrcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
 		conn, err := net.DialUDP("udp", clientSrcAddr, dstAddr)
 		if err != nil {
-			log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
 			return
 		}
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*3)))
 		_, err = conn.Write(p.Data())
 		conn.SetDeadline(time.Time{})
-		log.Printf("udp send:%v", len(p.Data()))
+		s.log.Printf("udp send:%v", len(p.Data()))
 		if err != nil {
-			log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
 			conn.Close()
 			return
 		}
-		//log.Printf("send udp packet to %s success", dstAddr.String())
+		//s.log.Printf("send udp packet to %s success", dstAddr.String())
 		buf := make([]byte, 10*1024)
 		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		length, _, err := conn.ReadFromUDP(buf)
 		conn.SetDeadline(time.Time{})
 
 		if err != nil {
-			log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
+			s.log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
 			conn.Close()
 			return
 		}
 		respBody := buf[0:length]
 		//封装来自真实服务器的数据,返回给访问者
 		respPacket := p.NewReply(respBody)
-		//log.Printf("revecived udp packet from %s", dstAddr.String())
+		//s.log.Printf("revecived udp packet from %s", dstAddr.String())
 		if *s.cfg.LocalType == "tls" {
 			d, err := goaes.Encrypt(s.UDPKey(), respPacket)
 			if err != nil {
-				log.Printf("encrypt udp data fail from %s", dstAddr.String())
+				s.log.Printf("encrypt udp data fail from %s", dstAddr.String())
 				conn.Close()
 				return
 			}
@@ -365,14 +368,14 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpSC.UDPListener.WriteToUDP(respPacket, srcAddr)
 			s.udpSC.UDPListener.SetDeadline(time.Time{})
 		}
-		log.Printf("udp reply:%v", len(respPacket))
+		s.log.Printf("udp reply:%v", len(respPacket))
 	}
 
 }
 func (s *Socks) socksConnCallback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("socks conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+			s.log.Printf("socks conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 			inConn.Close()
 		}
 	}()
@@ -393,7 +396,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	if err != nil {
 		methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 		utils.CloseConn(&inConn)
-		log.Printf("new methods request fail,ERR: %s", err)
+		s.log.Printf("new methods request fail,ERR: %s", err)
 		return
 	}
 
@@ -401,29 +404,29 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		if !methodReq.Select(socks.Method_NO_AUTH) {
 			methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 			utils.CloseConn(&inConn)
-			log.Printf("none method found : Method_NO_AUTH")
+			s.log.Printf("none method found : Method_NO_AUTH")
 			return
 		}
 		//method select reply
 		err = methodReq.Reply(socks.Method_NO_AUTH)
 		if err != nil {
-			log.Printf("reply answer data fail,ERR: %s", err)
+			s.log.Printf("reply answer data fail,ERR: %s", err)
 			utils.CloseConn(&inConn)
 			return
 		}
-		// log.Printf("% x", methodReq.Bytes())
+		// s.log.Printf("% x", methodReq.Bytes())
 	} else {
 		//auth
 		if !methodReq.Select(socks.Method_USER_PASS) {
 			methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 			utils.CloseConn(&inConn)
-			log.Printf("none method found : Method_USER_PASS")
+			s.log.Printf("none method found : Method_USER_PASS")
 			return
 		}
 		//method reply need auth
 		err = methodReq.Reply(socks.Method_USER_PASS)
 		if err != nil {
-			log.Printf("reply answer data fail,ERR: %s", err)
+			s.log.Printf("reply answer data fail,ERR: %s", err)
 			utils.CloseConn(&inConn)
 			return
 		}
@@ -439,7 +442,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 		r := buf[:n]
 		user := string(r[2 : r[1]+2])
 		pass := string(r[2+r[1]+1:])
-		//log.Printf("user:%s,pass:%s", user, pass)
+		//s.log.Printf("user:%s,pass:%s", user, pass)
 		//auth
 		_addr := strings.Split(inConn.RemoteAddr().String(), ":")
 		if s.basicAuth.CheckUserPass(user, pass, _addr[0], "") {
@@ -460,7 +463,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	//request detail
 	request, err := socks.NewRequest(inConn)
 	if err != nil {
-		log.Printf("read request data fail,ERR: %s", err)
+		s.log.Printf("read request data fail,ERR: %s", err)
 		utils.CloseConn(&inConn)
 		return
 	}
@@ -488,7 +491,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
 	_, port, _ := net.SplitHostPort(s.udpSC.UDPListener.LocalAddr().String())
-	log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
+	s.log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
 	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
 }
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
@@ -500,7 +503,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	//防止死循环
 	if s.IsDeadLoop((*inConn).LocalAddr().String(), request.Host()) {
 		utils.CloseConn(inConn)
-		log.Printf("dead loop detected , %s", request.Host())
+		s.log.Printf("dead loop detected , %s", request.Host())
 		utils.CloseConn(inConn)
 		return
 	}
@@ -535,25 +538,25 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		if err == nil || tryCount > maxTryCount || *s.cfg.Parent == "" {
 			break
 		} else {
-			log.Printf("get out conn fail,%s,retrying...", err)
+			s.log.Printf("get out conn fail,%s,retrying...", err)
 			time.Sleep(time.Second * 2)
 		}
 	}
 	if err != nil {
-		log.Printf("get out conn fail,%s", err)
+		s.log.Printf("get out conn fail,%s", err)
 		request.TCPReply(socks.REP_NETWOR_UNREACHABLE)
 		return
 	}
 
-	log.Printf("use proxy %v : %s", useProxy, request.Addr())
+	s.log.Printf("use proxy %v : %s", useProxy, request.Addr())
 
 	request.TCPReply(socks.REP_SUCCESS)
 	inAddr := (*inConn).RemoteAddr().String()
 	//inLocalAddr := (*inConn).LocalAddr().String()
 
-	log.Printf("conn %s - %s connected", inAddr, request.Addr())
+	s.log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
-		log.Printf("conn %s - %s released", inAddr, request.Addr())
+		s.log.Printf("conn %s - %s released", inAddr, request.Addr())
 	})
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
@@ -606,7 +609,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			return
 		}
 		//resp := buf[:n]
-		//log.Printf("resp:%v", resp)
+		//s.log.Printf("resp:%v", resp)
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(reqBytes)
 		outConn.SetDeadline(time.Time{})
@@ -622,7 +625,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			return
 		}
 		//result := buf[:n]
-		//log.Printf("result:%v", result)
+		//s.log.Printf("result:%v", result)
 
 	case "ssh":
 		maxTryCount := 1
@@ -648,7 +651,7 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			s.sshClient.Close()
 		}
 		if err != nil {
-			log.Printf("connect ssh fail, ERR: %s, retrying...", err)
+			s.log.Printf("connect ssh fail, ERR: %s, retrying...", err)
 			e := s.ConnectSSH()
 			if e == nil {
 				tryCount++
@@ -692,7 +695,7 @@ func (s *Socks) InitBasicAuth() (err error) {
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)
-		log.Printf("auth from %s", *s.cfg.AuthURL)
+		s.log.Printf("auth from %s", *s.cfg.AuthURL)
 	}
 	if *s.cfg.AuthFile != "" {
 		var n = 0
@@ -701,11 +704,11 @@ func (s *Socks) InitBasicAuth() (err error) {
 			err = fmt.Errorf("auth-file ERR:%s", err)
 			return
 		}
-		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
 	}
 	if len(*s.cfg.Auth) > 0 {
 		n := s.basicAuth.Add(*s.cfg.Auth)
-		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
+		s.log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
 	}
 	return
 }
@@ -757,7 +760,7 @@ func (s *Socks) Resolve(address string) string {
 	}
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
-		log.Printf("dns error %s , ERR:%s", address, err)
+		s.log.Printf("dns error %s , ERR:%s", address, err)
 	}
 	return ip
 }

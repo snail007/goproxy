@@ -3,15 +3,16 @@ package services
 import (
 	"bufio"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
 	"io"
-	"log"
+	logger "log"
 	"math/rand"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
 
 	"github.com/xtaci/smux"
 )
@@ -24,6 +25,7 @@ type MuxBridge struct {
 	l                  *sync.Mutex
 	isStop             bool
 	sc                 *utils.ServerChannel
+	log                *logger.Logger
 }
 
 func NewMuxBridge() Service {
@@ -58,9 +60,9 @@ func (s *MuxBridge) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop bridge service crashed,%s", e)
+			s.log.Printf("stop bridge service crashed,%s", e)
 		} else {
-			log.Printf("service bridge stoped")
+			s.log.Printf("service bridge stoped")
 		}
 	}()
 	s.isStop = true
@@ -76,7 +78,8 @@ func (s *MuxBridge) StopService() {
 		(*c.(*net.Conn)).Close()
 	}
 }
-func (s *MuxBridge) Start(args interface{}) (err error) {
+func (s *MuxBridge) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(MuxBridgeArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
@@ -99,7 +102,7 @@ func (s *MuxBridge) Start(args interface{}) (err error) {
 		return
 	}
 	s.sc = &sc
-	log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+	s.log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	return
 }
 func (s *MuxBridge) Clean() {
@@ -115,7 +118,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 	err = utils.ReadPacket(reader, &connType, &key)
 	inConn.SetDeadline(time.Time{})
 	if err != nil {
-		log.Printf("read error,ERR:%s", err)
+		s.log.Printf("read error,ERR:%s", err)
 		return
 	}
 	switch connType {
@@ -126,10 +129,10 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		err = utils.ReadPacketData(reader, &serverID)
 		inConn.SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("read error,ERR:%s", err)
+			s.log.Printf("read error,ERR:%s", err)
 			return
 		}
-		log.Printf("server connection %s %s connected", serverID, key)
+		s.log.Printf("server connection %s %s connected", serverID, key)
 		if c, ok := s.serverConns.Get(inAddr); ok {
 			(*c.(*net.Conn)).Close()
 		}
@@ -137,7 +140,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		session, err := smux.Server(inConn, nil)
 		if err != nil {
 			utils.CloseConn(&inConn)
-			log.Printf("server session error,ERR:%s", err)
+			s.log.Printf("server session error,ERR:%s", err)
 			return
 		}
 		for {
@@ -149,30 +152,30 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 				session.Close()
 				utils.CloseConn(&inConn)
 				s.serverConns.Remove(inAddr)
-				log.Printf("server connection %s %s released", serverID, key)
+				s.log.Printf("server connection %s %s released", serverID, key)
 				return
 			}
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						log.Printf("bridge callback crashed,err: %s", e)
+						s.log.Printf("bridge callback crashed,err: %s", e)
 					}
 				}()
 				s.callback(stream, serverID, key)
 			}()
 		}
 	case CONN_CLIENT:
-		log.Printf("client connection %s connected", key)
+		s.log.Printf("client connection %s connected", key)
 		session, err := smux.Client(inConn, nil)
 		if err != nil {
 			utils.CloseConn(&inConn)
-			log.Printf("client session error,ERR:%s", err)
+			s.log.Printf("client session error,ERR:%s", err)
 			return
 		}
 		keyInfo := strings.Split(key, "-")
 		if len(keyInfo) != 2 {
 			utils.CloseConn(&inConn)
-			log.Printf("client key format error,key:%s", key)
+			s.log.Printf("client key format error,key:%s", key)
 			return
 		}
 		groupKey := keyInfo[0]
@@ -200,7 +203,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 					defer s.l.Unlock()
 					if sess, ok := group.Get(index); ok && sess.(*smux.Session).IsClosed() {
 						group.Remove(index)
-						log.Printf("client connection %s released", key)
+						s.log.Printf("client connection %s released", key)
 					}
 					if group.IsEmpty() {
 						s.clientControlConns.Remove(groupKey)
@@ -210,7 +213,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 				time.Sleep(time.Second * 5)
 			}
 		}()
-		//log.Printf("set client session,key: %s", key)
+		//s.log.Printf("set client session,key: %s", key)
 	}
 
 }
@@ -229,7 +232,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		}
 		_group, ok := s.clientControlConns.Get(key)
 		if !ok {
-			log.Printf("client %s session not exists for server stream %s, retrying...", key, serverID)
+			s.log.Printf("client %s session not exists for server stream %s, retrying...", key, serverID)
 			time.Sleep(time.Second * 3)
 			continue
 		}
@@ -240,22 +243,22 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		if keysLen > 0 {
 			i = rand.Intn(keysLen)
 		} else {
-			log.Printf("client %s session empty for server stream %s, retrying...", key, serverID)
+			s.log.Printf("client %s session empty for server stream %s, retrying...", key, serverID)
 			time.Sleep(time.Second * 3)
 			continue
 		}
 		index := keys[i]
-		log.Printf("select client : %s-%s", key, index)
+		s.log.Printf("select client : %s-%s", key, index)
 		session, _ := group.Get(index)
 		session.(*smux.Session).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		stream, err := session.(*smux.Session).OpenStream()
 		session.(*smux.Session).SetDeadline(time.Time{})
 		if err != nil {
-			log.Printf("%s client session open stream %s fail, err: %s, retrying...", key, serverID, err)
+			s.log.Printf("%s client session open stream %s fail, err: %s, retrying...", key, serverID, err)
 			time.Sleep(time.Second * 3)
 			continue
 		} else {
-			log.Printf("stream %s -> %s created", serverID, key)
+			s.log.Printf("stream %s -> %s created", serverID, key)
 			die1 := make(chan bool, 1)
 			die2 := make(chan bool, 1)
 			go func() {
@@ -272,7 +275,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			}
 			stream.Close()
 			inConn.Close()
-			log.Printf("%s server %s stream released", key, serverID)
+			s.log.Printf("%s server %s stream released", key, serverID)
 			break
 		}
 	}

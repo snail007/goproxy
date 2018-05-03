@@ -3,11 +3,12 @@ package services
 import (
 	"bytes"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
-	"log"
+	logger "log"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
 
 	"github.com/xtaci/smux"
 )
@@ -21,6 +22,7 @@ type TunnelBridge struct {
 	serverConns        utils.ConcurrentMap
 	clientControlConns utils.ConcurrentMap
 	isStop             bool
+	log                *logger.Logger
 }
 
 func NewTunnelBridge() Service {
@@ -47,9 +49,9 @@ func (s *TunnelBridge) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop tbridge service crashed,%s", e)
+			s.log.Printf("stop tbridge service crashed,%s", e)
 		} else {
-			log.Printf("service tbridge stoped")
+			s.log.Printf("service tbridge stoped")
 		}
 	}()
 	s.isStop = true
@@ -60,7 +62,8 @@ func (s *TunnelBridge) StopService() {
 		(*sess.(ServerConn).Conn).Close()
 	}
 }
-func (s *TunnelBridge) Start(args interface{}) (err error) {
+func (s *TunnelBridge) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(TunnelBridgeArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
@@ -76,7 +79,7 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	log.Printf("proxy on tunnel bridge mode %s", (*sc.Listener).Addr())
+	s.log.Printf("proxy on tunnel bridge mode %s", (*sc.Listener).Addr())
 	return
 }
 func (s *TunnelBridge) Clean() {
@@ -84,7 +87,7 @@ func (s *TunnelBridge) Clean() {
 }
 func (s *TunnelBridge) callback(inConn net.Conn) {
 	var err error
-	//log.Printf("connection from %s ", inConn.RemoteAddr())
+	//s.log.Printf("connection from %s ", inConn.RemoteAddr())
 	sess, err := smux.Server(inConn, &smux.Config{
 		KeepAliveInterval: 10 * time.Second,
 		KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
@@ -92,12 +95,12 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 		MaxReceiveBuffer:  4194304,
 	})
 	if err != nil {
-		log.Printf("new mux server conn error,ERR:%s", err)
+		s.log.Printf("new mux server conn error,ERR:%s", err)
 		return
 	}
 	inConn, err = sess.AcceptStream()
 	if err != nil {
-		log.Printf("mux server conn accept error,ERR:%s", err)
+		s.log.Printf("mux server conn accept error,ERR:%s", err)
 		return
 	}
 
@@ -109,7 +112,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 	var connType uint8
 	err = utils.ReadPacket(reader, &connType)
 	if err != nil {
-		log.Printf("read error,ERR:%s", err)
+		s.log.Printf("read error,ERR:%s", err)
 		return
 	}
 	switch connType {
@@ -117,11 +120,11 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 		var key, ID, clientLocalAddr, serverID string
 		err = utils.ReadPacketData(reader, &key, &ID, &clientLocalAddr, &serverID)
 		if err != nil {
-			log.Printf("read error,ERR:%s", err)
+			s.log.Printf("read error,ERR:%s", err)
 			return
 		}
 		packet := utils.BuildPacketData(ID, clientLocalAddr, serverID)
-		log.Printf("server connection, key: %s , id: %s %s %s", key, ID, clientLocalAddr, serverID)
+		s.log.Printf("server connection, key: %s , id: %s %s %s", key, ID, clientLocalAddr, serverID)
 
 		//addr := clientLocalAddr + "@" + ID
 		s.serverConns.Set(ID, ServerConn{
@@ -133,7 +136,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			}
 			item, ok := s.clientControlConns.Get(key)
 			if !ok {
-				log.Printf("client %s control conn not exists", key)
+				s.log.Printf("client %s control conn not exists", key)
 				time.Sleep(time.Second * 3)
 				continue
 			}
@@ -141,7 +144,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			_, err := (*item.(*net.Conn)).Write(packet)
 			(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
 			if err != nil {
-				log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
+				s.log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
 				time.Sleep(time.Second * 3)
 				continue
 			} else {
@@ -153,15 +156,15 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 		var key, ID, serverID string
 		err = utils.ReadPacketData(reader, &key, &ID, &serverID)
 		if err != nil {
-			log.Printf("read error,ERR:%s", err)
+			s.log.Printf("read error,ERR:%s", err)
 			return
 		}
-		log.Printf("client connection , key: %s , id: %s, server id:%s", key, ID, serverID)
+		s.log.Printf("client connection , key: %s , id: %s, server id:%s", key, ID, serverID)
 
 		serverConnItem, ok := s.serverConns.Get(ID)
 		if !ok {
 			inConn.Close()
-			log.Printf("server conn %s exists", ID)
+			s.log.Printf("server conn %s exists", ID)
 			return
 		}
 		serverConn := serverConnItem.(ServerConn).Conn
@@ -169,24 +172,24 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			s.serverConns.Remove(ID)
 			// s.cmClient.RemoveOne(key, ID)
 			// s.cmServer.RemoveOne(serverID, ID)
-			log.Printf("conn %s released", ID)
+			s.log.Printf("conn %s released", ID)
 		})
 		// s.cmClient.Add(key, ID, &inConn)
-		log.Printf("conn %s created", ID)
+		s.log.Printf("conn %s created", ID)
 
 	case CONN_CLIENT_CONTROL:
 		var key string
 		err = utils.ReadPacketData(reader, &key)
 		if err != nil {
-			log.Printf("read error,ERR:%s", err)
+			s.log.Printf("read error,ERR:%s", err)
 			return
 		}
-		log.Printf("client control connection, key: %s", key)
+		s.log.Printf("client control connection, key: %s", key)
 		if s.clientControlConns.Has(key) {
 			item, _ := s.clientControlConns.Get(key)
 			(*item.(*net.Conn)).Close()
 		}
 		s.clientControlConns.Set(key, &inConn)
-		log.Printf("set client %s control conn", key)
+		s.log.Printf("set client %s control conn", key)
 	}
 }

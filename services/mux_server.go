@@ -3,15 +3,16 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
 	"io"
-	"log"
+	logger "log"
 	"math/rand"
 	"net"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
 
 	"github.com/golang/snappy"
 	"github.com/xtaci/smux"
@@ -25,6 +26,7 @@ type MuxServer struct {
 	lockChn  chan bool
 	isStop   bool
 	udpConn  *net.Conn
+	log      *logger.Logger
 }
 
 type MuxServerManager struct {
@@ -32,6 +34,7 @@ type MuxServerManager struct {
 	udpChn   chan MuxUDPItem
 	serverID string
 	servers  []*Service
+	log      *logger.Logger
 }
 
 func NewMuxServerManager() Service {
@@ -43,13 +46,14 @@ func NewMuxServerManager() Service {
 	}
 }
 
-func (s *MuxServerManager) Start(args interface{}) (err error) {
+func (s *MuxServerManager) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(MuxServerArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
 	}
 	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	} else {
 		err = fmt.Errorf("parent required")
 		return
@@ -59,8 +63,8 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 		return
 	}
 
-	log.Printf("server id: %s", s.serverID)
-	//log.Printf("route:%v", *s.cfg.Route)
+	s.log.Printf("server id: %s", s.serverID)
+	//s.log.Printf("route:%v", *s.cfg.Route)
 	for _, _info := range *s.cfg.Route {
 		if _info == "" {
 			continue
@@ -73,6 +77,7 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 		info = strings.TrimPrefix(info, "tcp://")
 		_routeInfo := strings.Split(info, "@")
 		server := NewMuxServer()
+
 		local := _routeInfo[0]
 		remote := _routeInfo[1]
 		KEY := *s.cfg.Key
@@ -99,7 +104,7 @@ func (s *MuxServerManager) Start(args interface{}) (err error) {
 			SessionCount: s.cfg.SessionCount,
 			KCP:          s.cfg.KCP,
 			ParentType:   s.cfg.ParentType,
-		})
+		}, log)
 
 		if err != nil {
 			return
@@ -153,9 +158,9 @@ func (s *MuxServer) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop server service crashed,%s", e)
+			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			log.Printf("service server stoped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -184,7 +189,8 @@ func (s *MuxServer) CheckArgs() (err error) {
 	return
 }
 
-func (s *MuxServer) Start(args interface{}) (err error) {
+func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(MuxServerArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
@@ -206,12 +212,12 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("server on %s", (*s.sc.UDPListener).LocalAddr())
+		s.log.Printf("server on %s", (*s.sc.UDPListener).LocalAddr())
 	} else {
 		err = s.sc.ListenTCP(func(inConn net.Conn) {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Printf("connection handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+					s.log.Printf("connection handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 				}
 			}()
 			var outConn net.Conn
@@ -223,14 +229,14 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				outConn, ID, err = s.GetOutConn()
 				if err != nil {
 					utils.CloseConn(&outConn)
-					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
+					s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
 					time.Sleep(time.Second * 3)
 					continue
 				} else {
 					break
 				}
 			}
-			log.Printf("%s stream %s created", *s.cfg.Key, ID)
+			s.log.Printf("%s stream %s created", *s.cfg.Key, ID)
 			if *s.cfg.IsCompress {
 				die1 := make(chan bool, 1)
 				die2 := make(chan bool, 1)
@@ -248,17 +254,17 @@ func (s *MuxServer) Start(args interface{}) (err error) {
 				}
 				outConn.Close()
 				inConn.Close()
-				log.Printf("%s stream %s released", *s.cfg.Key, ID)
+				s.log.Printf("%s stream %s released", *s.cfg.Key, ID)
 			} else {
 				utils.IoBind(inConn, outConn, func(err interface{}) {
-					log.Printf("%s stream %s released", *s.cfg.Key, ID)
+					s.log.Printf("%s stream %s released", *s.cfg.Key, ID)
 				})
 			}
 		})
 		if err != nil {
 			return
 		}
-		log.Printf("server on %s", (*s.sc.Listener).Addr())
+		s.log.Printf("server on %s", (*s.sc.Listener).Addr())
 	}
 	return
 }
@@ -272,7 +278,7 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	}
 	outConn, err = s.GetConn(fmt.Sprintf("%d", i))
 	if err != nil {
-		log.Printf("connection err: %s", err)
+		s.log.Printf("connection err: %s", err)
 		return
 	}
 	remoteAddr := "tcp:" + *s.cfg.Remote
@@ -284,7 +290,7 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	_, err = outConn.Write(utils.BuildPacketData(ID, remoteAddr, s.cfg.Mgr.serverID))
 	outConn.SetDeadline(time.Time{})
 	if err != nil {
-		log.Printf("write stream data err: %s ,retrying...", err)
+		s.log.Printf("write stream data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
 		return
 	}
@@ -325,7 +331,7 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 			_sess.(*smux.Session).Close()
 		}
 		s.sessions.Set(index, session)
-		log.Printf("session[%s] created", index)
+		s.log.Printf("session[%s] created", index)
 		go func() {
 			for {
 				if s.isStop {
@@ -366,7 +372,7 @@ func (s *MuxServer) UDPConnDeamon() {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+				s.log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 			}
 		}()
 		var outConn net.Conn
@@ -390,7 +396,7 @@ func (s *MuxServer) UDPConnDeamon() {
 					if err != nil {
 						outConn = nil
 						utils.CloseConn(&outConn)
-						log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
+						s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
 						time.Sleep(time.Second * 3)
 						continue
 					} else {
@@ -407,14 +413,14 @@ func (s *MuxServer) UDPConnDeamon() {
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
 								outConn.SetDeadline(time.Time{})
 								if err != nil {
-									log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
-									log.Printf("UDP deamon connection %s exited", ID)
+									s.log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
+									s.log.Printf("UDP deamon connection %s exited", ID)
 									break
 								}
-								//log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
+								//s.log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
 								_srcAddr := strings.Split(srcAddrFromConn, ":")
 								if len(_srcAddr) != 2 {
-									log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
+									s.log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
 									continue
 								}
 								port, _ := strconv.Atoi(_srcAddr[1])
@@ -423,10 +429,10 @@ func (s *MuxServer) UDPConnDeamon() {
 								_, err = s.sc.UDPListener.WriteToUDP(body, dstAddr)
 								s.sc.UDPListener.SetDeadline(time.Time{})
 								if err != nil {
-									log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
+									s.log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
 									continue
 								}
-								//log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
+								//s.log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
 							}
 						}(outConn, ID)
 						break
@@ -439,10 +445,10 @@ func (s *MuxServer) UDPConnDeamon() {
 			if err != nil {
 				utils.CloseConn(&outConn)
 				outConn = nil
-				log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
+				s.log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
 				goto RETRY
 			}
-			//log.Printf("write packet %v", *item.packet)
+			//s.log.Printf("write packet %v", *item.packet)
 		}
 	}()
 }

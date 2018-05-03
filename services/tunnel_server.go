@@ -3,14 +3,15 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/snail007/goproxy/utils"
 	"io"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
 
 	"github.com/xtaci/smux"
 )
@@ -22,6 +23,7 @@ type TunnelServer struct {
 	isStop    bool
 	udpConn   *net.Conn
 	userConns utils.ConcurrentMap
+	log       *logger.Logger
 }
 
 type TunnelServerManager struct {
@@ -29,6 +31,7 @@ type TunnelServerManager struct {
 	udpChn   chan UDPItem
 	serverID string
 	servers  []*Service
+	log      *logger.Logger
 }
 
 func NewTunnelServerManager() Service {
@@ -39,13 +42,14 @@ func NewTunnelServerManager() Service {
 		servers:  []*Service{},
 	}
 }
-func (s *TunnelServerManager) Start(args interface{}) (err error) {
+func (s *TunnelServerManager) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(TunnelServerArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
 	}
 	if *s.cfg.Parent != "" {
-		log.Printf("use tls parent %s", *s.cfg.Parent)
+		s.log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
 		err = fmt.Errorf("parent required")
 		return
@@ -55,8 +59,8 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 		return
 	}
 
-	log.Printf("server id: %s", s.serverID)
-	//log.Printf("route:%v", *s.cfg.Route)
+	s.log.Printf("server id: %s", s.serverID)
+	//s.log.Printf("route:%v", *s.cfg.Route)
 	for _, _info := range *s.cfg.Route {
 		IsUDP := *s.cfg.IsUDP
 		if strings.HasPrefix(_info, "udp://") {
@@ -88,7 +92,7 @@ func (s *TunnelServerManager) Start(args interface{}) (err error) {
 			Key:       &KEY,
 			Timeout:   s.cfg.Timeout,
 			Mgr:       s,
-		})
+		}, log)
 
 		if err != nil {
 			return
@@ -120,13 +124,13 @@ func (s *TunnelServerManager) InitService() (err error) {
 func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
-		log.Printf("connection err: %s", err)
+		s.log.Printf("connection err: %s", err)
 		return
 	}
 	ID = s.serverID
 	_, err = outConn.Write(utils.BuildPacket(typ, s.serverID))
 	if err != nil {
-		log.Printf("write connection data err: %s ,retrying...", err)
+		s.log.Printf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
 		return
 	}
@@ -159,9 +163,9 @@ func (s *TunnelServer) StopService() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			log.Printf("stop server service crashed,%s", e)
+			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			log.Printf("service server stoped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -191,7 +195,8 @@ func (s *TunnelServer) CheckArgs() (err error) {
 	return
 }
 
-func (s *TunnelServer) Start(args interface{}) (err error) {
+func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
+	s.log = log
 	s.cfg = args.(TunnelServerArgs)
 	if err = s.CheckArgs(); err != nil {
 		return
@@ -213,12 +218,12 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on udp tunnel server mode %s", (*s.sc.UDPListener).LocalAddr())
+		s.log.Printf("proxy on udp tunnel server mode %s", (*s.sc.UDPListener).LocalAddr())
 	} else {
 		err = s.sc.ListenTCP(func(inConn net.Conn) {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Printf("tserver conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+					s.log.Printf("tserver conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 				}
 			}()
 			var outConn net.Conn
@@ -230,7 +235,7 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 				outConn, ID, err = s.GetOutConn(CONN_SERVER)
 				if err != nil {
 					utils.CloseConn(&outConn)
-					log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
+					s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
 					time.Sleep(time.Second * 3)
 					continue
 				} else {
@@ -240,18 +245,18 @@ func (s *TunnelServer) Start(args interface{}) (err error) {
 			inAddr := inConn.RemoteAddr().String()
 			utils.IoBind(inConn, outConn, func(err interface{}) {
 				s.userConns.Remove(inAddr)
-				log.Printf("%s conn %s released", *s.cfg.Key, ID)
+				s.log.Printf("%s conn %s released", *s.cfg.Key, ID)
 			})
 			if c, ok := s.userConns.Get(inAddr); ok {
 				(*c.(*net.Conn)).Close()
 			}
 			s.userConns.Set(inAddr, &inConn)
-			log.Printf("%s conn %s created", *s.cfg.Key, ID)
+			s.log.Printf("%s conn %s created", *s.cfg.Key, ID)
 		})
 		if err != nil {
 			return
 		}
-		log.Printf("proxy on tunnel server mode %s", (*s.sc.Listener).Addr())
+		s.log.Printf("proxy on tunnel server mode %s", (*s.sc.Listener).Addr())
 	}
 	return
 }
@@ -261,7 +266,7 @@ func (s *TunnelServer) Clean() {
 func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
-		log.Printf("connection err: %s", err)
+		s.log.Printf("connection err: %s", err)
 		return
 	}
 	remoteAddr := "tcp:" + *s.cfg.Remote
@@ -271,7 +276,7 @@ func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err e
 	ID = utils.Uniqueid()
 	_, err = outConn.Write(utils.BuildPacket(typ, *s.cfg.Key, ID, remoteAddr, s.cfg.Mgr.serverID))
 	if err != nil {
-		log.Printf("write connection data err: %s ,retrying...", err)
+		s.log.Printf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
 		return
 	}
@@ -289,13 +294,13 @@ func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 			MaxReceiveBuffer:  4194304,
 		})
 		if e != nil {
-			log.Printf("new mux client conn error,ERR:%s", e)
+			s.log.Printf("new mux client conn error,ERR:%s", e)
 			err = e
 			return
 		}
 		conn, e = c.OpenStream()
 		if e != nil {
-			log.Printf("mux client conn open stream error,ERR:%s", e)
+			s.log.Printf("mux client conn open stream error,ERR:%s", e)
 			err = e
 			return
 		}
@@ -306,7 +311,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+				s.log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
 			}
 		}()
 		var outConn net.Conn
@@ -333,7 +338,7 @@ func (s *TunnelServer) UDPConnDeamon() {
 						// cmdChn <- true
 						outConn = nil
 						utils.CloseConn(&outConn)
-						log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
+						s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
 						time.Sleep(time.Second * 3)
 						continue
 					} else {
@@ -348,27 +353,27 @@ func (s *TunnelServer) UDPConnDeamon() {
 								}
 								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
 								if err == io.EOF || err == io.ErrUnexpectedEOF {
-									log.Printf("UDP deamon connection %s exited", ID)
+									s.log.Printf("UDP deamon connection %s exited", ID)
 									break
 								}
 								if err != nil {
-									log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
+									s.log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
 									continue
 								}
-								//log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
+								//s.log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
 								_srcAddr := strings.Split(srcAddrFromConn, ":")
 								if len(_srcAddr) != 2 {
-									log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
+									s.log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
 									continue
 								}
 								port, _ := strconv.Atoi(_srcAddr[1])
 								dstAddr := &net.UDPAddr{IP: net.ParseIP(_srcAddr[0]), Port: port}
 								_, err = s.sc.UDPListener.WriteToUDP(body, dstAddr)
 								if err != nil {
-									log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
+									s.log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
 									continue
 								}
-								//log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
+								//s.log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
 							}
 						}(outConn, ID)
 						break
@@ -381,10 +386,10 @@ func (s *TunnelServer) UDPConnDeamon() {
 			if err != nil {
 				utils.CloseConn(&outConn)
 				outConn = nil
-				log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
+				s.log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
 				goto RETRY
 			}
-			//log.Printf("write packet %v", *item.packet)
+			//s.log.Printf("write packet %v", *item.packet)
 		}
 	}()
 }

@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"crypto/sha1"
 	"fmt"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"log"
+	logger "log"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils"
 
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
@@ -297,11 +298,13 @@ func initConfig() (err error) {
 	muxServerArgs.KCP = kcpArgs
 	muxClientArgs.KCP = kcpArgs
 
-	flags := log.Ldate
+	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
+
+	flags := logger.Ldate
 	if *debug {
-		flags |= log.Lshortfile | log.Lmicroseconds
+		flags |= logger.Lshortfile | logger.Lmicroseconds
 	} else {
-		flags |= log.Ltime
+		flags |= logger.Ltime
 	}
 	log.SetFlags(flags)
 
@@ -383,18 +386,18 @@ func initConfig() (err error) {
 		poster()
 	}
 	//regist services and run service
-	services.Regist("http", services.NewHTTP(), httpArgs)
-	services.Regist("tcp", services.NewTCP(), tcpArgs)
-	services.Regist("udp", services.NewUDP(), udpArgs)
-	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs)
-	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs)
-	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs)
-	services.Regist("server", services.NewMuxServerManager(), muxServerArgs)
-	services.Regist("client", services.NewMuxClient(), muxClientArgs)
-	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs)
-	services.Regist("socks", services.NewSocks(), socksArgs)
-	services.Regist("sps", services.NewSPS(), spsArgs)
-	service, err = services.Run(serviceName)
+	services.Regist("http", services.NewHTTP(), httpArgs, log)
+	services.Regist("tcp", services.NewTCP(), tcpArgs, log)
+	services.Regist("udp", services.NewUDP(), udpArgs, log)
+	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs, log)
+	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs, log)
+	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs, log)
+	services.Regist("server", services.NewMuxServerManager(), muxServerArgs, log)
+	services.Regist("client", services.NewMuxClient(), muxClientArgs, log)
+	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs, log)
+	services.Regist("socks", services.NewSocks(), socksArgs, log)
+	services.Regist("sps", services.NewSPS(), spsArgs, log)
+	service, err = services.Run(serviceName, nil)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", serviceName, err)
 	}
