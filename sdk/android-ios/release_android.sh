@@ -4,7 +4,7 @@ rm -rf sdk-android-*.tar.gz
 rm -rf android
 mkdir android
 
-#android ,android ndk & android sdk required, install gomobile go1.10 required
+#android ; jdk,android ndk & android sdk required, install gomobile go1.10 required
 #export GOPATH="$HOME/go"
 #export GOROOT="/usr/local/go"
 #export PATH="$GOROOT/bin:$GOPATH/bin:$PATH"
