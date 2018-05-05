@@ -1,0 +1,7 @@
+*.jar
+*.aar
+*.tar.gz
+ios
+android
+Proxy.framework
+  

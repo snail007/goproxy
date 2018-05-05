@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e
 
-# install monexec
-tar zxvf monexec_0.1.1_linux_amd64.tar.gz
-cd  monexec_0.1.1_linux_amd64
-cp monexec /usr/bin/
-chmod +x /usr/bin/monexec
-cd ..
 # #install proxy
 tar zxvf proxy-linux-amd64.tar.gz
 cp proxy /usr/bin/

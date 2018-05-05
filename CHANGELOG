@@ -1,21 +1,122 @@
 proxy更新日志
-v3.2
-1.内网穿透功能server端-r参数增加了协议和key设置
-  
-  -r 完整格式是:PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT
-  
-  1.1.协议PROTOCOL:默认是tcp,可以是udp.
-  比如: -r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"
-  如果指定了--udp参数,PROTOCOL默认为udp;
-  如果没有指定--udp参数,PROTOCOL默认为tcp;
-  
-  1.2.CLIENT_KEY:默认是default.
-  比如: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"
-  如果指定了--key参数,CLIENT_KEY留空默认为--key指定的值;
-  如果没有指定--key参数,CLIENT_KEY留空默认为default;p;
+v4.7
+1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.
+2.优化了bridge的日志,增加了client和server的掉线日志.
+3.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
+ 避免了某些代理服务器返回过多数据导致不能正常通讯的问题.
+4.去除了鸡肋连接池功能.
+5.优化了所有服务代码,方便对sdk提供支持.
+6.增加了SDK手册.
+7.增加了GUI客户端(windows/web/android/ios)介绍主页.
+8.SPS\HTTP(s)\Socks代理增加了自定义加密传输,只需要通过参数-z和-Z设置一个密码即可.
+9.SPS\HTTP(s)\Socks代理增加了压缩传输,只需要通过参数-m和-M设置即可.
+10.手册增加了SPS\HTTP(s)\Socks自定义加密的使用示例.
+11.手册增加了SPS\HTTP(s)\Socks压缩传输的使用示例.
+12.优化了多链接版本的内网穿透,融合了多链接和smux的优点,即能够拥有大的吞吐量,
+ 同时又具备mux的心跳机制保证了链接的稳定性.
+13.手册增加了大量配图.
+14.优化了socks代理udp上级的设置逻辑,智能判断parent上级填充udp parent.
+15.优化了项目文件夹结构,使用源码可以直接go get.
 
-  1.3.LOCAL_IP为空默认是绑定全部ip.CLIENT_LOCAL_HOST留空默认是127.0.0.1
+v4.6
+1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.
+2.sps增加了强大的树形级联认证支持,可以轻松构建你的认证代理网络.
+3.手册增加了6.6对sps认证功能的介绍.
+
+
+v4.5
+1.优化了mux内网穿透连接管理逻辑,增强了稳定性.  
+2.mux内网穿透增加了tcp和kcp协议支持,之前是tls,现在支持三种协议tcp,tls,kcp.  
+3.keygen参数增加了用法: proxy keygen usage.  
+4.http(s)/socks5代理,tls增加了自签名证书支持.  
+5.建议升级.   
+v4.4
+1.增加了协议转换sps功能，代理协议转换使用的是sps子命令(socks+https的缩写)，
+sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理
+或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口
+同时支持http(s)和socks5代理，而且http(s)代理支持正向代理和反向代理(SNI)，转
+换后的SOCKS5代理不支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，
+支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建
+加密通道。
+2.增加了对KCP传输参数的配置，多达17个参数可以自由的配置对kcp传输效率调优。
+3.内网穿透功能，server和client增加了--session-count参数，可以设置server每个
+监听端口到bridge打开的session数量，可以设置client到bridge打开的session数量，
+之前都是1个，现在性能提升N倍，N就是你自己设置的--session-count，这个参数很大
+程度上解决了多路复用的拥塞问题，v4.4开始默认10个。
+
+v4.3
+1.优化了参数keygen生成证书逻辑，避免证书出现特征。
+2.http(s)和socks代理增加了--dns-address和--dns-ttl参数。
+ 用于自己指定proxy访问域名的时候使用的dns（--dns-address）以及解析结果缓存时间（--dns-ttl）秒数，
+ 避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度。
+3.优化了http代理的basic认证逻辑。
+提示：
+v4.3生成的证书不适用于v4.2及以下版本。
+
+v4.2
+1.优化了内网穿透,避免了client意外下线,导致链接信息残留的问题.
+2.http代理增加了SNI支持,现在http(s)代理模式支持反向代理,支持http(s)透明代理.
+3.增加了英文手册.  
+
+v4.1
+1.优化了http(s),socks5代理中的域名智能判断,如果是内网IP,直接走本地网络,提升浏览体验,
+ 同时优化了检查机制,判断更快.
+2.http代理basic认证增加了对https协议的支持,现在basic认证可以控制所有http(s)流量了.
+3.项目代码增加了依赖类库vendor目录,clone下来就能go build,再也不用担心go get依赖类库
+ 失败导致不能编译了.
+
+v4.0
+1.内网穿透三端重构了一个multiplexing版本，使用github.com/xtaci/smux实现了tcp链接的多路复用，
+  鼎鼎大名的kcp-go底层就是使用的这个库，基于kcp-go的双边加速工具kcptun的广泛使用已经很好
+  的验证来该库的强大与稳定。multiplexing版的内网穿透对应的子命令分别是server，client，bridge
+  使用方式和参数与之前的子命令tserver，tclient，tserver完全一样，另外server，client增加了
+  压缩传输参数--c，使用压缩传输速度更快。
+
+v3.9
+1.增加了守护运行参数--forever,比如: proxy http --forever ,
+  proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后重启子进程.
+  该参数配合后台运行参数--daemon和日志参数--log,可以保障proxy一直在后台执行不会因为意外退出,
+  而且可以通过日志文件看到proxy的输出日志内容.
+  比如: proxy http -p ":9090" --forever --log proxy.log --daemon
+
+v3.8
+1.增加了日志输出到文件--log参数,比如: --log proxy.log,日志就会输出到proxy.log方便排除问题.
+
+v3.7
+1.修复了socks代理不能正常和上级代理通讯的问题.
+
+
+v3.6
+1.http(s),socks代理,集成了外部HTTP API认证,可以通过外部API对用户名和密码进行认证.
+2.手册http(s),socks代理认证部分增加了集成外部HTTP API认证的使用说明.
+
+v3.5
+1.优化了kcp参数,速度有所提升.
+2.修复了socks无法正常工作的问题.
+3.修正了文档中的一些描述.
+4.tcp代理增加了kcp协议传输数据.
+5.优化了死循环检查,增加了添加本地IP参数,当VPS在nat设备后面,
+  vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.
+6.增加了--daemon参数,可以后台运行程序哟.  
+
+v3.4
+1.socks5代理新增了用户名密码验证支持.
+2.socks5,http(s)代理增加了kcp传输协议支持.
+3.优化了内网穿透的心跳机制.
+
+v3.3
+1.修复了socks代理模式对证书文件的判断逻辑.
+2.增强了http代理,socks代理的ssh中转模式的稳定性.
+3.socks代理tls,tcp模式新增了CMD_ASSOCIATE(udp)支持.socks代理ssh模式不支持udp.
+4.修复了http代理某些情况下会崩溃的bug.
+
+v3.2
+1.内网穿透功能server端-r参数增加了协议和key设置.
 2.手册增加了对-r参数的详细说明.
+3.修复了普通模式也检查证书文件的bug.
+4.增加了Socks5支持,目前只支持TCP协议,不支持UDP协议.
+5.Socks5上级代理支持ssh中转,linux服务器不需要任何服务端,本地一个proxy即可开心上网.
+6.http(s)代理增加了ssh中转支持,linux服务器不需要任何服务端,本地一个proxy即可开心上网.
 
 v3.1
 1.优化了内网穿透功能,bridge,client和server只需要启动一个即可。  

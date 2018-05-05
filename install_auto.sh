@@ -5,15 +5,8 @@ if [ -e /tmp/proxy ]; then
 fi
 mkdir /tmp/proxy
 cd /tmp/proxy
-wget https://github.com/reddec/monexec/releases/download/v0.1.1/monexec_0.1.1_linux_amd64.tar.gz
-wget https://github.com/snail007/goproxy/releases/download/v3.1/proxy-linux-amd64.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v4.7/proxy-linux-amd64.tar.gz
 
-# install monexec
-tar zxvf monexec_0.1.1_linux_amd64.tar.gz
-cd  monexec_0.1.1_linux_amd64
-cp monexec /usr/bin/
-chmod +x /usr/bin/monexec
-cd ..
 # #install proxy
 tar zxvf proxy-linux-amd64.tar.gz
 cp proxy /usr/bin/

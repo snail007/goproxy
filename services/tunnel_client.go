@@ -1,80 +1,114 @@
 package services
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/binary"
 	"fmt"
+	"github.com/snail007/goproxy/utils"
 	"io"
 	"log"
 	"net"
-	"proxy/utils"
-	"strings"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type TunnelClient struct {
-	cfg TunnelClientArgs
+	cfg       TunnelClientArgs
+	ctrlConn  net.Conn
+	isStop    bool
+	userConns utils.ConcurrentMap
 }
 
 func NewTunnelClient() Service {
 	return &TunnelClient{
-		cfg: TunnelClientArgs{},
+		cfg:       TunnelClientArgs{},
+		userConns: utils.NewConcurrentMap(),
+		isStop:    false,
 	}
 }
 
-func (s *TunnelClient) InitService() {
+func (s *TunnelClient) InitService() (err error) {
+	return
 }
-func (s *TunnelClient) Check() {
+
+func (s *TunnelClient) CheckArgs() (err error) {
 	if *s.cfg.Parent != "" {
 		log.Printf("use tls parent %s", *s.cfg.Parent)
 	} else {
-		log.Fatalf("parent required")
+		err = fmt.Errorf("parent required")
+		return
 	}
-	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
-		log.Fatalf("cert and key file required")
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
 }
 func (s *TunnelClient) StopService() {
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tclient service crashed,%s", e)
+		} else {
+			log.Printf("service tclient stoped")
+		}
+	}()
+	s.isStop = true
+	if s.ctrlConn != nil {
+		s.ctrlConn.Close()
+	}
+	for _, c := range s.userConns.Items() {
+		(*c.(*net.Conn)).Close()
+	}
 }
 func (s *TunnelClient) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelClientArgs)
-	s.Check()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	log.Printf("proxy on tunnel client mode")
+
 	for {
-		ctrlConn, err := s.GetInConn(CONN_CONTROL, "")
+		if s.isStop {
+			return
+		}
+		if s.ctrlConn != nil {
+			s.ctrlConn.Close()
+		}
+
+		s.ctrlConn, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
 		if err != nil {
-			log.Printf("control connection err: %s", err)
+			log.Printf("control connection err: %s, retrying...", err)
 			time.Sleep(time.Second * 3)
-			utils.CloseConn(&ctrlConn)
+			if s.ctrlConn != nil {
+				s.ctrlConn.Close()
+			}
 			continue
 		}
-		// rw := utils.NewHeartbeatReadWriter(&ctrlConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-		// 	log.Printf("ctrlConn err %s", err)
-		// 	utils.CloseConn(&ctrlConn)
-		// })
 		for {
-			signal := make([]byte, 50)
-			// n, err := rw.Read(signal)
-			n, err := ctrlConn.Read(signal)
+			if s.isStop {
+				return
+			}
+			var ID, clientLocalAddr, serverID string
+			err = utils.ReadPacketData(s.ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
-				utils.CloseConn(&ctrlConn)
-				log.Printf("read connection signal err: %s", err)
+				if s.ctrlConn != nil {
+					s.ctrlConn.Close()
+				}
+				log.Printf("read connection signal err: %s, retrying...", err)
 				break
 			}
-			addr := string(signal[:n])
-			// log.Printf("n:%d addr:%s err:%s", n, addr, err)
-			// os.Exit(0)
-			log.Printf("signal revecived:%s", addr)
-			protocol := addr[:3]
-			atIndex := strings.Index(addr, "@")
-			ID := addr[atIndex+1:]
-			localAddr := addr[4:atIndex]
+			log.Printf("signal revecived:%s %s %s", serverID, ID, clientLocalAddr)
+			protocol := clientLocalAddr[:3]
+			localAddr := clientLocalAddr[4:]
 			if protocol == "udp" {
-				go s.ServeUDP(localAddr, ID)
+				go s.ServeUDP(localAddr, ID, serverID)
 			} else {
-				go s.ServeConn(localAddr, ID)
+				go s.ServeConn(localAddr, ID, serverID)
 			}
 		}
 	}
@@ -82,25 +116,13 @@ func (s *TunnelClient) Start(args interface{}) (err error) {
 func (s *TunnelClient) Clean() {
 	s.StopService()
 }
-func (s *TunnelClient) GetInConn(typ uint8, ID string) (outConn net.Conn, err error) {
+func (s *TunnelClient) GetInConn(typ uint8, data ...string) (outConn net.Conn, err error) {
 	outConn, err = s.GetConn()
 	if err != nil {
 		err = fmt.Errorf("connection err: %s", err)
 		return
 	}
-	keyBytes := []byte(*s.cfg.Key)
-	keyLength := uint16(len(keyBytes))
-	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, typ)
-	binary.Write(pkg, binary.LittleEndian, keyLength)
-	binary.Write(pkg, binary.LittleEndian, keyBytes)
-	if ID != "" {
-		IDBytes := []byte(ID)
-		IDLength := uint16(len(IDBytes))
-		binary.Write(pkg, binary.LittleEndian, IDLength)
-		binary.Write(pkg, binary.LittleEndian, IDBytes)
-	}
-	_, err = outConn.Write(pkg.Bytes())
+	_, err = outConn.Write(utils.BuildPacket(typ, data...))
 	if err != nil {
 		err = fmt.Errorf("write connection data err: %s ,retrying...", err)
 		utils.CloseConn(&outConn)
@@ -110,18 +132,42 @@ func (s *TunnelClient) GetInConn(typ uint8, ID string) (outConn net.Conn, err er
 }
 func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes)
+	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 	if err == nil {
 		conn = net.Conn(&_conn)
+		c, e := smux.Client(conn, &smux.Config{
+			KeepAliveInterval: 10 * time.Second,
+			KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
+			MaxFrameSize:      4096,
+			MaxReceiveBuffer:  4194304,
+		})
+		if e != nil {
+			log.Printf("new mux client conn error,ERR:%s", e)
+			err = e
+			return
+		}
+		conn, e = c.OpenStream()
+		if e != nil {
+			log.Printf("mux client conn open stream error,ERR:%s", e)
+			err = e
+			return
+		}
 	}
 	return
 }
-func (s *TunnelClient) ServeUDP(localAddr, ID string) {
+func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 	var inConn net.Conn
 	var err error
 	// for {
 	for {
-		inConn, err = s.GetInConn(CONN_CLIENT, ID)
+		if s.isStop {
+			if inConn != nil {
+				inConn.Close()
+			}
+			return
+		}
+		// s.cm.RemoveOne(*s.cfg.Key, ID)
+		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
 			log.Printf("connection err: %s, retrying...", err)
@@ -131,13 +177,13 @@ func (s *TunnelClient) ServeUDP(localAddr, ID string) {
 			break
 		}
 	}
+	// s.cm.Add(*s.cfg.Key, ID, &inConn)
 	log.Printf("conn %s created", ID)
-	// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
-	// 	log.Printf("hw err %s", err)
-	// 	hw.Close()
-	// })
+
 	for {
-		// srcAddr, body, err := utils.ReadUDPPacket(&hw)
+		if s.isStop {
+			return
+		}
 		srcAddr, body, err := utils.ReadUDPPacket(inConn)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			log.Printf("connection %s released", ID)
@@ -190,11 +236,14 @@ func (s *TunnelClient) processUDPPacket(inConn *net.Conn, srcAddr, localAddr str
 	}
 	//log.Printf("send udp response success ,from:%s ,%d ,%v", dstAddr.String(), len(bs), bs)
 }
-func (s *TunnelClient) ServeConn(localAddr, ID string) {
+func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	var inConn, outConn net.Conn
 	var err error
 	for {
-		inConn, err = s.GetInConn(CONN_CLIENT, ID)
+		if s.isStop {
+			return
+		}
+		inConn, err = s.GetInConn(CONN_CLIENT, *s.cfg.Key, ID, serverID)
 		if err != nil {
 			utils.CloseConn(&inConn)
 			log.Printf("connection err: %s, retrying...", err)
@@ -207,6 +256,9 @@ func (s *TunnelClient) ServeConn(localAddr, ID string) {
 
 	i := 0
 	for {
+		if s.isStop {
+			return
+		}
 		i++
 		outConn, err = utils.ConnectHost(localAddr, *s.cfg.Timeout)
 		if err == nil || i == 3 {
@@ -225,10 +277,14 @@ func (s *TunnelClient) ServeConn(localAddr, ID string) {
 		log.Printf("build connection error, err: %s", err)
 		return
 	}
-	utils.IoBind(inConn, outConn, func(err error) {
+	inAddr := inConn.RemoteAddr().String()
+	utils.IoBind(inConn, outConn, func(err interface{}) {
 		log.Printf("conn %s released", ID)
-		utils.CloseConn(&inConn)
-		utils.CloseConn(&outConn)
-	}, func(i int, b bool) {}, 0)
+		s.userConns.Remove(inAddr)
+	})
+	if c, ok := s.userConns.Get(inAddr); ok {
+		(*c.(*net.Conn)).Close()
+	}
+	s.userConns.Set(inAddr, &inConn)
 	log.Printf("conn %s created", ID)
 }

@@ -3,11 +3,12 @@ package services
 import (
 	"bufio"
 	"fmt"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils"
 	"hash/crc32"
 	"io"
 	"log"
 	"net"
-	"proxy/utils"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -16,37 +17,68 @@ import (
 
 type UDP struct {
 	p       utils.ConcurrentMap
-	outPool utils.OutPool
+	outPool utils.OutConn
 	cfg     UDPArgs
 	sc      *utils.ServerChannel
+	isStop  bool
 }
 
 func NewUDP() Service {
 	return &UDP{
-		outPool: utils.OutPool{},
+		outPool: utils.OutConn{},
 		p:       utils.NewConcurrentMap(),
+		isStop:  false,
 	}
 }
-func (s *UDP) InitService() {
+func (s *UDP) CheckArgs() (err error) {
+	if *s.cfg.Parent == "" {
+		err = fmt.Errorf("parent required for udp %s", *s.cfg.Local)
+		return
+	}
+	if *s.cfg.ParentType == "" {
+		err = fmt.Errorf("parent type unkown,use -T <tls|tcp>")
+		return
+	}
+	if *s.cfg.ParentType == "tls" {
+		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func (s *UDP) InitService() (err error) {
 	if *s.cfg.ParentType != TYPE_UDP {
 		s.InitOutConnPool()
 	}
+	return
 }
 func (s *UDP) StopService() {
-	if s.outPool.Pool != nil {
-		s.outPool.Pool.ReleaseAll()
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop udp service crashed,%s", e)
+		} else {
+			log.Printf("service udp stoped")
+		}
+	}()
+	s.isStop = true
+	if s.sc.Listener != nil && *s.sc.Listener != nil {
+		(*s.sc.Listener).Close()
+	}
+	if s.sc.UDPListener != nil {
+		(*s.sc.UDPListener).Close()
 	}
 }
 func (s *UDP) Start(args interface{}) (err error) {
 	s.cfg = args.(UDPArgs)
-	if *s.cfg.Parent != "" {
-		log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	} else {
-		log.Fatalf("parent required for udp %s", *s.cfg.Local)
+	if err = s.CheckArgs(); err != nil {
+		return
 	}
-
-	s.InitService()
-
+	log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
@@ -87,7 +119,7 @@ func (s *UDP) GetConn(connKey string) (conn net.Conn, isNew bool, err error) {
 	isNew = !s.p.Has(connKey)
 	var _conn interface{}
 	if isNew {
-		_conn, err = s.outPool.Pool.Get()
+		_conn, err = s.outPool.Get()
 		if err != nil {
 			return nil, false, err
 		}
@@ -101,7 +133,7 @@ func (s *UDP) GetConn(connKey string) (conn net.Conn, isNew bool, err error) {
 func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err error) {
 	numLocal := crc32.ChecksumIEEE([]byte(localAddr.String()))
 	numSrc := crc32.ChecksumIEEE([]byte(srcAddr.String()))
-	mod := uint32(*s.cfg.PoolSize)
+	mod := uint32(10)
 	if mod == 0 {
 		mod = 10
 	}
@@ -120,6 +152,10 @@ func (s *UDP) OutToTCP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err erro
 			}()
 			log.Printf("conn %d created , local: %s", connKey, srcAddr.String())
 			for {
+				if s.isStop {
+					conn.Close()
+					return
+				}
 				srcAddrFromConn, body, err := utils.ReadUDPPacket(bufio.NewReader(conn))
 				if err == io.EOF || err == io.ErrUnexpectedEOF {
 					//log.Printf("connection %d released", connKey)
@@ -198,14 +234,13 @@ func (s *UDP) InitOutConnPool() {
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutPool(
+		s.outPool = utils.NewOutConn(
 			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType == TYPE_TLS,
-			s.cfg.CertBytes, s.cfg.KeyBytes,
+			*s.cfg.ParentType,
+			kcpcfg.KCPConfigArgs{},
+			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
 			*s.cfg.Parent,
 			*s.cfg.Timeout,
-			*s.cfg.PoolSize,
-			*s.cfg.PoolSize*2,
 		)
 	}
 }

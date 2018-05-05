@@ -1,24 +1,26 @@
 package services
 
 import (
-	"bufio"
-	"encoding/binary"
+	"bytes"
+	"fmt"
+	"github.com/snail007/goproxy/utils"
 	"log"
 	"net"
-	"proxy/utils"
 	"strconv"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 type ServerConn struct {
-	ClientLocalAddr string //tcp:2.2.22:333@ID
-	Conn            *net.Conn
-	//Conn *utils.HeartbeatReadWriter
+	//ClientLocalAddr string //tcp:2.2.22:333@ID
+	Conn *net.Conn
 }
 type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
 	serverConns        utils.ConcurrentMap
 	clientControlConns utils.ConcurrentMap
+	isStop             bool
 }
 
 func NewTunnelBridge() Service {
@@ -26,160 +28,51 @@ func NewTunnelBridge() Service {
 		cfg:                TunnelBridgeArgs{},
 		serverConns:        utils.NewConcurrentMap(),
 		clientControlConns: utils.NewConcurrentMap(),
+		isStop:             false,
 	}
 }
 
-func (s *TunnelBridge) InitService() {
-
+func (s *TunnelBridge) InitService() (err error) {
+	return
 }
-func (s *TunnelBridge) Check() {
-	if s.cfg.CertBytes == nil || s.cfg.KeyBytes == nil {
-		log.Fatalf("cert and key file required")
+func (s *TunnelBridge) CheckArgs() (err error) {
+	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
+		err = fmt.Errorf("cert and key file required")
+		return
 	}
-
+	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	return
 }
 func (s *TunnelBridge) StopService() {
-
+	defer func() {
+		e := recover()
+		if e != nil {
+			log.Printf("stop tbridge service crashed,%s", e)
+		} else {
+			log.Printf("service tbridge stoped")
+		}
+	}()
+	s.isStop = true
+	for _, sess := range s.clientControlConns.Items() {
+		(*sess.(*net.Conn)).Close()
+	}
+	for _, sess := range s.serverConns.Items() {
+		(*sess.(ServerConn).Conn).Close()
+	}
 }
 func (s *TunnelBridge) Start(args interface{}) (err error) {
 	s.cfg = args.(TunnelBridgeArgs)
-	s.Check()
-	s.InitService()
+	if err = s.CheckArgs(); err != nil {
+		return
+	}
+	if err = s.InitService(); err != nil {
+		return
+	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p)
 
-	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, func(inConn net.Conn) {
-		//log.Printf("connection from %s ", inConn.RemoteAddr())
-
-		reader := bufio.NewReader(inConn)
-		var connType uint8
-		err = binary.Read(reader, binary.LittleEndian, &connType)
-		if err != nil {
-			utils.CloseConn(&inConn)
-			return
-		}
-		//log.Printf("conn type %d", connType)
-
-		var key, clientLocalAddr, ID string
-		var connTypeStrMap = map[uint8]string{CONN_SERVER: "server", CONN_CLIENT: "client", CONN_CONTROL: "client"}
-		var keyLength uint16
-		err = binary.Read(reader, binary.LittleEndian, &keyLength)
-		if err != nil {
-			return
-		}
-
-		_key := make([]byte, keyLength)
-		n, err := reader.Read(_key)
-		if err != nil {
-			return
-		}
-		if n != int(keyLength) {
-			return
-		}
-		key = string(_key)
-		//log.Printf("conn key %s", key)
-
-		if connType != CONN_CONTROL {
-			var IDLength uint16
-			err = binary.Read(reader, binary.LittleEndian, &IDLength)
-			if err != nil {
-				return
-			}
-			_id := make([]byte, IDLength)
-			n, err := reader.Read(_id)
-			if err != nil {
-				return
-			}
-			if n != int(IDLength) {
-				return
-			}
-			ID = string(_id)
-
-			if connType == CONN_SERVER {
-				var addrLength uint16
-				err = binary.Read(reader, binary.LittleEndian, &addrLength)
-				if err != nil {
-					return
-				}
-				_addr := make([]byte, addrLength)
-				n, err = reader.Read(_addr)
-				if err != nil {
-					return
-				}
-				if n != int(addrLength) {
-					return
-				}
-				clientLocalAddr = string(_addr)
-			}
-		}
-		log.Printf("connection from %s , key: %s , id: %s", connTypeStrMap[connType], key, ID)
-
-		switch connType {
-		case CONN_SERVER:
-			// hb := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			// 	log.Printf("%s conn %s from server released", key, ID)
-			// 	s.serverConns.Remove(ID)
-			// })
-			addr := clientLocalAddr + "@" + ID
-			s.serverConns.Set(ID, ServerConn{
-				//Conn:            &hb,
-				Conn:            &inConn,
-				ClientLocalAddr: addr,
-			})
-			for {
-				item, ok := s.clientControlConns.Get(key)
-				if !ok {
-					log.Printf("client %s control conn not exists", key)
-					time.Sleep(time.Second * 3)
-					continue
-				}
-				_, err := (*item.(*net.Conn)).Write([]byte(addr))
-				if err != nil {
-					log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
-					time.Sleep(time.Second * 3)
-					continue
-				} else {
-					break
-				}
-			}
-		case CONN_CLIENT:
-			serverConnItem, ok := s.serverConns.Get(ID)
-			if !ok {
-				inConn.Close()
-				log.Printf("server conn %s exists", ID)
-				return
-			}
-			serverConn := serverConnItem.(ServerConn).Conn
-			// hw := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hw *utils.HeartbeatReadWriter) {
-			// 	log.Printf("%s conn %s from client released", key, ID)
-			// 	hw.Close()
-			// })
-			utils.IoBind(*serverConn, inConn, func(err error) {
-				// utils.IoBind(serverConn, inConn, func(isSrcErr bool, err error) {
-				//serverConn.Close()
-				(*serverConn).Close()
-				utils.CloseConn(&inConn)
-				// hw.Close()
-				s.serverConns.Remove(ID)
-				log.Printf("conn %s released", ID)
-			}, func(i int, b bool) {}, 0)
-			log.Printf("conn %s created", ID)
-		case CONN_CONTROL:
-			if s.clientControlConns.Has(key) {
-				item, _ := s.clientControlConns.Get(key)
-				//(*item.(*utils.HeartbeatReadWriter)).Close()
-				(*item.(*net.Conn)).Close()
-			}
-			// hb := utils.NewHeartbeatReadWriter(&inConn, 3, func(err error, hb *utils.HeartbeatReadWriter) {
-			// 	log.Printf("client %s disconnected", key)
-			// 	s.clientControlConns.Remove(key)
-			// })
-			// s.clientControlConns.Set(key, &hb)
-			s.clientControlConns.Set(key, &inConn)
-			log.Printf("set client %s control conn", key)
-		}
-	})
+	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	if err != nil {
 		return
 	}
@@ -188,4 +81,112 @@ func (s *TunnelBridge) Start(args interface{}) (err error) {
 }
 func (s *TunnelBridge) Clean() {
 	s.StopService()
+}
+func (s *TunnelBridge) callback(inConn net.Conn) {
+	var err error
+	//log.Printf("connection from %s ", inConn.RemoteAddr())
+	sess, err := smux.Server(inConn, &smux.Config{
+		KeepAliveInterval: 10 * time.Second,
+		KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
+		MaxFrameSize:      4096,
+		MaxReceiveBuffer:  4194304,
+	})
+	if err != nil {
+		log.Printf("new mux server conn error,ERR:%s", err)
+		return
+	}
+	inConn, err = sess.AcceptStream()
+	if err != nil {
+		log.Printf("mux server conn accept error,ERR:%s", err)
+		return
+	}
+
+	var buf = make([]byte, 1024)
+	n, _ := inConn.Read(buf)
+	reader := bytes.NewReader(buf[:n])
+	//reader := bufio.NewReader(inConn)
+
+	var connType uint8
+	err = utils.ReadPacket(reader, &connType)
+	if err != nil {
+		log.Printf("read error,ERR:%s", err)
+		return
+	}
+	switch connType {
+	case CONN_SERVER:
+		var key, ID, clientLocalAddr, serverID string
+		err = utils.ReadPacketData(reader, &key, &ID, &clientLocalAddr, &serverID)
+		if err != nil {
+			log.Printf("read error,ERR:%s", err)
+			return
+		}
+		packet := utils.BuildPacketData(ID, clientLocalAddr, serverID)
+		log.Printf("server connection, key: %s , id: %s %s %s", key, ID, clientLocalAddr, serverID)
+
+		//addr := clientLocalAddr + "@" + ID
+		s.serverConns.Set(ID, ServerConn{
+			Conn: &inConn,
+		})
+		for {
+			if s.isStop {
+				return
+			}
+			item, ok := s.clientControlConns.Get(key)
+			if !ok {
+				log.Printf("client %s control conn not exists", key)
+				time.Sleep(time.Second * 3)
+				continue
+			}
+			(*item.(*net.Conn)).SetWriteDeadline(time.Now().Add(time.Second * 3))
+			_, err := (*item.(*net.Conn)).Write(packet)
+			(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
+			if err != nil {
+				log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
+				time.Sleep(time.Second * 3)
+				continue
+			} else {
+				// s.cmServer.Add(serverID, ID, &inConn)
+				break
+			}
+		}
+	case CONN_CLIENT:
+		var key, ID, serverID string
+		err = utils.ReadPacketData(reader, &key, &ID, &serverID)
+		if err != nil {
+			log.Printf("read error,ERR:%s", err)
+			return
+		}
+		log.Printf("client connection , key: %s , id: %s, server id:%s", key, ID, serverID)
+
+		serverConnItem, ok := s.serverConns.Get(ID)
+		if !ok {
+			inConn.Close()
+			log.Printf("server conn %s exists", ID)
+			return
+		}
+		serverConn := serverConnItem.(ServerConn).Conn
+		utils.IoBind(*serverConn, inConn, func(err interface{}) {
+			s.serverConns.Remove(ID)
+			// s.cmClient.RemoveOne(key, ID)
+			// s.cmServer.RemoveOne(serverID, ID)
+			log.Printf("conn %s released", ID)
+		})
+		// s.cmClient.Add(key, ID, &inConn)
+		log.Printf("conn %s created", ID)
+
+	case CONN_CLIENT_CONTROL:
+		var key string
+		err = utils.ReadPacketData(reader, &key)
+		if err != nil {
+			log.Printf("read error,ERR:%s", err)
+			return
+		}
+		log.Printf("client control connection, key: %s", key)
+		if s.clientControlConns.Has(key) {
+			item, _ := s.clientControlConns.Get(key)
+			(*item.(*net.Conn)).Close()
+		}
+		s.clientControlConns.Set(key, &inConn)
+		log.Printf("set client %s control conn", key)
+	}
 }

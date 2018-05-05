@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/binary"
+	"errors"
 	"fmt"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/sni"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,6 +16,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/golang/snappy"
+	"github.com/miekg/dns"
 )
 
 type Checker struct {
@@ -22,6 +27,7 @@ type Checker struct {
 	directMap  ConcurrentMap
 	interval   int64
 	timeout    int
+	isStop     bool
 }
 type CheckerItem struct {
 	IsHTTPS      bool
@@ -42,6 +48,7 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 		data:     NewConcurrentMap(),
 		interval: interval,
 		timeout:  timeout,
+		isStop:   false,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -51,7 +58,10 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 	if !ch.directMap.IsEmpty() {
 		log.Printf("direct file loaded , domains : %d", ch.directMap.Count())
 	}
-	ch.start()
+	if interval > 0 {
+		ch.start()
+	}
+
 	return ch
 }
 
@@ -72,23 +82,24 @@ func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 	}
 	return
 }
+func (c *Checker) Stop() {
+	c.isStop = true
+}
 func (c *Checker) start() {
 	go func() {
+		//log.Printf("checker started")
 		for {
+			//log.Printf("checker did")
 			for _, v := range c.data.Items() {
 				go func(item CheckerItem) {
 					if c.isNeedCheck(item) {
-						//log.Printf("check %s", item.Domain)
+						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
-						if item.IsHTTPS {
-							conn, err = ConnectHost(item.Host, c.timeout)
-							if err == nil {
-								conn.SetDeadline(time.Now().Add(time.Millisecond))
-								conn.Close()
-							}
-						} else {
-							err = HTTPGet(item.URL, c.timeout)
+						conn, err = ConnectHost(item.Host, c.timeout)
+						if err == nil {
+							conn.SetDeadline(time.Now().Add(time.Millisecond))
+							conn.Close()
 						}
 						if err != nil {
 							item.FailCount = item.FailCount + 1
@@ -100,6 +111,9 @@ func (c *Checker) start() {
 				}(v.(CheckerItem))
 			}
 			time.Sleep(time.Second * time.Duration(c.interval))
+			if c.isStop {
+				return
+			}
 		}
 	}()
 }
@@ -155,34 +169,37 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(address string, isHTTPS bool, method, URL string, data []byte) {
+func (c *Checker) Add(address string) {
 	if c.domainIsInMap(address, false) || c.domainIsInMap(address, true) {
 		return
 	}
-	if !isHTTPS && strings.ToLower(method) != "get" {
-		return
-	}
 	var item CheckerItem
-	u := strings.Split(address, ":")
 	item = CheckerItem{
-		URL:     URL,
-		Domain:  u[0],
-		Host:    address,
-		Data:    data,
-		IsHTTPS: isHTTPS,
-		Method:  method,
+		Host: address,
 	}
 	c.data.SetIfAbsent(item.Host, item)
 }
 
 type BasicAuth struct {
-	data ConcurrentMap
+	data        ConcurrentMap
+	authURL     string
+	authOkCode  int
+	authTimeout int
+	authRetry   int
+	dns         *DomainResolver
 }
 
-func NewBasicAuth() BasicAuth {
+func NewBasicAuth(dns *DomainResolver) BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
+		dns:  dns,
 	}
+}
+func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
+	ba.authURL = URL
+	ba.authOkCode = code
+	ba.authTimeout = timeout
+	ba.authRetry = retry
 }
 func (ba *BasicAuth) AddFromFile(file string) (n int, err error) {
 	_content, err := ioutil.ReadFile(file)
@@ -213,16 +230,82 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
+func (ba *BasicAuth) CheckUserPass(user, pass, ip, target string) (ok bool) {
 
-func (ba *BasicAuth) Check(userpass string) (ok bool) {
+	return ba.Check(user+":"+pass, ip, target)
+}
+func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) == 2 {
 		if p, _ok := ba.data.Get(u[0]); _ok {
 			return p.(string) == u[1]
 		}
+		if ba.authURL != "" {
+			err := ba.checkFromURL(userpass, ip, target)
+			if err == nil {
+				return true
+			}
+			log.Printf("%s", err)
+		}
+		return false
 	}
 	return
 }
+func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
+	u := strings.Split(strings.Trim(userpass, " "), ":")
+	if len(u) != 2 {
+		return
+	}
+
+	URL := ba.authURL
+	if strings.Contains(URL, "?") {
+		URL += "&"
+	} else {
+		URL += "?"
+	}
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, url.QueryEscape(target))
+	getURL := URL
+	var domain string
+	if ba.dns != nil {
+		_url, _ := url.Parse(ba.authURL)
+		domain = _url.Host
+		domainIP := ba.dns.MustResolve(domain)
+		getURL = strings.Replace(URL, domain, domainIP, 1)
+	}
+	var code int
+	var tryCount = 0
+	var body []byte
+	for tryCount <= ba.authRetry {
+		body, code, err = HttpGet(getURL, ba.authTimeout, domain)
+		if err == nil && code == ba.authOkCode {
+			break
+		} else if err != nil {
+			err = fmt.Errorf("auth fail from url %s,resonse err:%s , %s", URL, err, ip)
+		} else {
+			if len(body) > 0 {
+				err = fmt.Errorf(string(body[0:100]))
+			} else {
+				err = fmt.Errorf("token error")
+			}
+			b := string(body)
+			if len(b) > 50 {
+				b = b[:50]
+			}
+			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
+		}
+		if err != nil && tryCount < ba.authRetry {
+			log.Print(err)
+			time.Sleep(time.Second * 2)
+		}
+		tryCount++
+	}
+	if err != nil {
+		return
+	}
+	//log.Printf("auth success from auth url, %s", ip)
+	return
+}
+
 func (ba *BasicAuth) Total() (n int) {
 	n = ba.data.Count()
 	return
@@ -239,30 +322,46 @@ type HTTPRequest struct {
 	basicAuth   *BasicAuth
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
-	len := 0
+	n := 0
 	req = HTTPRequest{
 		conn: inConn,
 	}
-	len, err = (*inConn).Read(buf[:])
-	if err != nil {
-		if err != io.EOF {
-			err = fmt.Errorf("http decoder read err:%s", err)
+	if header != nil && len(header) == 1 && len(header[0]) > 1 {
+		buf = header[0]
+		n = len(header[0])
+	} else {
+		n, err = (*inConn).Read(buf[:])
+		if err != nil {
+			if err != io.EOF {
+				err = fmt.Errorf("http decoder read err:%s", err)
+			}
+			CloseConn(inConn)
+			return
 		}
-		CloseConn(inConn)
-		return
 	}
-	req.HeadBuf = buf[:len]
-	index := bytes.IndexByte(req.HeadBuf, '\n')
-	if index == -1 {
-		err = fmt.Errorf("http decoder data line err:%s", string(req.HeadBuf)[:50])
-		CloseConn(inConn)
-		return
+
+	req.HeadBuf = buf[:n]
+	//fmt.Println(string(req.HeadBuf))
+	//try sni
+	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
+	if err0 == nil {
+		//sni success
+		req.Method = "SNI"
+		req.hostOrURL = "https://" + serverName + ":443"
+	} else {
+		//sni fail , try http
+		index := bytes.IndexByte(req.HeadBuf, '\n')
+		if index == -1 {
+			err = fmt.Errorf("http decoder data line err:%s", SubStr(string(req.HeadBuf), 0, 50))
+			CloseConn(inConn)
+			return
+		}
+		fmt.Sscanf(string(req.HeadBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
 	}
-	fmt.Sscanf(string(req.HeadBuf[:index]), "%s%s", &req.Method, &req.hostOrURL)
 	if req.Method == "" || req.hostOrURL == "" {
-		err = fmt.Errorf("http decoder data err:%s", string(req.HeadBuf)[:50])
+		err = fmt.Errorf("http decoder data err:%s", SubStr(string(req.HeadBuf), 0, 50))
 		CloseConn(inConn)
 		return
 	}
@@ -285,18 +384,25 @@ func (req *HTTPRequest) HTTP() (err error) {
 			return
 		}
 	}
-	req.URL, err = req.getHTTPURL()
-	if err == nil {
-		u, _ := url.Parse(req.URL)
-		req.Host = u.Host
-		req.addPortIfNot()
+	req.URL = req.getHTTPURL()
+	var u *url.URL
+	u, err = url.Parse(req.URL)
+	if err != nil {
+		return
 	}
+	req.Host = u.Host
+	req.addPortIfNot()
 	return
 }
 func (req *HTTPRequest) HTTPS() (err error) {
+	if req.isBasicAuth {
+		err = req.BasicAuth()
+		if err != nil {
+			return
+		}
+	}
 	req.Host = req.hostOrURL
 	req.addPortIfNot()
-	//_, err = fmt.Fprint(*req.conn, "HTTP/1.1 200 Connection established\r\n\r\n")
 	return
 }
 func (req *HTTPRequest) HTTPSReply() (err error) {
@@ -307,16 +413,18 @@ func (req *HTTPRequest) IsHTTPS() bool {
 	return req.Method == "CONNECT"
 }
 
-func (req *HTTPRequest) BasicAuth() (err error) {
+func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
+	// log.Printf("request :%s", string(req.HeadBuf))
+	authorization := req.getHeader("Proxy-Authorization")
 
-	//log.Printf("request :%s", string(b[:n]))
-	authorization, err := req.getHeader("Authorization")
-	if err != nil {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
+	authorization = strings.Trim(authorization, " \r\n\t")
+	if authorization == "" {
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
+		err = errors.New("require auth header data")
 		return
 	}
-	//log.Printf("Authorization:%s", authorization)
+	//log.Printf("Authorization:%authorization = req.getHeader("Authorization")
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
 		err = fmt.Errorf("authorization data error,ERR:%s", authorization)
@@ -329,30 +437,46 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		CloseConn(req.conn)
 		return
 	}
-	authOk := (*req.basicAuth).Check(string(user))
+	basicInfo = string(user)
+	return
+}
+func (req *HTTPRequest) BasicAuth() (err error) {
+	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
+	URL := ""
+	if req.IsHTTPS() {
+		URL = "https://" + req.Host
+	} else {
+		URL = req.getHTTPURL()
+	}
+	user, err := req.GetAuthDataStr()
+	if err != nil {
+		return
+	}
+	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", "407")
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
 	}
 	return
 }
-func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
+func (req *HTTPRequest) getHTTPURL() (URL string) {
 	if !strings.HasPrefix(req.hostOrURL, "/") {
-		return req.hostOrURL, nil
+		return req.hostOrURL
 	}
-	_host, err := req.getHeader("host")
-	if err != nil {
+	_host := req.getHeader("host")
+	if _host == "" {
 		return
 	}
 	URL = fmt.Sprintf("http://%s%s", _host, req.hostOrURL)
 	return
 }
-func (req *HTTPRequest) getHeader(key string) (val string, err error) {
+func (req *HTTPRequest) getHeader(key string) (val string) {
 	key = strings.ToUpper(key)
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
+	//log.Println(lines)
 	for _, line := range lines {
 		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
 		if len(line) == 2 {
@@ -364,7 +488,6 @@ func (req *HTTPRequest) getHeader(key string) (val string, err error) {
 			}
 		}
 	}
-	err = fmt.Errorf("can not find HOST header")
 	return
 }
 
@@ -382,233 +505,290 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 	return
 }
 
-type OutPool struct {
-	Pool      ConnPool
-	dur       int
-	isTLS     bool
-	certBytes []byte
-	keyBytes  []byte
-	address   string
-	timeout   int
+type OutConn struct {
+	dur         int
+	typ         string
+	certBytes   []byte
+	keyBytes    []byte
+	caCertBytes []byte
+	kcp         kcpcfg.KCPConfigArgs
+	address     string
+	timeout     int
 }
 
-func NewOutPool(dur int, isTLS bool, certBytes, keyBytes []byte, address string, timeout int, InitialCap int, MaxCap int) (op OutPool) {
-	op = OutPool{
-		dur:       dur,
-		isTLS:     isTLS,
-		certBytes: certBytes,
-		keyBytes:  keyBytes,
-		address:   address,
-		timeout:   timeout,
+func NewOutConn(dur int, typ string, kcp kcpcfg.KCPConfigArgs, certBytes, keyBytes, caCertBytes []byte, address string, timeout int) (op OutConn) {
+	return OutConn{
+		dur:         dur,
+		typ:         typ,
+		certBytes:   certBytes,
+		keyBytes:    keyBytes,
+		caCertBytes: caCertBytes,
+		kcp:         kcp,
+		address:     address,
+		timeout:     timeout,
 	}
-	var err error
-	op.Pool, err = NewConnPool(poolConfig{
-		IsActive: func(conn interface{}) bool { return true },
-		Release: func(conn interface{}) {
-			if conn != nil {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-				// log.Println("conn released")
-			}
-		},
-		InitialCap: InitialCap,
-		MaxCap:     MaxCap,
-		Factory: func() (conn interface{}, err error) {
-			conn, err = op.getConn()
-			return
-		},
-	})
-	if err != nil {
-		log.Fatalf("init conn pool fail ,%s", err)
-	} else {
-		if InitialCap > 0 {
-			log.Printf("init conn pool success")
-			op.initPoolDeamon()
-		} else {
-			log.Printf("conn pool closed")
-		}
-	}
-	return
 }
-func (op *OutPool) getConn() (conn interface{}, err error) {
-	if op.isTLS {
+func (op *OutConn) Get() (conn net.Conn, err error) {
+	if op.typ == "tls" {
 		var _conn tls.Conn
-		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes)
+		_conn, err = TlsConnectHost(op.address, op.timeout, op.certBytes, op.keyBytes, op.caCertBytes)
 		if err == nil {
 			conn = net.Conn(&_conn)
 		}
+	} else if op.typ == "kcp" {
+		conn, err = ConnectKCPHost(op.address, op.kcp)
 	} else {
 		conn, err = ConnectHost(op.address, op.timeout)
 	}
 	return
 }
 
-func (op *OutPool) initPoolDeamon() {
-	go func() {
-		if op.dur <= 0 {
-			return
-		}
-		log.Printf("pool deamon started")
-		for {
-			time.Sleep(time.Second * time.Duration(op.dur))
-			conn, err := op.getConn()
-			if err != nil {
-				log.Printf("pool deamon err %s , release pool", err)
-				op.Pool.ReleaseAll()
-			} else {
-				conn.(net.Conn).SetDeadline(time.Now().Add(time.Millisecond))
-				conn.(net.Conn).Close()
-			}
-		}
-	}()
+type ConnManager struct {
+	pool ConcurrentMap
+	l    *sync.Mutex
 }
 
-type HeartbeatData struct {
-	Data  []byte
-	N     int
-	Error error
-}
-type HeartbeatReadWriter struct {
-	conn *net.Conn
-	// rchn       chan HeartbeatData
-	l          *sync.Mutex
-	dur        int
-	errHandler func(err error, hb *HeartbeatReadWriter)
-	once       *sync.Once
-	datachn    chan byte
-	// rbuf       bytes.Buffer
-	// signal     chan bool
-	rerrchn chan error
-}
-
-func NewHeartbeatReadWriter(conn *net.Conn, dur int, fn func(err error, hb *HeartbeatReadWriter)) (hrw HeartbeatReadWriter) {
-	hrw = HeartbeatReadWriter{
-		conn: conn,
+func NewConnManager() ConnManager {
+	cm := ConnManager{
+		pool: NewConcurrentMap(),
 		l:    &sync.Mutex{},
-		dur:  dur,
-		// rchn:       make(chan HeartbeatData, 10000),
-		// signal:     make(chan bool, 1),
-		errHandler: fn,
-		datachn:    make(chan byte, 4*1024),
-		once:       &sync.Once{},
-		rerrchn:    make(chan error, 1),
-		// rbuf:       bytes.Buffer{},
 	}
-	hrw.heartbeat()
-	hrw.reader()
-	return
+	return cm
+}
+func (cm *ConnManager) Add(key, ID string, conn *net.Conn) {
+	cm.pool.Upsert(key, nil, func(exist bool, valueInMap interface{}, newValue interface{}) interface{} {
+		var conns ConcurrentMap
+		if !exist {
+			conns = NewConcurrentMap()
+		} else {
+			conns = valueInMap.(ConcurrentMap)
+		}
+		if conns.Has(ID) {
+			v, _ := conns.Get(ID)
+			(*v.(*net.Conn)).Close()
+		}
+		conns.Set(ID, conn)
+		log.Printf("%s conn added", key)
+		return conns
+	})
+}
+func (cm *ConnManager) Remove(key string) {
+	var conns ConcurrentMap
+	if v, ok := cm.pool.Get(key); ok {
+		conns = v.(ConcurrentMap)
+		conns.IterCb(func(key string, v interface{}) {
+			CloseConn(v.(*net.Conn))
+		})
+		log.Printf("%s conns closed", key)
+	}
+	cm.pool.Remove(key)
+}
+func (cm *ConnManager) RemoveOne(key string, ID string) {
+	defer cm.l.Unlock()
+	cm.l.Lock()
+	var conns ConcurrentMap
+	if v, ok := cm.pool.Get(key); ok {
+		conns = v.(ConcurrentMap)
+		if conns.Has(ID) {
+			v, _ := conns.Get(ID)
+			(*v.(*net.Conn)).Close()
+			conns.Remove(ID)
+			cm.pool.Set(key, conns)
+			log.Printf("%s %s conn closed", key, ID)
+		}
+	}
+}
+func (cm *ConnManager) RemoveAll() {
+	for _, k := range cm.pool.Keys() {
+		cm.Remove(k)
+	}
 }
 
-func (rw *HeartbeatReadWriter) Close() {
-	CloseConn(rw.conn)
+type ClientKeyRouter struct {
+	keyChan chan string
+	ctrl    *ConcurrentMap
+	lock    *sync.Mutex
 }
-func (rw *HeartbeatReadWriter) reader() {
-	go func() {
-		//log.Printf("heartbeat read started")
-		for {
-			n, data, err := rw.read()
-			if n == -1 {
-				continue
-			}
-			//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
-			if err == nil {
-				//fmt.Printf("write data %s\n", string(data))
-				for _, b := range data {
-					rw.datachn <- b
-				}
-			}
-			if err != nil {
-				//log.Printf("heartbeat reader err: %s", err)
-				select {
-				case rw.rerrchn <- err:
-				default:
-				}
-				rw.once.Do(func() {
-					rw.errHandler(err, rw)
-				})
-				break
+
+func NewClientKeyRouter(ctrl *ConcurrentMap, size int) ClientKeyRouter {
+	return ClientKeyRouter{
+		keyChan: make(chan string, size),
+		ctrl:    ctrl,
+		lock:    &sync.Mutex{},
+	}
+}
+func (c *ClientKeyRouter) GetKey() string {
+	defer c.lock.Unlock()
+	c.lock.Lock()
+	if len(c.keyChan) == 0 {
+	EXIT:
+		for _, k := range c.ctrl.Keys() {
+			select {
+			case c.keyChan <- k:
+			default:
+				goto EXIT
 			}
 		}
-		//log.Printf("heartbeat read exited")
-	}()
+	}
+	for {
+		if len(c.keyChan) == 0 {
+			return "*"
+		}
+		select {
+		case key := <-c.keyChan:
+			if c.ctrl.Has(key) {
+				return key
+			}
+		default:
+			return "*"
+		}
+	}
+
 }
-func (rw *HeartbeatReadWriter) read() (n int, data []byte, err error) {
-	var typ uint8
-	err = binary.Read((*rw.conn), binary.LittleEndian, &typ)
-	if err != nil {
-		return
+
+type DomainResolver struct {
+	ttl         int
+	dnsAddrress string
+	data        ConcurrentMap
+}
+type DomainResolverItem struct {
+	ip        string
+	domain    string
+	expiredAt int64
+}
+
+func NewDomainResolver(dnsAddrress string, ttl int) DomainResolver {
+
+	return DomainResolver{
+		ttl:         ttl,
+		dnsAddrress: dnsAddrress,
+		data:        NewConcurrentMap(),
 	}
-	if typ == 0 {
-		// log.Printf("heartbeat revecived")
-		n = -1
-		return
-	}
-	var dataLength uint32
-	binary.Read((*rw.conn), binary.LittleEndian, &dataLength)
-	_data := make([]byte, dataLength)
-	// log.Printf("dataLength:%d , data:%s", dataLength, string(data))
-	n, err = (*rw.conn).Read(_data)
-	//log.Printf("n:%d , data:%s ,err:%s", n, string(data), err)
-	if err != nil {
-		return
-	}
-	if uint32(n) != dataLength {
-		err = fmt.Errorf("read short data body")
-		return
-	}
-	data = _data[:n]
+}
+func (a *DomainResolver) MustResolve(address string) (ip string) {
+	ip, _ = a.Resolve(address)
 	return
 }
-func (rw *HeartbeatReadWriter) heartbeat() {
-	go func() {
-		//log.Printf("heartbeat started")
-		for {
-			if rw.conn == nil || *rw.conn == nil {
-				//log.Printf("heartbeat err: conn nil")
-				break
-			}
-			rw.l.Lock()
-			_, err := (*rw.conn).Write([]byte{0})
-			rw.l.Unlock()
-			if err != nil {
-				//log.Printf("heartbeat err: %s", err)
-				rw.once.Do(func() {
-					rw.errHandler(err, rw)
-				})
-				break
-			} else {
-				// log.Printf("heartbeat send ok")
-			}
-			time.Sleep(time.Second * time.Duration(rw.dur))
+func (a *DomainResolver) Resolve(address string) (ip string, err error) {
+	domain := address
+	port := ""
+	fromCache := "false"
+	defer func() {
+		if port != "" {
+			ip = net.JoinHostPort(ip, port)
 		}
-		//log.Printf("heartbeat exited")
+		log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
+		//a.PrintData()
 	}()
-}
-func (rw *HeartbeatReadWriter) Read(p []byte) (n int, err error) {
-	data := make([]byte, cap(p))
-	for i := 0; i < cap(p); i++ {
-		data[i] = <-rw.datachn
-		n++
-		//fmt.Printf("read  %d %v\n", i, data[:n])
-		if len(rw.datachn) == 0 {
-			n = i + 1
-			copy(p, data[:n])
+	if strings.Contains(domain, ":") {
+		domain, port, err = net.SplitHostPort(domain)
+		if err != nil {
 			return
 		}
 	}
-	return
-}
-func (rw *HeartbeatReadWriter) Write(p []byte) (n int, err error) {
-	defer rw.l.Unlock()
-	rw.l.Lock()
-	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, uint8(1))
-	binary.Write(pkg, binary.LittleEndian, uint32(len(p)))
-	binary.Write(pkg, binary.LittleEndian, p)
-	bs := pkg.Bytes()
-	n, err = (*rw.conn).Write(bs)
-	if err == nil {
-		n = len(p)
+	if net.ParseIP(domain) != nil {
+		ip = domain
+		fromCache = "ip ignore"
+		return
+	}
+	item, ok := a.data.Get(domain)
+	if ok {
+		//log.Println("find ", domain)
+		if (*item.(*DomainResolverItem)).expiredAt > time.Now().Unix() {
+			ip = (*item.(*DomainResolverItem)).ip
+			fromCache = "true"
+			//log.Println("from cache ", domain)
+			return
+		}
+	} else {
+		item = &DomainResolverItem{
+			domain: domain,
+		}
+
+	}
+	c := new(dns.Client)
+	c.DialTimeout = time.Millisecond * 5000
+	c.ReadTimeout = time.Millisecond * 5000
+	c.WriteTimeout = time.Millisecond * 5000
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+	m.RecursionDesired = true
+	r, _, err := c.Exchange(m, a.dnsAddrress)
+	if r == nil {
+		return
+	}
+	if r.Rcode != dns.RcodeSuccess {
+		err = fmt.Errorf(" *** invalid answer name %s after A query for %s", domain, a.dnsAddrress)
+		return
+	}
+	for _, answer := range r.Answer {
+		if answer.Header().Rrtype == dns.TypeA {
+			info := strings.Fields(answer.String())
+			if len(info) >= 5 {
+				ip = info[4]
+				_item := item.(*DomainResolverItem)
+				(*_item).expiredAt = time.Now().Unix() + int64(a.ttl)
+				(*_item).ip = ip
+				a.data.Set(domain, item)
+				return
+			}
+		}
 	}
 	return
+}
+func (a *DomainResolver) PrintData() {
+	for k, item := range a.data.Items() {
+		d := item.(*DomainResolverItem)
+		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
+	}
+}
+func NewCompStream(conn net.Conn) *CompStream {
+	c := new(CompStream)
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return c
+}
+func NewCompConn(conn net.Conn) net.Conn {
+	c := CompStream{}
+	c.conn = conn
+	c.w = snappy.NewBufferedWriter(conn)
+	c.r = snappy.NewReader(conn)
+	return &c
+}
+
+type CompStream struct {
+	net.Conn
+	conn net.Conn
+	w    *snappy.Writer
+	r    *snappy.Reader
+}
+
+func (c *CompStream) Read(p []byte) (n int, err error) {
+	return c.r.Read(p)
+}
+
+func (c *CompStream) Write(p []byte) (n int, err error) {
+	n, err = c.w.Write(p)
+	err = c.w.Flush()
+	return n, err
+}
+
+func (c *CompStream) Close() error {
+	return c.conn.Close()
+}
+func (c *CompStream) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+func (c *CompStream) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+func (c *CompStream) SetDeadline(t time.Time) error {
+	return c.conn.SetDeadline(t)
+}
+func (c *CompStream) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+func (c *CompStream) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }
