@@ -963,7 +963,14 @@ If you want to get a more detailed configuration and explanation of the KCP para
 ```
 
 ### TODO  
-- Welcome joining group feedback...
+- HTTP, socks proxy which has multi parents proxy load balancing?
+- HTTP (s) proxy support PAC?
+- Welcome joining group feedback...   
+
+### How to contribute to the code?  
+First, you need to clone the project to your account, and then modify the code on the dev branch.   
+Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
+PR needs to explain what changes have been made and why you change them.  
 
 ### How to use the source code?    
 Recommend go1.8.5, which does not guarantee that version >=1.9 can be used.   

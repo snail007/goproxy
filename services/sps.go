@@ -368,7 +368,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
-	s.userConns.Set(inAddr, &inConn)
+	s.userConns.Set(inAddr, inConn)
 	return
 }
 func (s *SPS) InitBasicAuth() (err error) {

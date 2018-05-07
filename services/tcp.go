@@ -148,7 +148,7 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
-	s.userConns.Set(inAddr, &inConn)
+	s.userConns.Set(inAddr, inConn)
 	return
 }
 func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
