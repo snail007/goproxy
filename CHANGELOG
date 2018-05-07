@@ -1,4 +1,9 @@
 proxy更新日志
+v4.8
+1.优化了SPS连接HTTP上级的指令,避免了某些代理不响应的问题.
+
+
+
 v4.7
 1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.
 2.优化了bridge的日志,增加了client和server的掉线日志.

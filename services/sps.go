@@ -16,6 +16,7 @@ import (
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
+	"src/github.com/snail007/goproxy/utils/ss"
 )
 
 type SPS struct {
@@ -26,6 +27,7 @@ type SPS struct {
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
 	log            *logger.Logger
+	cipher         *ss.Cipher
 }
 
 func NewSPS() Service {
@@ -67,6 +69,13 @@ func (s *SPS) InitService() (err error) {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
 	}
 	err = s.InitBasicAuth()
+	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
+		s.cipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)
+		if err != nil {
+			s.log.Printf("error generating cipher : %s", err)
+			return
+		}
+	}
 	return
 }
 func (s *SPS) InitOutConnPool() {
@@ -171,39 +180,52 @@ func (s *SPS) callback(inConn net.Conn) {
 	}
 }
 func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
-	buf := make([]byte, 1024)
-	n, err := (*inConn).Read(buf)
-	header := buf[:n]
+	bInConn := utils.NewBufferedConn(*inConn)
+	//important
+	//action read will regist read event to system,
+	//when data arrived , system call process
+	//so that we can get buffered bytes count
+	//otherwise Buffered() always return 0
+	bInConn.ReadByte()
+	bInConn.UnreadByte()
+
+	n := 8
+	if n > bInConn.Buffered() {
+		n = bInConn.Buffered()
+	}
+	h, err := bInConn.Peek(n)
 	if err != nil {
-		s.log.Printf("ERR:%s", err)
-		utils.CloseConn(inConn)
+		s.log.Printf("peek error %s ", err)
+		(*inConn).Close()
 		return
 	}
+
+	*inConn = bInConn
 	address := ""
 	var auth socks.Auth
 	var forwardBytes []byte
 	//fmt.Printf("%v", header)
-	if header[0] == socks.VERSION_V5 {
+	if utils.IsSocks5(h) {
 		//socks5 server
 		var serverConn *socks.ServerConn
 		if s.IsBasicAuth() {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", header)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", nil)
 		} else {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", header)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", nil)
 		}
 		if err = serverConn.Handshake(); err != nil {
 			return
 		}
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
-	} else if bytes.IndexByte(header, '\n') != -1 {
+	} else if utils.IsHTTP(h) {
 		//http
 		var request utils.HTTPRequest
 		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		if s.IsBasicAuth() {
-			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, header)
+			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, nil)
 		} else {
-			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, header)
+			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, nil)
 		}
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
@@ -211,7 +233,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(inConn)
 			return
 		}
-		if len(header) >= 7 && strings.ToLower(string(header[:7])) == "connect" {
+		if len(h) >= 7 && strings.ToLower(string(h[:7])) == "connect" {
 			//https
 			request.HTTPSReply()
 			//s.log.Printf("https reply: %s", request.Host)
@@ -231,7 +253,21 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 		}
 	} else {
-		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(header))
+		//ss
+		ssConn := ss.NewConn(*inConn, s.cipher.Copy())
+		address, err = ss.GetRequest(ssConn)
+		if err != nil {
+			return
+		}
+		// ensure the host does not contain some illegal characters, NUL may panic on Win32
+		if strings.ContainsRune(address, 0x00) {
+			err = errors.New("invalid domain name")
+			return
+		}
+		*inConn = ssConn
+	}
+	if err != nil {
+		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(h))
 		utils.CloseConn(inConn)
 		err = errors.New("unknown request")
 		return
@@ -256,7 +292,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
 		pb := new(bytes.Buffer)
-		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n", address)))
+		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost:%s\r\nProxy-Connection: Keep-Alive\r\n", address, address)))
 		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
@@ -305,12 +341,12 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 				err = fmt.Errorf("parent auth data format error")
 				return
 			}
-			clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, header)
+			clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, nil)
 		} else {
 			if !s.IsBasicAuth() && auth.Password != "" && auth.User != "" {
-				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, header)
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, nil)
 			} else {
-				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, header)
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
 			}
 		}
 		if err = clientConn.Handshake(); err != nil {

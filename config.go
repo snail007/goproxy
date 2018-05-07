@@ -242,6 +242,8 @@ func initConfig() (err error) {
 	spsArgs.ParentKey = sps.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
 	spsArgs.LocalCompress = sps.Flag("local-compress", "auto compress/decompress data on local connection").Short('m').Default("false").Bool()
 	spsArgs.ParentCompress = sps.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
+	spsArgs.SSMethod = sps.Hidden().Flag("ss-method", "").Short('h').Default("aes-256-cfb").String()
+	spsArgs.SSKey = sps.Hidden().Flag("ss-key", "").Short('j').Default("sspassword").String()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))

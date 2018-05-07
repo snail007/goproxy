@@ -1,13 +1,12 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils/sni"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,6 +15,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/sni"
 
 	"github.com/golang/snappy"
 	"github.com/miekg/dns"
@@ -791,4 +793,34 @@ func (c *CompStream) SetReadDeadline(t time.Time) error {
 }
 func (c *CompStream) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
+}
+
+type BufferedConn struct {
+	r        *bufio.Reader
+	net.Conn // So that most methods are embedded
+}
+
+func NewBufferedConn(c net.Conn) BufferedConn {
+	return BufferedConn{bufio.NewReader(c), c}
+}
+
+func NewBufferedConnSize(c net.Conn, n int) BufferedConn {
+	return BufferedConn{bufio.NewReaderSize(c, n), c}
+}
+
+func (b BufferedConn) Peek(n int) ([]byte, error) {
+	return b.r.Peek(n)
+}
+
+func (b BufferedConn) Read(p []byte) (int, error) {
+	return b.r.Read(p)
+}
+func (b BufferedConn) ReadByte() (byte, error) {
+	return b.r.ReadByte()
+}
+func (b BufferedConn) UnreadByte() error {
+	return b.r.UnreadByte()
+}
+func (b BufferedConn) Buffered() int {
+	return b.r.Buffered()
 }

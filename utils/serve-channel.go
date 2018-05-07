@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"log"
 	"net"
 	"runtime/debug"
 	"strconv"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
 
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -43,7 +47,7 @@ func (sc *ServerChannel) SetErrAcceptHandler(fn func(err error)) {
 	sc.errAcceptHandler = fn
 }
 func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn func(conn net.Conn)) (err error) {
-	sc.Listener, err = ListenTls(sc.ip, sc.port, certBytes, keyBytes, caCertBytes)
+	sc.Listener, err = sc.listenTls(sc.ip, sc.port, certBytes, keyBytes, caCertBytes)
 	if err == nil {
 		go func() {
 			defer func() {
@@ -73,7 +77,33 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn f
 	}
 	return
 }
+func (sc *ServerChannel) listenTls(ip string, port int, certBytes, keyBytes, caCertBytes []byte) (ln *net.Listener, err error) {
 
+	var cert tls.Certificate
+	cert, err = tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return
+	}
+	clientCertPool := x509.NewCertPool()
+	caBytes := certBytes
+	if caCertBytes != nil {
+		caBytes = caCertBytes
+	}
+	ok := clientCertPool.AppendCertsFromPEM(caBytes)
+	if !ok {
+		err = errors.New("failed to parse root certificate")
+	}
+	config := &tls.Config{
+		ClientCAs:    clientCertPool,
+		Certificates: []tls.Certificate{cert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+	}
+	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
+	if err == nil {
+		ln = &_ln
+	}
+	return
+}
 func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 	var l net.Listener
 	l, err = net.Listen("tcp", fmt.Sprintf("%s:%d", sc.ip, sc.port))
