@@ -16,7 +16,7 @@ import (
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
-	"src/github.com/snail007/goproxy/utils/ss"
+	"github.com/snail007/goproxy/utils/ss"
 )
 
 type SPS struct {
