@@ -251,7 +251,8 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			request.HTTPSReply()
 			//s.log.Printf("https reply: %s", request.Host)
 		} else {
-			forwardBytes = request.HeadBuf
+			//forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
+			forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
 		}
 		address = request.Host
 		var userpass string
@@ -312,7 +313,13 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
 		pb := new(bytes.Buffer)
-		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost:%s\r\nProxy-Connection: Keep-Alive\r\n", address, strings.TrimRight(address,":80"))))
+		if len(forwardBytes) > 0 {
+			pb.Write(forwardBytes)
+			pb.WriteString("\r\nProxy-Connection: Keep-Alive\r\n")
+			forwardBytes=nil
+		}else{
+			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n", address)))
+		}
 		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
