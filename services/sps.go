@@ -231,9 +231,9 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		var request utils.HTTPRequest
 		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		if s.IsBasicAuth() {
-			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, nil)
+			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, s.log)
 		} else {
-			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, nil)
+			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, s.log)
 		}
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
