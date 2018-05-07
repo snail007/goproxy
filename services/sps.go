@@ -111,7 +111,12 @@ func (s *SPS) StopService() {
 		}
 	}
 	for _, c := range s.userConns.Items() {
-		(*c.(*net.Conn)).Close()
+		if _,ok:=c.(*net.Conn);ok{
+			(*c.(*net.Conn)).Close()
+		}
+		if _,ok:=c.(**net.Conn);ok{
+			(*(*c.(**net.Conn))).Close()
+		}
 	}
 }
 func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
