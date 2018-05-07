@@ -307,7 +307,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
 		pb := new(bytes.Buffer)
-		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost:%s\r\nProxy-Connection: Keep-Alive\r\n", address, address)))
+		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost:%s\r\nProxy-Connection: Keep-Alive\r\n", address, strings.TrimRight(address,":80"))))
 		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
