@@ -206,7 +206,7 @@ func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	s.sc = utils.NewServerChannel(host, p)
+	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpChn <- UDPItem{
@@ -246,7 +246,7 @@ func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
 			utils.IoBind(inConn, outConn, func(err interface{}) {
 				s.userConns.Remove(inAddr)
 				s.log.Printf("%s conn %s released", *s.cfg.Key, ID)
-			})
+			}, s.log)
 			if c, ok := s.userConns.Get(inAddr); ok {
 				(*c.(*net.Conn)).Close()
 			}

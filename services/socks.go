@@ -110,9 +110,9 @@ func (s *Socks) CheckArgs() (err error) {
 func (s *Socks) InitService() (err error) {
 	s.InitBasicAuth()
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
-	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
+	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
 	if *s.cfg.ParentType == "ssh" {
 		e := s.ConnectSSH()
 		if e != nil {
@@ -147,7 +147,7 @@ func (s *Socks) InitService() (err error) {
 	if *s.cfg.ParentType == "ssh" {
 		s.log.Printf("warn: socks udp not suppored for ssh")
 	} else {
-		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal)
+		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal, s.log)
 		e := s.udpSC.ListenUDP(s.udpCallback)
 		if e != nil {
 			err = fmt.Errorf("init udp service fail, ERR: %s", e)
@@ -197,13 +197,13 @@ func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
 	if *s.cfg.UDPParent != "" {
 		s.log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
 	}
-	sc := utils.NewServerChannelHost(*s.cfg.Local)
+	sc := utils.NewServerChannelHost(*s.cfg.Local, s.log)
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.socksConnCallback)
 	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.socksConnCallback)
 	} else if *s.cfg.LocalType == TYPE_KCP {
-		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback)
+		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback, s.log)
 	}
 	if err != nil {
 		return
@@ -557,7 +557,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	s.log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released", inAddr, request.Addr())
-	})
+	}, s.log)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 		s.userConns.Remove(inAddr)
@@ -689,9 +689,9 @@ func (s *Socks) ConnectSSH() (err error) {
 }
 func (s *Socks) InitBasicAuth() (err error) {
 	if *s.cfg.DNSAddress != "" {
-		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver, s.log)
 	} else {
-		s.basicAuth = utils.NewBasicAuth(nil)
+		s.basicAuth = utils.NewBasicAuth(nil, s.log)
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)

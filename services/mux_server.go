@@ -200,7 +200,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	s.sc = utils.NewServerChannel(host, p)
+	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpChn <- MuxUDPItem{
@@ -258,7 +258,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 			} else {
 				utils.IoBind(inConn, outConn, func(err interface{}) {
 					s.log.Printf("%s stream %s released", *s.cfg.Key, ID)
-				})
+				}, s.log)
 			}
 		})
 		if err != nil {

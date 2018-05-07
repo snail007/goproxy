@@ -66,7 +66,7 @@ func (s *SPS) CheckArgs() (err error) {
 func (s *SPS) InitService() (err error) {
 	s.InitOutConnPool()
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	err = s.InitBasicAuth()
 	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
@@ -128,13 +128,13 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p)
+			sc := utils.NewServerChannel(host, p, s.log)
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
-				err = sc.ListenKCP(s.cfg.KCP, s.callback)
+				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if err != nil {
 				return
@@ -206,6 +206,10 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	var forwardBytes []byte
 	//fmt.Printf("%v", header)
 	if utils.IsSocks5(h) {
+		if *s.cfg.DisableSocks5 {
+			(*inConn).Close()
+			return
+		}
 		//socks5 server
 		var serverConn *socks.ServerConn
 		if s.IsBasicAuth() {
@@ -219,6 +223,10 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
 	} else if utils.IsHTTP(h) {
+		if *s.cfg.DisableHTTP {
+			(*inConn).Close()
+			return
+		}
 		//http
 		var request utils.HTTPRequest
 		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -254,8 +262,14 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		}
 	} else {
 		//ss
+		if *s.cfg.DisableSS {
+			(*inConn).Close()
+			return
+		}
+		(*inConn).SetDeadline(time.Now().Add(time.Second * 5))
 		ssConn := ss.NewConn(*inConn, s.cipher.Copy())
 		address, err = ss.GetRequest(ssConn)
+		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
 			return
 		}
@@ -266,8 +280,9 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		}
 		*inConn = ssConn
 	}
-	if err != nil {
+	if err != nil || address == "" {
 		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(h))
+		(*inConn).Close()
 		utils.CloseConn(inConn)
 		err = errors.New("unknown request")
 		return
@@ -363,7 +378,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released", inAddr, outAddr)
 		s.userConns.Remove(inAddr)
-	})
+	}, s.log)
 	s.log.Printf("conn %s - %s connected", inAddr, outAddr)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
@@ -373,9 +388,9 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 }
 func (s *SPS) InitBasicAuth() (err error) {
 	if *s.cfg.DNSAddress != "" {
-		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver, s.log)
 	} else {
-		s.basicAuth = utils.NewBasicAuth(nil)
+		s.basicAuth = utils.NewBasicAuth(nil, s.log)
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)

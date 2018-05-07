@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -32,7 +32,7 @@ import (
 	kcp "github.com/xtaci/kcp-go"
 )
 
-func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{})) {
+func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -222,7 +222,7 @@ func Keygen() (err error) {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -231,7 +231,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -250,7 +250,7 @@ func Keygen() (err error) {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -260,7 +260,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -270,7 +270,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 
@@ -284,7 +284,7 @@ proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sig
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -293,7 +293,7 @@ proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sig
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))

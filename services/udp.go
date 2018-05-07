@@ -84,7 +84,7 @@ func (s *UDP) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p)
+	sc := utils.NewServerChannel(host, p, s.log)
 	s.sc = &sc
 	err = sc.ListenUDP(s.callback)
 	if err != nil {

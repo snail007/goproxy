@@ -244,6 +244,9 @@ func initConfig() (err error) {
 	spsArgs.ParentCompress = sps.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
 	spsArgs.SSMethod = sps.Hidden().Flag("ss-method", "").Short('h').Default("aes-256-cfb").String()
 	spsArgs.SSKey = sps.Hidden().Flag("ss-key", "").Short('j').Default("sspassword").String()
+	spsArgs.DisableHTTP = sps.Flag("disable-http", "disable http(s) proxy").Default("false").Bool()
+	spsArgs.DisableSocks5 = sps.Flag("disable-socks", "disable socks proxy").Default("false").Bool()
+	spsArgs.DisableSS = sps.Hidden().Flag("disable-ss", "").Default("false").Bool()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))

@@ -84,14 +84,14 @@ func (s *TCP) Start(args interface{}, log *logger.Logger) (err error) {
 	s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p)
+	sc := utils.NewServerChannel(host, p, s.log)
 
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.callback)
 	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	} else if *s.cfg.LocalType == TYPE_KCP {
-		err = sc.ListenKCP(s.cfg.KCP, s.callback)
+		err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 	}
 	if err != nil {
 		return
@@ -143,7 +143,7 @@ func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released", inAddr, outAddr)
 		s.userConns.Remove(inAddr)
-	})
+	}, s.log)
 	s.log.Printf("conn %s - %s connected", inAddr, outAddr)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()

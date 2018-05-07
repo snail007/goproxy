@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strconv"
@@ -21,23 +21,26 @@ type ServerChannel struct {
 	Listener         *net.Listener
 	UDPListener      *net.UDPConn
 	errAcceptHandler func(err error)
+	log              *logger.Logger
 }
 
-func NewServerChannel(ip string, port int) ServerChannel {
+func NewServerChannel(ip string, port int, log *logger.Logger) ServerChannel {
 	return ServerChannel{
 		ip:   ip,
 		port: port,
+		log:  log,
 		errAcceptHandler: func(err error) {
 			log.Printf("accept error , ERR:%s", err)
 		},
 	}
 }
-func NewServerChannelHost(host string) ServerChannel {
+func NewServerChannelHost(host string, log *logger.Logger) ServerChannel {
 	h, port, _ := net.SplitHostPort(host)
 	p, _ := strconv.Atoi(port)
 	return ServerChannel{
 		ip:   h,
 		port: p,
+		log:  log,
 		errAcceptHandler: func(err error) {
 			log.Printf("accept error , ERR:%s", err)
 		},
@@ -52,7 +55,7 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn f
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenTls crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenTls crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -62,7 +65,7 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn f
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("tls connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("tls connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -112,7 +115,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenTCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenTCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -122,7 +125,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("tcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("tcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -144,7 +147,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenUDP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenUDP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -155,7 +158,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(packet, addr, srcAddr)
@@ -169,7 +172,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 	}
 	return
 }
-func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn)) (err error) {
+func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn), log *logger.Logger) (err error) {
 	lis, err := kcp.ListenWithOptions(fmt.Sprintf("%s:%d", sc.ip, sc.port), config.Block, *config.DataShard, *config.ParityShard)
 	if err == nil {
 		if err = lis.SetDSCP(*config.DSCP); err != nil {
@@ -189,7 +192,7 @@ func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenKCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenKCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -199,7 +202,7 @@ func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("kcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("kcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						conn.SetStreamMode(true)
