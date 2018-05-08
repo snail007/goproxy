@@ -312,14 +312,16 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
+		isHTTPS:=false
 		pb := new(bytes.Buffer)
-		if len(forwardBytes) > 0 {
-			pb.Write(forwardBytes)
-			pb.WriteString("\r\nProxy-Connection: Keep-Alive\r\n")
-			forwardBytes=nil
-		}else{
-			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n", address)))
+		if len(forwardBytes) == 0 {
+			isHTTPS=true
+			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1", address)))
 		}
+		pb.WriteString("\r\nProxy-Connection: Keep-Alive\r\n")
+
+		s.log.Printf("before bytes:%s",string(forwardBytes))
+
 		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
@@ -337,7 +339,22 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		if u != "" {
 			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
 		}
-		pb.Write([]byte("\r\n"))
+
+		if isHTTPS{
+			pb.Write([]byte("\r\n"))
+		}else{
+			//do remove some headers with forwardBytes
+			//forwardBytes
+
+			forwardBytes=bytes.Replace(forwardBytes,[]byte("\r\n"),[]byte(pb.Bytes()),1)
+			pb.Reset()
+			pb.Write(forwardBytes)
+			if !bytes.Contains(forwardBytes,[]byte("\r\n\r\n\r\n")){
+				pb.Write([]byte("\r\n\r\n"))
+			}
+			forwardBytes=nil
+		}
+		
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
@@ -347,17 +364,23 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(&outConn)
 			return
 		}
-		reply := make([]byte, 1024)
-		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		_, err = outConn.Read(reply)
-		outConn.SetDeadline(time.Time{})
-		if err != nil {
-			s.log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
+
+		s.log.Printf("ishttps:%v",isHTTPS)
+		s.log.Printf("bytes:%s",string(pb.Bytes()))
+
+		if isHTTPS{
+			reply := make([]byte, 1024)
+			outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+			_, err = outConn.Read(reply)
+			outConn.SetDeadline(time.Time{})
+			if err != nil {
+				s.log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
+				utils.CloseConn(inConn)
+				utils.CloseConn(&outConn)
+				return
+			}
+			//s.log.Printf("reply: %s", string(reply[:n]))
 		}
-		//s.log.Printf("reply: %s", string(reply[:n]))
 	} else {
 		s.log.Printf("connect %s", address)
 		//socks client
