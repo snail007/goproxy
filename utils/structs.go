@@ -1,21 +1,23 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils/sni"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"net"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/sni"
 
 	"github.com/golang/snappy"
 	"github.com/miekg/dns"
@@ -28,6 +30,7 @@ type Checker struct {
 	interval   int64
 	timeout    int
 	isStop     bool
+	log        *logger.Logger
 }
 type CheckerItem struct {
 	IsHTTPS      bool
@@ -43,12 +46,13 @@ type CheckerItem struct {
 //NewChecker args:
 //timeout : tcp timeout milliseconds ,connect to host
 //interval: recheck domain interval seconds
-func NewChecker(timeout int, interval int64, blockedFile, directFile string) Checker {
+func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger) Checker {
 	ch := Checker{
 		data:     NewConcurrentMap(),
 		interval: interval,
 		timeout:  timeout,
 		isStop:   false,
+		log:      log,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -70,7 +74,7 @@ func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 	if PathExists(f) {
 		_contents, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Printf("load file err:%s", err)
+			c.log.Printf("load file err:%s", err)
 			return
 		}
 		for _, line := range strings.Split(string(_contents), "\n") {
@@ -149,7 +153,7 @@ func (c *Checker) IsBlocked(address string) (blocked bool, failN, successN uint)
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
 	if err != nil {
-		log.Printf("blocked check , url parse err:%s", err)
+		c.log.Printf("blocked check , url parse err:%s", err)
 		return true
 	}
 	domainSlice := strings.Split(u.Hostname(), ".")
@@ -187,12 +191,14 @@ type BasicAuth struct {
 	authTimeout int
 	authRetry   int
 	dns         *DomainResolver
+	log         *logger.Logger
 }
 
-func NewBasicAuth(dns *DomainResolver) BasicAuth {
+func NewBasicAuth(dns *DomainResolver, log *logger.Logger) BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
 		dns:  dns,
+		log:  log,
 	}
 }
 func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
@@ -245,7 +251,7 @@ func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
 			if err == nil {
 				return true
 			}
-			log.Printf("%s", err)
+			ba.log.Printf("%s", err)
 		}
 		return false
 	}
@@ -294,7 +300,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
 		}
 		if err != nil && tryCount < ba.authRetry {
-			log.Print(err)
+			ba.log.Print(err)
 			time.Sleep(time.Second * 2)
 		}
 		tryCount++
@@ -320,13 +326,15 @@ type HTTPRequest struct {
 	hostOrURL   string
 	isBasicAuth bool
 	basicAuth   *BasicAuth
+	log         *logger.Logger
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, header ...[]byte) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
 	n := 0
 	req = HTTPRequest{
 		conn: inConn,
+		log:  log,
 	}
 	if header != nil && len(header) == 1 && len(header[0]) > 1 {
 		buf = header[0]
@@ -546,12 +554,14 @@ func (op *OutConn) Get() (conn net.Conn, err error) {
 type ConnManager struct {
 	pool ConcurrentMap
 	l    *sync.Mutex
+	log  *logger.Logger
 }
 
-func NewConnManager() ConnManager {
+func NewConnManager(log *logger.Logger) ConnManager {
 	cm := ConnManager{
 		pool: NewConcurrentMap(),
 		l:    &sync.Mutex{},
+		log:  log,
 	}
 	return cm
 }
@@ -568,7 +578,7 @@ func (cm *ConnManager) Add(key, ID string, conn *net.Conn) {
 			(*v.(*net.Conn)).Close()
 		}
 		conns.Set(ID, conn)
-		log.Printf("%s conn added", key)
+		cm.log.Printf("%s conn added", key)
 		return conns
 	})
 }
@@ -579,7 +589,7 @@ func (cm *ConnManager) Remove(key string) {
 		conns.IterCb(func(key string, v interface{}) {
 			CloseConn(v.(*net.Conn))
 		})
-		log.Printf("%s conns closed", key)
+		cm.log.Printf("%s conns closed", key)
 	}
 	cm.pool.Remove(key)
 }
@@ -594,7 +604,7 @@ func (cm *ConnManager) RemoveOne(key string, ID string) {
 			(*v.(*net.Conn)).Close()
 			conns.Remove(ID)
 			cm.pool.Set(key, conns)
-			log.Printf("%s %s conn closed", key, ID)
+			cm.log.Printf("%s %s conn closed", key, ID)
 		}
 	}
 }
@@ -650,6 +660,7 @@ type DomainResolver struct {
 	ttl         int
 	dnsAddrress string
 	data        ConcurrentMap
+	log         *logger.Logger
 }
 type DomainResolverItem struct {
 	ip        string
@@ -657,12 +668,13 @@ type DomainResolverItem struct {
 	expiredAt int64
 }
 
-func NewDomainResolver(dnsAddrress string, ttl int) DomainResolver {
+func NewDomainResolver(dnsAddrress string, ttl int, log *logger.Logger) DomainResolver {
 
 	return DomainResolver{
 		ttl:         ttl,
 		dnsAddrress: dnsAddrress,
 		data:        NewConcurrentMap(),
+		log:         log,
 	}
 }
 func (a *DomainResolver) MustResolve(address string) (ip string) {
@@ -677,7 +689,7 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 		if port != "" {
 			ip = net.JoinHostPort(ip, port)
 		}
-		log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
+		a.log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
 		//a.PrintData()
 	}()
 	if strings.Contains(domain, ":") {
@@ -791,4 +803,34 @@ func (c *CompStream) SetReadDeadline(t time.Time) error {
 }
 func (c *CompStream) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
+}
+
+type BufferedConn struct {
+	r        *bufio.Reader
+	net.Conn // So that most methods are embedded
+}
+
+func NewBufferedConn(c net.Conn) BufferedConn {
+	return BufferedConn{bufio.NewReader(c), c}
+}
+
+func NewBufferedConnSize(c net.Conn, n int) BufferedConn {
+	return BufferedConn{bufio.NewReaderSize(c, n), c}
+}
+
+func (b BufferedConn) Peek(n int) ([]byte, error) {
+	return b.r.Peek(n)
+}
+
+func (b BufferedConn) Read(p []byte) (int, error) {
+	return b.r.Read(p)
+}
+func (b BufferedConn) ReadByte() (byte, error) {
+	return b.r.ReadByte()
+}
+func (b BufferedConn) UnreadByte() error {
+	return b.r.UnreadByte()
+}
+func (b BufferedConn) Buffered() int {
+	return b.r.Buffered()
 }

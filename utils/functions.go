@@ -10,27 +10,29 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"math/rand"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 
+	"github.com/snail007/goproxy/services/kcpcfg"
+
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/snail007/goproxy/utils/id"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/utils/id"
+
 	kcp "github.com/xtaci/kcp-go"
 )
 
-func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{})) {
+func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -68,7 +70,9 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 		}
 		src.Close()
 		dst.Close()
-		fn(err)
+		if fn != nil {
+			fn(err)
+		}
 	}()
 }
 func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
@@ -171,33 +175,6 @@ func ConnectKCPHost(hostAndPort string, config kcpcfg.KCPConfigArgs) (conn net.C
 	return NewCompStream(kcpconn), err
 }
 
-func ListenTls(ip string, port int, certBytes, keyBytes, caCertBytes []byte) (ln *net.Listener, err error) {
-
-	var cert tls.Certificate
-	cert, err = tls.X509KeyPair(certBytes, keyBytes)
-	if err != nil {
-		return
-	}
-	clientCertPool := x509.NewCertPool()
-	caBytes := certBytes
-	if caCertBytes != nil {
-		caBytes = caCertBytes
-	}
-	ok := clientCertPool.AppendCertsFromPEM(caBytes)
-	if !ok {
-		err = errors.New("failed to parse root certificate")
-	}
-	config := &tls.Config{
-		ClientCAs:    clientCertPool,
-		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-	}
-	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
-	if err == nil {
-		ln = &_ln
-	}
-	return
-}
 func PathExists(_path string) bool {
 	_, err := os.Stat(_path)
 	if err != nil && os.IsNotExist(err) {
@@ -245,7 +222,7 @@ func Keygen() (err error) {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -254,7 +231,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -273,7 +250,7 @@ func Keygen() (err error) {
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -283,7 +260,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -293,7 +270,7 @@ func Keygen() (err error) {
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 
@@ -307,7 +284,7 @@ proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sig
 		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -316,7 +293,7 @@ proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sig
 		cmd = exec.Command("sh", "-c", cmdStr)
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("err:%s", err)
+			logger.Printf("err:%s", err)
 			return
 		}
 		fmt.Println(string(out))
@@ -620,6 +597,26 @@ func IsIternalIP(domainOrIP string) bool {
 		if ip.To4().Mask(net.IPv4Mask(255, 0, 0, 0)).String() == "172.0.0.0" {
 			i, _ := strconv.Atoi(strings.Split(ip.To4().String(), ".")[1])
 			return i >= 16 && i <= 31
+		}
+	}
+	return false
+}
+func IsHTTP(head []byte) bool {
+	keys := []string{"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+	for _, key := range keys {
+		if bytes.HasPrefix(head, []byte(key)) || bytes.HasPrefix(head, []byte(strings.ToLower(key))) {
+			return true
+		}
+	}
+	return false
+}
+func IsSocks5(head []byte) bool {
+	if len(head) < 3 {
+		return false
+	}
+	if head[0] == uint8(0x05) && 0 < int(head[1]) && int(head[1]) < 255 {
+		if len(head) == 2+int(head[1]) {
+			return true
 		}
 	}
 	return false

@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"log"
+	logger "log"
 	"net"
 	"runtime/debug"
 	"strconv"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
 
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -17,23 +21,26 @@ type ServerChannel struct {
 	Listener         *net.Listener
 	UDPListener      *net.UDPConn
 	errAcceptHandler func(err error)
+	log              *logger.Logger
 }
 
-func NewServerChannel(ip string, port int) ServerChannel {
+func NewServerChannel(ip string, port int, log *logger.Logger) ServerChannel {
 	return ServerChannel{
 		ip:   ip,
 		port: port,
+		log:  log,
 		errAcceptHandler: func(err error) {
 			log.Printf("accept error , ERR:%s", err)
 		},
 	}
 }
-func NewServerChannelHost(host string) ServerChannel {
+func NewServerChannelHost(host string, log *logger.Logger) ServerChannel {
 	h, port, _ := net.SplitHostPort(host)
 	p, _ := strconv.Atoi(port)
 	return ServerChannel{
 		ip:   h,
 		port: p,
+		log:  log,
 		errAcceptHandler: func(err error) {
 			log.Printf("accept error , ERR:%s", err)
 		},
@@ -43,12 +50,12 @@ func (sc *ServerChannel) SetErrAcceptHandler(fn func(err error)) {
 	sc.errAcceptHandler = fn
 }
 func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn func(conn net.Conn)) (err error) {
-	sc.Listener, err = ListenTls(sc.ip, sc.port, certBytes, keyBytes, caCertBytes)
+	sc.Listener, err = sc.listenTls(sc.ip, sc.port, certBytes, keyBytes, caCertBytes)
 	if err == nil {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenTls crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenTls crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -58,7 +65,7 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn f
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("tls connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("tls connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -73,7 +80,33 @@ func (sc *ServerChannel) ListenTls(certBytes, keyBytes, caCertBytes []byte, fn f
 	}
 	return
 }
+func (sc *ServerChannel) listenTls(ip string, port int, certBytes, keyBytes, caCertBytes []byte) (ln *net.Listener, err error) {
 
+	var cert tls.Certificate
+	cert, err = tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return
+	}
+	clientCertPool := x509.NewCertPool()
+	caBytes := certBytes
+	if caCertBytes != nil {
+		caBytes = caCertBytes
+	}
+	ok := clientCertPool.AppendCertsFromPEM(caBytes)
+	if !ok {
+		err = errors.New("failed to parse root certificate")
+	}
+	config := &tls.Config{
+		ClientCAs:    clientCertPool,
+		Certificates: []tls.Certificate{cert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+	}
+	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
+	if err == nil {
+		ln = &_ln
+	}
+	return
+}
 func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 	var l net.Listener
 	l, err = net.Listen("tcp", fmt.Sprintf("%s:%d", sc.ip, sc.port))
@@ -82,7 +115,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenTCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenTCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -92,7 +125,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("tcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("tcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(conn)
@@ -114,7 +147,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenUDP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenUDP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -125,7 +158,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						fn(packet, addr, srcAddr)
@@ -139,7 +172,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 	}
 	return
 }
-func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn)) (err error) {
+func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn), log *logger.Logger) (err error) {
 	lis, err := kcp.ListenWithOptions(fmt.Sprintf("%s:%d", sc.ip, sc.port), config.Block, *config.DataShard, *config.ParityShard)
 	if err == nil {
 		if err = lis.SetDSCP(*config.DSCP); err != nil {
@@ -159,7 +192,7 @@ func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					log.Printf("ListenKCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+					sc.log.Printf("ListenKCP crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -169,7 +202,7 @@ func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net
 					go func() {
 						defer func() {
 							if e := recover(); e != nil {
-								log.Printf("kcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
+								sc.log.Printf("kcp connection handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
 						conn.SetStreamMode(true)

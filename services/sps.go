@@ -16,6 +16,7 @@ import (
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
+	"github.com/snail007/goproxy/utils/ss"
 )
 
 type SPS struct {
@@ -26,6 +27,7 @@ type SPS struct {
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
 	log            *logger.Logger
+	cipher         *ss.Cipher
 }
 
 func NewSPS() Service {
@@ -64,9 +66,16 @@ func (s *SPS) CheckArgs() (err error) {
 func (s *SPS) InitService() (err error) {
 	s.InitOutConnPool()
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	err = s.InitBasicAuth()
+	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
+		s.cipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)
+		if err != nil {
+			s.log.Printf("error generating cipher : %s", err)
+			return
+		}
+	}
 	return
 }
 func (s *SPS) InitOutConnPool() {
@@ -102,7 +111,12 @@ func (s *SPS) StopService() {
 		}
 	}
 	for _, c := range s.userConns.Items() {
-		(*c.(*net.Conn)).Close()
+		if _,ok:=c.(*net.Conn);ok{
+			(*c.(*net.Conn)).Close()
+		}
+		if _,ok:=c.(**net.Conn);ok{
+			(*(*c.(**net.Conn))).Close()
+		}
 	}
 }
 func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
@@ -119,13 +133,13 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p)
+			sc := utils.NewServerChannel(host, p, s.log)
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
-				err = sc.ListenKCP(s.cfg.KCP, s.callback)
+				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if err != nil {
 				return
@@ -171,39 +185,60 @@ func (s *SPS) callback(inConn net.Conn) {
 	}
 }
 func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
-	buf := make([]byte, 1024)
-	n, err := (*inConn).Read(buf)
-	header := buf[:n]
+	bInConn := utils.NewBufferedConn(*inConn)
+	//important
+	//action read will regist read event to system,
+	//when data arrived , system call process
+	//so that we can get buffered bytes count
+	//otherwise Buffered() always return 0
+	bInConn.ReadByte()
+	bInConn.UnreadByte()
+
+	n := 8
+	if n > bInConn.Buffered() {
+		n = bInConn.Buffered()
+	}
+	h, err := bInConn.Peek(n)
 	if err != nil {
-		s.log.Printf("ERR:%s", err)
-		utils.CloseConn(inConn)
+		s.log.Printf("peek error %s ", err)
+		(*inConn).Close()
 		return
 	}
+
+	*inConn = bInConn
 	address := ""
 	var auth socks.Auth
 	var forwardBytes []byte
 	//fmt.Printf("%v", header)
-	if header[0] == socks.VERSION_V5 {
+	if utils.IsSocks5(h) {
+		if *s.cfg.DisableSocks5 {
+			(*inConn).Close()
+			return
+		}
 		//socks5 server
 		var serverConn *socks.ServerConn
 		if s.IsBasicAuth() {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", header)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", nil)
 		} else {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", header)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", nil)
 		}
 		if err = serverConn.Handshake(); err != nil {
 			return
 		}
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
-	} else if bytes.IndexByte(header, '\n') != -1 {
+	} else if utils.IsHTTP(h) {
+		if *s.cfg.DisableHTTP {
+			(*inConn).Close()
+			return
+		}
 		//http
 		var request utils.HTTPRequest
 		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		if s.IsBasicAuth() {
-			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, header)
+			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, s.log)
 		} else {
-			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, header)
+			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, s.log)
 		}
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
@@ -211,12 +246,13 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(inConn)
 			return
 		}
-		if len(header) >= 7 && strings.ToLower(string(header[:7])) == "connect" {
+		if len(h) >= 7 && strings.ToLower(string(h[:7])) == "connect" {
 			//https
 			request.HTTPSReply()
 			//s.log.Printf("https reply: %s", request.Host)
 		} else {
-			forwardBytes = request.HeadBuf
+			//forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
+			forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
 		}
 		address = request.Host
 		var userpass string
@@ -231,7 +267,28 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 		}
 	} else {
-		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(header))
+		//ss
+		if *s.cfg.DisableSS {
+			(*inConn).Close()
+			return
+		}
+		(*inConn).SetDeadline(time.Now().Add(time.Second * 5))
+		ssConn := ss.NewConn(*inConn, s.cipher.Copy())
+		address, err = ss.GetRequest(ssConn)
+		(*inConn).SetDeadline(time.Time{})
+		if err != nil {
+			return
+		}
+		// ensure the host does not contain some illegal characters, NUL may panic on Win32
+		if strings.ContainsRune(address, 0x00) {
+			err = errors.New("invalid domain name")
+			return
+		}
+		*inConn = ssConn
+	}
+	if err != nil || address == "" {
+		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(h))
+		(*inConn).Close()
 		utils.CloseConn(inConn)
 		err = errors.New("unknown request")
 		return
@@ -255,8 +312,16 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
+		isHTTPS:=false
 		pb := new(bytes.Buffer)
-		pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n", address)))
+		if len(forwardBytes) == 0 {
+			isHTTPS=true
+			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1", address)))
+		}
+		pb.WriteString("\r\nProxy-Connection: Keep-Alive\r\n")
+
+		s.log.Printf("before bytes:%s",string(forwardBytes))
+
 		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
@@ -274,7 +339,22 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		if u != "" {
 			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
 		}
-		pb.Write([]byte("\r\n"))
+
+		if isHTTPS{
+			pb.Write([]byte("\r\n"))
+		}else{
+			//do remove some headers with forwardBytes
+			//forwardBytes
+
+			forwardBytes=bytes.Replace(forwardBytes,[]byte("\r\n"),[]byte(pb.Bytes()),1)
+			pb.Reset()
+			pb.Write(forwardBytes)
+			if !bytes.Contains(forwardBytes,[]byte("\r\n\r\n\r\n")){
+				pb.Write([]byte("\r\n\r\n"))
+			}
+			forwardBytes=nil
+		}
+		
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
@@ -284,17 +364,23 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			utils.CloseConn(&outConn)
 			return
 		}
-		reply := make([]byte, 1024)
-		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		_, err = outConn.Read(reply)
-		outConn.SetDeadline(time.Time{})
-		if err != nil {
-			s.log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
-			utils.CloseConn(inConn)
-			utils.CloseConn(&outConn)
-			return
+
+		s.log.Printf("ishttps:%v",isHTTPS)
+		s.log.Printf("bytes:%s",string(pb.Bytes()))
+
+		if isHTTPS{
+			reply := make([]byte, 1024)
+			outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+			_, err = outConn.Read(reply)
+			outConn.SetDeadline(time.Time{})
+			if err != nil {
+				s.log.Printf("read reply from %s , err:%s", *s.cfg.Parent, err)
+				utils.CloseConn(inConn)
+				utils.CloseConn(&outConn)
+				return
+			}
+			//s.log.Printf("reply: %s", string(reply[:n]))
 		}
-		//s.log.Printf("reply: %s", string(reply[:n]))
 	} else {
 		s.log.Printf("connect %s", address)
 		//socks client
@@ -305,12 +391,12 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 				err = fmt.Errorf("parent auth data format error")
 				return
 			}
-			clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, header)
+			clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, nil)
 		} else {
 			if !s.IsBasicAuth() && auth.Password != "" && auth.User != "" {
-				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, header)
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, nil)
 			} else {
-				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, header)
+				clientConn = socks.NewClientConn(&outConn, "tcp", address, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
 			}
 		}
 		if err = clientConn.Handshake(); err != nil {
@@ -327,7 +413,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released", inAddr, outAddr)
 		s.userConns.Remove(inAddr)
-	})
+	}, s.log)
 	s.log.Printf("conn %s - %s connected", inAddr, outAddr)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
@@ -337,9 +423,9 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 }
 func (s *SPS) InitBasicAuth() (err error) {
 	if *s.cfg.DNSAddress != "" {
-		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver, s.log)
 	} else {
-		s.basicAuth = utils.NewBasicAuth(nil)
+		s.basicAuth = utils.NewBasicAuth(nil, s.log)
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)

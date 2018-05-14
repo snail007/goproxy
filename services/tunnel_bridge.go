@@ -73,7 +73,7 @@ func (s *TunnelBridge) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p)
+	sc := utils.NewServerChannel(host, p, s.log)
 
 	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	if err != nil {
@@ -173,7 +173,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			// s.cmClient.RemoveOne(key, ID)
 			// s.cmServer.RemoveOne(serverID, ID)
 			s.log.Printf("conn %s released", ID)
-		})
+		}, s.log)
 		// s.cmClient.Add(key, ID, &inConn)
 		s.log.Printf("conn %s created", ID)
 

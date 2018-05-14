@@ -97,10 +97,10 @@ func (s *HTTP) CheckArgs() (err error) {
 func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
 	if *s.cfg.Parent != "" {
-		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct)
+		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
 	}
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL)
+		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	if *s.cfg.ParentType == "ssh" {
 		err = s.ConnectSSH()
@@ -178,13 +178,13 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p)
+			sc := utils.NewServerChannel(host, p, s.log)
 			if *s.cfg.LocalType == TYPE_TCP {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == TYPE_TLS {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == TYPE_KCP {
-				err = sc.ListenKCP(s.cfg.KCP, s.callback)
+				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if err != nil {
 				return
@@ -215,7 +215,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	}
 	var err interface{}
 	var req utils.HTTPRequest
-	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
+	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth, s.log)
 	if err != nil {
 		if err != io.EOF {
 			s.log.Printf("decoder error , from %s, ERR:%s", inConn.RemoteAddr(), err)
@@ -321,7 +321,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
 		s.userConns.Remove(inAddr)
-	})
+	}, s.log)
 	s.log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
@@ -403,9 +403,9 @@ func (s *HTTP) InitOutConnPool() {
 }
 func (s *HTTP) InitBasicAuth() (err error) {
 	if *s.cfg.DNSAddress != "" {
-		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver)
+		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver, s.log)
 	} else {
-		s.basicAuth = utils.NewBasicAuth(nil)
+		s.basicAuth = utils.NewBasicAuth(nil, s.log)
 	}
 	if *s.cfg.AuthURL != "" {
 		s.basicAuth.SetAuthURL(*s.cfg.AuthURL, *s.cfg.AuthURLOkCode, *s.cfg.AuthURLTimeout, *s.cfg.AuthURLRetry)

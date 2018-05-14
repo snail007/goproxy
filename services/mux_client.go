@@ -300,6 +300,6 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 	} else {
 		utils.IoBind(inConn, outConn, func(err interface{}) {
 			s.log.Printf("stream %s released", ID)
-		})
+		}, s.log)
 	}
 }

@@ -90,13 +90,13 @@ func (s *MuxBridge) Start(args interface{}, log *logger.Logger) (err error) {
 
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p)
+	sc := utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.LocalType == TYPE_TCP {
 		err = sc.ListenTCP(s.handler)
 	} else if *s.cfg.LocalType == TYPE_TLS {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.handler)
 	} else if *s.cfg.LocalType == TYPE_KCP {
-		err = sc.ListenKCP(s.cfg.KCP, s.handler)
+		err = sc.ListenKCP(s.cfg.KCP, s.handler, s.log)
 	}
 	if err != nil {
 		return

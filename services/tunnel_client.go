@@ -284,7 +284,7 @@ func (s *TunnelClient) ServeConn(localAddr, ID, serverID string) {
 	utils.IoBind(inConn, outConn, func(err interface{}) {
 		s.log.Printf("conn %s released", ID)
 		s.userConns.Remove(inAddr)
-	})
+	}, s.log)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
