@@ -715,7 +715,7 @@ You can also be placed in a file, which is a line, a ‘username: password’, a
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
-Then when the user is connected, the proxy request this url by get way, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+Then when the user is connected, the proxy request this url by get way, with the following three parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
 In other cases, the authentication fails.  
 for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
