@@ -751,7 +751,7 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 另外,socks5代理还集成了外部HTTP API认证,我们可以通过--auth-url参数指定一个http url接口地址,  
-然后有用户连接的时候,proxy会GET方式请求这url,带上下面四个参数,如果返回HTTP状态码204,代表认证成功  
+然后有用户连接的时候,proxy会GET方式请求这url,带上下面三个参数,如果返回HTTP状态码204,代表认证成功  
 其它情况认为认证失败.  
 比如:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
