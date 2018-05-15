@@ -58,12 +58,19 @@ func RawAddr(addr string) (buf []byte, err error) {
 // This is intended for use by users implementing a local socks proxy.
 // rawaddr shoud contain part of the data in socks request, starting from the
 // ATYP field. (Refer to rfc1928 for more information.)
-func DialWithRawAddr(rawaddr []byte, server string, cipher *Cipher) (c *Conn, err error) {
-	conn, err := net.Dial("tcp", server)
+func DialWithRawAddr(rawConn *net.Conn, rawaddr []byte, server string, cipher *Cipher) (c *Conn, err error) {
+	var conn net.Conn
+	if rawConn == nil {
+		conn, err = net.Dial("tcp", server)
+	}
 	if err != nil {
 		return
 	}
-	c = NewConn(conn, cipher)
+	if rawConn != nil {
+		c = NewConn(*rawConn, cipher)
+	} else {
+		c = NewConn(conn, cipher)
+	}
 	if cipher.ota {
 		if c.enc == nil {
 			if _, err = c.initEncrypt(); err != nil {
@@ -88,7 +95,7 @@ func Dial(addr, server string, cipher *Cipher) (c *Conn, err error) {
 	if err != nil {
 		return
 	}
-	return DialWithRawAddr(ra, server, cipher)
+	return DialWithRawAddr(nil, ra, server, cipher)
 }
 
 func (c *Conn) GetIv() (iv []byte) {

@@ -62,6 +62,7 @@ This page is the v4.7 manual, and the other version of the manual can be checked
 ### Installation
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
+- [Docker installation](#docker-installation)
 
 ### First use must read
 - [Environmental Science](#environmental-science)
@@ -169,6 +170,36 @@ wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh  
 ./install.sh  
 ```  
+
+#### Docker installation 
+
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.8.5 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 4.7.
+
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 4.7:
+
+```
+ARG GOPROXY_VERSION=v4.7
+```
+
+To Run:
+1. Clone the repository and cd into it.
+```
+sudo docker build .
+```
+2. Tag the image:
+```
+sudo docker tag <id from previous step>  goproxy/goproxy:latest
+```
+3. Run! 
+Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
+```
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+```
+4. View logs:
+```
+sudo docker logs -f goproxy
+```
+
   
 ## **First use must be read**  
   
@@ -967,7 +998,7 @@ If you want to get a more detailed configuration and explanation of the KCP para
 - HTTP (s) proxy support PAC?
 - Welcome joining group feedback...   
 
-### How to contribute to the code?  
+### How to contribute to the code (Pull Request)?  
 First, you need to clone the project to your account, and then modify the code on the dev branch.   
 Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
 PR needs to explain what changes have been made and why you change them.  

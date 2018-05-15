@@ -309,7 +309,12 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	} else {
 		//https或者http,上级是代理,proxy需要转发
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		_, err = outConn.Write(req.HeadBuf)
+		//直连目标或上级非代理,清理HTTP头部的代理头信息
+		if !useProxy || *s.cfg.ParentType == "ssh" {
+			_, err = outConn.Write(utils.RemoveProxyHeaders(req.HeadBuf))
+		} else {
+			_, err = outConn.Write(req.HeadBuf)
+		}
 		outConn.SetDeadline(time.Time{})
 		if err != nil {
 			s.log.Printf("write to %s , err:%s", *s.cfg.Parent, err)

@@ -3,7 +3,7 @@ v4.8
 1.优化了SPS连接HTTP上级的指令,避免了某些代理不响应的问题.
 2.SPS功能增加了参数:
 --disable-http:禁用http(s)代理
---disable-socks:禁用socks代理.
+--disable-socks:禁用socks代理
 默认都是false(开启).
 3.重构了部分代码的日志部分,保证了日志按着预期输出.
 

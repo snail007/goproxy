@@ -486,10 +486,10 @@ func (req *HTTPRequest) getHeader(key string) (val string) {
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
 	//log.Println(lines)
 	for _, line := range lines {
-		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
-		if len(line) == 2 {
-			k := strings.ToUpper(strings.Trim(line[0], " "))
-			v := strings.Trim(line[1], " ")
+		hline := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
+		if len(hline) == 2 {
+			k := strings.ToUpper(strings.Trim(hline[0], " "))
+			v := strings.Trim(hline[1], " ")
 			if key == k {
 				val = v
 				return

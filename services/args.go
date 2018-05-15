@@ -234,6 +234,8 @@ type SPSArgs struct {
 	ParentCompress    *bool
 	SSMethod          *string
 	SSKey             *string
+	ParentSSMethod    *string
+	ParentSSKey       *string
 	DisableHTTP       *bool
 	DisableSocks5     *bool
 	DisableSS         *bool

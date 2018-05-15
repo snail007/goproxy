@@ -61,6 +61,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 ### 安装 
 1. [快速安装](#自动安装)
 1. [手动安装](#手动安装)
+1. [Docker安装](#docker安装)
 
 ### 首次使用必看
 - [环境](#首次使用必看-1)
@@ -168,7 +169,36 @@ wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh  
 ./install.sh  
 ```  
-  
+
+#### Docker安装 
+项目根目录的Dockerfile文件用来构建,使用golang 1.8.5,构建基于goproxy v4.7,
+全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile,指定构建的goproxy版本.
+
+```
+ARG GOPROXY_VERSION=v4.7
+```
+
+步骤:  
+1. 克隆仓库,然后cd进入仓库文件夹,执行:
+```
+sudo docker build .
+```
+2. 镜像打标签:
+```
+sudo docker tag <上一步的结果ID> goproxy/goproxy:latest
+```
+3. 运行 
+参数OPTS的值就是传递给proxy的所有参数
+比如下面的例子启动了一个http服务: 
+
+```
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+```
+4. 查看日志:
+```
+sudo docker logs -f goproxy
+```
+
 ## **首次使用必看**  
   
 ### **环境**  
@@ -1012,7 +1042,7 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
-### 如何贡献代码?  
+### 如何贡献代码(Pull Request)?  
 首先需要clone本项目到自己的帐号下面,然后在dev分支上面修改代码,  
 最后发Pull Request到goproxy项目的dev分支即可,为了高效贡献代码,  
 pr的时候需要说明做了什么变更,原因是什么.  

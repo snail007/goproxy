@@ -621,6 +621,33 @@ func IsSocks5(head []byte) bool {
 	}
 	return false
 }
+func RemoveProxyHeaders(head []byte) []byte {
+	newLines := [][]byte{}
+	var keys = map[string]bool{}
+	lines := bytes.Split(head, []byte("\r\n"))
+	IsBody := false
+	for _, line := range lines {
+		if len(line) == 0 || IsBody {
+			newLines = append(newLines, line)
+			IsBody = true
+		} else {
+			hline := bytes.SplitN(line, []byte(":"), 2)
+			if len(hline) != 2 {
+				continue
+			}
+			k := strings.ToUpper(string(hline[0]))
+			if _, ok := keys[k]; ok || strings.HasPrefix(k, "PROXY-") {
+				continue
+			}
+			keys[k] = true
+			newLines = append(newLines, line)
+		}
+	}
+	return bytes.Join(newLines, []byte("\r\n"))
+}
+func InsertProxyHeaders(head []byte, headers string) []byte {
+	return bytes.Replace(head, []byte("\r\n"), []byte("\r\n"+headers), 1)
+}
 
 // type sockaddr struct {
 // 	family uint16

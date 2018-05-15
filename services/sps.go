@@ -27,7 +27,8 @@ type SPS struct {
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
 	log            *logger.Logger
-	cipher         *ss.Cipher
+	localCipher    *ss.Cipher
+	parentCipher   *ss.Cipher
 }
 
 func NewSPS() Service {
@@ -46,6 +47,10 @@ func (s *SPS) CheckArgs() (err error) {
 	}
 	if *s.cfg.ParentType == "" {
 		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp>")
+		return
+	}
+	if *s.cfg.ParentType == "ss" && (*s.cfg.ParentSSKey == "" || *s.cfg.ParentSSMethod == "") {
+		err = fmt.Errorf("ss parent need a ss key, set it by : -J <sskey>")
 		return
 	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
@@ -70,7 +75,14 @@ func (s *SPS) InitService() (err error) {
 	}
 	err = s.InitBasicAuth()
 	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
-		s.cipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)
+		s.localCipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)
+		if err != nil {
+			s.log.Printf("error generating cipher : %s", err)
+			return
+		}
+	}
+	if *s.cfg.ParentServiceType == "ss" {
+		s.parentCipher, err = ss.NewCipher(*s.cfg.ParentSSMethod, *s.cfg.ParentSSKey)
 		if err != nil {
 			s.log.Printf("error generating cipher : %s", err)
 			return
@@ -111,10 +123,10 @@ func (s *SPS) StopService() {
 		}
 	}
 	for _, c := range s.userConns.Items() {
-		if _,ok:=c.(*net.Conn);ok{
+		if _, ok := c.(*net.Conn); ok {
 			(*c.(*net.Conn)).Close()
 		}
-		if _,ok:=c.(**net.Conn);ok{
+		if _, ok := c.(**net.Conn); ok {
 			(*(*c.(**net.Conn))).Close()
 		}
 	}
@@ -252,7 +264,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			//s.log.Printf("https reply: %s", request.Host)
 		} else {
 			//forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
-			forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
+			forwardBytes = request.HeadBuf
 		}
 		address = request.Host
 		var userpass string
@@ -273,7 +285,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			return
 		}
 		(*inConn).SetDeadline(time.Now().Add(time.Second * 5))
-		ssConn := ss.NewConn(*inConn, s.cipher.Copy())
+		ssConn := ss.NewConn(*inConn, s.localCipher.Copy())
 		address, err = ss.GetRequest(ssConn)
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {
@@ -309,20 +321,23 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			Password: *s.cfg.ParentKey,
 		})
 	}
+
+	if *s.cfg.ParentAuth != "" || *s.cfg.ParentSSKey != "" || s.IsBasicAuth() {
+		forwardBytes = utils.RemoveProxyHeaders(forwardBytes)
+	}
+
 	//ask parent for connect to target address
 	if *s.cfg.ParentServiceType == "http" {
 		//http parent
-		isHTTPS:=false
+		isHTTPS := false
+
 		pb := new(bytes.Buffer)
 		if len(forwardBytes) == 0 {
-			isHTTPS=true
-			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1", address)))
+			isHTTPS = true
+			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\n", address)))
 		}
-		pb.WriteString("\r\nProxy-Connection: Keep-Alive\r\n")
+		pb.WriteString("Proxy-Connection: Keep-Alive\r\n")
 
-		s.log.Printf("before bytes:%s",string(forwardBytes))
-
-		//Proxy-Authorization:\r\n
 		u := ""
 		if *s.cfg.ParentAuth != "" {
 			a := strings.Split(*s.cfg.ParentAuth, ":")
@@ -337,24 +352,18 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 		}
 		if u != "" {
-			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization:Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
+			pb.Write([]byte(fmt.Sprintf("Proxy-Authorization: Basic %s\r\n", base64.StdEncoding.EncodeToString([]byte(u)))))
 		}
 
-		if isHTTPS{
+		if isHTTPS {
 			pb.Write([]byte("\r\n"))
-		}else{
-			//do remove some headers with forwardBytes
-			//forwardBytes
-
-			forwardBytes=bytes.Replace(forwardBytes,[]byte("\r\n"),[]byte(pb.Bytes()),1)
+		} else {
+			forwardBytes = utils.InsertProxyHeaders(forwardBytes, string(pb.Bytes()))
 			pb.Reset()
 			pb.Write(forwardBytes)
-			if !bytes.Contains(forwardBytes,[]byte("\r\n\r\n\r\n")){
-				pb.Write([]byte("\r\n\r\n"))
-			}
-			forwardBytes=nil
+			forwardBytes = nil
 		}
-		
+
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		_, err = outConn.Write(pb.Bytes())
 		outConn.SetDeadline(time.Time{})
@@ -365,10 +374,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			return
 		}
 
-		s.log.Printf("ishttps:%v",isHTTPS)
-		s.log.Printf("bytes:%s",string(pb.Bytes()))
-
-		if isHTTPS{
+		if isHTTPS {
 			reply := make([]byte, 1024)
 			outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			_, err = outConn.Read(reply)
@@ -381,7 +387,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 			//s.log.Printf("reply: %s", string(reply[:n]))
 		}
-	} else {
+	} else if *s.cfg.ParentServiceType == "socks" {
 		s.log.Printf("connect %s", address)
 		//socks client
 		var clientConn *socks.ClientConn
@@ -402,11 +408,25 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		if err = clientConn.Handshake(); err != nil {
 			return
 		}
+	} else if *s.cfg.ParentServiceType == "ss" {
+		ra, e := ss.RawAddr(address)
+		if e != nil {
+			err = fmt.Errorf("build ss raw addr fail, err: %s", e)
+			return
+		}
+
+		outConn, err = ss.DialWithRawAddr(&outConn, ra, "", s.parentCipher.Copy())
+		if err != nil {
+			err = fmt.Errorf("dial ss parent fail, err : %s", err)
+			return
+		}
 	}
+
 	//forward client data to target,if necessary.
 	if len(forwardBytes) > 0 {
 		outConn.Write(forwardBytes)
 	}
+
 	//bind
 	inAddr := (*inConn).RemoteAddr().String()
 	outAddr := outConn.RemoteAddr().String()
