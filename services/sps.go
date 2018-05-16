@@ -69,10 +69,13 @@ func (s *SPS) CheckArgs() (err error) {
 	return
 }
 func (s *SPS) InitService() (err error) {
-	s.InitOutConnPool()
+
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
+
+	s.InitOutConnPool()
+
 	err = s.InitBasicAuth()
 	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
 		s.localCipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)

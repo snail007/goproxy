@@ -669,7 +669,6 @@ type DomainResolverItem struct {
 }
 
 func NewDomainResolver(dnsAddrress string, ttl int, log *logger.Logger) DomainResolver {
-
 	return DomainResolver{
 		ttl:         ttl,
 		dnsAddrress: dnsAddrress,
@@ -751,7 +750,7 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 func (a *DomainResolver) PrintData() {
 	for k, item := range a.data.Items() {
 		d := item.(*DomainResolverItem)
-		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
+		a.log.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
 	}
 }
 func NewCompStream(conn net.Conn) *CompStream {

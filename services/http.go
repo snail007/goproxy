@@ -167,13 +167,16 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 	if err = s.CheckArgs(); err != nil {
 		return
 	}
+
+	if err = s.InitService(); err != nil {
+		return
+	}
+
 	if *s.cfg.Parent != "" {
 		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
 		s.InitOutConnPool()
 	}
-	if err = s.InitService(); err != nil {
-		return
-	}
+
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
