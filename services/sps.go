@@ -431,10 +431,10 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	inAddr := (*inConn).RemoteAddr().String()
 	outAddr := outConn.RemoteAddr().String()
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
-		s.log.Printf("conn %s - %s released", inAddr, outAddr)
+		s.log.Printf("conn %s - %s released [%s]", inAddr, outAddr, address)
 		s.userConns.Remove(inAddr)
 	}, s.log)
-	s.log.Printf("conn %s - %s connected", inAddr, outAddr)
+	s.log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, address)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
