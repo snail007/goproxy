@@ -232,6 +232,8 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **1.3.HTTP二级代理(加密)**  
+> 注意: 后面二级代理使用的`proxy.crt`和`proxy.key`应与一级代理一致  
+
 ![1.3](/docs/images/http-tls-2.png)  
 一级HTTP代理(VPS,IP:22.22.22.22)  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
