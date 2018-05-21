@@ -8,6 +8,9 @@ v4.8
 3.重构了部分代码的日志部分,保证了日志按着预期输出.
 4.修复了sps\http代理初始化服务的时机不正确,导致nil异常的bug.
 5.优化了sps日志输出.
+6.--debug参数增加了Profiling功能,可以保存cpu,内存等多种调试数据到文件.
+7.优化了服务注册,避免了不必要的内存开销.
+
 
 v4.7
 1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.

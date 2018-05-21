@@ -309,6 +309,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
 			s.udpSC.UDPListener.SetDeadline(time.Time{})
 			s.log.Printf("udp reply:%v", len(d))
+			d = nil
 		} else {
 			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(respBody, srcAddr)
@@ -363,6 +364,7 @@ func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
 			s.udpSC.UDPListener.SetDeadline(time.Time{})
+			d = nil
 		} else {
 			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 			s.udpSC.UDPListener.WriteToUDP(respPacket, srcAddr)

@@ -41,6 +41,9 @@ func Clean(s *services.Service) {
 				log.Printf("clean process %d", cmd.Process.Pid)
 				cmd.Process.Kill()
 			}
+			if isDebug {
+				saveProfiling()
+			}
 			cleanupDone <- true
 		}
 	}()

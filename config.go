@@ -7,6 +7,7 @@ import (
 	logger "log"
 	"os"
 	"os/exec"
+	"runtime/pprof"
 	"time"
 
 	"github.com/snail007/goproxy/services"
@@ -19,9 +20,11 @@ import (
 )
 
 var (
-	app     *kingpin.Application
-	service *services.ServiceItem
-	cmd     *exec.Cmd
+	app                                                                                                       *kingpin.Application
+	service                                                                                                   *services.ServiceItem
+	cmd                                                                                                       *exec.Cmd
+	cpuProfilingFile, memProfilingFile, blockProfilingFile, goroutineProfilingFile, threadcreateProfilingFile *os.File
+	isDebug                                                                                                   bool
 )
 
 func initConfig() (err error) {
@@ -227,7 +230,7 @@ func initConfig() (err error) {
 	spsArgs.ParentType = sps.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
 	spsArgs.LocalType = sps.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	spsArgs.Local = sps.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
-	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks|ss>").Short('S').Enum("http", "socks", "ss")
+	spsArgs.ParentServiceType = sps.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks", "ss")
 	spsArgs.DNSAddress = sps.Flag("dns-address", "if set this, proxy will use this dns for resolve doamin").Short('q').Default("").String()
 	spsArgs.DNSTTL = sps.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
 	spsArgs.AuthFile = sps.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
@@ -252,6 +255,8 @@ func initConfig() (err error) {
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	isDebug = *debug
 
 	//set kcp config
 
@@ -310,6 +315,12 @@ func initConfig() (err error) {
 	flags := logger.Ldate
 	if *debug {
 		flags |= logger.Lshortfile | logger.Lmicroseconds
+		cpuProfilingFile, _ = os.Create("cpu.prof")
+		memProfilingFile, _ = os.Create("memory.prof")
+		blockProfilingFile, _ = os.Create("block.prof")
+		goroutineProfilingFile, _ = os.Create("goroutine.prof")
+		threadcreateProfilingFile, _ = os.Create("threadcreate.prof")
+		pprof.StartCPUProfile(cpuProfilingFile)
 	} else {
 		flags |= logger.Ltime
 	}
@@ -391,19 +402,40 @@ func initConfig() (err error) {
 	}
 	if *logfile == "" {
 		poster()
+		if *debug {
+			log.Println("[profiling] cpu profiling save to file : cpu.prof")
+			log.Println("[profiling] memory profiling save to file : memory.prof")
+			log.Println("[profiling] block profiling save to file : block.prof")
+			log.Println("[profiling] goroutine profiling save to file : goroutine.prof")
+			log.Println("[profiling] threadcreate profiling save to file : threadcreate.prof")
+		}
 	}
 	//regist services and run service
-	services.Regist("http", services.NewHTTP(), httpArgs, log)
-	services.Regist("tcp", services.NewTCP(), tcpArgs, log)
-	services.Regist("udp", services.NewUDP(), udpArgs, log)
-	services.Regist("tserver", services.NewTunnelServerManager(), tunnelServerArgs, log)
-	services.Regist("tclient", services.NewTunnelClient(), tunnelClientArgs, log)
-	services.Regist("tbridge", services.NewTunnelBridge(), tunnelBridgeArgs, log)
-	services.Regist("server", services.NewMuxServerManager(), muxServerArgs, log)
-	services.Regist("client", services.NewMuxClient(), muxClientArgs, log)
-	services.Regist("bridge", services.NewMuxBridge(), muxBridgeArgs, log)
-	services.Regist("socks", services.NewSocks(), socksArgs, log)
-	services.Regist("sps", services.NewSPS(), spsArgs, log)
+	//regist services and run service
+	switch serviceName {
+	case "http":
+		services.Regist(serviceName, services.NewHTTP(), httpArgs, log)
+	case "tcp":
+		services.Regist(serviceName, services.NewTCP(), tcpArgs, log)
+	case "udp":
+		services.Regist(serviceName, services.NewUDP(), udpArgs, log)
+	case "tserver":
+		services.Regist(serviceName, services.NewTunnelServerManager(), tunnelServerArgs, log)
+	case "tclient":
+		services.Regist(serviceName, services.NewTunnelClient(), tunnelClientArgs, log)
+	case "tbridge":
+		services.Regist(serviceName, services.NewTunnelBridge(), tunnelBridgeArgs, log)
+	case "server":
+		services.Regist(serviceName, services.NewMuxServerManager(), muxServerArgs, log)
+	case "client":
+		services.Regist(serviceName, services.NewMuxClient(), muxClientArgs, log)
+	case "bridge":
+		services.Regist(serviceName, services.NewMuxBridge(), muxBridgeArgs, log)
+	case "socks":
+		services.Regist(serviceName, services.NewSocks(), socksArgs, log)
+	case "sps":
+		services.Regist(serviceName, services.NewSPS(), spsArgs, log)
+	}
 	service, err = services.Run(serviceName, nil)
 	if err != nil {
 		log.Fatalf("run service [%s] fail, ERR:%s", serviceName, err)
@@ -422,4 +454,15 @@ func poster() {
 		##        ##     ##  #######  ##     ##    ##    
 		
 		v%s`+" by snail , blog : http://www.host900.com/\n\n", APP_VERSION)
+}
+func saveProfiling() {
+	goroutine := pprof.Lookup("goroutine")
+	goroutine.WriteTo(goroutineProfilingFile, 1)
+	heap := pprof.Lookup("heap")
+	heap.WriteTo(memProfilingFile, 1)
+	block := pprof.Lookup("block")
+	block.WriteTo(blockProfilingFile, 1)
+	threadcreate := pprof.Lookup("threadcreate")
+	threadcreate.WriteTo(threadcreateProfilingFile, 1)
+	pprof.StopCPUProfile()
 }
