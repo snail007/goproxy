@@ -14,7 +14,6 @@ v4.8
 9.优化了ioCopy避免了内存泄漏,大大提升了内存占用的稳定性.
 
 
-
 v4.7
 1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.
 2.优化了bridge的日志,增加了client和server的掉线日志.
