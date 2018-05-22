@@ -16,7 +16,6 @@ import (
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
-	"github.com/snail007/goproxy/utils/ss"
 )
 
 type SPS struct {
@@ -27,8 +26,6 @@ type SPS struct {
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
 	log            *logger.Logger
-	localCipher    *ss.Cipher
-	parentCipher   *ss.Cipher
 }
 
 func NewSPS() Service {
@@ -49,10 +46,6 @@ func (s *SPS) CheckArgs() (err error) {
 		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp>")
 		return
 	}
-	if *s.cfg.ParentType == "ss" && (*s.cfg.ParentSSKey == "" || *s.cfg.ParentSSMethod == "") {
-		err = fmt.Errorf("ss parent need a ss key, set it by : -J <sskey>")
-		return
-	}
 	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
 		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 		if err != nil {
@@ -69,28 +62,11 @@ func (s *SPS) CheckArgs() (err error) {
 	return
 }
 func (s *SPS) InitService() (err error) {
-
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
-
 	s.InitOutConnPool()
-
 	err = s.InitBasicAuth()
-	if *s.cfg.SSMethod != "" && *s.cfg.SSKey != "" {
-		s.localCipher, err = ss.NewCipher(*s.cfg.SSMethod, *s.cfg.SSKey)
-		if err != nil {
-			s.log.Printf("error generating cipher : %s", err)
-			return
-		}
-	}
-	if *s.cfg.ParentServiceType == "ss" {
-		s.parentCipher, err = ss.NewCipher(*s.cfg.ParentSSMethod, *s.cfg.ParentSSKey)
-		if err != nil {
-			s.log.Printf("error generating cipher : %s", err)
-			return
-		}
-	}
 	return
 }
 func (s *SPS) InitOutConnPool() {
@@ -281,25 +257,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 				auth = socks.Auth{User: userpassA[0], Password: userpassA[1]}
 			}
 		}
-	} else {
-		//ss
-		if *s.cfg.DisableSS {
-			(*inConn).Close()
-			return
-		}
-		(*inConn).SetDeadline(time.Now().Add(time.Second * 5))
-		ssConn := ss.NewConn(*inConn, s.localCipher.Copy())
-		address, err = ss.GetRequest(ssConn)
-		(*inConn).SetDeadline(time.Time{})
-		if err != nil {
-			return
-		}
-		// ensure the host does not contain some illegal characters, NUL may panic on Win32
-		if strings.ContainsRune(address, 0x00) {
-			err = errors.New("invalid domain name")
-			return
-		}
-		*inConn = ssConn
 	}
 	if err != nil || address == "" {
 		s.log.Printf("unknown request from: %s,%s", (*inConn).RemoteAddr(), string(h))
@@ -325,7 +282,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		})
 	}
 
-	if *s.cfg.ParentAuth != "" || *s.cfg.ParentSSKey != "" || s.IsBasicAuth() {
+	if *s.cfg.ParentAuth != "" || s.IsBasicAuth() {
 		forwardBytes = utils.RemoveProxyHeaders(forwardBytes)
 	}
 
@@ -409,18 +366,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			}
 		}
 		if err = clientConn.Handshake(); err != nil {
-			return
-		}
-	} else if *s.cfg.ParentServiceType == "ss" {
-		ra, e := ss.RawAddr(address)
-		if e != nil {
-			err = fmt.Errorf("build ss raw addr fail, err: %s", e)
-			return
-		}
-
-		outConn, err = ss.DialWithRawAddr(&outConn, ra, "", s.parentCipher.Copy())
-		if err != nil {
-			err = fmt.Errorf("dial ss parent fail, err : %s", err)
 			return
 		}
 	}

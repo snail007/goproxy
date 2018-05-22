@@ -232,13 +232,8 @@ type SPSArgs struct {
 	ParentKey         *string
 	LocalCompress     *bool
 	ParentCompress    *bool
-	SSMethod          *string
-	SSKey             *string
-	ParentSSMethod    *string
-	ParentSSKey       *string
 	DisableHTTP       *bool
 	DisableSocks5     *bool
-	DisableSS         *bool
 }
 
 func (a *SPSArgs) Protocol() string {
