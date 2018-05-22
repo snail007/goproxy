@@ -2,14 +2,17 @@ proxy更新日志
 v4.8
 1.优化了SPS连接HTTP上级的指令,避免了某些代理不响应的问题.
 2.SPS功能增加了参数:
---disable-http:禁用http(s)代理
---disable-socks:禁用socks代理
-默认都是false(开启).
+  --disable-http:禁用http(s)代理
+  --disable-socks:禁用socks代理
+  默认都是false(开启).
 3.重构了部分代码的日志部分,保证了日志按着预期输出.
 4.修复了sps\http代理初始化服务的时机不正确,导致nil异常的bug.
 5.优化了sps日志输出.
 6.--debug参数增加了Profiling功能,可以保存cpu,内存等多种调试数据到文件.
 7.优化了服务注册,避免了不必要的内存开销.
+8.增加了Dockerfile和docker安装手册.
+9.优化了ioCopy避免了内存泄漏,大大提升了内存占用的稳定性.
+
 
 
 v4.7

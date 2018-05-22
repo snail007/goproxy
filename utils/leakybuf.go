@@ -1,15 +1,15 @@
 // Provides leaky buffer, based on the example in Effective Go.
-package ss
+package utils
 
 type LeakyBuf struct {
 	bufSize  int // size of each buffer
 	freeList chan []byte
 }
 
-const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
+const LeakyBufSize = 2048 // data.len(2) + hmacsha1(10) + data(4096)
 const maxNBuf = 2048
 
-var leakyBuf = NewLeakyBuf(maxNBuf, leakyBufSize)
+var LeakyBuffer = NewLeakyBuf(maxNBuf, LeakyBufSize)
 
 // NewLeakyBuf creates a leaky buffer which can hold at most n buffer, each
 // with bufSize bytes.

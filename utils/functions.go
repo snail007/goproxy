@@ -76,7 +76,8 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 	}()
 }
 func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
-	buf := make([]byte, 32*1024)
+	buf := LeakyBuffer.Get()
+	defer LeakyBuffer.Put(buf)
 	n := 0
 	for {
 		n, err = src.Read(buf)

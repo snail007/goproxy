@@ -3,6 +3,7 @@ goproxy
 *.exe
 *.exe~
 .*
+*.prof
 !.gitignore
 release-*
 proxy.crt
