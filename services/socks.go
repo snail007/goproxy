@@ -559,6 +559,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	s.log.Printf("conn %s - %s connected", inAddr, request.Addr())
 	utils.IoBind(*inConn, outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released", inAddr, request.Addr())
+		s.userConns.Remove(inAddr)
 	}, s.log)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
