@@ -36,7 +36,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v4.8 manual, and the other version of the manual can be checked by the following link.  
+This page is the v4.9 manual, and the other version of the manual can be checked by the following link.  
+- [v4.8 manual](https://github.com/snail007/goproxy/tree/v4.8)
 - [v4.7 manual](https://github.com/snail007/goproxy/tree/v4.7)
 - [v4.6 manual](https://github.com/snail007/goproxy/tree/v4.6)
 - [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
@@ -162,7 +163,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.8/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v4.9/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
