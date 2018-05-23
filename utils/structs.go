@@ -427,7 +427,7 @@ func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
 
 	authorization = strings.Trim(authorization, " \r\n\t")
 	if authorization == "" {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", "407")
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"\"\r\n\r\nProxy Authentication Required", "407")
 		CloseConn(req.conn)
 		err = errors.New("require auth header data")
 		return
@@ -463,7 +463,7 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", "407")
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\n\r\nProxy Authentication Required", "407")
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
