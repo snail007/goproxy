@@ -579,9 +579,23 @@ func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, er
 	body, err = ioutil.ReadAll(resp.Body)
 	return
 }
-func IsIternalIP(domainOrIP string) bool {
+func IsIternalIP(domainOrIP string, always bool) bool {
 	var outIPs []net.IP
-	outIPs, err := net.LookupIP(domainOrIP)
+	var err error
+	var isDomain bool
+	if net.ParseIP(domainOrIP) == nil {
+		isDomain = true
+	}
+	if always && isDomain {
+		return false
+	}
+
+	if isDomain {
+		outIPs, err = net.LookupIP(domainOrIP)
+	} else {
+		outIPs = []net.IP{net.ParseIP(domainOrIP)}
+	}
+
 	if err != nil {
 		return false
 	}

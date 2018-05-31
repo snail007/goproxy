@@ -519,7 +519,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			if *s.cfg.Parent != "" {
 				host, _, _ := net.SplitHostPort(request.Addr())
 				useProxy := false
-				if utils.IsIternalIP(host) {
+				if utils.IsIternalIP(host, *s.cfg.Always) {
 					useProxy = false
 				} else {
 					k := s.Resolve(request.Addr())
