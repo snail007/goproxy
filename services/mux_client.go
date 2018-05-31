@@ -11,7 +11,8 @@ import (
 	"github.com/snail007/goproxy/utils"
 
 	"github.com/golang/snappy"
-	"github.com/xtaci/smux"
+	//"github.com/xtaci/smux"
+	smux "github.com/hashicorp/yamux"
 )
 
 type MuxClient struct {
