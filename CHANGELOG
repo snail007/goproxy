@@ -1,7 +1,7 @@
 proxy更新日志
 v4.9
 1.修复了HTTP Basic代理返回不合适的头部,导致浏览器不会弹框,个别代理插件无法认证的问题.
-2.mux内网穿透切换smux到yamux.
+2.内网穿透切换smux到yamux.
 
 
 v4.8

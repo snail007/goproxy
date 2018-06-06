@@ -6,11 +6,13 @@ import (
 	"io"
 	logger "log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/snail007/goproxy/utils"
 
-	"github.com/xtaci/smux"
+	//"github.com/xtaci/smux"
+	smux "github.com/hashicorp/yamux"
 )
 
 type TunnelClient struct {
@@ -139,10 +141,12 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 	if err == nil {
 		conn = net.Conn(&_conn)
 		c, e := smux.Client(conn, &smux.Config{
-			KeepAliveInterval: 10 * time.Second,
-			KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
-			MaxFrameSize:      4096,
-			MaxReceiveBuffer:  4194304,
+			AcceptBacklog:          256,
+			EnableKeepAlive:        true,
+			KeepAliveInterval:      9 * time.Second,
+			ConnectionWriteTimeout: 3 * time.Second,
+			MaxStreamWindowSize:    512 * 1024,
+			LogOutput:              os.Stderr,
 		})
 		if e != nil {
 			s.log.Printf("new mux client conn error,ERR:%s", e)

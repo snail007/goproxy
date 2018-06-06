@@ -5,12 +5,14 @@ import (
 	"fmt"
 	logger "log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/snail007/goproxy/utils"
 
-	"github.com/xtaci/smux"
+	//"github.com/xtaci/smux"
+	smux "github.com/hashicorp/yamux"
 )
 
 type ServerConn struct {
@@ -89,10 +91,12 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 	var err error
 	//s.log.Printf("connection from %s ", inConn.RemoteAddr())
 	sess, err := smux.Server(inConn, &smux.Config{
-		KeepAliveInterval: 10 * time.Second,
-		KeepAliveTimeout:  time.Duration(*s.cfg.Timeout) * time.Second,
-		MaxFrameSize:      4096,
-		MaxReceiveBuffer:  4194304,
+		AcceptBacklog:          256,
+		EnableKeepAlive:        true,
+		KeepAliveInterval:      9 * time.Second,
+		ConnectionWriteTimeout: 3 * time.Second,
+		MaxStreamWindowSize:    512 * 1024,
+		LogOutput:              os.Stderr,
 	})
 	if err != nil {
 		s.log.Printf("new mux server conn error,ERR:%s", err)
