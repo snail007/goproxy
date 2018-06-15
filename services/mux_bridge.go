@@ -69,7 +69,7 @@ func (s *MuxBridge) StopService() {
 	s.isStop = true
 	if s.sc != nil && (*s.sc).Listener != nil {
 		(*(*s.sc).Listener).Close()
-	}
+	} 
 	for _, g := range s.clientControlConns.Items() {
 		for _, session := range g.(utils.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()

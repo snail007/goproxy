@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/snail007/goproxy",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.10",
 	"GodepVersion": "v80",
 	"Packages": [
 		"./..."
@@ -25,6 +25,10 @@
 		{
 			"ImportPath": "github.com/golang/snappy",
 			"Rev": "553a641470496b2327abcac10b36396bd98e45c9"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/yamux",
+			"Rev": "3520598351bb3500a49ae9563f5539666ae0a27c"
 		},
 		{
 			"ImportPath": "github.com/miekg/dns",

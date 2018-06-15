@@ -235,20 +235,45 @@ type SPSArgs struct {
 	DisableHTTP       *bool
 	DisableSocks5     *bool
 }
-
+type DNSArgs struct {
+	Parent            *string
+	CertFile          *string
+	KeyFile           *string
+	CaCertFile        *string
+	CaCertBytes       []byte
+	CertBytes         []byte
+	KeyBytes          []byte
+	Local             *string
+	ParentType        *string
+	LocalType         *string
+	Timeout           *int
+	KCP               kcpcfg.KCPConfigArgs
+	ParentServiceType *string
+	DNSAddress        *string
+	DNSTTL            *int
+	AuthFile          *string
+	Auth              *[]string
+	AuthURL           *string
+	AuthURLOkCode     *int
+	AuthURLTimeout    *int
+	AuthURLRetry      *int
+	LocalIPS          *[]string
+	ParentAuth        *string
+	LocalKey          *string
+	ParentKey         *string
+	LocalCompress     *bool
+	ParentCompress    *bool
+	DisableHTTP       *bool
+	DisableSocks5     *bool
+}
 func (a *SPSArgs) Protocol() string {
-	switch *a.LocalType {
-	case TYPE_TLS:
-		return TYPE_TLS
-	case TYPE_TCP:
-		return TYPE_TCP
-	case TYPE_KCP:
-		return TYPE_KCP
-	}
-	return "unknown"
+	return ProtocoStrl(*a.LocalType)
 }
 func (a *TCPArgs) Protocol() string {
-	switch *a.LocalType {
+	return ProtocoStrl(*a.LocalType)
+}
+func ProtocoStrl(t string) string {
+	switch t {
 	case TYPE_TLS:
 		return TYPE_TLS
 	case TYPE_TCP:
