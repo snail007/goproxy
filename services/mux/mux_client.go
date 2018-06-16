@@ -1,4 +1,4 @@
-package services
+package mux
 
 import (
 	"crypto/tls"
@@ -8,13 +8,27 @@ import (
 	"net"
 	"time"
 
-	"github.com/snail007/goproxy/utils"
-
 	"github.com/golang/snappy"
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
+type MuxClientArgs struct {
+	Parent       *string
+	ParentType   *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Key          *string
+	Timeout      *int
+	IsCompress   *bool
+	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
+}
 type MuxClient struct {
 	cfg      MuxClientArgs
 	isStop   bool
@@ -22,7 +36,7 @@ type MuxClient struct {
 	log      *logger.Logger
 }
 
-func NewMuxClient() Service {
+func NewMuxClient() services.Service {
 	return &MuxClient{
 		cfg:      MuxClientArgs{},
 		isStop:   false,

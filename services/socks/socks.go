@@ -10,14 +10,54 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/aes"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
-
 	"golang.org/x/crypto/ssh"
 )
 
+type SocksArgs struct {
+	Parent         *string
+	ParentType     *string
+	Local          *string
+	LocalType      *string
+	CertFile       *string
+	KeyFile        *string
+	CaCertFile     *string
+	CaCertBytes    []byte
+	CertBytes      []byte
+	KeyBytes       []byte
+	SSHKeyFile     *string
+	SSHKeyFileSalt *string
+	SSHPassword    *string
+	SSHUser        *string
+	SSHKeyBytes    []byte
+	SSHAuthMethod  ssh.AuthMethod
+	Timeout        *int
+	Always         *bool
+	Interval       *int
+	Blocked        *string
+	Direct         *string
+	AuthFile       *string
+	Auth           *[]string
+	AuthURL        *string
+	AuthURLOkCode  *int
+	AuthURLTimeout *int
+	AuthURLRetry   *int
+	KCP            kcpcfg.KCPConfigArgs
+	UDPParent      *string
+	UDPLocal       *string
+	LocalIPS       *[]string
+	DNSAddress     *string
+	DNSTTL         *int
+	LocalKey       *string
+	ParentKey      *string
+	LocalCompress  *bool
+	ParentCompress *bool
+}
 type Socks struct {
 	cfg            SocksArgs
 	checker        utils.Checker
@@ -32,7 +72,7 @@ type Socks struct {
 	log            *logger.Logger
 }
 
-func NewSocks() Service {
+func NewSocks() services.Service {
 	return &Socks{
 		cfg:       SocksArgs{},
 		checker:   utils.Checker{},
@@ -198,11 +238,11 @@ func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
 		s.log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
 	}
 	sc := utils.NewServerChannelHost(*s.cfg.Local, s.log)
-	if *s.cfg.LocalType == TYPE_TCP {
+	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.socksConnCallback)
-	} else if *s.cfg.LocalType == TYPE_TLS {
+	} else if *s.cfg.LocalType == "tls" {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.socksConnCallback)
-	} else if *s.cfg.LocalType == TYPE_KCP {
+	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback, s.log)
 	}
 	if err != nil {

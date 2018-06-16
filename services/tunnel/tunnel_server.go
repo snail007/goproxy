@@ -12,36 +12,47 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
-type TunnelServer struct {
-	cfg       TunnelServerArgs
-	udpChn    chan UDPItem
-	sc        utils.ServerChannel
-	isStop    bool
-	udpConn   *net.Conn
-	userConns utils.ConcurrentMap
-	log       *logger.Logger
+type TunnelServerArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Local     *string
+	IsUDP     *bool
+	Key       *string
+	Remote    *string
+	Timeout   *int
+	Route     *[]string
+	Mgr       *TunnelServerManager
+	Mux       *bool
 }
-
+type UDPItem struct {
+	packet    *[]byte
+	localAddr *net.UDPAddr
+	srcAddr   *net.UDPAddr
+}
 type TunnelServerManager struct {
 	cfg      TunnelServerArgs
 	udpChn   chan UDPItem
 	serverID string
-	servers  []*Service
+	servers  []*services.Service
 	log      *logger.Logger
 }
 
-func NewTunnelServerManager() Service {
+func NewTunnelServerManager() services.Service {
 	return &TunnelServerManager{
 		cfg:      TunnelServerArgs{},
 		udpChn:   make(chan UDPItem, 50000),
 		serverID: utils.Uniqueid(),
-		servers:  []*Service{},
+		servers:  []*services.Service{},
 	}
 }
 func (s *TunnelServerManager) Start(args interface{}, log *logger.Logger) (err error) {
@@ -146,19 +157,24 @@ func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
 	}
 	return
 }
-func NewTunnelServer() Service {
+
+type TunnelServer struct {
+	cfg       TunnelServerArgs
+	udpChn    chan UDPItem
+	sc        utils.ServerChannel
+	isStop    bool
+	udpConn   *net.Conn
+	userConns utils.ConcurrentMap
+	log       *logger.Logger
+}
+
+func NewTunnelServer() services.Service {
 	return &TunnelServer{
 		cfg:       TunnelServerArgs{},
 		udpChn:    make(chan UDPItem, 50000),
 		isStop:    false,
 		userConns: utils.NewConcurrentMap(),
 	}
-}
-
-type UDPItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
 }
 
 func (s *TunnelServer) StopService() {

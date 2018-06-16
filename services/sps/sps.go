@@ -13,11 +13,44 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
 )
 
+type SPSArgs struct {
+	Parent            *string
+	CertFile          *string
+	KeyFile           *string
+	CaCertFile        *string
+	CaCertBytes       []byte
+	CertBytes         []byte
+	KeyBytes          []byte
+	Local             *string
+	ParentType        *string
+	LocalType         *string
+	Timeout           *int
+	KCP               kcpcfg.KCPConfigArgs
+	ParentServiceType *string
+	DNSAddress        *string
+	DNSTTL            *int
+	AuthFile          *string
+	Auth              *[]string
+	AuthURL           *string
+	AuthURLOkCode     *int
+	AuthURLTimeout    *int
+	AuthURLRetry      *int
+	LocalIPS          *[]string
+	ParentAuth        *string
+	LocalKey          *string
+	ParentKey         *string
+	LocalCompress     *bool
+	ParentCompress    *bool
+	DisableHTTP       *bool
+	DisableSocks5     *bool
+}
 type SPS struct {
 	outPool        utils.OutConn
 	cfg            SPSArgs
@@ -28,7 +61,7 @@ type SPS struct {
 	log            *logger.Logger
 }
 
-func NewSPS() Service {
+func NewSPS() services.Service {
 	return &SPS{
 		outPool:        utils.OutConn{},
 		cfg:            SPSArgs{},
@@ -39,14 +72,14 @@ func NewSPS() Service {
 }
 func (s *SPS) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", *s.cfg.LocalType, *s.cfg.Local)
 		return
 	}
 	if *s.cfg.ParentType == "" {
 		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp>")
 		return
 	}
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
+	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 		if err != nil {
 			return
@@ -70,7 +103,7 @@ func (s *SPS) InitService() (err error) {
 	return
 }
 func (s *SPS) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
+	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" || *s.cfg.ParentType == "kcp" {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutConn(
@@ -125,17 +158,17 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 			host, port, _ := net.SplitHostPort(*s.cfg.Local)
 			p, _ := strconv.Atoi(port)
 			sc := utils.NewServerChannel(host, p, s.log)
-			if *s.cfg.LocalType == TYPE_TCP {
+			if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenTCP(s.callback)
-			} else if *s.cfg.LocalType == TYPE_TLS {
+			} else if *s.cfg.LocalType == "tls" {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
-			} else if *s.cfg.LocalType == TYPE_KCP {
+			} else if *s.cfg.LocalType == "kcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if err != nil {
 				return
 			}
-			s.log.Printf("%s http(s)+socks proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+			s.log.Printf("%s http(s)+socks proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
@@ -148,7 +181,7 @@ func (s *SPS) Clean() {
 func (s *SPS) callback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			s.log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
+			s.log.Printf("%s conn handler crashed with err : %s \nstack: %s", *s.cfg.LocalType, err, string(debug.Stack()))
 		}
 	}()
 	if *s.cfg.LocalCompress {
@@ -161,11 +194,11 @@ func (s *SPS) callback(inConn net.Conn) {
 	}
 	var err error
 	switch *s.cfg.ParentType {
-	case TYPE_KCP:
+	case "kcp":
 		fallthrough
-	case TYPE_TCP:
+	case "tcp":
 		fallthrough
-	case TYPE_TLS:
+	case "tls":
 		err = s.OutToTCP(&inConn)
 	default:
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)

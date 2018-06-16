@@ -1,5 +1,5 @@
 #/bin/bash
-VER="v4.9"
+VER="v5.0"
 
 rm -rf sdk-linux-*.tar.gz
 rm -rf README.md libproxy-sdk.so libproxy-sdk.h libproxy-sdk.a

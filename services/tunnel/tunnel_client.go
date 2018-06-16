@@ -9,12 +9,27 @@ import (
 	"os"
 	"time"
 
+	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
-
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
+const (
+	CONN_SERVER_MUX = uint8(6)
+	CONN_CLIENT_MUX = uint8(7)
+)
+
+type TunnelClientArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Key       *string
+	Timeout   *int
+	Mux       *bool
+}
 type TunnelClient struct {
 	cfg       TunnelClientArgs
 	ctrlConn  net.Conn
@@ -23,7 +38,7 @@ type TunnelClient struct {
 	log       *logger.Logger
 }
 
-func NewTunnelClient() Service {
+func NewTunnelClient() services.Service {
 	return &TunnelClient{
 		cfg:       TunnelClientArgs{},
 		userConns: utils.NewConcurrentMap(),

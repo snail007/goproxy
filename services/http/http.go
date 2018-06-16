@@ -11,12 +11,53 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 
 	"golang.org/x/crypto/ssh"
 )
 
+type HTTPArgs struct {
+	Parent              *string
+	CertFile            *string
+	KeyFile             *string
+	CaCertFile          *string
+	CaCertBytes         []byte
+	CertBytes           []byte
+	KeyBytes            []byte
+	Local               *string
+	Always              *bool
+	HTTPTimeout         *int
+	Interval            *int
+	Blocked             *string
+	Direct              *string
+	AuthFile            *string
+	Auth                *[]string
+	AuthURL             *string
+	AuthURLOkCode       *int
+	AuthURLTimeout      *int
+	AuthURLRetry        *int
+	ParentType          *string
+	LocalType           *string
+	Timeout             *int
+	CheckParentInterval *int
+	SSHKeyFile          *string
+	SSHKeyFileSalt      *string
+	SSHPassword         *string
+	SSHUser             *string
+	SSHKeyBytes         []byte
+	SSHAuthMethod       ssh.AuthMethod
+	KCP                 kcpcfg.KCPConfigArgs
+	LocalIPS            *[]string
+	DNSAddress          *string
+	DNSTTL              *int
+	LocalKey            *string
+	ParentKey           *string
+	LocalCompress       *bool
+	ParentCompress      *bool
+}
 type HTTP struct {
 	outPool        utils.OutConn
 	cfg            HTTPArgs
@@ -31,7 +72,7 @@ type HTTP struct {
 	log            *logger.Logger
 }
 
-func NewHTTP() Service {
+func NewHTTP() services.Service {
 	return &HTTP{
 		outPool:        utils.OutConn{},
 		cfg:            HTTPArgs{},
@@ -182,11 +223,11 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
 			sc := utils.NewServerChannel(host, p, s.log)
-			if *s.cfg.LocalType == TYPE_TCP {
+			if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenTCP(s.callback)
-			} else if *s.cfg.LocalType == TYPE_TLS {
+			} else if *s.cfg.LocalType == "tls" {
 				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
-			} else if *s.cfg.LocalType == TYPE_KCP {
+			} else if *s.cfg.LocalType == "kcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if err != nil {
@@ -396,7 +437,7 @@ func (s *HTTP) ConnectSSH() (err error) {
 	return
 }
 func (s *HTTP) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
+	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" || *s.cfg.ParentType == "kcp" {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutConn(

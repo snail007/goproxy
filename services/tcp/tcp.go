@@ -9,10 +9,26 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 
 	"strconv"
 )
+
+type TCPArgs struct {
+	Parent              *string
+	CertFile            *string
+	KeyFile             *string
+	CertBytes           []byte
+	KeyBytes            []byte
+	Local               *string
+	ParentType          *string
+	LocalType           *string
+	Timeout             *int
+	CheckParentInterval *int
+	KCP                 kcpcfg.KCPConfigArgs
+}
 
 type TCP struct {
 	outPool   utils.OutConn
@@ -23,7 +39,7 @@ type TCP struct {
 	log       *logger.Logger
 }
 
-func NewTCP() Service {
+func NewTCP() services.Service {
 	return &TCP{
 		outPool:   utils.OutConn{},
 		cfg:       TCPArgs{},
@@ -33,14 +49,14 @@ func NewTCP() Service {
 }
 func (s *TCP) CheckArgs() (err error) {
 	if *s.cfg.Parent == "" {
-		err = fmt.Errorf("parent required for %s %s", s.cfg.Protocol(), *s.cfg.Local)
+		err = fmt.Errorf("parent required for %s %s", *s.cfg.LocalType, *s.cfg.Local)
 		return
 	}
 	if *s.cfg.ParentType == "" {
 		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|kcp|udp>")
 		return
 	}
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.LocalType == TYPE_TLS {
+	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 		if err != nil {
 			return
@@ -86,17 +102,17 @@ func (s *TCP) Start(args interface{}, log *logger.Logger) (err error) {
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p, s.log)
 
-	if *s.cfg.LocalType == TYPE_TCP {
+	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.callback)
-	} else if *s.cfg.LocalType == TYPE_TLS {
+	} else if *s.cfg.LocalType == "tls" {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
-	} else if *s.cfg.LocalType == TYPE_KCP {
+	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 	}
 	if err != nil {
 		return
 	}
-	s.log.Printf("%s proxy on %s", s.cfg.Protocol(), (*sc.Listener).Addr())
+	s.log.Printf("%s proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
 	s.sc = &sc
 	return
 }
@@ -107,18 +123,18 @@ func (s *TCP) Clean() {
 func (s *TCP) callback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			s.log.Printf("%s conn handler crashed with err : %s \nstack: %s", s.cfg.Protocol(), err, string(debug.Stack()))
+			s.log.Printf("%s conn handler crashed with err : %s \nstack: %s", *s.cfg.LocalType, err, string(debug.Stack()))
 		}
 	}()
 	var err error
 	switch *s.cfg.ParentType {
-	case TYPE_KCP:
+	case "kcp":
 		fallthrough
-	case TYPE_TCP:
+	case "tcp":
 		fallthrough
-	case TYPE_TLS:
+	case "tls":
 		err = s.OutToTCP(&inConn)
-	case TYPE_UDP:
+	case "udp":
 		err = s.OutToUDP(&inConn)
 	default:
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
@@ -204,7 +220,7 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 
 }
 func (s *TCP) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP || *s.cfg.ParentType == TYPE_KCP {
+	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" || *s.cfg.ParentType == "kcp" {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutConn(

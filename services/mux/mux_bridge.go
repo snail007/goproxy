@@ -1,4 +1,4 @@
-package services
+package mux
 
 import (
 	"bufio"
@@ -12,12 +12,29 @@ import (
 	"sync"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
-
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
+const (
+	CONN_SERVER = uint8(4)
+	CONN_CLIENT = uint8(5)
+)
+
+type MuxBridgeArgs struct {
+	CertFile   *string
+	KeyFile    *string
+	CertBytes  []byte
+	KeyBytes   []byte
+	Local      *string
+	LocalType  *string
+	Timeout    *int
+	IsCompress *bool
+	KCP        kcpcfg.KCPConfigArgs
+}
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
 	clientControlConns utils.ConcurrentMap
@@ -29,7 +46,7 @@ type MuxBridge struct {
 	log                *logger.Logger
 }
 
-func NewMuxBridge() Service {
+func NewMuxBridge() services.Service {
 	b := &MuxBridge{
 		cfg:                MuxBridgeArgs{},
 		clientControlConns: utils.NewConcurrentMap(),
@@ -49,7 +66,7 @@ func (s *MuxBridge) CheckArgs() (err error) {
 		err = fmt.Errorf("cert and key file required")
 		return
 	}
-	if *s.cfg.LocalType == TYPE_TLS {
+	if *s.cfg.LocalType == "tls" {
 		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
 		if err != nil {
 			return
@@ -69,7 +86,7 @@ func (s *MuxBridge) StopService() {
 	s.isStop = true
 	if s.sc != nil && (*s.sc).Listener != nil {
 		(*(*s.sc).Listener).Close()
-	} 
+	}
 	for _, g := range s.clientControlConns.Items() {
 		for _, session := range g.(utils.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()
@@ -92,11 +109,11 @@ func (s *MuxBridge) Start(args interface{}, log *logger.Logger) (err error) {
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p, s.log)
-	if *s.cfg.LocalType == TYPE_TCP {
+	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.handler)
-	} else if *s.cfg.LocalType == TYPE_TLS {
+	} else if *s.cfg.LocalType == "tls" {
 		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.handler)
-	} else if *s.cfg.LocalType == TYPE_KCP {
+	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.handler, s.log)
 	}
 	if err != nil {

@@ -12,10 +12,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 )
 
+type UDPArgs struct {
+	Parent              *string
+	CertFile            *string
+	KeyFile             *string
+	CertBytes           []byte
+	KeyBytes            []byte
+	Local               *string
+	ParentType          *string
+	Timeout             *int
+	CheckParentInterval *int
+}
 type UDP struct {
 	p       utils.ConcurrentMap
 	outPool utils.OutConn
@@ -25,7 +37,7 @@ type UDP struct {
 	log     *logger.Logger
 }
 
-func NewUDP() Service {
+func NewUDP() services.Service {
 	return &UDP{
 		outPool: utils.OutConn{},
 		p:       utils.NewConcurrentMap(),
@@ -50,7 +62,7 @@ func (s *UDP) CheckArgs() (err error) {
 	return
 }
 func (s *UDP) InitService() (err error) {
-	if *s.cfg.ParentType != TYPE_UDP {
+	if *s.cfg.ParentType != "udp" {
 		s.InitOutConnPool()
 	}
 	return
@@ -105,11 +117,11 @@ func (s *UDP) callback(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 	}()
 	var err error
 	switch *s.cfg.ParentType {
-	case TYPE_TCP:
+	case "tcp":
 		fallthrough
-	case TYPE_TLS:
+	case "tls":
 		err = s.OutToTCP(packet, localAddr, srcAddr)
-	case TYPE_UDP:
+	case "udp":
 		err = s.OutToUDP(packet, localAddr, srcAddr)
 	default:
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
@@ -234,7 +246,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err erro
 	return
 }
 func (s *UDP) InitOutConnPool() {
-	if *s.cfg.ParentType == TYPE_TLS || *s.cfg.ParentType == TYPE_TCP {
+	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" {
 		//dur int, isTLS bool, certBytes, keyBytes []byte,
 		//parent string, timeout int, InitialCap int, MaxCap int
 		s.outPool = utils.NewOutConn(

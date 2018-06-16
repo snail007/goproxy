@@ -9,12 +9,29 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
+const (
+	CONN_CLIENT_CONTROL = uint8(1)
+	CONN_SERVER         = uint8(4)
+	CONN_CLIENT         = uint8(5)
+)
+
+type TunnelBridgeArgs struct {
+	Parent    *string
+	CertFile  *string
+	KeyFile   *string
+	CertBytes []byte
+	KeyBytes  []byte
+	Local     *string
+	Timeout   *int
+	Mux       *bool
+}
 type ServerConn struct {
 	//ClientLocalAddr string //tcp:2.2.22:333@ID
 	Conn *net.Conn
@@ -27,7 +44,7 @@ type TunnelBridge struct {
 	log                *logger.Logger
 }
 
-func NewTunnelBridge() Service {
+func NewTunnelBridge() services.Service {
 	return &TunnelBridge{
 		cfg:                TunnelBridgeArgs{},
 		serverConns:        utils.NewConcurrentMap(),

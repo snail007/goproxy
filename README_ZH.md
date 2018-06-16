@@ -26,6 +26,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
 - 自定义底层加密传输，http(s)\sps\socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可。
 - 底层压缩高效传输，http(s)\sps\socks代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在加密之后还可以对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的。
+- 安全的DNS代理，可以通过本地的proxy提供的DNS代理服务器与上级代理加密通讯实现安全防污染的DNS查询。
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
@@ -37,7 +38,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v4.9手册,其他版本手册请点击下面链接查看. 
+本页是v5.0手册,其他版本手册请点击下面链接查看. 
+- [v4.9手册](https://github.com/snail007/goproxy/tree/v4.9) 
 - [v4.8手册](https://github.com/snail007/goproxy/tree/v4.8) 
 - [v4.7手册](https://github.com/snail007/goproxy/tree/v4.7) 
 - [v4.6手册](https://github.com/snail007/goproxy/tree/v4.6) 
@@ -145,6 +147,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - [7. KCP配置](#7kcp配置)
     - [7.1 配置介绍](#71-配置介绍)
     - [7.2 详细配置](#72-详细配置)
+- [8. DNS防污染服务器](#8dns防污染服务器)
+    - [8.1 介绍](#81-介绍)
+    - [8.2 使用示例](#82-使用示例)
 
 ### Fast Start  
 提示:所有操作需要root权限.  
@@ -162,7 +167,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.9/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.0/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -1040,6 +1045,73 @@ normal：`--nodelay=0 --interval=40 --resend=2 --nc=1`
 fast ：`--nodelay=0 --interval=30 --resend=2 --nc=1`  
 fast2：`--nodelay=1 --interval=20 --resend=2 --nc=1`  
 fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`  
+
+### **8.DNS防污染服务器** 
+
+#### **8.1 介绍** 
+众所周知DNS是UDP端口53提供的服务，但是随着网络的发展一些知名DNS服务器也支持TCP方式dns查询，比如谷歌的8.8.8.8，proxy的DNS防污染服务器原理就是在本地启动一个proxy的DNS代理服务器，它用TCP的方式通过上级代理进行dns查询。如果它和上级代理通讯采用加密的方式，那么就可以进行安全无污染的DNS解析。
+
+#### **8.2 使用示例** 
+
+***8.2.1 普通HTTP(S)上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+本地执行：  
+`proxy dns -S http -T tcp -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了DNS解析功能。  
+
+***8.2.2 普通SOCKS5上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+本地执行：  
+`proxy dns -S socks -T tcp -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了DNS解析功能。 
+
+***8.2.3 TLS加密的HTTP(S)上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy http -t tls -C proxy.crt -K proxy.key -p :33080`
+本地执行：  
+`proxy dns -S http -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。 
+
+***8.2.4 TLS加密的SOCKS5上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy socks -t tls -C proxy.crt -K proxy.key -p :33080`
+本地执行：  
+`proxy dns -S socks -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。  
+
+***8.2.5 KCP加密的HTTP(S)上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy http -t kcp -p :33080`
+本地执行：  
+`proxy dns -S http -T kcp -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。 
+
+***8.2.6 KCP加密的SOCKS5上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy socks -t kcp -p :33080`
+本地执行：  
+`proxy dns -S socks -T kcp -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。 
+
+***8.2.7 自定义加密的HTTP(S)上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy http -t tcp -p :33080 -z password`
+本地执行：  
+`proxy dns -S http -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。 
+
+***8.2.8 自定义加密的SOCKS5上级代理***   
+假设有一个上级代理：2.2.2.2:33080  
+上级代理执行的命令是：
+`proxy socks -t kcp -p :33080 -z password`
+本地执行：  
+`proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
+那么本地的UDP端口53就提供了安全防污染DNS解析功能。
 
 ### TODO  
 - http,socks代理多个上级负载均衡?

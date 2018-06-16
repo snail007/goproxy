@@ -5,17 +5,25 @@ import (
 	"fmt"
 	logger "log"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/snail007/goproxy/services"
+	httpx "github.com/snail007/goproxy/services/http"
 	"github.com/snail007/goproxy/services/kcpcfg"
-
+	mux "github.com/snail007/goproxy/services/mux"
+	socksx "github.com/snail007/goproxy/services/socks"
+	spsx "github.com/snail007/goproxy/services/sps"
+	tcpx "github.com/snail007/goproxy/services/tcp"
+	tunnel "github.com/snail007/goproxy/services/tunnel"
+	udpx "github.com/snail007/goproxy/services/udp"
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-const SDK_VERSION = "4.9"
+const SDK_VERSION = "5.0"
 
 var (
 	app *kingpin.Application
@@ -32,17 +40,18 @@ var (
 //if start success, errStr is empty.
 func Start(serviceID, serviceArgsStr string) (errStr string) {
 	//define  args
-	tcpArgs := services.TCPArgs{}
-	httpArgs := services.HTTPArgs{}
-	tunnelServerArgs := services.TunnelServerArgs{}
-	tunnelClientArgs := services.TunnelClientArgs{}
-	tunnelBridgeArgs := services.TunnelBridgeArgs{}
-	muxServerArgs := services.MuxServerArgs{}
-	muxClientArgs := services.MuxClientArgs{}
-	muxBridgeArgs := services.MuxBridgeArgs{}
-	udpArgs := services.UDPArgs{}
-	socksArgs := services.SocksArgs{}
-	spsArgs := services.SPSArgs{}
+	tcpArgs := tcpx.TCPArgs{}
+	httpArgs := httpx.HTTPArgs{}
+	tunnelServerArgs := tunnel.TunnelServerArgs{}
+	tunnelClientArgs := tunnel.TunnelClientArgs{}
+	tunnelBridgeArgs := tunnel.TunnelBridgeArgs{}
+	muxServerArgs := mux.MuxServerArgs{}
+	muxClientArgs := mux.MuxClientArgs{}
+	muxBridgeArgs := mux.MuxBridgeArgs{}
+	udpArgs := udpx.UDPArgs{}
+	socksArgs := socksx.SocksArgs{}
+	spsArgs := spsx.SPSArgs{}
+	dnsArgs := DNSArgs{}
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
@@ -240,6 +249,23 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	spsArgs.ParentCompress = sps.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
 	spsArgs.DisableHTTP = sps.Flag("disable-http", "disable http(s) proxy").Default("false").Bool()
 	spsArgs.DisableSocks5 = sps.Flag("disable-socks", "disable socks proxy").Default("false").Bool()
+	//########dns#########
+	dns := app.Command("dns", "proxy on dns server mode")
+	dnsArgs.Parent = dns.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	dnsArgs.CertFile = dns.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
+	dnsArgs.KeyFile = dns.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	dnsArgs.CaCertFile = dns.Flag("ca", "ca cert file for tls").Default("").String()
+	dnsArgs.Timeout = dns.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('i').Default("2000").Int()
+	dnsArgs.ParentType = dns.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
+	dnsArgs.Local = dns.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
+	dnsArgs.ParentServiceType = dns.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
+	dnsArgs.RemoteDNSAddress = dns.Flag("dns-address", "remote dns for resolve doamin").Short('q').Default("8.8.8.8:53").String()
+	dnsArgs.DNSTTL = dns.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
+	dnsArgs.ParentAuth = dns.Flag("parent-auth", "parent socks auth username and password, such as: -A user1:pass1").Short('A').String()
+	dnsArgs.ParentKey = dns.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
+	dnsArgs.ParentCompress = dns.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
+	dnsArgs.CacheFile = dns.Flag("cache-file", "dns result cached file").Short('f').Default(filepath.Join(path.Dir(os.Args[0]), "cache.dat")).String()
+	dnsArgs.LocalSocks5Port = dns.Flag("socks-port", "local socks5 port").Short('s').Default("65501").String()
 
 	//parse args
 	_args := strings.Fields(strings.Trim(serviceArgsStr, " "))
@@ -302,6 +328,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	muxBridgeArgs.KCP = kcpArgs
 	muxServerArgs.KCP = kcpArgs
 	muxClientArgs.KCP = kcpArgs
+	dnsArgs.KCP = kcpArgs
 
 	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
 	flags := logger.Ldate
@@ -323,27 +350,29 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	//regist services and run service
 	switch serviceName {
 	case "http":
-		services.Regist(serviceID, services.NewHTTP(), httpArgs, log)
+		services.Regist(serviceID, httpx.NewHTTP(), httpArgs, log)
 	case "tcp":
-		services.Regist(serviceID, services.NewTCP(), tcpArgs, log)
+		services.Regist(serviceID, tcpx.NewTCP(), tcpArgs, log)
 	case "udp":
-		services.Regist(serviceID, services.NewUDP(), udpArgs, log)
+		services.Regist(serviceID, udpx.NewUDP(), udpArgs, log)
 	case "tserver":
-		services.Regist(serviceID, services.NewTunnelServerManager(), tunnelServerArgs, log)
+		services.Regist(serviceID, tunnel.NewTunnelServerManager(), tunnelServerArgs, log)
 	case "tclient":
-		services.Regist(serviceID, services.NewTunnelClient(), tunnelClientArgs, log)
+		services.Regist(serviceID, tunnel.NewTunnelClient(), tunnelClientArgs, log)
 	case "tbridge":
-		services.Regist(serviceID, services.NewTunnelBridge(), tunnelBridgeArgs, log)
+		services.Regist(serviceID, tunnel.NewTunnelBridge(), tunnelBridgeArgs, log)
 	case "server":
-		services.Regist(serviceID, services.NewMuxServerManager(), muxServerArgs, log)
+		services.Regist(serviceID, mux.NewMuxServerManager(), muxServerArgs, log)
 	case "client":
-		services.Regist(serviceID, services.NewMuxClient(), muxClientArgs, log)
+		services.Regist(serviceID, mux.NewMuxClient(), muxClientArgs, log)
 	case "bridge":
-		services.Regist(serviceID, services.NewMuxBridge(), muxBridgeArgs, log)
+		services.Regist(serviceID, mux.NewMuxBridge(), muxBridgeArgs, log)
 	case "socks":
-		services.Regist(serviceID, services.NewSocks(), socksArgs, log)
+		services.Regist(serviceID, socksx.NewSocks(), socksArgs, log)
 	case "sps":
-		services.Regist(serviceID, services.NewSPS(), spsArgs, log)
+		services.Regist(serviceID, spsx.NewSPS(), spsArgs, log)
+	case "dns":
+		services.Regist(serviceName, NewDNS(), dnsArgs, log)
 	}
 	_, err = services.Run(serviceID, nil)
 	if err != nil {

@@ -1,4 +1,4 @@
-package services
+package mux
 
 import (
 	"crypto/tls"
@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 
 	"github.com/golang/snappy"
@@ -19,31 +21,45 @@ import (
 	smux "github.com/hashicorp/yamux"
 )
 
-type MuxServer struct {
-	cfg      MuxServerArgs
-	udpChn   chan MuxUDPItem
-	sc       utils.ServerChannel
-	sessions utils.ConcurrentMap
-	lockChn  chan bool
-	isStop   bool
-	udpConn  *net.Conn
-	log      *logger.Logger
+type MuxServerArgs struct {
+	Parent       *string
+	ParentType   *string
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Local        *string
+	IsUDP        *bool
+	Key          *string
+	Remote       *string
+	Timeout      *int
+	Route        *[]string
+	Mgr          *MuxServerManager
+	IsCompress   *bool
+	SessionCount *int
+	KCP          kcpcfg.KCPConfigArgs
+}
+
+type MuxUDPItem struct {
+	packet    *[]byte
+	localAddr *net.UDPAddr
+	srcAddr   *net.UDPAddr
 }
 
 type MuxServerManager struct {
 	cfg      MuxServerArgs
 	udpChn   chan MuxUDPItem
 	serverID string
-	servers  []*Service
+	servers  []*services.Service
 	log      *logger.Logger
 }
 
-func NewMuxServerManager() Service {
+func NewMuxServerManager() services.Service {
 	return &MuxServerManager{
 		cfg:      MuxServerArgs{},
 		udpChn:   make(chan MuxUDPItem, 50000),
 		serverID: utils.Uniqueid(),
-		servers:  []*Service{},
+		servers:  []*services.Service{},
 	}
 }
 
@@ -139,7 +155,18 @@ func (s *MuxServerManager) InitService() (err error) {
 	return
 }
 
-func NewMuxServer() Service {
+type MuxServer struct {
+	cfg      MuxServerArgs
+	udpChn   chan MuxUDPItem
+	sc       utils.ServerChannel
+	sessions utils.ConcurrentMap
+	lockChn  chan bool
+	isStop   bool
+	udpConn  *net.Conn
+	log      *logger.Logger
+}
+
+func NewMuxServer() services.Service {
 	return &MuxServer{
 		cfg:      MuxServerArgs{},
 		udpChn:   make(chan MuxUDPItem, 50000),
@@ -147,12 +174,6 @@ func NewMuxServer() Service {
 		sessions: utils.NewConcurrentMap(),
 		isStop:   false,
 	}
-}
-
-type MuxUDPItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
 }
 
 func (s *MuxServer) StopService() {
