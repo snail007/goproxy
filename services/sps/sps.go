@@ -155,7 +155,7 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 	s.log.Printf("use %s %s parent %s", *s.cfg.ParentType, *s.cfg.ParentServiceType, *s.cfg.Parent)
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
 		if addr != "" {
-			host, port, _ := net.SplitHostPort(*s.cfg.Local)
+			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
 			sc := utils.NewServerChannel(host, p, s.log)
 			if *s.cfg.LocalType == "tcp" {
