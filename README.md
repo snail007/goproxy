@@ -25,6 +25,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.Also support powerful cascading authentication.  
 - Custom underlying encrypted transmission, HTTP(s)\sps\socks proxy can encrypt TCP data through TLS standard encryption and KCP protocol encryption. In addition, it also supports custom encryption after TLS and KCP. That is to say, custom encryption and tls|kcp can be used together. The internal uses AES256 encryption, and it only needs to define one password by yourself when is used.   
 - Low level compression and efficient transmission，The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
+- The secure DNS proxy, Through the DNS proxy provided by the local proxy, you can encrypted communicate with the father proxy to realize the DNS query of security and pollution prevention.
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -146,6 +147,10 @@ This page is the v5.0 manual, and the other version of the manual can be checked
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
+- [8.DNS anti pollution server](#8dns-anti-pollution-server)
+    - [8.1 Introduction](#81introduction)
+    - [8.2 Use examples](#82use-examples)
+
 
 
 ### Fast Start  
@@ -995,6 +1000,73 @@ If you want to get a more detailed configuration and explanation of the KCP para
 --kcp-sockbuf=4194304      be carefull!
 --kcp-keepalive=10         be carefull!
 ```
+
+### **8.DNS anti pollution server** 
+
+#### **8.1.Introduction** 
+It is well known that DNS is a service which use UDP protocol and 53 port，But with the development of network, some well-known DNS servers also support TCP protocol's DNS query，such as google's 8.8.8.8，Proxy's DNS anti pollution server theory is starting a local DNS proxy server，It uses TCP to conduct DNS queries through father proxy. If it encrypted communicate with father proxy，Then you can make a safe and pollution-free DNS analysis.
+
+#### **8.2.Use examples** 
+
+***8.2.1 common HTTP(S) father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+local execution：  
+`proxy dns -S http -T tcp -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides the DNS analysis.  
+
+***8.2.2 common SOCKS5 father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+local execution：  
+`proxy dns -S socks -T tcp -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides the DNS analysis. 
+
+***8.2.3 TLS encrypted HTTP(S) father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy http -t tls -C proxy.crt -K proxy.key -p :33080`
+local execution：  
+`proxy dns -S http -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
+
+***8.2.4 TLS encrypted SOCKS5 father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy socks -t tls -C proxy.crt -K proxy.key -p :33080`
+local execution：  
+`proxy dns -S socks -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis.  
+
+***8.2.5 KCP encrypted HTTP(S) father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy http -t kcp -p :33080`
+local execution：  
+`proxy dns -S http -T kcp -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
+
+***8.2.6 KCP encrypted SOCKS5 father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy socks -t kcp -p :33080`
+local execution：  
+`proxy dns -S socks -T kcp -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
+
+***8.2.7 Custom encrypted HTTP(S) father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy http -t tcp -p :33080 -z password`
+local execution：  
+`proxy dns -S http -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
+
+***8.2.8 Custom encrypted SOCKS5 father proxy***   
+Suppose there is a father proxy：2.2.2.2:33080  
+The orders executed by father proxy：
+`proxy socks -t kcp -p :33080 -z password`
+local execution：  
+`proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
+Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 
 ### TODO  
 - HTTP, socks proxy which has multi parents proxy load balancing?
