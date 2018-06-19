@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
-Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet, secure DNS proxy.  
 
   
 ---  
@@ -181,12 +181,12 @@ chmod +x install.sh
 
 #### Docker installation 
 
-Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.8.5 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 4.7.
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 5.0.
 
 The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 4.7:
 
 ```
-ARG GOPROXY_VERSION=v4.7
+ARG GOPROXY_VERSION=v5.0
 ```
 
 To Run:

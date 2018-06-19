@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转，TLS加密传输，协议转换。
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
 
 [点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
 
@@ -178,11 +178,11 @@ chmod +x install.sh
 ```  
 
 #### Docker安装 
-项目根目录的Dockerfile文件用来构建,使用golang 1.8.5,构建基于goproxy v4.7,
+项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy v5.0,
 全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile,指定构建的goproxy版本.
 
 ```
-ARG GOPROXY_VERSION=v4.7
+ARG GOPROXY_VERSION=v5.0
 ```
 
 步骤:  

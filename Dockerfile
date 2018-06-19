@@ -1,4 +1,4 @@
-FROM golang:1.8.5-alpine as builder
+FROM golang:1.10.3-alpine as builder
 ARG GOPROXY_VERSION=master
 RUN apk update && apk upgrade && \
     apk add --no-cache git && cd /go/src/ && git clone https://github.com/snail007/goproxy && \
