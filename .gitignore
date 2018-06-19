@@ -1,10 +1,10 @@
-proxy
-goproxy
+/proxy
+/goproxy
 *.exe
 *.exe~
 .*
 *.prof
 !.gitignore
 release-*
-proxy.crt
-proxy.key
+/proxy.crt
+/proxy.key
