@@ -1079,7 +1079,7 @@ Finally, Pull Request to dev branch of goproxy project, and contribute code for 
 PR needs to explain what changes have been made and why you change them.  
 
 ### How to use the source code?    
-Recommend go1.8.5, which does not guarantee that version >=1.9 can be used.   
+Recommend go1.10.1.   
 `go get github.com/snail007/goproxy`   
 use command cd to enter your go SRC directory   
 then cd to enter `github.com/snail007/goproxy`.    

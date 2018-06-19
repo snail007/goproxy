@@ -1124,7 +1124,7 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 pr的时候需要说明做了什么变更,原因是什么.  
 
 ### 如何使用源码?   
-建议go1.8.5,不保证>=1.9能用.       
+建议go1.10.1.       
 `go get github.com/snail007/goproxy`   
 cd进入你的go src目录  
 cd进入`github.com/snail007/goproxy`即可.    
