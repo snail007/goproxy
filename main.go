@@ -9,7 +9,7 @@ import (
 	"github.com/snail007/goproxy/services"
 )
 
-const APP_VERSION = "4.9"
+const APP_VERSION = "5.0"
 
 func main() {
 	err := initConfig()
