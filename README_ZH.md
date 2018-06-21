@@ -38,26 +38,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v5.0手册,其他版本手册请点击下面链接查看. 
-- [v4.9手册](https://github.com/snail007/goproxy/tree/v4.9) 
-- [v4.8手册](https://github.com/snail007/goproxy/tree/v4.8) 
-- [v4.7手册](https://github.com/snail007/goproxy/tree/v4.7) 
-- [v4.6手册](https://github.com/snail007/goproxy/tree/v4.6) 
-- [v4.5手册](https://github.com/snail007/goproxy/tree/v4.5) 
-- [v4.4手册](https://github.com/snail007/goproxy/tree/v4.4) 
-- [v4.3手册](https://github.com/snail007/goproxy/tree/v4.3) 
-- [v4.2手册](https://github.com/snail007/goproxy/tree/v4.2) 
-- [v4.0-v4.1手册](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9手册](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8手册](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7手册](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5手册](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4手册](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3手册](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2手册](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1手册](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0手册](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x手册](https://github.com/snail007/goproxy/tree/v2.2)  
+本页是v5.1手册,其他版本手册请点击[这里](docs/old-release.md)查看. 
+ 
 
 ### 怎么找到组织?  
 [点击加入交流组织gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -167,7 +149,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.0/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.1/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -178,11 +160,12 @@ chmod +x install.sh
 ```  
 
 #### Docker安装 
-项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy v5.0,
-全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile,指定构建的goproxy版本.
+项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy v5.1,
+全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile
+或者使用参数GOPROXY_VERSION指定构建的goproxy版本.
 
 ```
-ARG GOPROXY_VERSION=v5.0
+ARG GOPROXY_VERSION=v5.1
 ```
 
 步骤:  
