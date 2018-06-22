@@ -119,7 +119,6 @@ func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Con
 	caBytes := certBytes
 	if caCertBytes != nil {
 		caBytes = caCertBytes
-
 	}
 	ok := serverCertPool.AppendCertsFromPEM(caBytes)
 	if !ok {
