@@ -2,6 +2,7 @@ proxy更新日志
 v5.1
 1.优化了kcp默认mtu配置,调整为450.
 2.优化了HTTP(S)\SOCKS5代理智能判断，更加精确。
+3.fix #97 , 修复了RemoveProxyHeaders方法忽略了第一行的bug。
 
 v5.0
 1.修复了SPS多端口无效的bug.

@@ -640,12 +640,18 @@ func RemoveProxyHeaders(head []byte) []byte {
 	var keys = map[string]bool{}
 	lines := bytes.Split(head, []byte("\r\n"))
 	IsBody := false
+	i := -1
 	for _, line := range lines {
+		i++
 		if len(line) == 0 || IsBody {
 			newLines = append(newLines, line)
 			IsBody = true
 		} else {
 			hline := bytes.SplitN(line, []byte(":"), 2)
+			if i == 0 && IsHTTP(head) {
+				newLines = append(newLines, line)
+				continue
+			}
 			if len(hline) != 2 {
 				continue
 			}
