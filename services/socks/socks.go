@@ -563,7 +563,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 					useProxy = false
 				} else {
 					k := s.Resolve(request.Addr())
-					s.checker.Add(k)
+					s.checker.Add(request.Addr(), k)
 					useProxy, _, _ = s.checker.IsBlocked(k)
 				}
 				if useProxy {

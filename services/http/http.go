@@ -278,7 +278,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 			useProxy = true
 		} else {
 			k := s.Resolve(address)
-			s.checker.Add(k)
+			s.checker.Add(address, k)
 			//var n, m uint
 			useProxy, _, _ = s.checker.IsBlocked(k)
 			//s.log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)

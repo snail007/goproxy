@@ -41,6 +41,7 @@ type CheckerItem struct {
 	Data         []byte
 	SuccessCount uint
 	FailCount    uint
+	Key          string
 }
 
 //NewChecker args:
@@ -173,13 +174,14 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(address string) {
-	if c.domainIsInMap(address, false) || c.domainIsInMap(address, true) {
+func (c *Checker) Add(key, address string) {
+	if c.domainIsInMap(key, false) || c.domainIsInMap(key, true) {
 		return
 	}
 	var item CheckerItem
 	item = CheckerItem{
 		Host: address,
+		Key:  key,
 	}
 	c.data.SetIfAbsent(item.Host, item)
 }
