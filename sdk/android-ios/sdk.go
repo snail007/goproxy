@@ -98,7 +98,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	httpArgs.SSHKeyFile = http.Flag("ssh-key", "private key file for ssh").Short('S').Default("").String()
 	httpArgs.SSHKeyFileSalt = http.Flag("ssh-keysalt", "salt of ssh private key").Short('s').Default("").String()
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
-	httpArgs.LocalIPS = http.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	httpArgs.LocalIPS = http.Flag("local-bind-ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	httpArgs.AuthURL = http.Flag("auth-url", "http basic auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	httpArgs.AuthURLTimeout = http.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	httpArgs.AuthURLOkCode = http.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
