@@ -37,7 +37,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v5.0 manual, and the other version of the manual can be checked by the following link.  
+This page is the v5.1 manual, and the other version of the manual can be checked by the following link.  
+- [v5.1 manual](https://github.com/snail007/goproxy/tree/v5.1)
 - [v4.9 manual](https://github.com/snail007/goproxy/tree/v4.9)
 - [v4.8 manual](https://github.com/snail007/goproxy/tree/v4.8)
 - [v4.7 manual](https://github.com/snail007/goproxy/tree/v4.7)
@@ -204,9 +205,18 @@ for example, --log proxy.log, The log will be exported to proxy.log file which i
 
 ### **Generating a communication certificate file**  
 HTTP, TCP, UDP proxy process will communicate with parent proxy. In order to secure, we use encrypted communication. Of course, we can choose not to encrypted communication. All communication with parent proxy in this tutorial is encrypted, requiring certificate files.    
-The OpenSSL command is installed on the Linux and encrypted certificate can be generated directly through the following command.    
-`./proxy keygen`  
-By default, the certificate file proxy.crt and the key file proxy.key are generated under the current program directory.  
+
+1.Generate signed certificates and key files through the following commands.  
+`./proxy keygen -C proxy`  
+The certificate file proxy.crt and key file proxy.key will be generated under the current directory.   
+
+2.Through the following commands, use the signed certificate proxy.crt and key file proxy.key to issue new certificates: goproxy.crt and goproxy.key.   
+`./proxy keygen -s -C proxy -c goproxy`  
+The certificate file goproxy.crt and key file goproxy.key will be generated under the current program directory.   
+
+3.By default, the domain name in the certificate is a random domain and can be specified using the `-n test.com` parameter.  
+
+4.More usage:`proxy keygen --help`。 
   
 ### **Daemon mode**
 After the default execution of proxy, if you want to keep proxy running, you can't close the command line. 
