@@ -5,7 +5,7 @@ rm -rf .cert
 mkdir .cert
 go build -o proxy 
 cd .cert
-../proxy keygen
+../proxy keygen -C proxy
 cd ..
 rm -rf ${RELEASE}
 mkdir ${RELEASE}

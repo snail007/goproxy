@@ -1,4 +1,4 @@
-package services
+package socks
 
 import (
 	"crypto/tls"

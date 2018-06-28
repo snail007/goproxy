@@ -217,10 +217,18 @@ http
 
 ### **生成加密通讯需要的证书文件**  
 http,tcp,udp代理过程会和上级通讯,为了安全我们采用加密通讯,当然可以选择不加密通信通讯,本教程所有和上级通讯都采用加密,需要证书文件.  
-在linux上并安装了openssl命令，可以直接通过下面的命令生成证书和key文件.  
-`./proxy keygen`  
-默认会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
-更多用法:`proxy keygen usage`。    
+
+1.通过下面的命令生成自签名的证书和key文件.  
+`./proxy keygen -C proxy`  
+会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。   
+
+2.通过下面的命令生,使用自签名证书proxy.crt和key文件proxy.key签发新证书:goproxy.crt和goproxy.key.   
+`./proxy keygen -s -C proxy -c goproxy`  
+会在当前程序目录下面生成证书文件goproxy.crt和key文件goproxy.key。   
+
+3.默认情况下证书的里面的域名是随机的,可以使用`-n test.com`参数指定.  
+
+4.更多用法:`proxy keygen --help`。    
 
 ### **后台运行**
 默认执行proxy之后,如果要保持proxy运行,不能关闭命令行.  

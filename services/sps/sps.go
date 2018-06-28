@@ -1,4 +1,4 @@
-package services
+package sps
 
 import (
 	"bytes"

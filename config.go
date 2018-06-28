@@ -15,9 +15,9 @@ import (
 	sdk "github.com/snail007/goproxy/sdk/android-ios"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
 
 	httpx "github.com/snail007/goproxy/services/http"
+	keygenx "github.com/snail007/goproxy/services/keygen"
 	mux "github.com/snail007/goproxy/services/mux"
 	socksx "github.com/snail007/goproxy/services/socks"
 	spsx "github.com/snail007/goproxy/services/sps"
@@ -39,14 +39,6 @@ var (
 )
 
 func initConfig() (err error) {
-	//keygen
-	if len(os.Args) > 1 {
-		if os.Args[1] == "keygen" {
-			utils.Keygen()
-			os.Exit(0)
-		}
-	}
-
 	//define  args
 	tcpArgs := tcpx.TCPArgs{}
 	httpArgs := httpx.HTTPArgs{}
@@ -60,6 +52,7 @@ func initConfig() (err error) {
 	socksArgs := socksx.SocksArgs{}
 	spsArgs := spsx.SPSArgs{}
 	dnsArgs := sdk.DNSArgs{}
+	keygenArgs := keygenx.KeygenArgs{}
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 
 	//build srvice args
@@ -109,7 +102,7 @@ func initConfig() (err error) {
 	httpArgs.SSHKeyFile = http.Flag("ssh-key", "private key file for ssh").Short('S').Default("").String()
 	httpArgs.SSHKeyFileSalt = http.Flag("ssh-keysalt", "salt of ssh private key").Short('s').Default("").String()
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
-	httpArgs.LocalIPS = http.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	httpArgs.LocalIPS = http.Flag("local-bind-ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	httpArgs.AuthURL = http.Flag("auth-url", "http basic auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	httpArgs.AuthURLTimeout = http.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	httpArgs.AuthURLOkCode = http.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
@@ -221,7 +214,7 @@ func initConfig() (err error) {
 	socksArgs.Direct = socks.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	socksArgs.AuthFile = socks.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
 	socksArgs.Auth = socks.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
-	socksArgs.LocalIPS = socks.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	socksArgs.LocalIPS = socks.Flag("local-bind-ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	socksArgs.AuthURL = socks.Flag("auth-url", "auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	socksArgs.AuthURLTimeout = socks.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	socksArgs.AuthURLOkCode = socks.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
@@ -278,6 +271,14 @@ func initConfig() (err error) {
 	dnsArgs.ParentCompress = dns.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
 	dnsArgs.CacheFile = dns.Flag("cache-file", "dns result cached file").Short('f').Default(filepath.Join(path.Dir(os.Args[0]), "cache.dat")).String()
 	dnsArgs.LocalSocks5Port = dns.Flag("socks-port", "local socks5 port").Short('s').Default("65501").String()
+
+	//########tunnel-bridge#########
+	keygen := app.Command("keygen", "create certificate for proxy")
+	keygenArgs.CommonName = keygen.Flag("cn", "common name").Short('n').Default("").String()
+	keygenArgs.CaName = keygen.Flag("ca", "ca name").Short('C').Default("").String()
+	keygenArgs.CertName = keygen.Flag("cert", "cert name of sign to create").Short('c').Default("").String()
+	keygenArgs.SignDays = keygen.Flag("days", "days of sign").Short('d').Default("365").Int()
+	keygenArgs.Sign = keygen.Flag("sign", "cert is to signin").Short('s').Default("false").Bool()
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -464,6 +465,8 @@ func initConfig() (err error) {
 		services.Regist(serviceName, spsx.NewSPS(), spsArgs, log)
 	case "dns":
 		services.Regist(serviceName, sdk.NewDNS(), dnsArgs, log)
+	case "keygen":
+		services.Regist(serviceName, keygenx.NewKeygen(), keygenArgs, log)
 	}
 
 	service, err = services.Run(serviceName, nil)
