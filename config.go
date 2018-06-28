@@ -272,7 +272,7 @@ func initConfig() (err error) {
 	dnsArgs.CacheFile = dns.Flag("cache-file", "dns result cached file").Short('f').Default(filepath.Join(path.Dir(os.Args[0]), "cache.dat")).String()
 	dnsArgs.LocalSocks5Port = dns.Flag("socks-port", "local socks5 port").Short('s').Default("65501").String()
 
-	//########tunnel-bridge#########
+	//########keygen#########
 	keygen := app.Command("keygen", "create certificate for proxy")
 	keygenArgs.CommonName = keygen.Flag("cn", "common name").Short('n').Default("").String()
 	keygenArgs.CaName = keygen.Flag("ca", "ca name").Short('C').Default("").String()

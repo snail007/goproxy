@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/cert"
-	"src/github.com/snail007/goproxy/utils"
 )
 
 type KeygenArgs struct {
