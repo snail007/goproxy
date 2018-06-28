@@ -19,7 +19,7 @@ fi
 
 if [ ! -e /etc/proxy/proxy.crt ]; then
     cd /etc/proxy/
-    proxy keygen >/dev/null 2>&1 
+    proxy keygen -C proxy >/dev/null 2>&1 
 fi
 rm -rf /tmp/proxy
 echo "install done"
