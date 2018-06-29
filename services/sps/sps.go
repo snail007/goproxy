@@ -17,6 +17,7 @@ import (
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
+	"github.com/snail007/goproxy/utils/sni"
 	"github.com/snail007/goproxy/utils/socks"
 )
 
@@ -218,7 +219,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	bInConn.ReadByte()
 	bInConn.UnreadByte()
 
-	n := 8
+	n := 2048
 	if n > bInConn.Buffered() {
 		n = bInConn.Buffered()
 	}
@@ -228,12 +229,12 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		(*inConn).Close()
 		return
 	}
-
+	isSNI, _ := sni.ServerNameFromBytes(h)
 	*inConn = bInConn
 	address := ""
 	var auth socks.Auth
 	var forwardBytes []byte
-	//fmt.Printf("%v", header)
+	//fmt.Printf("%v", h)
 	if utils.IsSocks5(h) {
 		if *s.cfg.DisableSocks5 {
 			(*inConn).Close()
@@ -251,7 +252,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		}
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
-	} else if utils.IsHTTP(h) {
+	} else if utils.IsHTTP(h) || isSNI != "" {
 		if *s.cfg.DisableHTTP {
 			(*inConn).Close()
 			return
