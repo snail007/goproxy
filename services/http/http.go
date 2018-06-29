@@ -523,6 +523,7 @@ func (s *HTTP) Resolve(address string) string {
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
 		s.log.Printf("dns error %s , ERR:%s", address, err)
+		return address
 	}
 	return ip
 }
