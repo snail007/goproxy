@@ -329,6 +329,7 @@ type HTTPRequest struct {
 	isBasicAuth bool
 	basicAuth   *BasicAuth
 	log         *logger.Logger
+	IsSNI       bool
 }
 
 func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
@@ -360,6 +361,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 		//sni success
 		req.Method = "SNI"
 		req.hostOrURL = "https://" + serverName + ":443"
+		req.IsSNI = true
 	} else {
 		//sni fail , try http
 		index := bytes.IndexByte(req.HeadBuf, '\n')

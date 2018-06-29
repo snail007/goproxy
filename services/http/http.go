@@ -344,7 +344,6 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			Password: *s.cfg.ParentKey,
 		})
 	}
-
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
@@ -353,8 +352,8 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	} else {
 		//https或者http,上级是代理,proxy需要转发
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		//直连目标或上级非代理,清理HTTP头部的代理头信息
-		if !useProxy || *s.cfg.ParentType == "ssh" {
+		//直连目标或上级非代理或非SNI,清理HTTP头部的代理头信息.
+		if (!useProxy || *s.cfg.ParentType == "ssh") && !req.IsSNI {
 			_, err = outConn.Write(utils.RemoveProxyHeaders(req.HeadBuf))
 		} else {
 			_, err = outConn.Write(req.HeadBuf)
