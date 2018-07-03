@@ -33,15 +33,11 @@ type Checker struct {
 	log        *logger.Logger
 }
 type CheckerItem struct {
-	IsHTTPS      bool
-	Method       string
-	URL          string
 	Domain       string
-	Host         string
-	Data         []byte
+	Address      string
 	SuccessCount uint
 	FailCount    uint
-	Key          string
+	Lasttime     int64
 }
 
 //NewChecker args:
@@ -101,7 +97,7 @@ func (c *Checker) start() {
 						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
-						conn, err = ConnectHost(item.Host, c.timeout)
+						conn, err = ConnectHost(item.Address, c.timeout)
 						if err == nil {
 							conn.SetDeadline(time.Now().Add(time.Millisecond))
 							conn.Close()
@@ -111,7 +107,8 @@ func (c *Checker) start() {
 						} else {
 							item.SuccessCount = item.SuccessCount + 1
 						}
-						c.data.Set(item.Host, item)
+						item.Lasttime = time.Now().Unix()
+						c.data.Set(item.Domain, item)
 					}
 				}(v.(CheckerItem))
 			}
@@ -126,23 +123,28 @@ func (c *Checker) isNeedCheck(item CheckerItem) bool {
 	var minCount uint = 5
 	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount) ||
 		(item.FailCount >= minCount && item.SuccessCount > item.FailCount) ||
-		c.domainIsInMap(item.Host, false) ||
-		c.domainIsInMap(item.Host, true) {
+		c.domainIsInMap(item.Domain, false) ||
+		c.domainIsInMap(item.Domain, true) ||
+		time.Now().Unix()-item.Lasttime > 1800 {
 		return false
 	}
 	return true
 }
-func (c *Checker) IsBlocked(address string) (blocked, isInMap bool, failN, successN uint) {
-	if c.domainIsInMap(address, true) {
+func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, successN uint) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
+	}
+	if c.domainIsInMap(domain, true) {
 		//log.Printf("%s in blocked ? true", address)
 		return true, true, 0, 0
 	}
-	if c.domainIsInMap(address, false) {
+	if c.domainIsInMap(domain, false) {
 		//log.Printf("%s in direct ? true", address)
 		return false, true, 0, 0
 	}
 
-	_item, ok := c.data.Get(address)
+	_item, ok := c.data.Get(domain)
 	if !ok {
 		//log.Printf("%s not in map, blocked true", address)
 		return true, false, 0, 0
@@ -174,16 +176,20 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(key, address string) {
-	if c.domainIsInMap(key, false) || c.domainIsInMap(key, true) {
+func (c *Checker) Add(domain, address string) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
+	}
+	if c.domainIsInMap(domain, false) || c.domainIsInMap(domain, true) {
 		return
 	}
 	var item CheckerItem
 	item = CheckerItem{
-		Host: address,
-		Key:  key,
+		Domain:  domain,
+		Address: address,
 	}
-	c.data.SetIfAbsent(item.Host, item)
+	c.data.SetIfAbsent(item.Domain, item)
 }
 
 type BasicAuth struct {
