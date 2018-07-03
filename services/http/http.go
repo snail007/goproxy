@@ -277,10 +277,11 @@ func (s *HTTP) callback(inConn net.Conn) {
 		} else if *s.cfg.Always {
 			useProxy = true
 		} else {
-			k := s.Resolve(address)
-			s.checker.Add(address, k)
-			//var n, m uint
-			useProxy, _, _ = s.checker.IsBlocked(k)
+			var isInMap bool
+			useProxy, isInMap, _, _ = s.checker.IsBlocked(address)
+			if !isInMap {
+				s.checker.Add(address, s.Resolve(address))
+			}
 			//s.log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 		}
 	}

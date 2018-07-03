@@ -132,24 +132,24 @@ func (c *Checker) isNeedCheck(item CheckerItem) bool {
 	}
 	return true
 }
-func (c *Checker) IsBlocked(address string) (blocked bool, failN, successN uint) {
+func (c *Checker) IsBlocked(address string) (blocked, isInMap bool, failN, successN uint) {
 	if c.domainIsInMap(address, true) {
 		//log.Printf("%s in blocked ? true", address)
-		return true, 0, 0
+		return true, true, 0, 0
 	}
 	if c.domainIsInMap(address, false) {
 		//log.Printf("%s in direct ? true", address)
-		return false, 0, 0
+		return false, true, 0, 0
 	}
 
 	_item, ok := c.data.Get(address)
 	if !ok {
 		//log.Printf("%s not in map, blocked true", address)
-		return true, 0, 0
+		return true, false, 0, 0
 	}
 	item := _item.(CheckerItem)
 
-	return item.FailCount >= item.SuccessCount, item.FailCount, item.SuccessCount
+	return item.FailCount >= item.SuccessCount, true, item.FailCount, item.SuccessCount
 }
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)

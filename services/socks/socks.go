@@ -562,9 +562,11 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 				if utils.IsIternalIP(host, *s.cfg.Always) {
 					useProxy = false
 				} else {
-					k := s.Resolve(request.Addr())
-					s.checker.Add(request.Addr(), k)
-					useProxy, _, _ = s.checker.IsBlocked(k)
+					var isInMap bool
+					useProxy, isInMap, _, _ = s.checker.IsBlocked(request.Addr())
+					if !isInMap {
+						s.checker.Add(request.Addr(), s.Resolve(request.Addr()))
+					}
 				}
 				if useProxy {
 					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
