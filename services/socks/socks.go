@@ -561,6 +561,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		isClosedErr      = func(err error) bool {
 			return err != nil && strings.Contains(err.Error(), "use of closed network connection")
 		}
+		destAddr *net.UDPAddr
 	)
 	var clean = func(msg, err string) {
 		raddr := ""
@@ -601,7 +602,18 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			time.Sleep(time.Second * 5)
 		}
 	}()
+	useProxy := true
 	if *s.cfg.Parent != "" {
+		dstHost, _, _ := net.SplitHostPort(request.Addr())
+		if utils.IsIternalIP(dstHost, *s.cfg.Always) {
+			useProxy = false
+		} else {
+			var isInMap bool
+			useProxy, isInMap, _, _ = s.checker.IsBlocked(request.Addr())
+			if !isInMap {
+				s.checker.Add(request.Addr(), s.Resolve(request.Addr()))
+			}
+		}
 		//parent proxy
 		outconn, err := s.getOutConn(nil, nil, "", false)
 		if err != nil {
@@ -624,83 +636,103 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		}()
 		//forward to parent udp
 		s.log.Printf("parent udp address %s", client.UDPAddr)
-
+		destAddr, _ = net.ResolveUDPAddr("udp", client.UDPAddr)
 	} else {
-		//local proxy
-		for {
-			buf := utils.LeakyBuffer.Get()
-			defer utils.LeakyBuffer.Put(buf)
-			n, srcAddr, err := udpListener.ReadFromUDP(buf)
+		useProxy = false
+	}
+	s.log.Printf("use proxy %v , udp %s", useProxy, request.Addr())
+	//relay
+	for {
+		buf := utils.LeakyBuffer.Get()
+		defer utils.LeakyBuffer.Put(buf)
+		n, srcAddr, err := udpListener.ReadFromUDP(buf)
+		if err != nil {
+			s.log.Printf("udp listener read fail, %s", err.Error())
+			if isClosedErr(err) {
+				return
+			}
+			continue
+		}
+		p := socks.NewPacketUDP()
+		err = p.Parse(buf[:n])
+		if err != nil {
+			s.log.Printf("udp listener parse packet fail, %s", err.Error())
+			continue
+		}
+
+		port, _ := strconv.Atoi(p.Port())
+
+		if v, ok := s.udpRelatedPacketConns.Get(srcAddr.String()); !ok {
+			if destAddr == nil {
+				destAddr = &net.UDPAddr{IP: net.ParseIP(p.Host()), Port: port}
+			}
+			outUDPConn, err = net.DialUDP("udp", localAddr, destAddr)
 			if err != nil {
-				s.log.Printf("udp listener read fail, %s", err.Error())
-				if isClosedErr(err) {
-					return
-				}
+				s.log.Printf("create out udp conn fail , %s , from : %s", err, srcAddr)
 				continue
 			}
-			p := socks.NewPacketUDP()
-			err = p.Parse(buf[:n])
-			if err != nil {
-				s.log.Printf("udp listener parse packet fail, %s", err.Error())
-				continue
-			}
+			s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
 
-			port, _ := strconv.Atoi(p.Port())
-			destAddr := &net.UDPAddr{IP: net.ParseIP(p.Host()), Port: port}
-			if v, ok := s.udpRelatedPacketConns.Get(srcAddr.String()); !ok {
-				outUDPConn, err = net.DialUDP("udp", localAddr, destAddr)
-				if err != nil {
-					s.log.Printf("create out udp conn fail , %s , from : %s", err, srcAddr)
-					continue
-				}
-				s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
-
-				go func() {
-					defer s.udpRelatedPacketConns.Remove(srcAddr.String())
-					//out->local io copy
-					buf := utils.LeakyBuffer.Get()
-					defer utils.LeakyBuffer.Put(buf)
-					for {
-						n, err := outUDPConn.Read(buf)
-						if err != nil {
-							s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
-							if isClosedErr(err) {
-								return
-							}
-							continue
+			go func() {
+				defer s.udpRelatedPacketConns.Remove(srcAddr.String())
+				//out->local io copy
+				buf := utils.LeakyBuffer.Get()
+				defer utils.LeakyBuffer.Put(buf)
+				for {
+					n, err := outUDPConn.Read(buf)
+					if err != nil {
+						s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
+						if isClosedErr(err) {
+							return
 						}
+						continue
+					}
+
+					var dlen = n
+					if useProxy {
+						//forward to local
+						_, err = udpListener.WriteTo(buf[:n], srcAddr)
+					} else {
 						rp := socks.NewPacketUDP()
 						rp.Build(srcAddr.String(), buf[:n])
 						d := rp.Bytes()
+						dlen = len(d)
 						_, err = udpListener.WriteTo(d, srcAddr)
-						if err != nil {
-							s.udpRelatedPacketConns.Remove(srcAddr.String())
-							s.log.Printf("write out data to local fail , %s , from : %s", err, srcAddr)
-							if isClosedErr(err) {
-								return
-							}
-							continue
-						} else {
-							s.log.Printf("send udp data to local success , len %d, for : %s", len(d), srcAddr)
-						}
 					}
-				}()
-			} else {
-				outUDPConn = v.(*net.UDPConn)
-			}
-			//local->out io copy
-			_, err = outUDPConn.Write(p.Data())
-			if err != nil {
-				if isClosedErr(err) {
-					return
+
+					if err != nil {
+						s.udpRelatedPacketConns.Remove(srcAddr.String())
+						s.log.Printf("write out data to local fail , %s , from : %s", err, srcAddr)
+						if isClosedErr(err) {
+							return
+						}
+						continue
+					} else {
+						s.log.Printf("send udp data to local success , len %d, for : %s", dlen, srcAddr)
+					}
 				}
-				s.log.Printf("send out udp data fail , %s , from : %s", err, srcAddr)
-				continue
-			} else {
-				s.log.Printf("send udp data to remote success , len %d, for : %s", len(p.Data()), srcAddr)
+			}()
+		} else {
+			outUDPConn = v.(*net.UDPConn)
+		}
+		//local->out io copy
+		if useProxy {
+			//forward to parent
+			_, err = outUDPConn.Write(buf[:n])
+		} else {
+			_, err = outUDPConn.Write(p.Data())
+		}
+		if err != nil {
+			if isClosedErr(err) {
+				return
 			}
+			s.log.Printf("send out udp data fail , %s , from : %s", err, srcAddr)
+			continue
+		} else {
+			s.log.Printf("send udp data to remote success , len %d, for : %s", len(p.Data()), srcAddr)
 		}
 	}
+
 }
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
 	var outConn net.Conn
