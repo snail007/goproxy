@@ -602,6 +602,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		}
 	}()
 	if *s.cfg.Parent != "" {
+		//parent proxy
 		outconn, err := s.getOutConn(nil, nil, "", false)
 		if err != nil {
 			clean("connnect fail", fmt.Sprintf("%s", err))
@@ -625,6 +626,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		s.log.Printf("parent udp address %s", client.UDPAddr)
 
 	} else {
+		//local proxy
 		for {
 			buf := utils.LeakyBuffer.Get()
 			defer utils.LeakyBuffer.Put(buf)
@@ -652,9 +654,10 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 					continue
 				}
 				s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
+
 				go func() {
 					defer s.udpRelatedPacketConns.Remove(srcAddr.String())
-					//bind
+					//out->local io copy
 					buf := utils.LeakyBuffer.Get()
 					defer utils.LeakyBuffer.Put(buf)
 					for {
@@ -685,6 +688,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			} else {
 				outUDPConn = v.(*net.UDPConn)
 			}
+			//local->out io copy
 			_, err = outUDPConn.Write(p.Data())
 			if err != nil {
 				if isClosedErr(err) {
