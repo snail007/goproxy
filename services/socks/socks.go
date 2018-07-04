@@ -3,10 +3,12 @@ package socks
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	logger "log"
 	"net"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,27 +61,29 @@ type SocksArgs struct {
 	ParentCompress *bool
 }
 type Socks struct {
-	cfg            SocksArgs
-	checker        utils.Checker
-	basicAuth      utils.BasicAuth
-	sshClient      *ssh.Client
-	lockChn        chan bool
-	udpSC          utils.ServerChannel
-	sc             *utils.ServerChannel
-	domainResolver utils.DomainResolver
-	isStop         bool
-	userConns      utils.ConcurrentMap
-	log            *logger.Logger
+	cfg                   SocksArgs
+	checker               utils.Checker
+	basicAuth             utils.BasicAuth
+	sshClient             *ssh.Client
+	lockChn               chan bool
+	udpSC                 utils.ServerChannel
+	sc                    *utils.ServerChannel
+	domainResolver        utils.DomainResolver
+	isStop                bool
+	userConns             utils.ConcurrentMap
+	log                   *logger.Logger
+	udpRelatedPacketConns utils.ConcurrentMap
 }
 
 func NewSocks() services.Service {
 	return &Socks{
-		cfg:       SocksArgs{},
-		checker:   utils.Checker{},
-		basicAuth: utils.BasicAuth{},
-		lockChn:   make(chan bool, 1),
-		isStop:    false,
-		userConns: utils.NewConcurrentMap(),
+		cfg:                   SocksArgs{},
+		checker:               utils.Checker{},
+		basicAuth:             utils.BasicAuth{},
+		lockChn:               make(chan bool, 1),
+		isStop:                false,
+		userConns:             utils.NewConcurrentMap(),
+		udpRelatedPacketConns: utils.NewConcurrentMap(),
 	}
 }
 
@@ -219,6 +223,9 @@ func (s *Socks) StopService() {
 	}
 	for _, c := range s.userConns.Items() {
 		(*c.(*net.Conn)).Close()
+	}
+	for _, c := range s.udpRelatedPacketConns.Items() {
+		(*c.(*net.UDPConn)).Close()
 	}
 }
 func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
@@ -438,7 +445,9 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	if err != nil {
 		methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 		utils.CloseConn(&inConn)
-		s.log.Printf("new methods request fail,ERR: %s", err)
+		if err != io.EOF {
+			s.log.Printf("new methods request fail,ERR: %s", err)
+		}
 		return
 	}
 
@@ -531,10 +540,132 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		utils.CloseConn(inConn)
 		return
 	}
+	inconnRemoteAddr := (*inConn).RemoteAddr().String()
+	localAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
+	udpListener, err := net.ListenUDP("udp", localAddr)
+	if err != nil {
+		(*inConn).Close()
+		udpListener.Close()
+		s.log.Printf("udp bind fail , %s", err)
+		return
+	}
 	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
-	_, port, _ := net.SplitHostPort(s.udpSC.UDPListener.LocalAddr().String())
-	s.log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
+	_, port, _ := net.SplitHostPort(udpListener.LocalAddr().String())
+	s.log.Printf("proxy udp on %s , for %s", udpListener.LocalAddr(), inconnRemoteAddr)
 	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
+
+	s.userConns.Set(inconnRemoteAddr, inConn)
+	var outUDPConn *net.UDPConn
+	go func() {
+		buf := make([]byte, 1)
+		if _, err := (*inConn).Read(buf); err != nil {
+			laddr := ""
+			if outUDPConn != nil {
+				laddr = outUDPConn.LocalAddr().String()
+			}
+			s.log.Printf("udp related tcp conn disconnected , %s -> %s , %s", inconnRemoteAddr, laddr, err)
+			(*inConn).Close()
+			udpListener.Close()
+			s.userConns.Remove(inconnRemoteAddr)
+			if outUDPConn != nil {
+				outUDPConn.Close()
+			}
+		}
+	}()
+	if *s.cfg.Parent != "" {
+		outconn, err := s.getOutConn(nil, nil, "", false)
+		if err != nil {
+			(*inConn).Close()
+			udpListener.Close()
+			s.log.Printf("connect fail , %s", err)
+			return
+		}
+		client := socks.NewClientConn(&outconn, "udp", "", time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
+		if err = client.Handshake(); err != nil {
+			(*inConn).Close()
+			udpListener.Close()
+			s.log.Printf("handshake fail , %s", err)
+		}
+		outconnRemoteAddr := outconn.RemoteAddr().String()
+		outconnLocalAddr := outconn.LocalAddr().String()
+		s.userConns.Set(outconnLocalAddr, &outconn)
+		s.log.Printf("parent udp address %s", client.UDPAddr)
+		go func() {
+			buf := make([]byte, 1)
+			if _, err := outconn.Read(buf); err != nil {
+				s.log.Printf("udp parent net conn offline , %s", outconnRemoteAddr)
+				(*inConn).Close()
+				udpListener.Close()
+				s.userConns.Remove(outconnLocalAddr)
+			}
+		}()
+	} else {
+		for {
+			buf := utils.LeakyBuffer.Get()
+			defer utils.LeakyBuffer.Put(buf)
+			n, srcAddr, err := udpListener.ReadFromUDP(buf)
+			if err != nil {
+				(*inConn).Close()
+				udpListener.Close()
+				s.userConns.Remove(inconnRemoteAddr)
+				s.log.Printf("udp listener read fail , %s", err)
+				return
+			}
+			p := socks.NewPacketUDP()
+			err = p.Parse(buf[:n])
+			if err != nil {
+				(*inConn).Close()
+				udpListener.Close()
+				s.userConns.Remove(inconnRemoteAddr)
+				s.log.Printf("udp listener parse packet fail , %s , from : %s", err, srcAddr)
+				return
+			}
+
+			port, _ := strconv.Atoi(p.Port())
+			destAddr := &net.UDPAddr{IP: net.ParseIP(p.Host()), Port: port}
+			if v, ok := s.udpRelatedPacketConns.Get(srcAddr.String()); !ok {
+				outUDPConn, err = net.DialUDP("udp", localAddr, destAddr)
+				if err != nil {
+					s.log.Printf("create out udp conn fail , %s , from : %s", err, srcAddr)
+					continue
+				}
+				s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
+				go func() {
+					//bind
+					for {
+						buf := utils.LeakyBuffer.Get()
+						defer utils.LeakyBuffer.Put(buf)
+						n, err := outUDPConn.Read(buf)
+						if err != nil {
+							s.udpRelatedPacketConns.Remove(srcAddr.String())
+							s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
+							if strings.Contains(err.Error(), "use of closed network connection") {
+								break
+							}
+							continue
+						}
+						rp := socks.NewPacketUDP()
+						rp.Build(srcAddr.String(), buf[:n])
+						_, err = udpListener.WriteTo(rp.Bytes(), srcAddr)
+						if err != nil {
+							s.udpRelatedPacketConns.Remove(srcAddr.String())
+							s.log.Printf("write out data to local fail , %s , from : %s", err, srcAddr)
+							if strings.Contains(err.Error(), "use of closed network connection") {
+								break
+							}
+						}
+					}
+				}()
+			} else {
+				outUDPConn = v.(*net.UDPConn)
+			}
+			_, err = outUDPConn.Write(p.Data())
+			if err != nil {
+				s.log.Printf("send out udp data fail , %s , from : %s", err, srcAddr)
+				continue
+			}
+		}
+	}
 }
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
 	var outConn net.Conn
@@ -554,7 +685,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			return
 		}
 		if *s.cfg.Always {
-			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr(), true)
 		} else {
 			if *s.cfg.Parent != "" {
 				host, _, _ := net.SplitHostPort(request.Addr())
@@ -569,7 +700,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 					}
 				}
 				if useProxy {
-					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr(), true)
 				} else {
 					outConn, err = utils.ConnectHost(s.Resolve(request.Addr()), *s.cfg.Timeout)
 				}
@@ -609,7 +740,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	s.userConns.Set(inAddr, inConn)
 }
-func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
+func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string, handshake bool) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
 	case "kcp":
 		fallthrough
@@ -636,6 +767,9 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			outConn = conncrypt.New(outConn, &conncrypt.Config{
 				Password: *s.cfg.ParentKey,
 			})
+		}
+		if !handshake {
+			return
 		}
 		var buf = make([]byte, 1024)
 		//var n int
