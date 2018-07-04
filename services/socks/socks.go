@@ -563,13 +563,32 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			if outUDPConn != nil {
 				raddr = outUDPConn.RemoteAddr().String()
 			}
-			s.log.Printf("udp related tcp conn disconnected , %s -> %s", inconnRemoteAddr, raddr)
+			s.log.Printf("udp related tcp conn disconnected with read , %s -> %s", inconnRemoteAddr, raddr)
 			(*inConn).Close()
 			udpListener.Close()
 			s.userConns.Remove(inconnRemoteAddr)
 			if outUDPConn != nil {
 				outUDPConn.Close()
 			}
+		}
+	}()
+	go func() {
+		for {
+			if _, err := (*inConn).Write([]byte{0x00}); err != nil {
+				raddr := ""
+				if outUDPConn != nil {
+					raddr = outUDPConn.RemoteAddr().String()
+				}
+				s.log.Printf("udp related tcp conn disconnected with write , %s -> %s", inconnRemoteAddr, raddr)
+				(*inConn).Close()
+				udpListener.Close()
+				s.userConns.Remove(inconnRemoteAddr)
+				if outUDPConn != nil {
+					outUDPConn.Close()
+				}
+				return
+			}
+			time.Sleep(time.Second * 5)
 		}
 	}()
 	if *s.cfg.Parent != "" {
