@@ -97,17 +97,22 @@ func (c *Checker) start() {
 						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
+						var now = time.Now().Unix()
 						conn, err = ConnectHost(item.Address, c.timeout)
 						if err == nil {
 							conn.SetDeadline(time.Now().Add(time.Millisecond))
 							conn.Close()
+						}
+						if now-item.Lasttime > 1800 {
+							item.FailCount = 0
+							item.SuccessCount = 0
 						}
 						if err != nil {
 							item.FailCount = item.FailCount + 1
 						} else {
 							item.SuccessCount = item.SuccessCount + 1
 						}
-						item.Lasttime = time.Now().Unix()
+						item.Lasttime = now
 						c.data.Set(item.Domain, item)
 					}
 				}(v.(CheckerItem))
@@ -121,11 +126,11 @@ func (c *Checker) start() {
 }
 func (c *Checker) isNeedCheck(item CheckerItem) bool {
 	var minCount uint = 5
-	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount) ||
-		(item.FailCount >= minCount && item.SuccessCount > item.FailCount) ||
+	var now = time.Now().Unix()
+	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
+		(item.FailCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
 		c.domainIsInMap(item.Domain, false) ||
-		c.domainIsInMap(item.Domain, true) ||
-		time.Now().Unix()-item.Lasttime > 1800 {
+		c.domainIsInMap(item.Domain, true) {
 		return false
 	}
 	return true
