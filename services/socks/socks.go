@@ -553,39 +553,49 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	_, port, _ := net.SplitHostPort(udpListener.LocalAddr().String())
 	s.log.Printf("proxy udp on %s , for %s", udpListener.LocalAddr(), inconnRemoteAddr)
 	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
-
 	s.userConns.Set(inconnRemoteAddr, inConn)
-	var outUDPConn *net.UDPConn
+	var (
+		outUDPConn       *net.UDPConn
+		outconn          net.Conn
+		outconnLocalAddr string
+		isClosedErr      = func(err error) bool {
+			return err != nil && strings.Contains(err.Error(), "use of closed network connection")
+		}
+	)
+	var clean = func(msg, err string) {
+		raddr := ""
+		if outUDPConn != nil {
+			raddr = outUDPConn.RemoteAddr().String()
+			outUDPConn.Close()
+		}
+		if msg != "" {
+			if raddr != "" {
+				s.log.Printf("%s , %s , %s -> %s", msg, err, inconnRemoteAddr, raddr)
+			} else {
+				s.log.Printf("%s , %s , from : %s", msg, err, inconnRemoteAddr)
+			}
+		}
+		(*inConn).Close()
+		udpListener.Close()
+		s.userConns.Remove(inconnRemoteAddr)
+		if outconn != nil {
+			outconn.Close()
+		}
+		if outconnLocalAddr != "" {
+			s.userConns.Remove(outconnLocalAddr)
+		}
+	}
+	defer clean("", "")
 	go func() {
 		buf := make([]byte, 1)
 		if _, err := (*inConn).Read(buf); err != nil {
-			raddr := ""
-			if outUDPConn != nil {
-				raddr = outUDPConn.RemoteAddr().String()
-			}
-			s.log.Printf("udp related tcp conn disconnected with read , %s -> %s", inconnRemoteAddr, raddr)
-			(*inConn).Close()
-			udpListener.Close()
-			s.userConns.Remove(inconnRemoteAddr)
-			if outUDPConn != nil {
-				outUDPConn.Close()
-			}
+			clean("udp related tcp conn disconnected with read", err.Error())
 		}
 	}()
 	go func() {
 		for {
 			if _, err := (*inConn).Write([]byte{0x00}); err != nil {
-				raddr := ""
-				if outUDPConn != nil {
-					raddr = outUDPConn.RemoteAddr().String()
-				}
-				s.log.Printf("udp related tcp conn disconnected with write , %s -> %s", inconnRemoteAddr, raddr)
-				(*inConn).Close()
-				udpListener.Close()
-				s.userConns.Remove(inconnRemoteAddr)
-				if outUDPConn != nil {
-					outUDPConn.Close()
-				}
+				clean("udp related tcp conn disconnected with write", err.Error())
 				return
 			}
 			time.Sleep(time.Second * 5)
@@ -594,50 +604,43 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	if *s.cfg.Parent != "" {
 		outconn, err := s.getOutConn(nil, nil, "", false)
 		if err != nil {
-			(*inConn).Close()
-			udpListener.Close()
-			s.log.Printf("connect fail , %s", err)
+			clean("connnect fail", fmt.Sprintf("%s", err))
 			return
 		}
 		client := socks.NewClientConn(&outconn, "udp", "", time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
 		if err = client.Handshake(); err != nil {
-			(*inConn).Close()
-			udpListener.Close()
-			s.log.Printf("handshake fail , %s", err)
+			clean("handshake fail", fmt.Sprintf("%s", err))
+			return
 		}
-		outconnRemoteAddr := outconn.RemoteAddr().String()
-		outconnLocalAddr := outconn.LocalAddr().String()
+		//outconnRemoteAddr := outconn.RemoteAddr().String()
+		outconnLocalAddr = outconn.LocalAddr().String()
 		s.userConns.Set(outconnLocalAddr, &outconn)
-		s.log.Printf("parent udp address %s", client.UDPAddr)
 		go func() {
 			buf := make([]byte, 1)
 			if _, err := outconn.Read(buf); err != nil {
-				s.log.Printf("udp parent net conn offline , %s", outconnRemoteAddr)
-				(*inConn).Close()
-				udpListener.Close()
-				s.userConns.Remove(outconnLocalAddr)
+				clean("udp parent tcp conn disconnected", fmt.Sprintf("%s", err))
 			}
 		}()
+		//forward to parent udp
+		s.log.Printf("parent udp address %s", client.UDPAddr)
+
 	} else {
 		for {
 			buf := utils.LeakyBuffer.Get()
 			defer utils.LeakyBuffer.Put(buf)
 			n, srcAddr, err := udpListener.ReadFromUDP(buf)
 			if err != nil {
-				(*inConn).Close()
-				udpListener.Close()
-				s.userConns.Remove(inconnRemoteAddr)
-				s.log.Printf("udp listener read fail , %s", err)
-				return
+				s.log.Printf("udp listener read fail, %s", err.Error())
+				if isClosedErr(err) {
+					return
+				}
+				continue
 			}
 			p := socks.NewPacketUDP()
 			err = p.Parse(buf[:n])
 			if err != nil {
-				(*inConn).Close()
-				udpListener.Close()
-				s.userConns.Remove(inconnRemoteAddr)
-				s.log.Printf("udp listener parse packet fail , %s , from : %s", err, srcAddr)
-				return
+				s.log.Printf("udp listener parse packet fail, %s", err.Error())
+				continue
 			}
 
 			port, _ := strconv.Atoi(p.Port())
@@ -650,16 +653,16 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 				}
 				s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
 				go func() {
+					defer s.udpRelatedPacketConns.Remove(srcAddr.String())
 					//bind
+					buf := utils.LeakyBuffer.Get()
+					defer utils.LeakyBuffer.Put(buf)
 					for {
-						buf := utils.LeakyBuffer.Get()
-						defer utils.LeakyBuffer.Put(buf)
 						n, err := outUDPConn.Read(buf)
 						if err != nil {
-							s.udpRelatedPacketConns.Remove(srcAddr.String())
 							s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
-							if strings.Contains(err.Error(), "use of closed network connection") {
-								break
+							if isClosedErr(err) {
+								return
 							}
 							continue
 						}
@@ -670,9 +673,10 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 						if err != nil {
 							s.udpRelatedPacketConns.Remove(srcAddr.String())
 							s.log.Printf("write out data to local fail , %s , from : %s", err, srcAddr)
-							if strings.Contains(err.Error(), "use of closed network connection") {
-								break
+							if isClosedErr(err) {
+								return
 							}
+							continue
 						} else {
 							s.log.Printf("send udp data to local success , len %d, for : %s", len(d), srcAddr)
 						}
@@ -683,6 +687,9 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			}
 			_, err = outUDPConn.Write(p.Data())
 			if err != nil {
+				if isClosedErr(err) {
+					return
+				}
 				s.log.Printf("send out udp data fail , %s , from : %s", err, srcAddr)
 				continue
 			} else {
