@@ -17,7 +17,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 
 	"github.com/snail007/goproxy/services/kcpcfg"
 
@@ -208,98 +207,6 @@ func CloseConn(conn *net.Conn) {
 		(*conn).SetDeadline(time.Now().Add(time.Millisecond))
 		(*conn).Close()
 	}
-}
-func Keygen() (err error) {
-	CList := []string{"AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AT", "AU", "AZ", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BR", "BS", "BW", "BY", "BZ", "CA", "CF", "CG", "CH", "CK", "CL", "CM", "CN", "CO", "CR", "CS", "CU", "CY", "CZ", "DE", "DJ", "DK", "DO", "DZ", "EC", "EE", "EG", "ES", "ET", "FI", "FJ", "FR", "GA", "GB", "GD", "GE", "GF", "GH", "GI", "GM", "GN", "GR", "GT", "GU", "GY", "HK", "HN", "HT", "HU", "ID", "IE", "IL", "IN", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KP", "KR", "KT", "KW", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "MG", "ML", "MM", "MN", "MO", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL", "NO", "NP", "NR", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PR", "PT", "PY", "QA", "RO", "RU", "SA", "SB", "SC", "SD", "SE", "SG", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "ST", "SV", "SY", "SZ", "TD", "TG", "TH", "TJ", "TM", "TN", "TO", "TR", "TT", "TW", "TZ", "UA", "UG", "US", "UY", "UZ", "VC", "VE", "VN", "YE", "YU", "ZA", "ZM", "ZR", "ZW"}
-	domainSubfixList := []string{".com", ".edu", ".gov", ".int", ".mil", ".net", ".org", ".biz", ".info", ".pro", ".name", ".museum", ".coop", ".aero", ".xxx", ".idv", ".ac", ".ad", ".ae", ".af", ".ag", ".ai", ".al", ".am", ".an", ".ao", ".aq", ".ar", ".as", ".at", ".au", ".aw", ".az", ".ba", ".bb", ".bd", ".be", ".bf", ".bg", ".bh", ".bi", ".bj", ".bm", ".bn", ".bo", ".br", ".bs", ".bt", ".bv", ".bw", ".by", ".bz", ".ca", ".cc", ".cd", ".cf", ".cg", ".ch", ".ci", ".ck", ".cl", ".cm", ".cn", ".co", ".cr", ".cu", ".cv", ".cx", ".cy", ".cz", ".de", ".dj", ".dk", ".dm", ".do", ".dz", ".ec", ".ee", ".eg", ".eh", ".er", ".es", ".et", ".eu", ".fi", ".fj", ".fk", ".fm", ".fo", ".fr", ".ga", ".gd", ".ge", ".gf", ".gg", ".gh", ".gi", ".gl", ".gm", ".gn", ".gp", ".gq", ".gr", ".gs", ".gt", ".gu", ".gw", ".gy", ".hk", ".hm", ".hn", ".hr", ".ht", ".hu", ".id", ".ie", ".il", ".im", ".in", ".io", ".iq", ".ir", ".is", ".it", ".je", ".jm", ".jo", ".jp", ".ke", ".kg", ".kh", ".ki", ".km", ".kn", ".kp", ".kr", ".kw", ".ky", ".kz", ".la", ".lb", ".lc", ".li", ".lk", ".lr", ".ls", ".lt", ".lu", ".lv", ".ly", ".ma", ".mc", ".md", ".mg", ".mh", ".mk", ".ml", ".mm", ".mn", ".mo", ".mp", ".mq", ".mr", ".ms", ".mt", ".mu", ".mv", ".mw", ".mx", ".my", ".mz", ".na", ".nc", ".ne", ".nf", ".ng", ".ni", ".nl", ".no", ".np", ".nr", ".nu", ".nz", ".om", ".pa", ".pe", ".pf", ".pg", ".ph", ".pk", ".pl", ".pm", ".pn", ".pr", ".ps", ".pt", ".pw", ".py", ".qa", ".re", ".ro", ".ru", ".rw", ".sa", ".sb", ".sc", ".sd", ".se", ".sg", ".sh", ".si", ".sj", ".sk", ".sl", ".sm", ".sn", ".so", ".sr", ".st", ".sv", ".sy", ".sz", ".tc", ".td", ".tf", ".tg", ".th", ".tj", ".tk", ".tl", ".tm", ".tn", ".to", ".tp", ".tr", ".tt", ".tv", ".tw", ".tz", ".ua", ".ug", ".uk", ".um", ".us", ".uy", ".uz", ".va", ".vc", ".ve", ".vg", ".vi", ".vn", ".vu", ".wf", ".ws", ".ye", ".yt", ".yu", ".yr", ".za", ".zm", ".zw"}
-	C := CList[int(RandInt(4))%len(CList)]
-	ST := RandString(int(RandInt(4) % 10))
-	O := RandString(int(RandInt(4) % 10))
-	CN := strings.ToLower(RandString(int(RandInt(4)%10)) + domainSubfixList[int(RandInt(4))%len(domainSubfixList)])
-	//log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
-	var out []byte
-	if len(os.Args) == 3 && os.Args[2] == "ca" {
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr := fmt.Sprintf("openssl req -new -key ca.key -x509 -days 36500 -out ca.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, "*."+CN)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-	} else if len(os.Args) == 5 && os.Args[2] == "ca" && os.Args[3] != "" && os.Args[4] != "" {
-		certBytes, _ := ioutil.ReadFile("ca.crt")
-		block, _ := pem.Decode(certBytes)
-		if block == nil || certBytes == nil {
-			panic("failed to parse ca certificate PEM")
-		}
-		x509Cert, _ := x509.ParseCertificate(block.Bytes)
-		if x509Cert == nil {
-			panic("failed to parse block")
-		}
-		name := os.Args[3]
-		days := os.Args[4]
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr := fmt.Sprintf("openssl req -new -key %s.key -out %s.csr -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, C, ST, O, CN)
-		fmt.Printf("%s", cmdStr)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr = fmt.Sprintf("openssl x509 -req -days %s -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", days, name, name)
-		fmt.Printf("%s", cmdStr)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-
-		fmt.Println(string(out))
-	} else if len(os.Args) == 3 && os.Args[2] == "usage" {
-		fmt.Println(`proxy keygen //generate proxy.crt and proxy.key
-proxy keygen ca //generate ca.crt and ca.key
-proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sign it with 30 days
-	`)
-	} else if len(os.Args) == 2 {
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr := fmt.Sprintf("openssl req -new -key proxy.key -x509 -days 36500 -out proxy.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, CN)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logger.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-	}
-
-	return
 }
 func GetAllInterfaceAddr() ([]net.IP, error) {
 
