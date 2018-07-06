@@ -579,7 +579,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 						// _, err = udpListener.WriteTo(buf[:n], srcAddr)
 					} else {
 						rp := socks.NewPacketUDP()
-						rp.Build(srcAddr.String(), buf[:n])
+						rp.Build(destAddr.String(), buf[:n])
 						v := rp.Bytes()
 						//dlen = len(v)
 						//rp.Bytes() v is raw, try convert to local
