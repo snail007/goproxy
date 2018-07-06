@@ -689,7 +689,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help client`  
   
 ### **5.SOCKS5代理**  
-提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+提示:
+
+SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+
+***如果你的VPS是阿里云，腾讯云这种VPS，就是ifconfig看不见你的公网IP，只能看见内网IP，***
+
+***那么需要加上`-g VPS公网IP`参数，SOCKS5代理的UDP功能才能正常工作。***
+
 #### **5.1.普通SOCKS5代理**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   

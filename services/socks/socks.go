@@ -405,7 +405,10 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
 	_, port, _ := net.SplitHostPort(udpListener.LocalAddr().String())
-	s.log.Printf("proxy udp on %s , for %s", udpListener.LocalAddr(), inconnRemoteAddr)
+	if len(*s.cfg.LocalIPS) > 0 {
+		host = (*s.cfg.LocalIPS)[0]
+	}
+	s.log.Printf("proxy udp on %s , for %s", net.JoinHostPort(host, port), inconnRemoteAddr)
 	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
 	s.userConns.Set(inconnRemoteAddr, inConn)
 	var (
