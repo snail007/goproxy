@@ -2,10 +2,11 @@ package socks
 
 import (
 	"fmt"
-	"github.com/snail007/goproxy/utils"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/snail007/goproxy/utils"
 )
 
 const (
@@ -54,26 +55,27 @@ type ServerConn struct {
 	methods      []uint8
 	method       uint8
 	//request
-	cmd         uint8
-	reserve     uint8
-	addressType uint8
-	dstAddr     string
-	dstPort     string
-	dstHost     string
-	udpAddress  string
+	cmd             uint8
+	reserve         uint8
+	addressType     uint8
+	dstAddr         string
+	dstPort         string
+	dstHost         string
+	UDPConnListener *net.UDPConn
+	enableUDP       bool
+	udpIP           string
 }
 
-func NewServerConn(conn *net.Conn, timeout time.Duration, auth *utils.BasicAuth, udpAddress string, header []byte) *ServerConn {
-	if udpAddress == "" {
-		udpAddress = "0.0.0.0:16666"
-	}
+func NewServerConn(conn *net.Conn, timeout time.Duration, auth *utils.BasicAuth, enableUDP bool, udpHost string, header []byte) *ServerConn {
+
 	s := &ServerConn{
-		conn:       conn,
-		timeout:    timeout,
-		auth:       auth,
-		header:     header,
-		ver:        VERSION_V5,
-		udpAddress: udpAddress,
+		conn:      conn,
+		timeout:   timeout,
+		auth:      auth,
+		header:    header,
+		ver:       VERSION_V5,
+		enableUDP: enableUDP,
+		udpIP:     udpHost,
 	}
 	return s
 
@@ -83,6 +85,12 @@ func (s *ServerConn) Close() {
 }
 func (s *ServerConn) AuthData() Auth {
 	return Auth{s.user, s.password}
+}
+func (s *ServerConn) IsUDP() bool {
+	return s.cmd == CMD_ASSOCIATE
+}
+func (s *ServerConn) IsTCP() bool {
+	return s.cmd == CMD_CONNECT
 }
 func (s *ServerConn) Method() uint8 {
 	return s.method
@@ -205,11 +213,29 @@ func (s *ServerConn) Handshake() (err error) {
 			return
 		}
 	case CMD_ASSOCIATE:
-		err = request.UDPReply(REP_SUCCESS, s.udpAddress)
+		if !s.enableUDP {
+			request.UDPReply(REP_UNKNOWN, "0.0.0.0:0")
+			if err != nil {
+				err = fmt.Errorf("UDPReply REP_UNKNOWN to %s fail,ERR: %s", remoteAddr, err)
+				return
+			}
+			err = fmt.Errorf("cmd associate not supported, form: %s", remoteAddr)
+			return
+		}
+		a, _ := net.ResolveUDPAddr("udp", ":0")
+		s.UDPConnListener, err = net.ListenUDP("udp", a)
+		if err != nil {
+			request.UDPReply(REP_UNKNOWN, "0.0.0.0:0")
+			err = fmt.Errorf("udp bind fail,ERR: %s , for %s", err, remoteAddr)
+			return
+		}
+		_, port, _ := net.SplitHostPort(s.UDPConnListener.LocalAddr().String())
+		err = request.UDPReply(REP_SUCCESS, net.JoinHostPort(s.udpIP, port))
 		if err != nil {
 			err = fmt.Errorf("UDPReply REP_SUCCESS to %s fail,ERR: %s", remoteAddr, err)
 			return
 		}
+
 	}
 
 	//fill socks info

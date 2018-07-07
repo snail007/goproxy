@@ -53,22 +53,26 @@ type SPSArgs struct {
 	DisableSocks5     *bool
 }
 type SPS struct {
-	outPool        utils.OutConn
-	cfg            SPSArgs
-	domainResolver utils.DomainResolver
-	basicAuth      utils.BasicAuth
-	serverChannels []*utils.ServerChannel
-	userConns      utils.ConcurrentMap
-	log            *logger.Logger
+	outPool               utils.OutConn
+	cfg                   SPSArgs
+	domainResolver        utils.DomainResolver
+	basicAuth             utils.BasicAuth
+	serverChannels        []*utils.ServerChannel
+	userConns             utils.ConcurrentMap
+	log                   *logger.Logger
+	udpRelatedPacketConns utils.ConcurrentMap
+	udpLocalKey           []byte
+	udpParentKey          []byte
 }
 
 func NewSPS() services.Service {
 	return &SPS{
-		outPool:        utils.OutConn{},
-		cfg:            SPSArgs{},
-		basicAuth:      utils.BasicAuth{},
-		serverChannels: []*utils.ServerChannel{},
-		userConns:      utils.NewConcurrentMap(),
+		outPool:               utils.OutConn{},
+		cfg:                   SPSArgs{},
+		basicAuth:             utils.BasicAuth{},
+		serverChannels:        []*utils.ServerChannel{},
+		userConns:             utils.NewConcurrentMap(),
+		udpRelatedPacketConns: utils.NewConcurrentMap(),
 	}
 }
 func (s *SPS) CheckArgs() (err error) {
@@ -93,6 +97,8 @@ func (s *SPS) CheckArgs() (err error) {
 			}
 		}
 	}
+	s.udpLocalKey = s.LocalUDPKey()
+	s.udpParentKey = s.ParentUDPKey()
 	return
 }
 func (s *SPS) InitService() (err error) {
@@ -210,6 +216,11 @@ func (s *SPS) callback(inConn net.Conn) {
 	}
 }
 func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
+	enableUDP := *s.cfg.ParentServiceType == "socks"
+	udpIP, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
+	if len(*s.cfg.LocalIPS) > 0 {
+		udpIP = (*s.cfg.LocalIPS)[0]
+	}
 	bInConn := utils.NewBufferedConn(*inConn)
 	//important
 	//action read will regist read event to system,
@@ -243,15 +254,19 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		//socks5 server
 		var serverConn *socks.ServerConn
 		if s.IsBasicAuth() {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", nil)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, enableUDP, udpIP, nil)
 		} else {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", nil)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, enableUDP, udpIP, nil)
 		}
 		if err = serverConn.Handshake(); err != nil {
 			return
 		}
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
+		if serverConn.IsUDP() {
+			s.proxyUDP(inConn, serverConn)
+			return
+		}
 	} else if utils.IsHTTP(h) || isSNI != "" {
 		if *s.cfg.DisableHTTP {
 			(*inConn).Close()
