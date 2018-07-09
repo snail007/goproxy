@@ -277,10 +277,11 @@ func (s *HTTP) callback(inConn net.Conn) {
 		} else if *s.cfg.Always {
 			useProxy = true
 		} else {
-			k := s.Resolve(address)
-			s.checker.Add(address, k)
-			//var n, m uint
-			useProxy, _, _ = s.checker.IsBlocked(k)
+			var isInMap bool
+			useProxy, isInMap, _, _ = s.checker.IsBlocked(address)
+			if !isInMap {
+				s.checker.Add(address, s.Resolve(address))
+			}
 			//s.log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 		}
 	}
@@ -344,7 +345,6 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			Password: *s.cfg.ParentKey,
 		})
 	}
-
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
@@ -353,8 +353,8 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	} else {
 		//https或者http,上级是代理,proxy需要转发
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		//直连目标或上级非代理,清理HTTP头部的代理头信息
-		if !useProxy || *s.cfg.ParentType == "ssh" {
+		//直连目标或上级非代理或非SNI,清理HTTP头部的代理头信息.
+		if (!useProxy || *s.cfg.ParentType == "ssh") && !req.IsSNI {
 			_, err = outConn.Write(utils.RemoveProxyHeaders(req.HeadBuf))
 		} else {
 			_, err = outConn.Write(req.HeadBuf)
@@ -524,6 +524,7 @@ func (s *HTTP) Resolve(address string) string {
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
 		s.log.Printf("dns error %s , ERR:%s", address, err)
+		return address
 	}
 	return ip
 }

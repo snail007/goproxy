@@ -5,7 +5,7 @@ if [ -e /tmp/proxy ]; then
 fi
 mkdir /tmp/proxy
 cd /tmp/proxy
-wget https://github.com/snail007/goproxy/releases/download/v5.1/proxy-linux-amd64.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v5.2/proxy-linux-amd64.tar.gz
 
 # #install proxy
 tar zxvf proxy-linux-amd64.tar.gz

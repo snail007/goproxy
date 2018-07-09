@@ -6,7 +6,24 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-[中文手册](/README_ZH.md)  **[全平台GUI版本](/gui/README.md)**  **[全平台SDK](/sdk/README.md)**   
+**[中文手册](/README_ZH.md)**  
+
+**[全平台图形界面版本](/gui/README.md)**  
+
+**[全平台SDK](/sdk/README.md)**   
+
+
+### How to use the source code?  
+
+Pull Request is welcomed.  
+Recommend go1.10.1.   
+`go get github.com/snail007/goproxy`   
+use command cd to enter your go SRC directory   
+then cd to enter `github.com/snail007/goproxy`.    
+Direct compilation:`go build -o proxy`        
+execution: `go run *.go`       
+`utils` is a toolkit, and `service` is a specific service class.  
+
 
 ### Features  
 - chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
@@ -37,27 +54,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v5.1 manual, and the other version of the manual can be checked by the following link.  
-- [v5.1 manual](https://github.com/snail007/goproxy/tree/v5.1)
-- [v4.9 manual](https://github.com/snail007/goproxy/tree/v4.9)
-- [v4.8 manual](https://github.com/snail007/goproxy/tree/v4.8)
-- [v4.7 manual](https://github.com/snail007/goproxy/tree/v4.7)
-- [v4.6 manual](https://github.com/snail007/goproxy/tree/v4.6)
-- [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
-- [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
-- [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
-- [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
-- [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7 manual](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5 manual](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4 manual](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3 manual](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2 manual](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1 manual](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0 manual](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
+This page is the v5.2 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -1087,15 +1084,6 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 First, you need to clone the project to your account, and then modify the code on the dev branch.   
 Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
 PR needs to explain what changes have been made and why you change them.  
-
-### How to use the source code?    
-Recommend go1.10.1.   
-`go get github.com/snail007/goproxy`   
-use command cd to enter your go SRC directory   
-then cd to enter `github.com/snail007/goproxy`.    
-Direct compilation:`go build -o proxy`        
-execution: `go run *.go`       
-`utils` is a toolkit, and `service` is a specific service class.  
 
 ### License  
 Proxy is licensed under GPLv3 license.  

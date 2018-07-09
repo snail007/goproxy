@@ -7,7 +7,17 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-**[English Manual](/README.md)** **[全平台GUI版本](/gui/README.md)**  **[全平台SDK](/sdk/README.md)**
+**[English Manual](/README.md)**  
+
+**[全平台图形界面版本](/gui/README.md)**  
+
+**[全平台SDK](/sdk/README.md)**
+
+### 如何贡献代码(Pull Request)?  
+
+欢迎加入一起发展壮大proxy.首先需要clone本项目到自己的帐号下面,   
+然后在dev分支上面修改代码,最后发Pull Request到goproxy项目的dev分支即可,  
+为了高效贡献代码,pr的时候需要说明做了什么变更,原因是什么.  
 
 ### Features  
 - 链式代理,程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.  
@@ -38,7 +48,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v5.1手册,其他版本手册请点击[这里](docs/old-release.md)查看. 
+本页是v5.2手册,其他版本手册请点击[这里](docs/old-release.md)查看. 
  
 
 ### 怎么找到组织?  
@@ -689,7 +699,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help client`  
   
 ### **5.SOCKS5代理**  
-提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+提示:
+
+SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+
+***如果你的VPS是阿里云，腾讯云这种VPS，就是ifconfig看不见你的公网IP，只能看见内网IP，***
+
+***那么需要加上`-g VPS公网IP`参数，SOCKS5代理的UDP功能才能正常工作。***
+
 #### **5.1.普通SOCKS5代理**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
@@ -1109,11 +1126,6 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
-### 如何贡献代码(Pull Request)?  
-首先需要clone本项目到自己的帐号下面,然后在dev分支上面修改代码,  
-最后发Pull Request到goproxy项目的dev分支即可,为了高效贡献代码,  
-pr的时候需要说明做了什么变更,原因是什么.  
-
 ### 如何使用源码?   
 建议go1.10.1.       
 `go get github.com/snail007/goproxy`   
@@ -1133,5 +1145,3 @@ QQ交流群:189618940
 如果proxy帮助你解决了很多问题,你可以通过下面的捐赠更好的支持proxy.  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
-
-  

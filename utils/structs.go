@@ -33,15 +33,11 @@ type Checker struct {
 	log        *logger.Logger
 }
 type CheckerItem struct {
-	IsHTTPS      bool
-	Method       string
-	URL          string
 	Domain       string
-	Host         string
-	Data         []byte
+	Address      string
 	SuccessCount uint
 	FailCount    uint
-	Key          string
+	Lasttime     int64
 }
 
 //NewChecker args:
@@ -101,17 +97,23 @@ func (c *Checker) start() {
 						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
-						conn, err = ConnectHost(item.Host, c.timeout)
+						var now = time.Now().Unix()
+						conn, err = ConnectHost(item.Address, c.timeout)
 						if err == nil {
 							conn.SetDeadline(time.Now().Add(time.Millisecond))
 							conn.Close()
+						}
+						if now-item.Lasttime > 1800 {
+							item.FailCount = 0
+							item.SuccessCount = 0
 						}
 						if err != nil {
 							item.FailCount = item.FailCount + 1
 						} else {
 							item.SuccessCount = item.SuccessCount + 1
 						}
-						c.data.Set(item.Host, item)
+						item.Lasttime = now
+						c.data.Set(item.Domain, item)
 					}
 				}(v.(CheckerItem))
 			}
@@ -124,32 +126,37 @@ func (c *Checker) start() {
 }
 func (c *Checker) isNeedCheck(item CheckerItem) bool {
 	var minCount uint = 5
-	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount) ||
-		(item.FailCount >= minCount && item.SuccessCount > item.FailCount) ||
-		c.domainIsInMap(item.Host, false) ||
-		c.domainIsInMap(item.Host, true) {
+	var now = time.Now().Unix()
+	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
+		(item.FailCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
+		c.domainIsInMap(item.Domain, false) ||
+		c.domainIsInMap(item.Domain, true) {
 		return false
 	}
 	return true
 }
-func (c *Checker) IsBlocked(address string) (blocked bool, failN, successN uint) {
-	if c.domainIsInMap(address, true) {
-		//log.Printf("%s in blocked ? true", address)
-		return true, 0, 0
+func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, successN uint) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
 	}
-	if c.domainIsInMap(address, false) {
+	if c.domainIsInMap(domain, true) {
+		//log.Printf("%s in blocked ? true", address)
+		return true, true, 0, 0
+	}
+	if c.domainIsInMap(domain, false) {
 		//log.Printf("%s in direct ? true", address)
-		return false, 0, 0
+		return false, true, 0, 0
 	}
 
-	_item, ok := c.data.Get(address)
+	_item, ok := c.data.Get(domain)
 	if !ok {
 		//log.Printf("%s not in map, blocked true", address)
-		return true, 0, 0
+		return true, false, 0, 0
 	}
 	item := _item.(CheckerItem)
 
-	return item.FailCount >= item.SuccessCount, item.FailCount, item.SuccessCount
+	return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
 }
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
@@ -174,16 +181,20 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(key, address string) {
-	if c.domainIsInMap(key, false) || c.domainIsInMap(key, true) {
+func (c *Checker) Add(domain, address string) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
+	}
+	if c.domainIsInMap(domain, false) || c.domainIsInMap(domain, true) {
 		return
 	}
 	var item CheckerItem
 	item = CheckerItem{
-		Host: address,
-		Key:  key,
+		Domain:  domain,
+		Address: address,
 	}
-	c.data.SetIfAbsent(item.Host, item)
+	c.data.SetIfAbsent(item.Domain, item)
 }
 
 type BasicAuth struct {
@@ -329,6 +340,7 @@ type HTTPRequest struct {
 	isBasicAuth bool
 	basicAuth   *BasicAuth
 	log         *logger.Logger
+	IsSNI       bool
 }
 
 func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
@@ -360,6 +372,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 		//sni success
 		req.Method = "SNI"
 		req.hostOrURL = "https://" + serverName + ":443"
+		req.IsSNI = true
 	} else {
 		//sni fail , try http
 		index := bytes.IndexByte(req.HeadBuf, '\n')

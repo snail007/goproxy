@@ -76,7 +76,7 @@ func (s *DNS) InitService() (err error) {
 		nil,
 		&net.Dialer{
 			Timeout:   5 * time.Second,
-			KeepAlive: 5 * time.Second,
+			KeepAlive: 2 * time.Second,
 		},
 	)
 	if err != nil {

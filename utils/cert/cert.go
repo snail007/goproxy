@@ -73,7 +73,7 @@ func CreateSignCert(rootCa *x509.Certificate, rootKey *rsa.PrivateKey, domainOrI
 
 	buf := x509.MarshalPKCS1PrivateKey(priKey)
 	keyPem := &pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "RSA PRIVATE KEY",
 		Bytes: buf,
 	}
 	keyBytes = pem.EncodeToMemory(keyPem)

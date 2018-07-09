@@ -88,7 +88,7 @@ func (s *MuxBridge) StopService() {
 		(*(*s.sc).Listener).Close()
 	}
 	for _, g := range s.clientControlConns.Items() {
-		for _, session := range g.(utils.ConcurrentMap).Items() {
+		for _, session := range g.(*utils.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()
 		}
 	}
