@@ -54,6 +54,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		utils.CloseConn(inConn)
 		return
 	}
+	srcIP, _, _ := net.SplitHostPort((*inConn).RemoteAddr().String())
 	inconnRemoteAddr := (*inConn).RemoteAddr().String()
 	localAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
 	udpListener, err := net.ListenUDP("udp", localAddr)
@@ -189,6 +190,11 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			if isClosedErr(err) {
 				return
 			}
+			continue
+		}
+		srcIP0, _, _ := net.SplitHostPort(srcAddr.String())
+		//IP not match drop it
+		if srcIP != srcIP0 {
 			continue
 		}
 		p := socks.NewPacketUDP()
