@@ -55,6 +55,7 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 		utils.CloseConn(inConn)
 		return
 	}
+	srcIP, _, _ := net.SplitHostPort((*inConn).RemoteAddr().String())
 	inconnRemoteAddr := (*inConn).RemoteAddr().String()
 	localAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
 	udpListener := serverConn.UDPConnListener
@@ -137,8 +138,6 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 		})
 	}
 
-	//client := socks.NewClientConn(&outconn, "udp", serverConn.Target(), time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
-
 	s.log.Printf("connect %s for udp", serverConn.Target())
 	//socks client
 	var client *socks.ClientConn
@@ -182,15 +181,20 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	//s.log.Printf("parent udp address %s", client.UDPAddr)
 	destAddr, _ = net.ResolveUDPAddr("udp", client.UDPAddr)
 	//relay
+	buf := utils.LeakyBuffer.Get()
+	defer utils.LeakyBuffer.Put(buf)
 	for {
-		buf := utils.LeakyBuffer.Get()
-		defer utils.LeakyBuffer.Put(buf)
 		n, srcAddr, err := udpListener.ReadFromUDP(buf)
 		if err != nil {
 			s.log.Printf("udp listener read fail, %s", err.Error())
 			if isClosedErr(err) {
 				return
 			}
+			continue
+		}
+		srcIP0, _, _ := net.SplitHostPort(srcAddr.String())
+		//IP not match drop it
+		if srcIP != srcIP0 {
 			continue
 		}
 		p := socks.NewPacketUDP()
@@ -204,7 +208,6 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 		} else {
 			err = p.Parse(buf[:n])
 		}
-		//err = p.Parse(buf[:n])
 		if err != nil {
 			s.log.Printf("udp listener parse packet fail, %s", err.Error())
 			continue
@@ -233,7 +236,9 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 				buf := utils.LeakyBuffer.Get()
 				defer utils.LeakyBuffer.Put(buf)
 				for {
+					outUDPConn.SetReadDeadline(time.Now().Add(time.Second * 5))
 					n, err := outUDPConn.Read(buf)
+					outUDPConn.SetReadDeadline(time.Time{})
 					if err != nil {
 						s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
 						if isClosedErr(err) {
@@ -241,7 +246,6 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 						}
 						continue
 					}
-
 					//var dlen = n
 					//forward to local
 					var v []byte
