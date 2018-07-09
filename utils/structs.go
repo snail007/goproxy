@@ -156,7 +156,7 @@ func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, succes
 	}
 	item := _item.(CheckerItem)
 
-	return item.FailCount >= item.SuccessCount, true, item.FailCount, item.SuccessCount
+	return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
 }
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
