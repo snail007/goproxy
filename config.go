@@ -386,6 +386,7 @@ func initConfig() (err error) {
 			for {
 				if cmd != nil {
 					cmd.Process.Kill()
+					time.Sleep(time.Second * 5)
 				}
 				cmd = exec.Command(os.Args[0], args...)
 				cmdReaderStderr, err := cmd.StderrPipe()
@@ -421,7 +422,6 @@ func initConfig() (err error) {
 					continue
 				}
 				log.Printf("worker %s [PID] %d unexpected exited, restarting...\n", os.Args[0], pid)
-				time.Sleep(time.Second * 5)
 			}
 		}()
 		return
