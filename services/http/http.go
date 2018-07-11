@@ -492,7 +492,7 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 		if *s.cfg.DNSAddress != "" {
 			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
 		} else {
-			outIPs, err = net.LookupIP(outDomain)
+			outIPs, err = utils.MyLookupIP(outDomain)
 		}
 		if err == nil {
 			for _, ip := range outIPs {
