@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"context"
 
 	"github.com/snail007/goproxy/utils/id"
 
@@ -497,7 +498,7 @@ func IsIternalIP(domainOrIP string, always bool) bool {
 	}
 
 	if isDomain {
-		outIPs, err = net.LookupIP(domainOrIP)
+		outIPs, err = MyLookupIP(domainOrIP)
 	} else {
 		outIPs = []net.IP{net.ParseIP(domainOrIP)}
 	}
@@ -632,3 +633,27 @@ func InsertProxyHeaders(head []byte, headers string) []byte {
 // 	}
 // 	return
 // }
+
+
+/*
+net.LookupIP may cause  deadlock in windows
+https://github.com/golang/go/issues/24178
+*/
+
+func MyLookupIP(host string) ([]net.IP, error) {
+
+	ctx ,cancel := context.WithTimeout(context.Background(),time.Second *time.Duration(3))
+	defer func() {
+		cancel()
+		//ctx.Done()
+	}()
+	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+	ips := make([]net.IP, len(addrs))
+	for i, ia := range addrs {
+		ips[i] = ia.IP
+	}
+	return ips, nil
+}
