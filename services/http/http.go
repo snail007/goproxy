@@ -189,7 +189,9 @@ func (s *HTTP) StopService() {
 		}
 	}()
 	s.isStop = true
-	s.checker.Stop()
+	if *s.cfg.Parent != "" {
+		s.checker.Stop()
+	}
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}

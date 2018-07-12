@@ -146,7 +146,9 @@ func (s *Socks) InitService() (err error) {
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
-	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+	if *s.cfg.Parent != "" {
+		s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+	}
 	if *s.cfg.ParentType == "ssh" {
 		e := s.ConnectSSH()
 		if e != nil {
@@ -193,7 +195,9 @@ func (s *Socks) StopService() {
 		}
 	}()
 	s.isStop = true
-	s.checker.Stop()
+	if *s.cfg.Parent != "" {
+		s.checker.Stop()
+	}
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
