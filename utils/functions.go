@@ -25,12 +25,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"context"
 
 	"github.com/snail007/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
-
-	"context"
+	
 )
 
 func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
@@ -639,9 +639,7 @@ func InsertProxyHeaders(head []byte, headers string) []byte {
 /*
 net.LookupIP may cause  deadlock in windows
 https://github.com/golang/go/issues/24178
-
 */
-
 func MyLookupIP(host string) ([]net.IP, error) {
 
 	ctx ,cancel := context.WithTimeout(context.Background(),time.Second *time.Duration(3))
