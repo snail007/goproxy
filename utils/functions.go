@@ -30,8 +30,7 @@ import (
 	"github.com/snail007/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
-
-	"context"
+	
 )
 
 func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
