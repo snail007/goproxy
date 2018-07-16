@@ -1,4 +1,4 @@
-FROM golang:1.10.3-alpine as builder
+FROM golang:1.10.3-alpine
 ARG GOPROXY_VERSION=master
 RUN apk update && apk upgrade && \
     apk add --no-cache git && \

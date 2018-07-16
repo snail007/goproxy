@@ -170,12 +170,12 @@ chmod +x install.sh
 ```  
 
 #### Docker安装 
-项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy v5.1,
-全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile
-或者使用参数GOPROXY_VERSION指定构建的goproxy版本.
+项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy的master分支最新版本,  
+全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile  
+或者使用参数GOPROXY_VERSION指定构建的goproxy版本.  
 
 ```
-ARG GOPROXY_VERSION=v5.1
+ARG GOPROXY_VERSION=v5.2
 ```
 
 步骤:  
@@ -185,14 +185,14 @@ sudo docker build .
 ```
 2. 镜像打标签:
 ```
-sudo docker tag <上一步的结果ID> goproxy/goproxy:latest
+sudo docker tag <上一步的结果ID> snail007/goproxy:latest
 ```
 3. 运行 
 参数OPTS的值就是传递给proxy的所有参数
-比如下面的例子启动了一个http服务: 
+比如下面的例子启动了一个http服务:
 
 ```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
 ```
 4. 查看日志:
 ```

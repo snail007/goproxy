@@ -173,12 +173,12 @@ chmod +x install.sh
 
 #### Docker installation 
 
-Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 5.0.
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
 
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 4.7:
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.2:
 
 ```
-ARG GOPROXY_VERSION=v5.0
+ARG GOPROXY_VERSION=v5.2
 ```
 
 To Run:
@@ -188,12 +188,12 @@ sudo docker build .
 ```
 2. Tag the image:
 ```
-sudo docker tag <id from previous step>  goproxy/goproxy:latest
+sudo docker tag <id from previous step>  snail007/goproxy:latest
 ```
 3. Run! 
 Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
 ```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
 ```
 4. View logs:
 ```
