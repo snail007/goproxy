@@ -185,7 +185,7 @@ func (s *HTTP) StopService() {
 		if e != nil {
 			s.log.Printf("stop http(s) service crashed,%s", e)
 		} else {
-			s.log.Printf("service http(s) stoped")
+			s.log.Printf("service http(s) stopped")
 		}
 	}()
 	s.isStop = true

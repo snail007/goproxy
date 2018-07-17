@@ -80,7 +80,7 @@ func (s *MuxBridge) StopService() {
 		if e != nil {
 			s.log.Printf("stop bridge service crashed,%s", e)
 		} else {
-			s.log.Printf("service bridge stoped")
+			s.log.Printf("service bridge stopped")
 		}
 	}()
 	s.isStop = true
