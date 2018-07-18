@@ -117,7 +117,7 @@ func (s *DNS) StopService() {
 		if e != nil {
 			s.log.Printf("stop dns service crashed,%s", e)
 		} else {
-			s.log.Printf("service dns stoped")
+			s.log.Printf("service dns stopped")
 		}
 	}()
 	Stop(s.serviceKey)

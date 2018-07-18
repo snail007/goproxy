@@ -130,7 +130,7 @@ func (s *SPS) StopService() {
 		if e != nil {
 			s.log.Printf("stop sps service crashed,%s", e)
 		} else {
-			s.log.Printf("service sps stoped")
+			s.log.Printf("service sps stopped")
 		}
 	}()
 	for _, sc := range s.serverChannels {

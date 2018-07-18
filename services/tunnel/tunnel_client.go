@@ -70,7 +70,7 @@ func (s *TunnelClient) StopService() {
 		if e != nil {
 			s.log.Printf("stop tclient service crashed,%s", e)
 		} else {
-			s.log.Printf("service tclient stoped")
+			s.log.Printf("service tclient stopped")
 		}
 	}()
 	s.isStop = true
