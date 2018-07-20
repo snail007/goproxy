@@ -269,6 +269,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	}
 	address := req.Host
 	host, _, _ := net.SplitHostPort(address)
+	fmt.Println("This is the host we want: " + host)
 	useProxy := false
 	if !utils.IsIternalIP(host, *s.cfg.Always) {
 		useProxy = true
