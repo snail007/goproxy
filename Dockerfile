@@ -1,7 +1,7 @@
 FROM golang:1.10.3-alpine as builder
 ARG GOPROXY_VERSION=master
 RUN apk update && apk upgrade && \
-    apk add --no-cache git && cd /go/src/ && git clone https://github.com/snail007/goproxy && \
+    apk add --no-cache git && cd /go/src/ && git clone https://github.com/LuLechuan/goproxy && \
 	cd goproxy && git checkout ${GOPROXY_VERSION} && \
     go get && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o proxy
 FROM alpine:3.7

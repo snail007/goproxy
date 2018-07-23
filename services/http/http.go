@@ -233,7 +233,7 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 			if err != nil {
 				return
 			}
-			s.log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+			s.log.Printf("%s http(s) proxy on %s, did it really change anything?", *s.cfg.LocalType, (*sc.Listener).Addr())
 			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
@@ -269,6 +269,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	}
 	address := req.Host
 	host, _, _ := net.SplitHostPort(address)
+	s.log.Printf("This is the host we want: %s, or this is the parent proxy host?", host)
 	useProxy := false
 	if !utils.IsIternalIP(host, *s.cfg.Always) {
 		useProxy = true
