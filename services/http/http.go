@@ -233,7 +233,7 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 			if err != nil {
 				return
 			}
-			s.log.Printf("%s http(s) proxy on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+			s.log.Printf("%s http(s) proxy on %s, did it really change anything?", *s.cfg.LocalType, (*sc.Listener).Addr())
 			s.serverChannels = append(s.serverChannels, &sc)
 		}
 	}
