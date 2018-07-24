@@ -23,11 +23,30 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-const SDK_VERSION = "5.2"
+const SDK_VERSION = "5.3"
 
 var (
 	app *kingpin.Application
 )
+
+type LogCallback interface {
+	Write(line string)
+}
+type logCallback interface {
+	Write(line string)
+}
+type logWriter struct {
+	callback LogCallback
+}
+
+func (s *logWriter) Write(p []byte) (n int, err error) {
+	s.callback.Write(string(p))
+	return
+}
+
+func Start(serviceID, serviceArgsStr string) (errStr string) {
+	return StartWithLog(serviceID, serviceArgsStr, nil)
+}
 
 //Start
 //serviceID : is service identify id,different service's id should be difference
@@ -38,7 +57,7 @@ var (
 //and so on.
 //if an error occured , errStr will be the error reason
 //if start success, errStr is empty.
-func Start(serviceID, serviceArgsStr string) (errStr string) {
+func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) (errStr string) {
 	//define  args
 	tcpArgs := tcpx.TCPArgs{}
 	httpArgs := httpx.HTTPArgs{}
@@ -337,12 +356,19 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	}
 	log.SetFlags(flags)
 
-	if *logfile != "" {
-		f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-		if e != nil {
-			log.Fatal(e)
+	if loggerCallback == nil {
+		if *logfile != "" {
+			f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+			if e != nil {
+				log.Fatal(e)
+			}
+			log.SetOutput(f)
 		}
-		log.SetOutput(f)
+	} else {
+
+		log.SetOutput(&logWriter{
+			callback: loggerCallback,
+		})
 	}
 
 	//regist services and run service
