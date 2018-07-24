@@ -365,7 +365,6 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 			log.SetOutput(f)
 		}
 	} else {
-
 		log.SetOutput(&logWriter{
 			callback: loggerCallback,
 		})
