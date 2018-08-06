@@ -1,6 +1,6 @@
 proxy更新日志
 v5.3
-1.优化了socks_client握手端口判断,避免了sstap测试UDP失败的问题..
+1.优化了socks_client握手端口判断,避免了sstap测试UDP失败的问题.
 
 v5.2
 1.修复了HTTP(S)\SPS反向代理无法正常工作的问题.
