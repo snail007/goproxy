@@ -1,8 +1,8 @@
 #/bin/bash
-VER="v5.0"
+VER="v5.3"
 
-sudo rm /usr/local/go
-sudo ln -s /usr/local/go1.10.1 /usr/local/go
+#sudo rm /usr/local/go
+#sudo ln -s /usr/local/go1.10.1 /usr/local/go
 rm -rf sdk-windows-*.tar.gz
 rm -rf README.md proxy-sdk.h proxy-sdk.dll
 
@@ -22,7 +22,7 @@ cp ../README.md .
 tar zcf sdk-windows-32bit-${VER}.tar.gz README.md proxy-sdk.dll proxy-sdk.h ieshims.dll
 rm -rf README.md proxy-sdk.h proxy-sdk.dll
 
-sudo rm /usr/local/go
-sudo ln -s /usr/local/go1.8.5 /usr/local/go
+#sudo rm /usr/local/go
+#sudo ln -s /usr/local/go1.8.5 /usr/local/go
 
 echo "done."

@@ -73,7 +73,7 @@ func (s *UDP) StopService() {
 		if e != nil {
 			s.log.Printf("stop udp service crashed,%s", e)
 		} else {
-			s.log.Printf("service udp stoped")
+			s.log.Printf("service udp stopped")
 		}
 	}()
 	s.isStop = true

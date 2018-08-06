@@ -76,7 +76,7 @@ func (s *DNS) InitService() (err error) {
 		nil,
 		&net.Dialer{
 			Timeout:   5 * time.Second,
-			KeepAlive: 5 * time.Second,
+			KeepAlive: 2 * time.Second,
 		},
 	)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *DNS) StopService() {
 		if e != nil {
 			s.log.Printf("stop dns service crashed,%s", e)
 		} else {
-			s.log.Printf("service dns stoped")
+			s.log.Printf("service dns stopped")
 		}
 	}()
 	Stop(s.serviceKey)

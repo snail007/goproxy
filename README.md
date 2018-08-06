@@ -6,7 +6,18 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-[中文手册](/README_ZH.md)  **[全平台GUI版本](/gui/README.md)**  **[全平台SDK](/sdk/README.md)**   
+**[中文手册](/README_ZH.md)**  
+
+**[全平台图形界面版本](/gui/README.md)**  
+
+**[全平台SDK](/sdk/README.md)**   
+
+### How to contribute to the code (Pull Request)?  
+
+Pull Request is welcomed.   
+First, you need to clone the project to your account, and then modify the code on the dev branch.   
+Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
+PR needs to explain what changes have been made and why you change them.  
 
 ### Features  
 - chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
@@ -37,26 +48,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v5.0 manual, and the other version of the manual can be checked by the following link.  
-- [v4.9 manual](https://github.com/snail007/goproxy/tree/v4.9)
-- [v4.8 manual](https://github.com/snail007/goproxy/tree/v4.8)
-- [v4.7 manual](https://github.com/snail007/goproxy/tree/v4.7)
-- [v4.6 manual](https://github.com/snail007/goproxy/tree/v4.6)
-- [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
-- [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
-- [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
-- [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
-- [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7 manual](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5 manual](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4 manual](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3 manual](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2 manual](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1 manual](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0 manual](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
+This page is the v5.3 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -169,7 +161,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.0/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.3/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -181,12 +173,12 @@ chmod +x install.sh
 
 #### Docker installation 
 
-Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 5.0.
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
 
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 4.7:
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.3:
 
 ```
-ARG GOPROXY_VERSION=v5.0
+ARG GOPROXY_VERSION=v5.3
 ```
 
 To Run:
@@ -196,12 +188,12 @@ sudo docker build .
 ```
 2. Tag the image:
 ```
-sudo docker tag <id from previous step>  goproxy/goproxy:latest
+sudo docker tag <id from previous step>  snail007/goproxy:latest
 ```
 3. Run! 
 Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
 ```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
 ```
 4. View logs:
 ```
@@ -235,9 +227,18 @@ for example, --log proxy.log, The log will be exported to proxy.log file which i
 
 ### **Generating a communication certificate file**  
 HTTP, TCP, UDP proxy process will communicate with parent proxy. In order to secure, we use encrypted communication. Of course, we can choose not to encrypted communication. All communication with parent proxy in this tutorial is encrypted, requiring certificate files.    
-The OpenSSL command is installed on the Linux and encrypted certificate can be generated directly through the following command.    
-`./proxy keygen`  
-By default, the certificate file proxy.crt and the key file proxy.key are generated under the current program directory.  
+
+1.Generate signed certificates and key files through the following commands.  
+`./proxy keygen -C proxy`  
+The certificate file proxy.crt and key file proxy.key will be generated under the current directory.   
+
+2.Through the following commands, use the signed certificate proxy.crt and key file proxy.key to issue new certificates: goproxy.crt and goproxy.key.   
+`./proxy keygen -s -C proxy -c goproxy`  
+The certificate file goproxy.crt and key file goproxy.key will be generated under the current program directory.   
+
+3.By default, the domain name in the certificate is a random domain and can be specified using the `-n test.com` parameter.  
+
+4.More usage:`proxy keygen --help`。 
   
 ### **Daemon mode**
 After the default execution of proxy, if you want to keep proxy running, you can't close the command line. 
@@ -831,7 +832,7 @@ through this way, When you visits the website by local proxy 8080, it visits the
 ### **6.Proxy protocol conversion** 
 
 #### **6.1.Functional introduction** 
-The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is conversed does not support UDP. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
+The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is also does support UDP when parent is Socks5. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
 
 #### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
 Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
@@ -1073,19 +1074,15 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 - HTTP (s) proxy support PAC?
 - Welcome joining group feedback...   
 
-### How to contribute to the code (Pull Request)?  
-First, you need to clone the project to your account, and then modify the code on the dev branch.   
-Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
-PR needs to explain what changes have been made and why you change them.  
+### How to use the source code?  
 
-### How to use the source code?    
 Recommend go1.10.1.   
 `go get github.com/snail007/goproxy`   
 use command cd to enter your go SRC directory   
 then cd to enter `github.com/snail007/goproxy`.    
 Direct compilation:`go build -o proxy`        
 execution: `go run *.go`       
-`utils` is a toolkit, and `service` is a specific service class.  
+`utils` is a toolkit, and `service` is a specific service class. 
 
 ### License  
 Proxy is licensed under GPLv3 license.  

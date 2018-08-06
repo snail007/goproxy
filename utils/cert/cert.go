@@ -73,7 +73,7 @@ func CreateSignCert(rootCa *x509.Certificate, rootKey *rsa.PrivateKey, domainOrI
 
 	buf := x509.MarshalPKCS1PrivateKey(priKey)
 	keyPem := &pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "RSA PRIVATE KEY",
 		Bytes: buf,
 	}
 	keyBytes = pem.EncodeToMemory(keyPem)
@@ -109,7 +109,7 @@ func CreateCa(organization string, expireDays int) (certBytes []byte, keyBytes [
 		NotAfter:  time.Now().Add(time.Hour * 24 * time.Duration(expireDays)),
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		IsCA: true,
 	}

@@ -7,7 +7,17 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-**[English Manual](/README.md)** **[全平台GUI版本](/gui/README.md)**  **[全平台SDK](/sdk/README.md)**
+**[English Manual](/README.md)**  
+
+**[全平台图形界面版本](/gui/README.md)**  
+
+**[全平台SDK](/sdk/README.md)**
+
+### 如何贡献代码(Pull Request)?  
+
+欢迎加入一起发展壮大proxy.首先需要clone本项目到自己的帐号下面,   
+然后在dev分支上面修改代码,最后发Pull Request到goproxy项目的dev分支即可,  
+为了高效贡献代码,pr的时候需要说明做了什么变更,原因是什么.  
 
 ### Features  
 - 链式代理,程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.  
@@ -38,7 +48,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - ...  
 
  
-本页是v5.1手册,其他版本手册请点击[这里](docs/old-release.md)查看. 
+本页是v5.3手册,其他版本手册请点击[这里](docs/old-release.md)查看. 
  
 
 ### 怎么找到组织?  
@@ -149,7 +159,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.1/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.3/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -160,12 +170,12 @@ chmod +x install.sh
 ```  
 
 #### Docker安装 
-项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy v5.1,
-全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile
-或者使用参数GOPROXY_VERSION指定构建的goproxy版本.
+项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy的master分支最新版本,  
+全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile  
+或者使用参数GOPROXY_VERSION指定构建的goproxy版本.  
 
 ```
-ARG GOPROXY_VERSION=v5.1
+ARG GOPROXY_VERSION=v5.3
 ```
 
 步骤:  
@@ -175,14 +185,14 @@ sudo docker build .
 ```
 2. 镜像打标签:
 ```
-sudo docker tag <上一步的结果ID> goproxy/goproxy:latest
+sudo docker tag <上一步的结果ID> snail007/goproxy:latest
 ```
 3. 运行 
 参数OPTS的值就是传递给proxy的所有参数
-比如下面的例子启动了一个http服务: 
+比如下面的例子启动了一个http服务:
 
 ```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
 ```
 4. 查看日志:
 ```
@@ -689,7 +699,14 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
 `./proxy help client`  
   
 ### **5.SOCKS5代理**  
-提示:SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+提示:
+
+SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.  
+
+***如果你的VPS是阿里云，腾讯云这种VPS，就是ifconfig看不见你的公网IP，只能看见内网IP，***
+
+***那么需要加上`-g VPS公网IP`参数，SOCKS5代理的UDP功能才能正常工作。***
+
 #### **5.1.普通SOCKS5代理**  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
@@ -837,7 +854,7 @@ proxy的socks代理在tcp之上可以通过自定义加密和tls标准加密以�
 ### **6.代理协议转换** 
 
 #### **6.1 功能介绍** 
-代理协议转换使用的是sps子命令(socks+https的缩写)，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口同时支持http(s)和socks5代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理不支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
+代理协议转换使用的是sps子命令(socks+https的缩写)，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口同时支持http(s)和socks5代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理，当上级是SOCKS5时仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
 
 #### **6.2 HTTP(S)转HTTP(S)+SOCKS5** 
 假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
@@ -1109,11 +1126,6 @@ fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`
 - http(s)代理增加pac支持?
 - 欢迎加群反馈...
 
-### 如何贡献代码(Pull Request)?  
-首先需要clone本项目到自己的帐号下面,然后在dev分支上面修改代码,  
-最后发Pull Request到goproxy项目的dev分支即可,为了高效贡献代码,  
-pr的时候需要说明做了什么变更,原因是什么.  
-
 ### 如何使用源码?   
 建议go1.10.1.       
 `go get github.com/snail007/goproxy`   
@@ -1133,5 +1145,3 @@ QQ交流群:189618940
 如果proxy帮助你解决了很多问题,你可以通过下面的捐赠更好的支持proxy.  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
-
-  

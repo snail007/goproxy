@@ -1,5 +1,5 @@
 #/bin/bash
-VER="v5.0"
+VER="v5.3"
 rm -rf sdk-android-*.tar.gz
 rm -rf android
 mkdir android

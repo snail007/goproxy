@@ -33,7 +33,7 @@ type ClientConn struct {
 	timeout  time.Duration
 	addr     string
 	network  string
-	udpAddr  string
+	UDPAddr  string
 }
 
 // SOCKS5 returns a Dialer that makes SOCKSv5 connections to the given address
@@ -72,7 +72,7 @@ func (s *ClientConn) Handshake() error {
 	if err != nil {
 		return errors.New("proxy: failed to parse port number: " + portStr)
 	}
-	if port < 1 || port > 0xffff {
+	if s.network == "tcp" && (port < 1 || port > 0xffff) {
 		return errors.New("proxy: port number out of range: " + portStr)
 	}
 
@@ -168,14 +168,14 @@ func (s *ClientConn) Handshake() error {
 	}
 	p := binary.BigEndian.Uint16([]byte{buf[0], buf[1]})
 	//log.Printf("%v", p)
-	s.udpAddr = net.JoinHostPort(ipStr, fmt.Sprintf("%d", p))
+	s.UDPAddr = net.JoinHostPort(ipStr, fmt.Sprintf("%d", p))
 	//log.Printf("%v", s.udpAddr)
 	(*s.conn).SetDeadline(time.Time{})
 	return nil
 }
 func (s *ClientConn) SendUDP(data []byte, addr string) (respData []byte, err error) {
 
-	c, err := net.DialTimeout("udp", s.udpAddr, s.timeout)
+	c, err := net.DialTimeout("udp", s.UDPAddr, s.timeout)
 	if err != nil {
 		return
 	}

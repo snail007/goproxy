@@ -23,11 +23,30 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-const SDK_VERSION = "5.0"
+const SDK_VERSION = "5.3"
 
 var (
 	app *kingpin.Application
 )
+
+type LogCallback interface {
+	Write(line string)
+}
+type logCallback interface {
+	Write(line string)
+}
+type logWriter struct {
+	callback LogCallback
+}
+
+func (s *logWriter) Write(p []byte) (n int, err error) {
+	s.callback.Write(string(p))
+	return
+}
+
+func Start(serviceID, serviceArgsStr string) (errStr string) {
+	return StartWithLog(serviceID, serviceArgsStr, nil)
+}
 
 //Start
 //serviceID : is service identify id,different service's id should be difference
@@ -38,7 +57,7 @@ var (
 //and so on.
 //if an error occured , errStr will be the error reason
 //if start success, errStr is empty.
-func Start(serviceID, serviceArgsStr string) (errStr string) {
+func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) (errStr string) {
 	//define  args
 	tcpArgs := tcpx.TCPArgs{}
 	httpArgs := httpx.HTTPArgs{}
@@ -194,8 +213,6 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	socksArgs.ParentType = socks.Flag("parent-type", "parent protocol type <tls|tcp|kcp|ssh>").Default("tcp").Short('T').Enum("tls", "tcp", "kcp", "ssh")
 	socksArgs.LocalType = socks.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	socksArgs.Local = socks.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	socksArgs.UDPParent = socks.Flag("udp-parent", "udp parent address, such as: \"23.32.32.19:33090\"").Default("").Short('X').String()
-	socksArgs.UDPLocal = socks.Flag("udp-local", "udp local ip:port to listen").Short('x').Default(":33090").String()
 	socksArgs.CertFile = socks.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	socksArgs.CaCertFile = socks.Flag("ca", "ca cert file for tls").Default("").String()
 	socksArgs.KeyFile = socks.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -339,12 +356,18 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	}
 	log.SetFlags(flags)
 
-	if *logfile != "" {
-		f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-		if e != nil {
-			log.Fatal(e)
+	if loggerCallback == nil {
+		if *logfile != "" {
+			f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+			if e != nil {
+				log.Fatal(e)
+			}
+			log.SetOutput(f)
 		}
-		log.SetOutput(f)
+	} else {
+		log.SetOutput(&logWriter{
+			callback: loggerCallback,
+		})
 	}
 
 	//regist services and run service

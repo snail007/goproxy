@@ -17,6 +17,7 @@ import (
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
+	"github.com/snail007/goproxy/utils/sni"
 	"github.com/snail007/goproxy/utils/socks"
 )
 
@@ -52,22 +53,26 @@ type SPSArgs struct {
 	DisableSocks5     *bool
 }
 type SPS struct {
-	outPool        utils.OutConn
-	cfg            SPSArgs
-	domainResolver utils.DomainResolver
-	basicAuth      utils.BasicAuth
-	serverChannels []*utils.ServerChannel
-	userConns      utils.ConcurrentMap
-	log            *logger.Logger
+	outPool               utils.OutConn
+	cfg                   SPSArgs
+	domainResolver        utils.DomainResolver
+	basicAuth             utils.BasicAuth
+	serverChannels        []*utils.ServerChannel
+	userConns             utils.ConcurrentMap
+	log                   *logger.Logger
+	udpRelatedPacketConns utils.ConcurrentMap
+	udpLocalKey           []byte
+	udpParentKey          []byte
 }
 
 func NewSPS() services.Service {
 	return &SPS{
-		outPool:        utils.OutConn{},
-		cfg:            SPSArgs{},
-		basicAuth:      utils.BasicAuth{},
-		serverChannels: []*utils.ServerChannel{},
-		userConns:      utils.NewConcurrentMap(),
+		outPool:               utils.OutConn{},
+		cfg:                   SPSArgs{},
+		basicAuth:             utils.BasicAuth{},
+		serverChannels:        []*utils.ServerChannel{},
+		userConns:             utils.NewConcurrentMap(),
+		udpRelatedPacketConns: utils.NewConcurrentMap(),
 	}
 }
 func (s *SPS) CheckArgs() (err error) {
@@ -92,6 +97,8 @@ func (s *SPS) CheckArgs() (err error) {
 			}
 		}
 	}
+	s.udpLocalKey = s.LocalUDPKey()
+	s.udpParentKey = s.ParentUDPKey()
 	return
 }
 func (s *SPS) InitService() (err error) {
@@ -123,7 +130,7 @@ func (s *SPS) StopService() {
 		if e != nil {
 			s.log.Printf("stop sps service crashed,%s", e)
 		} else {
-			s.log.Printf("service sps stoped")
+			s.log.Printf("service sps stopped")
 		}
 	}()
 	for _, sc := range s.serverChannels {
@@ -209,6 +216,11 @@ func (s *SPS) callback(inConn net.Conn) {
 	}
 }
 func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
+	enableUDP := *s.cfg.ParentServiceType == "socks"
+	udpIP, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
+	if len(*s.cfg.LocalIPS) > 0 {
+		udpIP = (*s.cfg.LocalIPS)[0]
+	}
 	bInConn := utils.NewBufferedConn(*inConn)
 	//important
 	//action read will regist read event to system,
@@ -218,7 +230,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 	bInConn.ReadByte()
 	bInConn.UnreadByte()
 
-	n := 8
+	n := 2048
 	if n > bInConn.Buffered() {
 		n = bInConn.Buffered()
 	}
@@ -228,12 +240,12 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		(*inConn).Close()
 		return
 	}
-
+	isSNI, _ := sni.ServerNameFromBytes(h)
 	*inConn = bInConn
 	address := ""
 	var auth socks.Auth
 	var forwardBytes []byte
-	//fmt.Printf("%v", header)
+	//fmt.Printf("%v", h)
 	if utils.IsSocks5(h) {
 		if *s.cfg.DisableSocks5 {
 			(*inConn).Close()
@@ -242,16 +254,20 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		//socks5 server
 		var serverConn *socks.ServerConn
 		if s.IsBasicAuth() {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, "", nil)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), &s.basicAuth, enableUDP, udpIP, nil)
 		} else {
-			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, "", nil)
+			serverConn = socks.NewServerConn(inConn, time.Millisecond*time.Duration(*s.cfg.Timeout), nil, enableUDP, udpIP, nil)
 		}
 		if err = serverConn.Handshake(); err != nil {
 			return
 		}
 		address = serverConn.Target()
 		auth = serverConn.AuthData()
-	} else if utils.IsHTTP(h) {
+		if serverConn.IsUDP() {
+			s.proxyUDP(inConn, serverConn)
+			return
+		}
+	} else if utils.IsHTTP(h) || isSNI != "" {
 		if *s.cfg.DisableHTTP {
 			(*inConn).Close()
 			return
@@ -495,6 +511,7 @@ func (s *SPS) Resolve(address string) string {
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
 		s.log.Printf("dns error %s , ERR:%s", address, err)
+		return address
 	}
 	return ip
 }

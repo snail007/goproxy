@@ -74,7 +74,7 @@ func (s *TCP) StopService() {
 		if e != nil {
 			s.log.Printf("stop tcp service crashed,%s", e)
 		} else {
-			s.log.Printf("service tcp stoped")
+			s.log.Printf("service tcp stopped")
 		}
 	}()
 	s.isStop = true

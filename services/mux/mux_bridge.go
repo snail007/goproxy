@@ -80,7 +80,7 @@ func (s *MuxBridge) StopService() {
 		if e != nil {
 			s.log.Printf("stop bridge service crashed,%s", e)
 		} else {
-			s.log.Printf("service bridge stoped")
+			s.log.Printf("service bridge stopped")
 		}
 	}()
 	s.isStop = true
@@ -88,7 +88,7 @@ func (s *MuxBridge) StopService() {
 		(*(*s.sc).Listener).Close()
 	}
 	for _, g := range s.clientControlConns.Items() {
-		for _, session := range g.(utils.ConcurrentMap).Items() {
+		for _, session := range g.(*utils.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()
 		}
 	}

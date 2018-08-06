@@ -3,6 +3,7 @@ package socks
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	logger "log"
 	"net"
@@ -13,7 +14,6 @@ import (
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/aes"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
 	"golang.org/x/crypto/ssh"
@@ -48,8 +48,6 @@ type SocksArgs struct {
 	AuthURLTimeout *int
 	AuthURLRetry   *int
 	KCP            kcpcfg.KCPConfigArgs
-	UDPParent      *string
-	UDPLocal       *string
 	LocalIPS       *[]string
 	DNSAddress     *string
 	DNSTTL         *int
@@ -59,27 +57,31 @@ type SocksArgs struct {
 	ParentCompress *bool
 }
 type Socks struct {
-	cfg            SocksArgs
-	checker        utils.Checker
-	basicAuth      utils.BasicAuth
-	sshClient      *ssh.Client
-	lockChn        chan bool
-	udpSC          utils.ServerChannel
-	sc             *utils.ServerChannel
-	domainResolver utils.DomainResolver
-	isStop         bool
-	userConns      utils.ConcurrentMap
-	log            *logger.Logger
+	cfg                   SocksArgs
+	checker               utils.Checker
+	basicAuth             utils.BasicAuth
+	sshClient             *ssh.Client
+	lockChn               chan bool
+	udpSC                 utils.ServerChannel
+	sc                    *utils.ServerChannel
+	domainResolver        utils.DomainResolver
+	isStop                bool
+	userConns             utils.ConcurrentMap
+	log                   *logger.Logger
+	udpRelatedPacketConns utils.ConcurrentMap
+	udpLocalKey           []byte
+	udpParentKey          []byte
 }
 
 func NewSocks() services.Service {
 	return &Socks{
-		cfg:       SocksArgs{},
-		checker:   utils.Checker{},
-		basicAuth: utils.BasicAuth{},
-		lockChn:   make(chan bool, 1),
-		isStop:    false,
-		userConns: utils.NewConcurrentMap(),
+		cfg:                   SocksArgs{},
+		checker:               utils.Checker{},
+		basicAuth:             utils.BasicAuth{},
+		lockChn:               make(chan bool, 1),
+		isStop:                false,
+		userConns:             utils.NewConcurrentMap(),
+		udpRelatedPacketConns: utils.NewConcurrentMap(),
 	}
 }
 
@@ -102,17 +104,6 @@ func (s *Socks) CheckArgs() (err error) {
 		if *s.cfg.ParentType == "" {
 			err = fmt.Errorf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 			return
-		}
-		host, _, e := net.SplitHostPort(*s.cfg.Parent)
-		if e != nil {
-			err = fmt.Errorf("parent format error : %s", e)
-			return
-		}
-		if *s.cfg.UDPParent == "" {
-			*s.cfg.UDPParent = net.JoinHostPort(host, "33090")
-		}
-		if strings.HasPrefix(*s.cfg.UDPParent, ":") {
-			*s.cfg.UDPParent = net.JoinHostPort(host, strings.TrimLeft(*s.cfg.UDPParent, ":"))
 		}
 		if *s.cfg.ParentType == "ssh" {
 			if *s.cfg.SSHUser == "" {
@@ -145,6 +136,9 @@ func (s *Socks) CheckArgs() (err error) {
 			}
 		}
 	}
+	s.udpLocalKey = s.LocalUDPKey()
+	s.udpParentKey = s.ParentUDPKey()
+	//s.log.Printf("udpLocalKey : %v , udpParentKey : %v", s.udpLocalKey, s.udpParentKey)
 	return
 }
 func (s *Socks) InitService() (err error) {
@@ -152,7 +146,9 @@ func (s *Socks) InitService() (err error) {
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
-	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+	if *s.cfg.Parent != "" {
+		s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+	}
 	if *s.cfg.ParentType == "ssh" {
 		e := s.ConnectSSH()
 		if e != nil {
@@ -186,14 +182,6 @@ func (s *Socks) InitService() (err error) {
 	}
 	if *s.cfg.ParentType == "ssh" {
 		s.log.Printf("warn: socks udp not suppored for ssh")
-	} else {
-		s.udpSC = utils.NewServerChannelHost(*s.cfg.UDPLocal, s.log)
-		e := s.udpSC.ListenUDP(s.udpCallback)
-		if e != nil {
-			err = fmt.Errorf("init udp service fail, ERR: %s", e)
-			return
-		}
-		s.log.Printf("udp socks proxy on %s", s.udpSC.UDPListener.LocalAddr())
 	}
 	return
 }
@@ -203,11 +191,13 @@ func (s *Socks) StopService() {
 		if e != nil {
 			s.log.Printf("stop socks service crashed,%s", e)
 		} else {
-			s.log.Printf("service socks stoped")
+			s.log.Printf("service socks stopped")
 		}
 	}()
 	s.isStop = true
-	s.checker.Stop()
+	if *s.cfg.Parent != "" {
+		s.checker.Stop()
+	}
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
@@ -219,6 +209,9 @@ func (s *Socks) StopService() {
 	}
 	for _, c := range s.userConns.Items() {
 		(*c.(*net.Conn)).Close()
+	}
+	for _, c := range s.udpRelatedPacketConns.Items() {
+		(*c.(*net.UDPConn)).Close()
 	}
 }
 func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
@@ -233,9 +226,6 @@ func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	if *s.cfg.Parent != "" {
 		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-	}
-	if *s.cfg.UDPParent != "" {
-		s.log.Printf("use socks udp parent %s", *s.cfg.UDPParent)
 	}
 	sc := utils.NewServerChannelHost(*s.cfg.Local, s.log)
 	if *s.cfg.LocalType == "tcp" {
@@ -255,165 +245,7 @@ func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
 func (s *Socks) Clean() {
 	s.StopService()
 }
-func (s *Socks) UDPKey() []byte {
-	return s.cfg.KeyBytes[:32]
-}
-func (s *Socks) udpCallback(b []byte, localAddr, srcAddr *net.UDPAddr) {
-	rawB := b
-	var err error
-	if *s.cfg.LocalType == "tls" {
-		//decode b
-		rawB, err = goaes.Decrypt(s.UDPKey(), b)
-		if err != nil {
-			s.log.Printf("decrypt udp packet fail from %s", srcAddr.String())
-			return
-		}
-	}
-	p, err := socks.ParseUDPPacket(rawB)
-	s.log.Printf("udp revecived:%v", len(p.Data()))
-	if err != nil {
-		s.log.Printf("parse udp packet fail, ERR:%s", err)
-		return
-	}
-	//防止死循环
-	if s.IsDeadLoop((*localAddr).String(), p.Host()) {
-		s.log.Printf("dead loop detected , %s", p.Host())
-		return
-	}
-	//s.log.Printf("##########udp to -> %s:%s###########", p.Host(), p.Port())
-	if *s.cfg.Parent != "" {
-		//有上级代理,转发给上级
-		if *s.cfg.ParentType == "tls" {
-			//encode b
-			rawB, err = goaes.Encrypt(s.UDPKey(), rawB)
-			if err != nil {
-				s.log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
-				return
-			}
-		}
-		parent := *s.cfg.UDPParent
-		if parent == "" {
-			parent = *s.cfg.Parent
-		}
-		dstAddr, err := net.ResolveUDPAddr("udp", s.Resolve(parent))
-		if err != nil {
-			s.log.Printf("can't resolve address: %s", err)
-			return
-		}
-		clientSrcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
-		conn, err := net.DialUDP("udp", clientSrcAddr, dstAddr)
-		if err != nil {
-			s.log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
-			return
-		}
-		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*5)))
-		_, err = conn.Write(rawB)
-		conn.SetDeadline(time.Time{})
-		s.log.Printf("udp request:%v", len(rawB))
-		if err != nil {
-			s.log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
-			conn.Close()
-			return
-		}
 
-		//s.log.Printf("send udp packet to %s success", dstAddr.String())
-		buf := make([]byte, 10*1024)
-		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		length, _, err := conn.ReadFromUDP(buf)
-		conn.SetDeadline(time.Time{})
-		if err != nil {
-			s.log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
-			conn.Close()
-			return
-		}
-		respBody := buf[0:length]
-		s.log.Printf("udp response:%v", len(respBody))
-		//s.log.Printf("revecived udp packet from %s", dstAddr.String())
-		if *s.cfg.ParentType == "tls" {
-			//decode b
-			respBody, err = goaes.Decrypt(s.UDPKey(), respBody)
-			if err != nil {
-				s.log.Printf("encrypt udp data fail to %s", *s.cfg.Parent)
-				conn.Close()
-				return
-			}
-		}
-		if *s.cfg.LocalType == "tls" {
-			d, err := goaes.Encrypt(s.UDPKey(), respBody)
-			if err != nil {
-				s.log.Printf("encrypt udp data fail from %s", dstAddr.String())
-				conn.Close()
-				return
-			}
-			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
-			s.udpSC.UDPListener.SetDeadline(time.Time{})
-			s.log.Printf("udp reply:%v", len(d))
-			d = nil
-		} else {
-			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-			s.udpSC.UDPListener.WriteToUDP(respBody, srcAddr)
-			s.udpSC.UDPListener.SetDeadline(time.Time{})
-			s.log.Printf("udp reply:%v", len(respBody))
-		}
-
-	} else {
-		//本地代理
-		dstAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(s.Resolve(p.Host()), p.Port()))
-		if err != nil {
-			s.log.Printf("can't resolve address: %s", err)
-			return
-		}
-		clientSrcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
-		conn, err := net.DialUDP("udp", clientSrcAddr, dstAddr)
-		if err != nil {
-			s.log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
-			return
-		}
-		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout*3)))
-		_, err = conn.Write(p.Data())
-		conn.SetDeadline(time.Time{})
-		s.log.Printf("udp send:%v", len(p.Data()))
-		if err != nil {
-			s.log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
-			conn.Close()
-			return
-		}
-		//s.log.Printf("send udp packet to %s success", dstAddr.String())
-		buf := make([]byte, 10*1024)
-		conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		length, _, err := conn.ReadFromUDP(buf)
-		conn.SetDeadline(time.Time{})
-
-		if err != nil {
-			s.log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
-			conn.Close()
-			return
-		}
-		respBody := buf[0:length]
-		//封装来自真实服务器的数据,返回给访问者
-		respPacket := p.NewReply(respBody)
-		//s.log.Printf("revecived udp packet from %s", dstAddr.String())
-		if *s.cfg.LocalType == "tls" {
-			d, err := goaes.Encrypt(s.UDPKey(), respPacket)
-			if err != nil {
-				s.log.Printf("encrypt udp data fail from %s", dstAddr.String())
-				conn.Close()
-				return
-			}
-			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-			s.udpSC.UDPListener.WriteToUDP(d, srcAddr)
-			s.udpSC.UDPListener.SetDeadline(time.Time{})
-			d = nil
-		} else {
-			s.udpSC.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-			s.udpSC.UDPListener.WriteToUDP(respPacket, srcAddr)
-			s.udpSC.UDPListener.SetDeadline(time.Time{})
-		}
-		s.log.Printf("udp reply:%v", len(respPacket))
-	}
-
-}
 func (s *Socks) socksConnCallback(inConn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -438,7 +270,9 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	if err != nil {
 		methodReq.Reply(socks.Method_NONE_ACCEPTABLE)
 		utils.CloseConn(&inConn)
-		s.log.Printf("new methods request fail,ERR: %s", err)
+		if err != io.EOF {
+			s.log.Printf("new methods request fail,ERR: %s", err)
+		}
 		return
 	}
 
@@ -526,16 +360,7 @@ func (s *Socks) socksConnCallback(inConn net.Conn) {
 	}
 
 }
-func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
-	if *s.cfg.ParentType == "ssh" {
-		utils.CloseConn(inConn)
-		return
-	}
-	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
-	_, port, _ := net.SplitHostPort(s.udpSC.UDPListener.LocalAddr().String())
-	s.log.Printf("proxy udp on %s", net.JoinHostPort(host, port))
-	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
-}
+
 func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
 	var outConn net.Conn
 	var err interface{}
@@ -554,7 +379,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 			return
 		}
 		if *s.cfg.Always {
-			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+			outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr(), true)
 		} else {
 			if *s.cfg.Parent != "" {
 				host, _, _ := net.SplitHostPort(request.Addr())
@@ -562,12 +387,14 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 				if utils.IsIternalIP(host, *s.cfg.Always) {
 					useProxy = false
 				} else {
-					k := s.Resolve(request.Addr())
-					s.checker.Add(request.Addr(), k)
-					useProxy, _, _ = s.checker.IsBlocked(k)
+					var isInMap bool
+					useProxy, isInMap, _, _ = s.checker.IsBlocked(request.Addr())
+					if !isInMap {
+						s.checker.Add(request.Addr(), s.Resolve(request.Addr()))
+					}
 				}
 				if useProxy {
-					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr())
+					outConn, err = s.getOutConn(methodReq.Bytes(), request.Bytes(), request.Addr(), true)
 				} else {
 					outConn, err = utils.ConnectHost(s.Resolve(request.Addr()), *s.cfg.Timeout)
 				}
@@ -607,7 +434,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	s.userConns.Set(inAddr, inConn)
 }
-func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn net.Conn, err interface{}) {
+func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string, handshake bool) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
 	case "kcp":
 		fallthrough
@@ -634,6 +461,9 @@ func (s *Socks) getOutConn(methodBytes, reqBytes []byte, host string) (outConn n
 			outConn = conncrypt.New(outConn, &conncrypt.Config{
 				Password: *s.cfg.ParentKey,
 			})
+		}
+		if !handshake {
+			return
 		}
 		var buf = make([]byte, 1024)
 		//var n int
@@ -772,7 +602,7 @@ func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
 		if *s.cfg.DNSAddress != "" {
 			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
 		} else {
-			outIPs, err = net.LookupIP(outDomain)
+			outIPs, err = utils.MyLookupIP(outDomain)
 		}
 		if err == nil {
 			for _, ip := range outIPs {
@@ -804,6 +634,7 @@ func (s *Socks) Resolve(address string) string {
 	ip, err := s.domainResolver.Resolve(address)
 	if err != nil {
 		s.log.Printf("dns error %s , ERR:%s", address, err)
+		return address
 	}
 	return ip
 }

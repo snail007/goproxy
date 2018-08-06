@@ -25,7 +25,7 @@ proxy使用gombile实现了一份go代码编译为android和ios平台下面可�
 #### 1.导入包
 
 ```java
-import snail007.proxy.Porxy
+import snail007.proxy.Proxy
 ```
 
 #### 2.启动一个服务
