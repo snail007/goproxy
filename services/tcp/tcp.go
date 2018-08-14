@@ -9,9 +9,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
 
 	"strconv"
 )
@@ -74,7 +74,7 @@ func (s *TCP) StopService() {
 		if e != nil {
 			s.log.Printf("stop tcp service crashed,%s", e)
 		} else {
-			s.log.Printf("service tcp stopped")
+			s.log.Printf("service tcp stoped")
 		}
 	}()
 	s.isStop = true

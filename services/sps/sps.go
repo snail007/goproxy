@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/conncrypt"
-	"github.com/snail007/goproxy/utils/sni"
-	"github.com/snail007/goproxy/utils/socks"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
+	"github.com/visenze/goproxy/utils/conncrypt"
+	"github.com/visenze/goproxy/utils/sni"
+	"github.com/visenze/goproxy/utils/socks"
 )
 
 type SPSArgs struct {
@@ -130,7 +130,7 @@ func (s *SPS) StopService() {
 		if e != nil {
 			s.log.Printf("stop sps service crashed,%s", e)
 		} else {
-			s.log.Printf("service sps stopped")
+			s.log.Printf("service sps stoped")
 		}
 	}()
 	for _, sc := range s.serverChannels {
@@ -276,9 +276,9 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 		var request utils.HTTPRequest
 		(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 		if s.IsBasicAuth() {
-			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, s.log)
+			request, err = utils.NewHTTPRequest(inConn, 1024, true, &s.basicAuth, nil, nil, s.log)
 		} else {
-			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, s.log)
+			request, err = utils.NewHTTPRequest(inConn, 1024, false, nil, nil, nil, s.log)
 		}
 		(*inConn).SetDeadline(time.Time{})
 		if err != nil {

@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
 
 	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
@@ -182,7 +182,7 @@ func (s *MuxServer) StopService() {
 		if e != nil {
 			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			s.log.Printf("service server stopped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true

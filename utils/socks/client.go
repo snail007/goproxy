@@ -72,7 +72,7 @@ func (s *ClientConn) Handshake() error {
 	if err != nil {
 		return errors.New("proxy: failed to parse port number: " + portStr)
 	}
-	if s.network == "tcp" && (port < 1 || port > 0xffff) {
+	if port < 1 || port > 0xffff {
 		return errors.New("proxy: port number out of range: " + portStr)
 	}
 

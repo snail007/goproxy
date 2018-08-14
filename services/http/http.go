@@ -1,23 +1,54 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	logger "log"
 	"net"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/conncrypt"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
+	"github.com/visenze/goproxy/utils/conncrypt"
 
 	"golang.org/x/crypto/ssh"
 )
+
+// LoadConfig - reads and parses config json file
+func LoadConfig(fileName string) *Config {
+	if fileName == "" {
+		fileName = "development" // default config
+	}
+	file, err := os.Open(fmt.Sprintf("./services/http/configs/%s.json", fileName))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	decoder := json.NewDecoder(file)
+	config := Config{}
+	err = decoder.Decode(&config)
+	fmt.Println(fmt.Sprintf("%s.json", fileName))
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	return &config
+}
+
+// Config - stores config values
+type Config struct {
+	SQLEndpoint      string `json:"mysql_endpoint"`
+	SQLCredentials   string `json:"mysql_credentials"`
+	SQLDbName        string `json:"sql_database_name"`
+	PatternTableName string `json:"pattern_table_name"`
+	ProxyTableName   string `json:"proxy_table_name"`
+}
 
 type HTTPArgs struct {
 	Parent              *string
@@ -70,6 +101,8 @@ type HTTP struct {
 	serverChannels []*utils.ServerChannel
 	userConns      utils.ConcurrentMap
 	log            *logger.Logger
+	patternTable   *utils.PatternTableImpl
+	cache          *utils.CacheImpl
 }
 
 func NewHTTP() services.Service {
@@ -137,6 +170,20 @@ func (s *HTTP) CheckArgs() (err error) {
 }
 func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
+	// TODO: Remove hard codes
+	configPath := os.Getenv("DEPLOY_ENV")
+	config := LoadConfig(configPath)
+	sqlConnString := fmt.Sprintf("%s@tcp(%s)/%s", config.SQLCredentials, config.SQLEndpoint, config.SQLDbName)
+	patternTable, err := utils.NewPatternTable(sqlConnString, config.PatternTableName)
+	if err != nil {
+		s.log.Printf("Connect to database failed: %s", err)
+	}
+	s.patternTable = patternTable
+	cache, err := utils.NewCache(sqlConnString, config.ProxyTableName)
+	if err != nil {
+		s.log.Printf("Connect to database failed: %s", err)
+	}
+	s.cache = cache
 	if *s.cfg.Parent != "" {
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
 	}
@@ -185,13 +232,11 @@ func (s *HTTP) StopService() {
 		if e != nil {
 			s.log.Printf("stop http(s) service crashed,%s", e)
 		} else {
-			s.log.Printf("service http(s) stopped")
+			s.log.Printf("service http(s) stoped")
 		}
 	}()
 	s.isStop = true
-	if *s.cfg.Parent != "" {
-		s.checker.Stop()
-	}
+	s.checker.Stop()
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
@@ -261,7 +306,10 @@ func (s *HTTP) callback(inConn net.Conn) {
 	}
 	var err interface{}
 	var req utils.HTTPRequest
-	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth, s.log)
+	t0 := time.Now().UnixNano() / int64(time.Millisecond)
+	req, err = utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth, s.patternTable, s.cache, s.log)
+	t1 := time.Now().UnixNano() / int64(time.Millisecond)
+	s.log.Printf("Time to generate new http request: %d", (t1 - t0))
 	if err != nil {
 		if err != io.EOF {
 			s.log.Printf("decoder error , from %s, ERR:%s", inConn.RemoteAddr(), err)
@@ -270,6 +318,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 		return
 	}
 	address := req.Host
+	s.log.Printf("The address: %s", address)
 	host, _, _ := net.SplitHostPort(address)
 	useProxy := false
 	if !utils.IsIternalIP(host, *s.cfg.Always) {
@@ -288,9 +337,15 @@ func (s *HTTP) callback(inConn net.Conn) {
 		}
 	}
 
+	if req.ParentAddress == "" {
+		useProxy = false
+	} else {
+		useProxy = true
+	}
+
 	s.log.Printf("use proxy : %v, %s", useProxy, address)
 
-	err = s.OutToTCP(useProxy, address, &inConn, &req)
+	err = s.OutToTCP(useProxy, address, &inConn, &req, req.ParentAddress)
 	if err != nil {
 		if *s.cfg.Parent == "" {
 			s.log.Printf("connect to %s fail, ERR:%s", address, err)
@@ -300,11 +355,13 @@ func (s *HTTP) callback(inConn net.Conn) {
 		utils.CloseConn(&inConn)
 	}
 }
-func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (err interface{}) {
+
+func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest, parentAddress string) (err interface{}) {
 	inAddr := (*inConn).RemoteAddr().String()
 	inLocalAddr := (*inConn).LocalAddr().String()
 	//防止死循环
 	if s.IsDeadLoop(inLocalAddr, req.Host) {
+		s.log.Println("There is a deadloop")
 		utils.CloseConn(inConn)
 		err = fmt.Errorf("dead loop detected , %s", req.Host)
 		return
@@ -321,7 +378,10 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 				outConn, err = s.getSSHConn(address)
 			} else {
 				// s.log.Printf("%v", s.outPool)
-				outConn, err = s.outPool.Get()
+				t0 := time.Now().UnixNano() / int64(time.Millisecond)
+				outConn, err = utils.ConnectHost(parentAddress, *s.cfg.Timeout)
+				t1 := time.Now().UnixNano() / int64(time.Millisecond)
+				s.log.Printf("Time to connect to proxy: %d", (t1 - t0))
 			}
 		} else {
 			outConn, err = utils.ConnectHost(s.Resolve(address), *s.cfg.Timeout)
@@ -337,7 +397,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	if err != nil {
 		s.log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
-		return
+		return err
 	}
 	if *s.cfg.ParentCompress {
 		outConn = utils.NewCompConn(outConn)
@@ -348,6 +408,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		})
 	}
 	outAddr := outConn.RemoteAddr().String()
+	t00 := time.Now().UnixNano() / int64(time.Millisecond)
 	//outLocalAddr := outConn.LocalAddr().String()
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
 		//https无上级或者上级非代理,proxy需要响应connect请求,并直连目标
@@ -368,7 +429,8 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			return
 		}
 	}
-
+	t01 := time.Now().UnixNano() / int64(time.Millisecond)
+	s.log.Printf("Time for connection: %d", (t01 - t00))
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
 		s.userConns.Remove(inAddr)
@@ -494,7 +556,7 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 		if *s.cfg.DNSAddress != "" {
 			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
 		} else {
-			outIPs, err = utils.MyLookupIP(outDomain)
+			outIPs, err = net.LookupIP(outDomain)
 		}
 		if err == nil {
 			for _, ip := range outIPs {

@@ -1,0 +1,7 @@
+{
+    "mysql_endpoint": "localhost:3307",
+    "mysql_credentials": "root:root",
+    "proxy_table_name": "proxy",
+    "pattern_table_name": "pattern_table",
+    "sql_database_name": "taskdb"
+}

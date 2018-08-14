@@ -48,7 +48,7 @@ PR needs to explain what changes have been made and why you change them.
 - ...  
 
  
-This page is the v5.3 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
+This page is the v5.2 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -161,7 +161,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.3/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.0/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -173,12 +173,12 @@ chmod +x install.sh
 
 #### Docker installation 
 
-Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy version 5.0.
 
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.3:
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 4.7:
 
 ```
-ARG GOPROXY_VERSION=v5.3
+ARG GOPROXY_VERSION=v5.0
 ```
 
 To Run:
@@ -188,12 +188,12 @@ sudo docker build .
 ```
 2. Tag the image:
 ```
-sudo docker tag <id from previous step>  snail007/goproxy:latest
+sudo docker tag <id from previous step>  goproxy/goproxy:latest
 ```
 3. Run! 
 Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
 ```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 goproxy/goproxy:latest
 ```
 4. View logs:
 ```
