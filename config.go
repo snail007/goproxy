@@ -7,23 +7,19 @@ import (
 	logger "log"
 	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 	"runtime/pprof"
 	"time"
 
-	sdk "github.com/snail007/goproxy/sdk/android-ios"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
 
-	httpx "github.com/snail007/goproxy/services/http"
-	keygenx "github.com/snail007/goproxy/services/keygen"
-	mux "github.com/snail007/goproxy/services/mux"
-	socksx "github.com/snail007/goproxy/services/socks"
-	spsx "github.com/snail007/goproxy/services/sps"
-	tcpx "github.com/snail007/goproxy/services/tcp"
-	tunnel "github.com/snail007/goproxy/services/tunnel"
-	udpx "github.com/snail007/goproxy/services/udp"
+	httpx "github.com/visenze/goproxy/services/http"
+	keygenx "github.com/visenze/goproxy/services/keygen"
+	mux "github.com/visenze/goproxy/services/mux"
+	socksx "github.com/visenze/goproxy/services/socks"
+	spsx "github.com/visenze/goproxy/services/sps"
+	tcpx "github.com/visenze/goproxy/services/tcp"
+	tunnel "github.com/visenze/goproxy/services/tunnel"
 
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
@@ -48,10 +44,8 @@ func initConfig() (err error) {
 	muxServerArgs := mux.MuxServerArgs{}
 	muxClientArgs := mux.MuxClientArgs{}
 	muxBridgeArgs := mux.MuxBridgeArgs{}
-	udpArgs := udpx.UDPArgs{}
 	socksArgs := socksx.SocksArgs{}
 	spsArgs := spsx.SPSArgs{}
-	dnsArgs := sdk.DNSArgs{}
 	keygenArgs := keygenx.KeygenArgs{}
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 
@@ -82,7 +76,7 @@ func initConfig() (err error) {
 
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
-	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	httpArgs.Parent = http.Flag("parent", "parent address, such as: \"209.205.219.26:3000\"").Default("").Short('P').String()
 	httpArgs.CaCertFile = http.Flag("ca", "ca cert file for tls").Default("").String()
 	httpArgs.CertFile = http.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	httpArgs.KeyFile = http.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -124,16 +118,6 @@ func initConfig() (err error) {
 	tcpArgs.LocalType = tcp.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	tcpArgs.CheckParentInterval = tcp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	tcpArgs.Local = tcp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-
-	//########udp#########
-	udp := app.Command("udp", "proxy on udp mode")
-	udpArgs.Parent = udp.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
-	udpArgs.CertFile = udp.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
-	udpArgs.KeyFile = udp.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
-	udpArgs.Timeout = udp.Flag("timeout", "tcp timeout milliseconds when connect to parent proxy").Short('t').Default("2000").Int()
-	udpArgs.ParentType = udp.Flag("parent-type", "parent protocol type <tls|tcp|udp>").Short('T').Enum("tls", "tcp", "udp")
-	udpArgs.CheckParentInterval = udp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
-	udpArgs.Local = udp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
 
 	//########mux-server#########
 	muxServer := app.Command("server", "proxy on mux server mode")
@@ -252,24 +236,6 @@ func initConfig() (err error) {
 	spsArgs.DisableHTTP = sps.Flag("disable-http", "disable http(s) proxy").Default("false").Bool()
 	spsArgs.DisableSocks5 = sps.Flag("disable-socks", "disable socks proxy").Default("false").Bool()
 
-	//########dns#########
-	dns := app.Command("dns", "proxy on dns server mode")
-	dnsArgs.Parent = dns.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
-	dnsArgs.CertFile = dns.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
-	dnsArgs.KeyFile = dns.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
-	dnsArgs.CaCertFile = dns.Flag("ca", "ca cert file for tls").Default("").String()
-	dnsArgs.Timeout = dns.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('i').Default("2000").Int()
-	dnsArgs.ParentType = dns.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
-	dnsArgs.Local = dns.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":53").String()
-	dnsArgs.ParentServiceType = dns.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
-	dnsArgs.RemoteDNSAddress = dns.Flag("dns-address", "remote dns for resolve doamin").Short('q').Default("8.8.8.8:53").String()
-	dnsArgs.DNSTTL = dns.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
-	dnsArgs.ParentAuth = dns.Flag("parent-auth", "parent socks auth username and password, such as: -A user1:pass1").Short('A').String()
-	dnsArgs.ParentKey = dns.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
-	dnsArgs.ParentCompress = dns.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
-	dnsArgs.CacheFile = dns.Flag("cache-file", "dns result cached file").Short('f').Default(filepath.Join(path.Dir(os.Args[0]), "cache.dat")).String()
-	dnsArgs.LocalSocks5Port = dns.Flag("socks-port", "local socks5 port").Short('s').Default("65501").String()
-
 	//########keygen#########
 	keygen := app.Command("keygen", "create certificate for proxy")
 	keygenArgs.CommonName = keygen.Flag("cn", "common name").Short('n').Default("").String()
@@ -334,7 +300,6 @@ func initConfig() (err error) {
 	muxBridgeArgs.KCP = kcpArgs
 	muxServerArgs.KCP = kcpArgs
 	muxClientArgs.KCP = kcpArgs
-	dnsArgs.KCP = kcpArgs
 
 	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
 
@@ -386,7 +351,6 @@ func initConfig() (err error) {
 			for {
 				if cmd != nil {
 					cmd.Process.Kill()
-					time.Sleep(time.Second * 5)
 				}
 				cmd = exec.Command(os.Args[0], args...)
 				cmdReaderStderr, err := cmd.StderrPipe()
@@ -422,6 +386,7 @@ func initConfig() (err error) {
 					continue
 				}
 				log.Printf("worker %s [PID] %d unexpected exited, restarting...\n", os.Args[0], pid)
+				time.Sleep(time.Second * 5)
 			}
 		}()
 		return
@@ -443,8 +408,6 @@ func initConfig() (err error) {
 		services.Regist(serviceName, httpx.NewHTTP(), httpArgs, log)
 	case "tcp":
 		services.Regist(serviceName, tcpx.NewTCP(), tcpArgs, log)
-	case "udp":
-		services.Regist(serviceName, udpx.NewUDP(), udpArgs, log)
 	case "tserver":
 		services.Regist(serviceName, tunnel.NewTunnelServerManager(), tunnelServerArgs, log)
 	case "tclient":
@@ -461,8 +424,6 @@ func initConfig() (err error) {
 		services.Regist(serviceName, socksx.NewSocks(), socksArgs, log)
 	case "sps":
 		services.Regist(serviceName, spsx.NewSPS(), spsArgs, log)
-	case "dns":
-		services.Regist(serviceName, sdk.NewDNS(), dnsArgs, log)
 	case "keygen":
 		services.Regist(serviceName, keygenx.NewKeygen(), keygenArgs, log)
 	}

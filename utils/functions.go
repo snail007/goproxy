@@ -18,19 +18,17 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/services/kcpcfg"
 
 	"golang.org/x/crypto/pbkdf2"
 
 	"strconv"
 	"strings"
 	"time"
-	"context"
 
-	"github.com/snail007/goproxy/utils/id"
+	"github.com/visenze/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
-	
 )
 
 func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
@@ -423,6 +421,21 @@ func TlsBytes(cert, key string) (certBytes, keyBytes []byte, err error) {
 	}
 	return
 }
+
+func GetIPFromAPI(apiURL string) ([]string, error) {
+	res, err := http.Get(apiURL)
+	if err != nil {
+		return nil, err
+	}
+	ips, err := ioutil.ReadAll(res.Body)
+	ipStrings := strings.Split(string(ips), "\r\n")
+	res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return ipStrings, nil
+}
+
 func GetKCPBlock(method, key string) (block kcp.BlockCrypt) {
 	pass := pbkdf2.Key([]byte(key), []byte(key), 4096, 32, sha1.New)
 	switch method {
@@ -499,7 +512,7 @@ func IsIternalIP(domainOrIP string, always bool) bool {
 	}
 
 	if isDomain {
-		outIPs, err = MyLookupIP(domainOrIP)
+		outIPs, err = net.LookupIP(domainOrIP)
 	} else {
 		outIPs = []net.IP{net.ParseIP(domainOrIP)}
 	}
@@ -634,26 +647,3 @@ func InsertProxyHeaders(head []byte, headers string) []byte {
 // 	}
 // 	return
 // }
-
-
-/*
-net.LookupIP may cause  deadlock in windows
-https://github.com/golang/go/issues/24178
-*/
-func MyLookupIP(host string) ([]net.IP, error) {
-
-	ctx ,cancel := context.WithTimeout(context.Background(),time.Second *time.Duration(3))
-	defer func() {
-		cancel()
-		//ctx.Done()
-	}()
-	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, host)
-	if err != nil {
-		return nil, err
-	}
-	ips := make([]net.IP, len(addrs))
-	for i, ia := range addrs {
-		ips[i] = ia.IP
-	}
-	return ips, nil
-}

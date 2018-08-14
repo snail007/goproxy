@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/utils"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -70,7 +70,7 @@ func (s *TunnelClient) StopService() {
 		if e != nil {
 			s.log.Printf("stop tclient service crashed,%s", e)
 		} else {
-			s.log.Printf("service tclient stopped")
+			s.log.Printf("service tclient stoped")
 		}
 	}()
 	s.isStop = true

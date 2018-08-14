@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/conncrypt"
-	"github.com/snail007/goproxy/utils/socks"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
+	"github.com/visenze/goproxy/utils/conncrypt"
+	"github.com/visenze/goproxy/utils/socks"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -146,9 +146,7 @@ func (s *Socks) InitService() (err error) {
 	if *s.cfg.DNSAddress != "" {
 		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
-	if *s.cfg.Parent != "" {
-		s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
-	}
+	s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
 	if *s.cfg.ParentType == "ssh" {
 		e := s.ConnectSSH()
 		if e != nil {
@@ -191,13 +189,11 @@ func (s *Socks) StopService() {
 		if e != nil {
 			s.log.Printf("stop socks service crashed,%s", e)
 		} else {
-			s.log.Printf("service socks stopped")
+			s.log.Printf("service socks stoped")
 		}
 	}()
 	s.isStop = true
-	if *s.cfg.Parent != "" {
-		s.checker.Stop()
-	}
+	s.checker.Stop()
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
@@ -602,7 +598,7 @@ func (s *Socks) IsDeadLoop(inLocalAddr string, host string) bool {
 		if *s.cfg.DNSAddress != "" {
 			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
 		} else {
-			outIPs, err = utils.MyLookupIP(outDomain)
+			outIPs, err = net.LookupIP(outDomain)
 		}
 		if err == nil {
 			for _, ip := range outIPs {

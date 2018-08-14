@@ -10,7 +10,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/services/kcpcfg"
 
 	kcp "github.com/xtaci/kcp-go"
 )
