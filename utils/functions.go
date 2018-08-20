@@ -18,7 +18,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/services/kcpcfg"
 
 	"golang.org/x/crypto/pbkdf2"
 
@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/utils/id"
+	"github.com/visenze/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -421,6 +421,21 @@ func TlsBytes(cert, key string) (certBytes, keyBytes []byte, err error) {
 	}
 	return
 }
+
+func GetIPFromAPI(apiURL string) ([]string, error) {
+	res, err := http.Get(apiURL)
+	if err != nil {
+		return nil, err
+	}
+	ips, err := ioutil.ReadAll(res.Body)
+	ipStrings := strings.Split(string(ips), "\r\n")
+	res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return ipStrings, nil
+}
+
 func GetKCPBlock(method, key string) (block kcp.BlockCrypt) {
 	pass := pbkdf2.Key([]byte(key), []byte(key), 4096, 32, sha1.New)
 	switch method {

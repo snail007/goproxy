@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/conncrypt"
-	"github.com/snail007/goproxy/utils/socks"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
+	"github.com/visenze/goproxy/utils/conncrypt"
+	"github.com/visenze/goproxy/utils/socks"
 	"golang.org/x/crypto/ssh"
 )
 

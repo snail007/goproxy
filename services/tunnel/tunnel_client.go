@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/utils"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )

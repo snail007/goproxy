@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
+	"github.com/visenze/goproxy/services"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils"
 
 	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"

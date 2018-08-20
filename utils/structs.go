@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils/sni"
+	"github.com/visenze/goproxy/services/kcpcfg"
+	"github.com/visenze/goproxy/utils/sni"
 
 	"github.com/golang/snappy"
 	"github.com/miekg/dns"
@@ -331,24 +331,28 @@ func (ba *BasicAuth) Total() (n int) {
 }
 
 type HTTPRequest struct {
-	HeadBuf     []byte
-	conn        *net.Conn
-	Host        string
-	Method      string
-	URL         string
-	hostOrURL   string
-	isBasicAuth bool
-	basicAuth   *BasicAuth
-	log         *logger.Logger
-	IsSNI       bool
+	HeadBuf       []byte
+	conn          *net.Conn
+	Host          string
+	Method        string
+	URL           string
+	hostOrURL     string
+	isBasicAuth   bool
+	basicAuth     *BasicAuth
+	log           *logger.Logger
+	IsSNI         bool
+	ParentAddress string
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, patternTable *PatternTableImpl, cache *CacheImpl, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
 	n := 0
 	req = HTTPRequest{
 		conn: inConn,
 		log:  log,
+	}
+	for i, line := range header {
+		log.Printf("Header line %d is: %s", i, line)
 	}
 	if header != nil && len(header) == 1 && len(header[0]) > 1 {
 		buf = header[0]
@@ -365,7 +369,6 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	}
 
 	req.HeadBuf = buf[:n]
-	//fmt.Println(string(req.HeadBuf))
 	//try sni
 	serverName, err0 := sni.ServerNameFromBytes(req.HeadBuf)
 	if err0 == nil {
@@ -393,6 +396,17 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	req.basicAuth = basicAuth
 	log.Printf("%s:%s", req.Method, req.hostOrURL)
 
+	host := req.getHeader("host")
+	if req.IsHTTPS() && req.Method == "CONNECT" {
+		headerLines := strings.Split(string(req.HeadBuf[:n]), "\r\n")
+		lines := strings.Split(headerLines[0], ":")
+		lines = strings.Split(lines[0], " ")
+		host = lines[1]
+	}
+	ip, user, pass := PrepareOutAddr(host, patternTable, cache, log)
+	req.ParentAddress = ip
+	req.HeadBuf = append(req.HeadBuf, GetBasicAuthHeader(user, pass)...)
+
 	if req.IsHTTPS() {
 		err = req.HTTPS()
 	} else {
@@ -400,6 +414,31 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	}
 	return
 }
+
+func GetBasicAuthHeader(user string, pass string) string {
+	auth := user + ":" + pass
+	credential := base64.StdEncoding.EncodeToString([]byte(auth))
+	header := "Proxy-Authorization: Basic " + credential + "\r\n"
+	return header
+}
+
+func PrepareOutAddr(address string, patternTable *PatternTableImpl, cache *CacheImpl, log *logger.Logger) (string, string, string) {
+	str := strings.Split(address, ":")
+	url := str[0]
+	proxyName, useProxy := patternTable.Get(url)
+	log.Printf("Checking: proxyName: %s, useProxy: %t", proxyName, useProxy)
+	if useProxy {
+		proxy, err := cache.GetProxy(proxyName)
+		if err != nil {
+			log.Printf("Get proxy failed: %s", err)
+		}
+		ip := fmt.Sprintf((proxy.Endpoint + ":%d"), proxy.Port)
+		log.Printf("The proxy ip is %s", ip)
+		return ip, proxy.User, proxy.Pass
+	}
+	return "", "", ""
+}
+
 func (req *HTTPRequest) HTTP() (err error) {
 	if req.isBasicAuth {
 		err = req.BasicAuth()
@@ -476,7 +515,6 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 		return
 	}
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
-	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
 		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\n\r\nProxy Authentication Required", "407")
 		CloseConn(req.conn)
