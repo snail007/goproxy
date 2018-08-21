@@ -22,15 +22,14 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
+	"context"
 	"strconv"
 	"strings"
 	"time"
-	"context"
 
 	"github.com/snail007/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
-	
 )
 
 func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
@@ -210,8 +209,13 @@ func CloseConn(conn *net.Conn) {
 		(*conn).Close()
 	}
 }
-func GetAllInterfaceAddr() ([]net.IP, error) {
 
+var allInterfaceAddrCache []net.IP
+
+func GetAllInterfaceAddr() ([]net.IP, error) {
+	if allInterfaceAddrCache != nil {
+		return allInterfaceAddrCache, nil
+	}
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -252,6 +256,7 @@ func GetAllInterfaceAddr() ([]net.IP, error) {
 		return nil, fmt.Errorf("no address Found, net.InterfaceAddrs: %v", addresses)
 	}
 	//only need first
+	allInterfaceAddrCache = addresses
 	return addresses, nil
 }
 func UDPPacket(srcAddr string, packet []byte) []byte {
@@ -635,14 +640,13 @@ func InsertProxyHeaders(head []byte, headers string) []byte {
 // 	return
 // }
 
-
 /*
 net.LookupIP may cause  deadlock in windows
 https://github.com/golang/go/issues/24178
 */
 func MyLookupIP(host string) ([]net.IP, error) {
 
-	ctx ,cancel := context.WithTimeout(context.Background(),time.Second *time.Duration(3))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(3))
 	defer func() {
 		cancel()
 		//ctx.Done()
