@@ -3,6 +3,7 @@ package proxy
 import (
 	"crypto/sha1"
 	"fmt"
+	"io/ioutil"
 	logger "log"
 	"os"
 	"path"
@@ -77,6 +78,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	app.Author("snail").Version(SDK_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
+	nolog := app.Flag("nolog", "turn off logging").Default("false").Bool()
 	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
 	kcpArgs.Crypt = app.Flag("kcp-method", "encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none").Default("aes").Enum("aes", "aes-128", "aes-192", "salsa20", "blowfish", "twofish", "cast5", "3des", "tea", "xtea", "xor", "sm4", "none")
 	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast3").Enum("fast3", "fast2", "fast", "normal", "manual")
@@ -357,7 +359,9 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	log.SetFlags(flags)
 
 	if loggerCallback == nil {
-		if *logfile != "" {
+		if *nolog {
+			log.SetOutput(ioutil.Discard)
+		} else if *logfile != "" {
 			f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if e != nil {
 				log.Fatal(e)
