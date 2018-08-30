@@ -50,6 +50,7 @@ PR needs to explain what changes have been made and why you change them.
  
 This page is the v5.4 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
+
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
 [Click to join the proxy group of telegram](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)    
@@ -164,6 +165,7 @@ Download address: https://github.com/snail007/goproxy/releases
 ```shell  
 cd /root/proxy/  
 wget https://github.com/snail007/goproxy/releases/download/v5.4/proxy-linux-amd64.tar.gz  
+
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  

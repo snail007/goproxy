@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
@@ -8,14 +9,15 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"net"
 	"net/url"
-	"snail007/proxy/services/kcpcfg"
-	"snail007/proxy/utils/sni"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/sni"
 
 	"github.com/golang/snappy"
 	"github.com/miekg/dns"
@@ -28,27 +30,26 @@ type Checker struct {
 	interval   int64
 	timeout    int
 	isStop     bool
+	log        *logger.Logger
 }
 type CheckerItem struct {
-	IsHTTPS      bool
-	Method       string
-	URL          string
 	Domain       string
-	Host         string
-	Data         []byte
+	Address      string
 	SuccessCount uint
 	FailCount    uint
+	Lasttime     int64
 }
 
 //NewChecker args:
 //timeout : tcp timeout milliseconds ,connect to host
 //interval: recheck domain interval seconds
-func NewChecker(timeout int, interval int64, blockedFile, directFile string) Checker {
+func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger) Checker {
 	ch := Checker{
 		data:     NewConcurrentMap(),
 		interval: interval,
 		timeout:  timeout,
 		isStop:   false,
+		log:      log,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -70,7 +71,7 @@ func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 	if PathExists(f) {
 		_contents, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Printf("load file err:%s", err)
+			c.log.Printf("load file err:%s", err)
 			return
 		}
 		for _, line := range strings.Split(string(_contents), "\n") {
@@ -96,17 +97,23 @@ func (c *Checker) start() {
 						//log.Printf("check %s", item.Host)
 						var conn net.Conn
 						var err error
-						conn, err = ConnectHost(item.Host, c.timeout)
+						var now = time.Now().Unix()
+						conn, err = ConnectHost(item.Address, c.timeout)
 						if err == nil {
 							conn.SetDeadline(time.Now().Add(time.Millisecond))
 							conn.Close()
+						}
+						if now-item.Lasttime > 1800 {
+							item.FailCount = 0
+							item.SuccessCount = 0
 						}
 						if err != nil {
 							item.FailCount = item.FailCount + 1
 						} else {
 							item.SuccessCount = item.SuccessCount + 1
 						}
-						c.data.Set(item.Host, item)
+						item.Lasttime = now
+						c.data.Set(item.Domain, item)
 					}
 				}(v.(CheckerItem))
 			}
@@ -119,37 +126,42 @@ func (c *Checker) start() {
 }
 func (c *Checker) isNeedCheck(item CheckerItem) bool {
 	var minCount uint = 5
-	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount) ||
-		(item.FailCount >= minCount && item.SuccessCount > item.FailCount) ||
-		c.domainIsInMap(item.Host, false) ||
-		c.domainIsInMap(item.Host, true) {
+	var now = time.Now().Unix()
+	if (item.SuccessCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
+		(item.FailCount >= minCount && item.SuccessCount > item.FailCount && now-item.Lasttime < 1800) ||
+		c.domainIsInMap(item.Domain, false) ||
+		c.domainIsInMap(item.Domain, true) {
 		return false
 	}
 	return true
 }
-func (c *Checker) IsBlocked(address string) (blocked bool, failN, successN uint) {
-	if c.domainIsInMap(address, true) {
-		//log.Printf("%s in blocked ? true", address)
-		return true, 0, 0
+func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, successN uint) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
 	}
-	if c.domainIsInMap(address, false) {
+	if c.domainIsInMap(domain, true) {
+		//log.Printf("%s in blocked ? true", address)
+		return true, true, 0, 0
+	}
+	if c.domainIsInMap(domain, false) {
 		//log.Printf("%s in direct ? true", address)
-		return false, 0, 0
+		return false, true, 0, 0
 	}
 
-	_item, ok := c.data.Get(address)
+	_item, ok := c.data.Get(domain)
 	if !ok {
 		//log.Printf("%s not in map, blocked true", address)
-		return true, 0, 0
+		return true, false, 0, 0
 	}
 	item := _item.(CheckerItem)
 
-	return item.FailCount >= item.SuccessCount, item.FailCount, item.SuccessCount
+	return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
 }
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
 	if err != nil {
-		log.Printf("blocked check , url parse err:%s", err)
+		c.log.Printf("blocked check , url parse err:%s", err)
 		return true
 	}
 	domainSlice := strings.Split(u.Hostname(), ".")
@@ -169,15 +181,20 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	return false
 }
-func (c *Checker) Add(address string) {
-	if c.domainIsInMap(address, false) || c.domainIsInMap(address, true) {
+func (c *Checker) Add(domain, address string) {
+	h, _, _ := net.SplitHostPort(domain)
+	if h != "" {
+		domain = h
+	}
+	if c.domainIsInMap(domain, false) || c.domainIsInMap(domain, true) {
 		return
 	}
 	var item CheckerItem
 	item = CheckerItem{
-		Host: address,
+		Domain:  domain,
+		Address: address,
 	}
-	c.data.SetIfAbsent(item.Host, item)
+	c.data.SetIfAbsent(item.Domain, item)
 }
 
 type BasicAuth struct {
@@ -187,12 +204,14 @@ type BasicAuth struct {
 	authTimeout int
 	authRetry   int
 	dns         *DomainResolver
+	log         *logger.Logger
 }
 
-func NewBasicAuth(dns *DomainResolver) BasicAuth {
+func NewBasicAuth(dns *DomainResolver, log *logger.Logger) BasicAuth {
 	return BasicAuth{
 		data: NewConcurrentMap(),
 		dns:  dns,
+		log:  log,
 	}
 }
 func (ba *BasicAuth) SetAuthURL(URL string, code, timeout, retry int) {
@@ -245,7 +264,7 @@ func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
 			if err == nil {
 				return true
 			}
-			log.Printf("%s", err)
+			ba.log.Printf("%s", err)
 		}
 		return false
 	}
@@ -294,7 +313,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
 		}
 		if err != nil && tryCount < ba.authRetry {
-			log.Print(err)
+			ba.log.Print(err)
 			time.Sleep(time.Second * 2)
 		}
 		tryCount++
@@ -320,13 +339,16 @@ type HTTPRequest struct {
 	hostOrURL   string
 	isBasicAuth bool
 	basicAuth   *BasicAuth
+	log         *logger.Logger
+	IsSNI       bool
 }
 
-func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, header ...[]byte) (req HTTPRequest, err error) {
+func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *BasicAuth, log *logger.Logger, header ...[]byte) (req HTTPRequest, err error) {
 	buf := make([]byte, bufSize)
 	n := 0
 	req = HTTPRequest{
 		conn: inConn,
+		log:  log,
 	}
 	if header != nil && len(header) == 1 && len(header[0]) > 1 {
 		buf = header[0]
@@ -350,6 +372,7 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 		//sni success
 		req.Method = "SNI"
 		req.hostOrURL = "https://" + serverName + ":443"
+		req.IsSNI = true
 	} else {
 		//sni fail , try http
 		index := bytes.IndexByte(req.HeadBuf, '\n')
@@ -419,7 +442,7 @@ func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
 
 	authorization = strings.Trim(authorization, " \r\n\t")
 	if authorization == "" {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized", "407")
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"\"\r\n\r\nProxy Authentication Required", "407")
 		CloseConn(req.conn)
 		err = errors.New("require auth header data")
 		return
@@ -455,7 +478,7 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Unauthorized\r\n\r\nUnauthorized", "407")
+		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\n\r\nProxy Authentication Required", "407")
 		CloseConn(req.conn)
 		err = fmt.Errorf("basic auth fail")
 		return
@@ -478,10 +501,10 @@ func (req *HTTPRequest) getHeader(key string) (val string) {
 	lines := strings.Split(string(req.HeadBuf), "\r\n")
 	//log.Println(lines)
 	for _, line := range lines {
-		line := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
-		if len(line) == 2 {
-			k := strings.ToUpper(strings.Trim(line[0], " "))
-			v := strings.Trim(line[1], " ")
+		hline := strings.SplitN(strings.Trim(line, "\r\n "), ":", 2)
+		if len(hline) == 2 {
+			k := strings.ToUpper(strings.Trim(hline[0], " "))
+			v := strings.Trim(hline[1], " ")
 			if key == k {
 				val = v
 				return
@@ -546,12 +569,14 @@ func (op *OutConn) Get() (conn net.Conn, err error) {
 type ConnManager struct {
 	pool ConcurrentMap
 	l    *sync.Mutex
+	log  *logger.Logger
 }
 
-func NewConnManager() ConnManager {
+func NewConnManager(log *logger.Logger) ConnManager {
 	cm := ConnManager{
 		pool: NewConcurrentMap(),
 		l:    &sync.Mutex{},
+		log:  log,
 	}
 	return cm
 }
@@ -568,7 +593,7 @@ func (cm *ConnManager) Add(key, ID string, conn *net.Conn) {
 			(*v.(*net.Conn)).Close()
 		}
 		conns.Set(ID, conn)
-		log.Printf("%s conn added", key)
+		cm.log.Printf("%s conn added", key)
 		return conns
 	})
 }
@@ -579,7 +604,7 @@ func (cm *ConnManager) Remove(key string) {
 		conns.IterCb(func(key string, v interface{}) {
 			CloseConn(v.(*net.Conn))
 		})
-		log.Printf("%s conns closed", key)
+		cm.log.Printf("%s conns closed", key)
 	}
 	cm.pool.Remove(key)
 }
@@ -594,7 +619,7 @@ func (cm *ConnManager) RemoveOne(key string, ID string) {
 			(*v.(*net.Conn)).Close()
 			conns.Remove(ID)
 			cm.pool.Set(key, conns)
-			log.Printf("%s %s conn closed", key, ID)
+			cm.log.Printf("%s %s conn closed", key, ID)
 		}
 	}
 }
@@ -650,6 +675,7 @@ type DomainResolver struct {
 	ttl         int
 	dnsAddrress string
 	data        ConcurrentMap
+	log         *logger.Logger
 }
 type DomainResolverItem struct {
 	ip        string
@@ -657,12 +683,12 @@ type DomainResolverItem struct {
 	expiredAt int64
 }
 
-func NewDomainResolver(dnsAddrress string, ttl int) DomainResolver {
-
+func NewDomainResolver(dnsAddrress string, ttl int, log *logger.Logger) DomainResolver {
 	return DomainResolver{
 		ttl:         ttl,
 		dnsAddrress: dnsAddrress,
 		data:        NewConcurrentMap(),
+		log:         log,
 	}
 }
 func (a *DomainResolver) MustResolve(address string) (ip string) {
@@ -677,7 +703,7 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 		if port != "" {
 			ip = net.JoinHostPort(ip, port)
 		}
-		log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
+		a.log.Printf("dns:%s->%s,cache:%s", address, ip, fromCache)
 		//a.PrintData()
 	}()
 	if strings.Contains(domain, ":") {
@@ -739,7 +765,7 @@ func (a *DomainResolver) Resolve(address string) (ip string, err error) {
 func (a *DomainResolver) PrintData() {
 	for k, item := range a.data.Items() {
 		d := item.(*DomainResolverItem)
-		fmt.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
+		a.log.Printf("%s:ip[%s],domain[%s],expired at[%d]\n", k, (*d).ip, (*d).domain, (*d).expiredAt)
 	}
 }
 func NewCompStream(conn net.Conn) *CompStream {
@@ -791,4 +817,34 @@ func (c *CompStream) SetReadDeadline(t time.Time) error {
 }
 func (c *CompStream) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
+}
+
+type BufferedConn struct {
+	r        *bufio.Reader
+	net.Conn // So that most methods are embedded
+}
+
+func NewBufferedConn(c net.Conn) BufferedConn {
+	return BufferedConn{bufio.NewReader(c), c}
+}
+
+func NewBufferedConnSize(c net.Conn, n int) BufferedConn {
+	return BufferedConn{bufio.NewReaderSize(c, n), c}
+}
+
+func (b BufferedConn) Peek(n int) ([]byte, error) {
+	return b.r.Peek(n)
+}
+
+func (b BufferedConn) Read(p []byte) (int, error) {
+	return b.r.Read(p)
+}
+func (b BufferedConn) ReadByte() (byte, error) {
+	return b.r.ReadByte()
+}
+func (b BufferedConn) UnreadByte() error {
+	return b.r.UnreadByte()
+}
+func (b BufferedConn) Buffered() int {
+	return b.r.Buffered()
 }

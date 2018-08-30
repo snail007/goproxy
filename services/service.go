@@ -2,43 +2,47 @@ package services
 
 import (
 	"fmt"
+	logger "log"
 	"runtime/debug"
+	"sync"
 )
 
 type Service interface {
-	Start(args interface{}) (err error)
+	Start(args interface{}, log *logger.Logger) (err error)
 	Clean()
 }
 type ServiceItem struct {
 	S    Service
 	Args interface{}
 	Name string
+	Log  *logger.Logger
 }
 
-var servicesMap = map[string]*ServiceItem{}
+var servicesMap = sync.Map{}
 
-func Regist(name string, s Service, args interface{}) {
+func Regist(name string, s Service, args interface{}, log *logger.Logger) {
 	Stop(name)
-	servicesMap[name] = &ServiceItem{
+	servicesMap.Store(name, &ServiceItem{
 		S:    s,
 		Args: args,
 		Name: name,
-	}
+		Log:  log,
+	})
 }
 func GetService(name string) *ServiceItem {
-	if s, ok := servicesMap[name]; ok && s.S != nil {
-		return s
+	if s, ok := servicesMap.Load(name); ok && s.(*ServiceItem).S != nil {
+		return s.(*ServiceItem)
 	}
 	return nil
 
 }
 func Stop(name string) {
-	if s, ok := servicesMap[name]; ok && s.S != nil {
-		s.S.Clean()
+	if s, ok := servicesMap.Load(name); ok && s.(*ServiceItem).S != nil {
+		s.(*ServiceItem).S.Clean()
 	}
 }
-func Run(name string, args ...interface{}) (service *ServiceItem, err error) {
-	service, ok := servicesMap[name]
+func Run(name string, args interface{}) (service *ServiceItem, err error) {
+	_service, ok := servicesMap.Load(name)
 	if ok {
 		defer func() {
 			e := recover()
@@ -46,10 +50,11 @@ func Run(name string, args ...interface{}) (service *ServiceItem, err error) {
 				err = fmt.Errorf("%s servcie crashed, ERR: %s\ntrace:%s", name, e, string(debug.Stack()))
 			}
 		}()
-		if len(args) == 1 {
-			err = service.S.Start(args[0])
+		service = _service.(*ServiceItem)
+		if args != nil {
+			err = service.S.Start(args, service.Log)
 		} else {
-			err = service.S.Start(service.Args)
+			err = service.S.Start(service.Args, service.Log)
 		}
 		if err != nil {
 			err = fmt.Errorf("%s servcie fail, ERR: %s", name, err)

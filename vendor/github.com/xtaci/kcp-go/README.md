@@ -169,4 +169,4 @@ A: A standalone `agent` or `gate` server for kcp-go is suggested, not only for C
 
 1. https://github.com/xtaci/libkcp -- FEC enhanced KCP session library for iOS/Android in C++
 2. https://github.com/skywind3000/kcp -- A Fast and Reliable ARQ Protocol
-3. https://github.com/templexxx/reedsolomon -- Reed-Solomon Erasure Coding in Go
+3. https://github.com/klauspost/reedsolomon -- Reed-Solomon Erasure Coding in Go

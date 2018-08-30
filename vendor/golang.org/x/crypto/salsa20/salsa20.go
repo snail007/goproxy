@@ -19,11 +19,12 @@ This package also implements XSalsa20: a version of Salsa20 with a 24-byte
 nonce as specified in https://cr.yp.to/snuffle/xsalsa-20081128.pdf. Simply
 passing a 24-byte slice as the nonce triggers XSalsa20.
 */
-package salsa20
+package salsa20 // import "golang.org/x/crypto/salsa20"
 
 // TODO(agl): implement XORKeyStream12 and XORKeyStream8 - the reduced round variants of Salsa20.
 
 import (
+	"golang.org/x/crypto/internal/subtle"
 	"golang.org/x/crypto/salsa20/salsa"
 )
 
@@ -32,7 +33,10 @@ import (
 // be either 8 or 24 bytes long.
 func XORKeyStream(out, in []byte, nonce []byte, key *[32]byte) {
 	if len(out) < len(in) {
-		in = in[:len(out)]
+		panic("salsa20: output smaller than input")
+	}
+	if subtle.InexactOverlap(out[:len(in)], in) {
+		panic("salsa20: invalid buffer overlap")
 	}
 
 	var subNonce [16]byte

@@ -12,25 +12,27 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	logger "log"
 	"math/rand"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
-	"snail007/proxy/services/kcpcfg"
+
+	"github.com/snail007/goproxy/services/kcpcfg"
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"snail007/proxy/utils/id"
+	"context"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/utils/id"
+
 	kcp "github.com/xtaci/kcp-go"
 )
 
-func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{})) {
+func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -68,11 +70,14 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 		}
 		src.Close()
 		dst.Close()
-		fn(err)
+		if fn != nil {
+			fn(err)
+		}
 	}()
 }
 func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
-	buf := make([]byte, 32*1024)
+	buf := LeakyBuffer.Get()
+	defer LeakyBuffer.Put(buf)
 	n := 0
 	for {
 		n, err = src.Read(buf)
@@ -103,6 +108,9 @@ func TlsConnect(host string, port, timeout int, certBytes, keyBytes, caCertBytes
 	}
 	return *tls.Client(_conn, conf), err
 }
+func TlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Config, err error) {
+	return getRequestTlsConfig(certBytes, keyBytes, caCertBytes)
+}
 func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Config, err error) {
 
 	var cert tls.Certificate
@@ -114,7 +122,6 @@ func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Con
 	caBytes := certBytes
 	if caCertBytes != nil {
 		caBytes = caCertBytes
-
 	}
 	ok := serverCertPool.AppendCertsFromPEM(caBytes)
 	if !ok {
@@ -171,33 +178,6 @@ func ConnectKCPHost(hostAndPort string, config kcpcfg.KCPConfigArgs) (conn net.C
 	return NewCompStream(kcpconn), err
 }
 
-func ListenTls(ip string, port int, certBytes, keyBytes, caCertBytes []byte) (ln *net.Listener, err error) {
-
-	var cert tls.Certificate
-	cert, err = tls.X509KeyPair(certBytes, keyBytes)
-	if err != nil {
-		return
-	}
-	clientCertPool := x509.NewCertPool()
-	caBytes := certBytes
-	if caCertBytes != nil {
-		caBytes = caCertBytes
-	}
-	ok := clientCertPool.AppendCertsFromPEM(caBytes)
-	if !ok {
-		err = errors.New("failed to parse root certificate")
-	}
-	config := &tls.Config{
-		ClientCAs:    clientCertPool,
-		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-	}
-	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
-	if err == nil {
-		ln = &_ln
-	}
-	return
-}
 func PathExists(_path string) bool {
 	_, err := os.Stat(_path)
 	if err != nil && os.IsNotExist(err) {
@@ -232,100 +212,13 @@ func CloseConn(conn *net.Conn) {
 		(*conn).Close()
 	}
 }
-func Keygen() (err error) {
-	CList := []string{"AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AT", "AU", "AZ", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BR", "BS", "BW", "BY", "BZ", "CA", "CF", "CG", "CH", "CK", "CL", "CM", "CN", "CO", "CR", "CS", "CU", "CY", "CZ", "DE", "DJ", "DK", "DO", "DZ", "EC", "EE", "EG", "ES", "ET", "FI", "FJ", "FR", "GA", "GB", "GD", "GE", "GF", "GH", "GI", "GM", "GN", "GR", "GT", "GU", "GY", "HK", "HN", "HT", "HU", "ID", "IE", "IL", "IN", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KP", "KR", "KT", "KW", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "MG", "ML", "MM", "MN", "MO", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL", "NO", "NP", "NR", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PR", "PT", "PY", "QA", "RO", "RU", "SA", "SB", "SC", "SD", "SE", "SG", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "ST", "SV", "SY", "SZ", "TD", "TG", "TH", "TJ", "TM", "TN", "TO", "TR", "TT", "TW", "TZ", "UA", "UG", "US", "UY", "UZ", "VC", "VE", "VN", "YE", "YU", "ZA", "ZM", "ZR", "ZW"}
-	domainSubfixList := []string{".com", ".edu", ".gov", ".int", ".mil", ".net", ".org", ".biz", ".info", ".pro", ".name", ".museum", ".coop", ".aero", ".xxx", ".idv", ".ac", ".ad", ".ae", ".af", ".ag", ".ai", ".al", ".am", ".an", ".ao", ".aq", ".ar", ".as", ".at", ".au", ".aw", ".az", ".ba", ".bb", ".bd", ".be", ".bf", ".bg", ".bh", ".bi", ".bj", ".bm", ".bn", ".bo", ".br", ".bs", ".bt", ".bv", ".bw", ".by", ".bz", ".ca", ".cc", ".cd", ".cf", ".cg", ".ch", ".ci", ".ck", ".cl", ".cm", ".cn", ".co", ".cr", ".cu", ".cv", ".cx", ".cy", ".cz", ".de", ".dj", ".dk", ".dm", ".do", ".dz", ".ec", ".ee", ".eg", ".eh", ".er", ".es", ".et", ".eu", ".fi", ".fj", ".fk", ".fm", ".fo", ".fr", ".ga", ".gd", ".ge", ".gf", ".gg", ".gh", ".gi", ".gl", ".gm", ".gn", ".gp", ".gq", ".gr", ".gs", ".gt", ".gu", ".gw", ".gy", ".hk", ".hm", ".hn", ".hr", ".ht", ".hu", ".id", ".ie", ".il", ".im", ".in", ".io", ".iq", ".ir", ".is", ".it", ".je", ".jm", ".jo", ".jp", ".ke", ".kg", ".kh", ".ki", ".km", ".kn", ".kp", ".kr", ".kw", ".ky", ".kz", ".la", ".lb", ".lc", ".li", ".lk", ".lr", ".ls", ".lt", ".lu", ".lv", ".ly", ".ma", ".mc", ".md", ".mg", ".mh", ".mk", ".ml", ".mm", ".mn", ".mo", ".mp", ".mq", ".mr", ".ms", ".mt", ".mu", ".mv", ".mw", ".mx", ".my", ".mz", ".na", ".nc", ".ne", ".nf", ".ng", ".ni", ".nl", ".no", ".np", ".nr", ".nu", ".nz", ".om", ".pa", ".pe", ".pf", ".pg", ".ph", ".pk", ".pl", ".pm", ".pn", ".pr", ".ps", ".pt", ".pw", ".py", ".qa", ".re", ".ro", ".ru", ".rw", ".sa", ".sb", ".sc", ".sd", ".se", ".sg", ".sh", ".si", ".sj", ".sk", ".sl", ".sm", ".sn", ".so", ".sr", ".st", ".sv", ".sy", ".sz", ".tc", ".td", ".tf", ".tg", ".th", ".tj", ".tk", ".tl", ".tm", ".tn", ".to", ".tp", ".tr", ".tt", ".tv", ".tw", ".tz", ".ua", ".ug", ".uk", ".um", ".us", ".uy", ".uz", ".va", ".vc", ".ve", ".vg", ".vi", ".vn", ".vu", ".wf", ".ws", ".ye", ".yt", ".yu", ".yr", ".za", ".zm", ".zw"}
-	C := CList[int(RandInt(4))%len(CList)]
-	ST := RandString(int(RandInt(4) % 10))
-	O := RandString(int(RandInt(4) % 10))
-	CN := strings.ToLower(RandString(int(RandInt(4)%10)) + domainSubfixList[int(RandInt(4))%len(domainSubfixList)])
-	//log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
-	var out []byte
-	if len(os.Args) == 3 && os.Args[2] == "ca" {
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
 
-		cmdStr := fmt.Sprintf("openssl req -new -key ca.key -x509 -days 36500 -out ca.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, "*."+CN)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-	} else if len(os.Args) == 5 && os.Args[2] == "ca" && os.Args[3] != "" && os.Args[4] != "" {
-		certBytes, _ := ioutil.ReadFile("ca.crt")
-		block, _ := pem.Decode(certBytes)
-		if block == nil || certBytes == nil {
-			panic("failed to parse ca certificate PEM")
-		}
-		x509Cert, _ := x509.ParseCertificate(block.Bytes)
-		if x509Cert == nil {
-			panic("failed to parse block")
-		}
-		name := os.Args[3]
-		days := os.Args[4]
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
+var allInterfaceAddrCache []net.IP
 
-		cmdStr := fmt.Sprintf("openssl req -new -key %s.key -out %s.csr -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, C, ST, O, CN)
-		fmt.Printf("%s", cmdStr)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr = fmt.Sprintf("openssl x509 -req -days %s -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", days, name, name)
-		fmt.Printf("%s", cmdStr)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-
-		fmt.Println(string(out))
-	} else if len(os.Args) == 3 && os.Args[2] == "usage" {
-		fmt.Println(`proxy keygen //generate proxy.crt and proxy.key
-proxy keygen ca //generate ca.crt and ca.key
-proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sign it with 30 days
-	`)
-	} else if len(os.Args) == 2 {
-		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-
-		cmdStr := fmt.Sprintf("openssl req -new -key proxy.key -x509 -days 36500 -out proxy.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, CN)
-		cmd = exec.Command("sh", "-c", cmdStr)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("err:%s", err)
-			return
-		}
-		fmt.Println(string(out))
-	}
-
-	return
-}
 func GetAllInterfaceAddr() ([]net.IP, error) {
-
+	if allInterfaceAddrCache != nil {
+		return allInterfaceAddrCache, nil
+	}
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -366,6 +259,7 @@ func GetAllInterfaceAddr() ([]net.IP, error) {
 		return nil, fmt.Errorf("no address Found, net.InterfaceAddrs: %v", addresses)
 	}
 	//only need first
+	allInterfaceAddrCache = addresses
 	return addresses, nil
 }
 func UDPPacket(srcAddr string, packet []byte) []byte {
@@ -601,9 +495,23 @@ func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, er
 	body, err = ioutil.ReadAll(resp.Body)
 	return
 }
-func IsIternalIP(domainOrIP string) bool {
+func IsIternalIP(domainOrIP string, always bool) bool {
 	var outIPs []net.IP
-	outIPs, err := net.LookupIP(domainOrIP)
+	var err error
+	var isDomain bool
+	if net.ParseIP(domainOrIP) == nil {
+		isDomain = true
+	}
+	if always && isDomain {
+		return false
+	}
+
+	if isDomain {
+		outIPs, err = MyLookupIP(domainOrIP)
+	} else {
+		outIPs = []net.IP{net.ParseIP(domainOrIP)}
+	}
+
 	if err != nil {
 		return false
 	}
@@ -623,6 +531,59 @@ func IsIternalIP(domainOrIP string) bool {
 		}
 	}
 	return false
+}
+func IsHTTP(head []byte) bool {
+	keys := []string{"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+	for _, key := range keys {
+		if bytes.HasPrefix(head, []byte(key)) || bytes.HasPrefix(head, []byte(strings.ToLower(key))) {
+			return true
+		}
+	}
+	return false
+}
+func IsSocks5(head []byte) bool {
+	if len(head) < 3 {
+		return false
+	}
+	if head[0] == uint8(0x05) && 0 < int(head[1]) && int(head[1]) < 255 {
+		if len(head) == 2+int(head[1]) {
+			return true
+		}
+	}
+	return false
+}
+func RemoveProxyHeaders(head []byte) []byte {
+	newLines := [][]byte{}
+	var keys = map[string]bool{}
+	lines := bytes.Split(head, []byte("\r\n"))
+	IsBody := false
+	i := -1
+	for _, line := range lines {
+		i++
+		if len(line) == 0 || IsBody {
+			newLines = append(newLines, line)
+			IsBody = true
+		} else {
+			hline := bytes.SplitN(line, []byte(":"), 2)
+			if i == 0 && IsHTTP(head) {
+				newLines = append(newLines, line)
+				continue
+			}
+			if len(hline) != 2 {
+				continue
+			}
+			k := strings.ToUpper(string(hline[0]))
+			if _, ok := keys[k]; ok || strings.HasPrefix(k, "PROXY-") {
+				continue
+			}
+			keys[k] = true
+			newLines = append(newLines, line)
+		}
+	}
+	return bytes.Join(newLines, []byte("\r\n"))
+}
+func InsertProxyHeaders(head []byte, headers string) []byte {
+	return bytes.Replace(head, []byte("\r\n"), []byte("\r\n"+headers), 1)
 }
 
 // type sockaddr struct {
@@ -681,3 +642,25 @@ func IsIternalIP(domainOrIP string) bool {
 // 	}
 // 	return
 // }
+
+/*
+net.LookupIP may cause  deadlock in windows
+https://github.com/golang/go/issues/24178
+*/
+func MyLookupIP(host string) ([]net.IP, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(3))
+	defer func() {
+		cancel()
+		//ctx.Done()
+	}()
+	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+	ips := make([]net.IP, len(addrs))
+	for i, ia := range addrs {
+		ips[i] = ia.IP
+	}
+	return ips, nil
+}

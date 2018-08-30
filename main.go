@@ -4,11 +4,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"snail007/proxy/services"
 	"syscall"
+
+	"github.com/snail007/goproxy/services"
 )
 
-const APP_VERSION = "4.7"
+const APP_VERSION = "5.5"
 
 func main() {
 	err := initConfig()
@@ -39,6 +40,9 @@ func Clean(s *services.Service) {
 			if cmd != nil {
 				log.Printf("clean process %d", cmd.Process.Pid)
 				cmd.Process.Kill()
+			}
+			if isDebug {
+				saveProfiling()
 			}
 			cleanupDone <- true
 		}

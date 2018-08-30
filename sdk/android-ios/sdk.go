@@ -3,20 +3,51 @@ package proxy
 import (
 	"crypto/sha1"
 	"fmt"
-	"log"
+	"io/ioutil"
+	logger "log"
 	"os"
-	"snail007/proxy/services"
-	"snail007/proxy/services/kcpcfg"
+	"path"
+	"path/filepath"
 	"strings"
 
+	"github.com/snail007/goproxy/services"
+	httpx "github.com/snail007/goproxy/services/http"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	mux "github.com/snail007/goproxy/services/mux"
+	socksx "github.com/snail007/goproxy/services/socks"
+	spsx "github.com/snail007/goproxy/services/sps"
+	tcpx "github.com/snail007/goproxy/services/tcp"
+	tunnel "github.com/snail007/goproxy/services/tunnel"
+	udpx "github.com/snail007/goproxy/services/udp"
 	kcp "github.com/xtaci/kcp-go"
 	"golang.org/x/crypto/pbkdf2"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
+const SDK_VERSION = "5.5"
+
 var (
 	app *kingpin.Application
 )
+
+type LogCallback interface {
+	Write(line string)
+}
+type logCallback interface {
+	Write(line string)
+}
+type logWriter struct {
+	callback LogCallback
+}
+
+func (s *logWriter) Write(p []byte) (n int, err error) {
+	s.callback.Write(string(p))
+	return
+}
+
+func Start(serviceID, serviceArgsStr string) (errStr string) {
+	return StartWithLog(serviceID, serviceArgsStr, nil)
+}
 
 //Start
 //serviceID : is service identify id,different service's id should be difference
@@ -27,25 +58,27 @@ var (
 //and so on.
 //if an error occured , errStr will be the error reason
 //if start success, errStr is empty.
-func Start(serviceID, serviceArgsStr string) (errStr string) {
+func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) (errStr string) {
 	//define  args
-	tcpArgs := services.TCPArgs{}
-	httpArgs := services.HTTPArgs{}
-	tunnelServerArgs := services.TunnelServerArgs{}
-	tunnelClientArgs := services.TunnelClientArgs{}
-	tunnelBridgeArgs := services.TunnelBridgeArgs{}
-	muxServerArgs := services.MuxServerArgs{}
-	muxClientArgs := services.MuxClientArgs{}
-	muxBridgeArgs := services.MuxBridgeArgs{}
-	udpArgs := services.UDPArgs{}
-	socksArgs := services.SocksArgs{}
-	spsArgs := services.SPSArgs{}
+	tcpArgs := tcpx.TCPArgs{}
+	httpArgs := httpx.HTTPArgs{}
+	tunnelServerArgs := tunnel.TunnelServerArgs{}
+	tunnelClientArgs := tunnel.TunnelClientArgs{}
+	tunnelBridgeArgs := tunnel.TunnelBridgeArgs{}
+	muxServerArgs := mux.MuxServerArgs{}
+	muxClientArgs := mux.MuxClientArgs{}
+	muxBridgeArgs := mux.MuxBridgeArgs{}
+	udpArgs := udpx.UDPArgs{}
+	socksArgs := socksx.SocksArgs{}
+	spsArgs := spsx.SPSArgs{}
+	dnsArgs := DNSArgs{}
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
-	app.Author("snail").Version("4.7")
+	app.Author("snail").Version(SDK_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
+	nolog := app.Flag("nolog", "turn off logging").Default("false").Bool()
 	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
 	kcpArgs.Crypt = app.Flag("kcp-method", "encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none").Default("aes").Enum("aes", "aes-128", "aes-192", "salsa20", "blowfish", "twofish", "cast5", "3des", "tea", "xtea", "xor", "sm4", "none")
 	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast3").Enum("fast3", "fast2", "fast", "normal", "manual")
@@ -86,7 +119,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	httpArgs.SSHKeyFile = http.Flag("ssh-key", "private key file for ssh").Short('S').Default("").String()
 	httpArgs.SSHKeyFileSalt = http.Flag("ssh-keysalt", "salt of ssh private key").Short('s').Default("").String()
 	httpArgs.SSHPassword = http.Flag("ssh-password", "password for ssh").Short('A').Default("").String()
-	httpArgs.LocalIPS = http.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	httpArgs.LocalIPS = http.Flag("local-bind-ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	httpArgs.AuthURL = http.Flag("auth-url", "http basic auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	httpArgs.AuthURLTimeout = http.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	httpArgs.AuthURLOkCode = http.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
@@ -106,8 +139,8 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('e').Default("2000").Int()
 	tcpArgs.ParentType = tcp.Flag("parent-type", "parent protocol type <tls|tcp|kcp|udp>").Short('T').Enum("tls", "tcp", "udp", "kcp")
 	tcpArgs.LocalType = tcp.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
-	tcpArgs.CheckParentInterval = tcp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	tcpArgs.Local = tcp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	tcpArgs.Jumper = tcp.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########udp#########
 	udp := app.Command("udp", "proxy on udp mode")
@@ -131,6 +164,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxServerArgs.SessionCount = muxServer.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
+	muxServerArgs.Jumper = muxServer.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########mux-client#########
 	muxClient := app.Command("client", "proxy on mux client mode")
@@ -142,6 +176,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	muxClientArgs.Key = muxClient.Flag("k", "key same with server").Default("default").String()
 	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxClientArgs.SessionCount = muxClient.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
+	muxClientArgs.Jumper = muxClient.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########mux-bridge#########
 	muxBridge := app.Command("bridge", "proxy on mux bridge mode")
@@ -160,6 +195,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
 	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	tunnelServerArgs.Jumper = tunnelServer.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")
@@ -168,6 +204,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	tunnelClientArgs.KeyFile = tunnelClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	tunnelClientArgs.Timeout = tunnelClient.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelClientArgs.Key = tunnelClient.Flag("k", "key same with server").Default("default").String()
+	tunnelClientArgs.Jumper = tunnelClient.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########tunnel-bridge#########
 	tunnelBridge := app.Command("tbridge", "proxy on tunnel bridge mode")
@@ -182,8 +219,6 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	socksArgs.ParentType = socks.Flag("parent-type", "parent protocol type <tls|tcp|kcp|ssh>").Default("tcp").Short('T').Enum("tls", "tcp", "kcp", "ssh")
 	socksArgs.LocalType = socks.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
 	socksArgs.Local = socks.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	socksArgs.UDPParent = socks.Flag("udp-parent", "udp parent address, such as: \"23.32.32.19:33090\"").Default("").Short('X').String()
-	socksArgs.UDPLocal = socks.Flag("udp-local", "udp local ip:port to listen").Short('x').Default(":33090").String()
 	socksArgs.CertFile = socks.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	socksArgs.CaCertFile = socks.Flag("ca", "ca cert file for tls").Default("").String()
 	socksArgs.KeyFile = socks.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
@@ -198,7 +233,7 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	socksArgs.Direct = socks.Flag("direct", "direct domain file , one domain each line").Default("direct").Short('d').String()
 	socksArgs.AuthFile = socks.Flag("auth-file", "http basic auth file,\"username:password\" each line in file").Short('F').String()
 	socksArgs.Auth = socks.Flag("auth", "socks auth username and password, mutiple user repeat -a ,such as: -a user1:pass1 -a user2:pass2").Short('a').Strings()
-	socksArgs.LocalIPS = socks.Flag("local bind ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
+	socksArgs.LocalIPS = socks.Flag("local-bind-ips", "if your host behind a nat,set your public ip here avoid dead loop").Short('g').Strings()
 	socksArgs.AuthURL = socks.Flag("auth-url", "auth username and password will send to this url,response http code equal to 'auth-code' means ok,others means fail.").Default("").String()
 	socksArgs.AuthURLTimeout = socks.Flag("auth-timeout", "access 'auth-url' timeout milliseconds").Default("3000").Int()
 	socksArgs.AuthURLOkCode = socks.Flag("auth-code", "access 'auth-url' success http code").Default("204").Int()
@@ -235,6 +270,25 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	spsArgs.ParentKey = sps.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
 	spsArgs.LocalCompress = sps.Flag("local-compress", "auto compress/decompress data on local connection").Short('m').Default("false").Bool()
 	spsArgs.ParentCompress = sps.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
+	spsArgs.DisableHTTP = sps.Flag("disable-http", "disable http(s) proxy").Default("false").Bool()
+	spsArgs.DisableSocks5 = sps.Flag("disable-socks", "disable socks proxy").Default("false").Bool()
+	//########dns#########
+	dns := app.Command("dns", "proxy on dns server mode")
+	dnsArgs.Parent = dns.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	dnsArgs.CertFile = dns.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
+	dnsArgs.KeyFile = dns.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	dnsArgs.CaCertFile = dns.Flag("ca", "ca cert file for tls").Default("").String()
+	dnsArgs.Timeout = dns.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('i').Default("2000").Int()
+	dnsArgs.ParentType = dns.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Short('T').Enum("tls", "tcp", "kcp")
+	dnsArgs.Local = dns.Flag("local", "local ip:port to listen,multiple address use comma split,such as: 0.0.0.0:80,0.0.0.0:443").Short('p').Default(":33080").String()
+	dnsArgs.ParentServiceType = dns.Flag("parent-service-type", "parent service type <http|socks>").Short('S').Enum("http", "socks")
+	dnsArgs.RemoteDNSAddress = dns.Flag("dns-address", "remote dns for resolve doamin").Short('q').Default("8.8.8.8:53").String()
+	dnsArgs.DNSTTL = dns.Flag("dns-ttl", "caching seconds of dns query result").Short('e').Default("300").Int()
+	dnsArgs.ParentAuth = dns.Flag("parent-auth", "parent socks auth username and password, such as: -A user1:pass1").Short('A').String()
+	dnsArgs.ParentKey = dns.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
+	dnsArgs.ParentCompress = dns.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
+	dnsArgs.CacheFile = dns.Flag("cache-file", "dns result cached file").Short('f').Default(filepath.Join(path.Dir(os.Args[0]), "cache.dat")).String()
+	dnsArgs.LocalSocks5Port = dns.Flag("socks-port", "local socks5 port").Short('s').Default("65501").String()
 
 	//parse args
 	_args := strings.Fields(strings.Trim(serviceArgsStr, " "))
@@ -297,49 +351,61 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 	muxBridgeArgs.KCP = kcpArgs
 	muxServerArgs.KCP = kcpArgs
 	muxClientArgs.KCP = kcpArgs
+	dnsArgs.KCP = kcpArgs
 
-	flags := log.Ldate
+	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
+	flags := logger.Ldate
 	if *debug {
-		flags |= log.Lshortfile | log.Lmicroseconds
+		flags |= logger.Lshortfile | logger.Lmicroseconds
 	} else {
-		flags |= log.Ltime
+		flags |= logger.Ltime
 	}
 	log.SetFlags(flags)
 
-	if *logfile != "" {
-		f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-		if e != nil {
-			log.Fatal(e)
+	if loggerCallback == nil {
+		if *nolog {
+			log.SetOutput(ioutil.Discard)
+		} else if *logfile != "" {
+			f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+			if e != nil {
+				log.Fatal(e)
+			}
+			log.SetOutput(f)
 		}
-		log.SetOutput(f)
+	} else {
+		log.SetOutput(&logWriter{
+			callback: loggerCallback,
+		})
 	}
 
 	//regist services and run service
 	switch serviceName {
 	case "http":
-		services.Regist(serviceID, services.NewHTTP(), httpArgs)
+		services.Regist(serviceID, httpx.NewHTTP(), httpArgs, log)
 	case "tcp":
-		services.Regist(serviceID, services.NewTCP(), tcpArgs)
+		services.Regist(serviceID, tcpx.NewTCP(), tcpArgs, log)
 	case "udp":
-		services.Regist(serviceID, services.NewUDP(), udpArgs)
+		services.Regist(serviceID, udpx.NewUDP(), udpArgs, log)
 	case "tserver":
-		services.Regist(serviceID, services.NewTunnelServerManager(), tunnelServerArgs)
+		services.Regist(serviceID, tunnel.NewTunnelServerManager(), tunnelServerArgs, log)
 	case "tclient":
-		services.Regist(serviceID, services.NewTunnelClient(), tunnelClientArgs)
+		services.Regist(serviceID, tunnel.NewTunnelClient(), tunnelClientArgs, log)
 	case "tbridge":
-		services.Regist(serviceID, services.NewTunnelBridge(), tunnelBridgeArgs)
+		services.Regist(serviceID, tunnel.NewTunnelBridge(), tunnelBridgeArgs, log)
 	case "server":
-		services.Regist(serviceID, services.NewMuxServerManager(), muxServerArgs)
+		services.Regist(serviceID, mux.NewMuxServerManager(), muxServerArgs, log)
 	case "client":
-		services.Regist(serviceID, services.NewMuxClient(), muxClientArgs)
+		services.Regist(serviceID, mux.NewMuxClient(), muxClientArgs, log)
 	case "bridge":
-		services.Regist(serviceID, services.NewMuxBridge(), muxBridgeArgs)
+		services.Regist(serviceID, mux.NewMuxBridge(), muxBridgeArgs, log)
 	case "socks":
-		services.Regist(serviceID, services.NewSocks(), socksArgs)
+		services.Regist(serviceID, socksx.NewSocks(), socksArgs, log)
 	case "sps":
-		services.Regist(serviceID, services.NewSPS(), spsArgs)
+		services.Regist(serviceID, spsx.NewSPS(), spsArgs, log)
+	case "dns":
+		services.Regist(serviceName, NewDNS(), dnsArgs, log)
 	}
-	_, err = services.Run(serviceID)
+	_, err = services.Run(serviceID, nil)
 	if err != nil {
 		return fmt.Sprintf("run service [%s:%s] fail, ERR:%s", serviceID, serviceName, err)
 	}
@@ -348,4 +414,8 @@ func Start(serviceID, serviceArgsStr string) (errStr string) {
 
 func Stop(serviceID string) {
 	services.Stop(serviceID)
+}
+
+func Version() string {
+	return SDK_VERSION
 }

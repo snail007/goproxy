@@ -1,6 +1,53 @@
 proxy更新日志
+v5.4
+1.优化了获取本地IP信息导致CPU过高的问题.
+2.所有服务都增加了--nolog参数,可以关闭日志输出,节省CPU.
+3.优化sdk,支持并发启动/关闭操作.
+4.修复了多连接版本的内网穿透,tserver连接不能正确释放的bug.
+5.内网穿透增加了client/tclient和server/tserver使用代理连接bridge/tbridge的功能,详细内容参考手册.
+6.TCP端口映射(TCP代理)增加了使用代理连接上级的功能,详细内容参考手册.
+
+v5.3
+1.优化了socks_client握手端口判断,避免了sstap测试UDP失败的问题.
+
+v5.2
+1.修复了HTTP(S)\SPS反向代理无法正常工作的问题.
+2.优化了智能判断,减少不必要的DNS解析.
+3.重构了SOCKS和SPS的UDP功能,基于UDP的游戏加速嗖嗖的.
+
+v5.1
+1.优化了kcp默认mtu配置,调整为450.
+2.优化了HTTP(S)\SOCKS5代理智能判断，更加精确。
+3.fix #97 , 修复了RemoveProxyHeaders方法忽略了第一行的bug。
+4.修复了-g参数长格式没有连接符号的bug.
+5.重构了证书生成功能,不再有任何外部依赖,任何平台都可以独立生成证书.
+
+v5.0
+1.修复了SPS多端口无效的bug.
+2.增加了DNS代理功能，提供安全无污染的DNS解析.
+
+v4.9
+1.修复了HTTP Basic代理返回不合适的头部,导致浏览器不会弹框,个别代理插件无法认证的问题.
+2.内网穿透切换smux到yamux.
+3.优化了HTTP(S)\SOCKS5代理--always的处理逻辑.
+
+v4.8
+1.优化了SPS连接HTTP上级的指令,避免了某些代理不响应的问题.
+2.SPS功能增加了参数:
+  --disable-http:禁用http(s)代理
+  --disable-socks:禁用socks代理
+  默认都是false(开启).
+3.重构了部分代码的日志部分,保证了日志按着预期输出.
+4.修复了sps\http代理初始化服务的时机不正确,导致nil异常的bug.
+5.优化了sps日志输出.
+6.--debug参数增加了Profiling功能,可以保存cpu,内存等多种调试数据到文件.
+7.优化了服务注册,避免了不必要的内存开销.
+8.增加了Dockerfile和docker安装手册.
+9.优化了ioCopy避免了内存泄漏,大大提升了内存占用的稳定性.
+
+
 v4.7
-1.增加了基于gomobile的sdk,对安卓/IOS提供SDK支持.
+1.增加了基于gomobile的sdk,对android/ios/windows/linux/mac提供SDK支持.
 2.优化了bridge的日志,增加了client和server的掉线日志.
 3.优化了sps读取http(s)代理响应的缓冲大小,同时优化了CONNECT请求,
  避免了某些代理服务器返回过多数据导致不能正常通讯的问题.
@@ -15,6 +62,8 @@ v4.7
 12.优化了多链接版本的内网穿透,融合了多链接和smux的优点,即能够拥有大的吞吐量,
  同时又具备mux的心跳机制保证了链接的稳定性.
 13.手册增加了大量配图.
+14.优化了socks代理udp上级的设置逻辑,智能判断parent上级填充udp parent.
+15.优化了项目文件夹结构,使用源码可以直接go get.
 
 v4.6
 1.sps,http(s),socks5,内网穿透都做了大量的超时优化处理,更加稳定.

@@ -1,0 +1,21 @@
+SDK更新日志
+v5.4
+1.去掉了无用参数
+
+
+v5.3
+1.增加了支持日志输出回调的方法:
+ StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback)
+2.优化了socks_client握手端口判断,避免了sstap测试UDP失败的问题..
+3.修复了HTTP(S)\SPS反向代理无法正常工作的问题.
+4.优化了智能判断,减少不必要的DNS解析.
+5.重构了SOCKS和SPS的UDP功能,基于UDP的游戏加速嗖嗖的.
+
+v4.9
+1.修复了HTTP Basic代理返回不合适的头部,导致浏览器不会弹框,个别代理插件无法认证的问题.
+2.内网穿透切换smux到yamux.
+3.优化了HTTP(S)\SOCKS5代理--always的处理逻辑.
+
+v4.8
+1.修复了多个服务同时开启日志,只会输出到最后一个日志文件的bug.  
+2.增加了获取sdk版本的Version()方法.  
