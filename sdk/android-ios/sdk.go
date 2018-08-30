@@ -3,6 +3,7 @@ package proxy
 import (
 	"crypto/sha1"
 	"fmt"
+	"io/ioutil"
 	logger "log"
 	"os"
 	"path"
@@ -77,6 +78,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	app.Author("snail").Version(SDK_VERSION)
 	debug := app.Flag("debug", "debug log output").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
+	nolog := app.Flag("nolog", "turn off logging").Default("false").Bool()
 	kcpArgs.Key = app.Flag("kcp-key", "pre-shared secret between client and server").Default("secrect").String()
 	kcpArgs.Crypt = app.Flag("kcp-method", "encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none").Default("aes").Enum("aes", "aes-128", "aes-192", "salsa20", "blowfish", "twofish", "cast5", "3des", "tea", "xtea", "xor", "sm4", "none")
 	kcpArgs.Mode = app.Flag("kcp-mode", "profiles: fast3, fast2, fast, normal, manual").Default("fast3").Enum("fast3", "fast2", "fast", "normal", "manual")
@@ -137,8 +139,8 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('e').Default("2000").Int()
 	tcpArgs.ParentType = tcp.Flag("parent-type", "parent protocol type <tls|tcp|kcp|udp>").Short('T').Enum("tls", "tcp", "udp", "kcp")
 	tcpArgs.LocalType = tcp.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tcp").Short('t').Enum("tls", "tcp", "kcp")
-	tcpArgs.CheckParentInterval = tcp.Flag("check-parent-interval", "check if proxy is okay every interval seconds,zero: means no check").Short('I').Default("3").Int()
 	tcpArgs.Local = tcp.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
+	tcpArgs.Jumper = tcp.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########udp#########
 	udp := app.Command("udp", "proxy on udp mode")
@@ -162,6 +164,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	muxServerArgs.Route = muxServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
 	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxServerArgs.SessionCount = muxServer.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
+	muxServerArgs.Jumper = muxServer.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########mux-client#########
 	muxClient := app.Command("client", "proxy on mux client mode")
@@ -173,6 +176,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	muxClientArgs.Key = muxClient.Flag("k", "key same with server").Default("default").String()
 	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxClientArgs.SessionCount = muxClient.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
+	muxClientArgs.Jumper = muxClient.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########mux-bridge#########
 	muxBridge := app.Command("bridge", "proxy on mux bridge mode")
@@ -191,6 +195,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	tunnelServerArgs.IsUDP = tunnelServer.Flag("udp", "proxy on udp tunnel server mode").Default("false").Bool()
 	tunnelServerArgs.Key = tunnelServer.Flag("k", "client key").Default("default").String()
 	tunnelServerArgs.Route = tunnelServer.Flag("route", "local route to client's network, such as: PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT").Short('r').Default("").Strings()
+	tunnelServerArgs.Jumper = tunnelServer.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########tunnel-client#########
 	tunnelClient := app.Command("tclient", "proxy on tunnel client mode")
@@ -199,6 +204,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	tunnelClientArgs.KeyFile = tunnelClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	tunnelClientArgs.Timeout = tunnelClient.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
 	tunnelClientArgs.Key = tunnelClient.Flag("k", "key same with server").Default("default").String()
+	tunnelClientArgs.Jumper = tunnelClient.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 
 	//########tunnel-bridge#########
 	tunnelBridge := app.Command("tbridge", "proxy on tunnel bridge mode")
@@ -357,7 +363,9 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	log.SetFlags(flags)
 
 	if loggerCallback == nil {
-		if *logfile != "" {
+		if *nolog {
+			log.SetOutput(ioutil.Discard)
+		} else if *logfile != "" {
 			f, e := os.OpenFile(*logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if e != nil {
 				log.Fatal(e)

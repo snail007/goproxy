@@ -11,6 +11,7 @@ import (
 
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -28,7 +29,7 @@ type TunnelClientArgs struct {
 	KeyBytes  []byte
 	Key       *string
 	Timeout   *int
-	Mux       *bool
+	Jumper    *string
 }
 type TunnelClient struct {
 	cfg       TunnelClientArgs
@@ -36,6 +37,7 @@ type TunnelClient struct {
 	isStop    bool
 	userConns utils.ConcurrentMap
 	log       *logger.Logger
+	jumper    *jumper.Jumper
 }
 
 func NewTunnelClient() services.Service {
@@ -62,6 +64,18 @@ func (s *TunnelClient) CheckArgs() (err error) {
 		return
 	}
 	s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+	if err != nil {
+		return
+	}
+	if *s.cfg.Jumper != "" {
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
+	}
 	return
 }
 func (s *TunnelClient) StopService() {
@@ -151,10 +165,24 @@ func (s *TunnelClient) GetInConn(typ uint8, data ...string) (outConn net.Conn, e
 	return
 }
 func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
-	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+	if s.jumper == nil {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else {
+		conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err != nil {
+			return nil, err
+		}
+		var _c net.Conn
+		_c, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err == nil {
+			conn = net.Conn(tls.Client(_c, conf))
+		}
+	}
 	if err == nil {
-		conn = net.Conn(&_conn)
 		c, e := smux.Client(conn, &smux.Config{
 			AcceptBacklog:          256,
 			EnableKeepAlive:        true,

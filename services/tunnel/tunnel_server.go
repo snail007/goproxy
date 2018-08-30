@@ -14,6 +14,7 @@ import (
 
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
@@ -32,7 +33,7 @@ type TunnelServerArgs struct {
 	Timeout   *int
 	Route     *[]string
 	Mgr       *TunnelServerManager
-	Mux       *bool
+	Jumper    *string
 }
 type UDPItem struct {
 	packet    *[]byte
@@ -105,6 +106,7 @@ func (s *TunnelServerManager) Start(args interface{}, log *logger.Logger) (err e
 			Key:       &KEY,
 			Timeout:   s.cfg.Timeout,
 			Mgr:       s,
+			Jumper:    s.cfg.Jumper,
 		}, log)
 
 		if err != nil {
@@ -134,30 +136,6 @@ func (s *TunnelServerManager) InitService() (err error) {
 	return
 }
 
-func (s *TunnelServerManager) GetOutConn(typ uint8) (outConn net.Conn, ID string, err error) {
-	outConn, err = s.GetConn()
-	if err != nil {
-		s.log.Printf("connection err: %s", err)
-		return
-	}
-	ID = s.serverID
-	_, err = outConn.Write(utils.BuildPacket(typ, s.serverID))
-	if err != nil {
-		s.log.Printf("write connection data err: %s ,retrying...", err)
-		utils.CloseConn(&outConn)
-		return
-	}
-	return
-}
-func (s *TunnelServerManager) GetConn() (conn net.Conn, err error) {
-	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
-	if err == nil {
-		conn = net.Conn(&_conn)
-	}
-	return
-}
-
 type TunnelServer struct {
 	cfg       TunnelServerArgs
 	udpChn    chan UDPItem
@@ -166,6 +144,7 @@ type TunnelServer struct {
 	udpConn   *net.Conn
 	userConns utils.ConcurrentMap
 	log       *logger.Logger
+	jumper    *jumper.Jumper
 }
 
 func NewTunnelServer() services.Service {
@@ -209,6 +188,15 @@ func (s *TunnelServer) CheckArgs() (err error) {
 	if *s.cfg.Remote == "" {
 		err = fmt.Errorf("remote required")
 		return
+	}
+	if *s.cfg.Jumper != "" {
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
 	}
 	return
 }
@@ -301,11 +289,26 @@ func (s *TunnelServer) GetOutConn(typ uint8) (outConn net.Conn, ID string, err e
 	return
 }
 func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
-	var _conn tls.Conn
-	_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+	var dconn net.Conn
+	if s.jumper == nil {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err == nil {
+			dconn = net.Conn(&_conn)
+		}
+	} else {
+		conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err != nil {
+			return nil, err
+		}
+		var _c net.Conn
+		_c, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err == nil {
+			dconn = net.Conn(tls.Client(_c, conf))
+		}
+	}
 	if err == nil {
-		conn = net.Conn(&_conn)
-		c, e := smux.Client(conn, &smux.Config{
+		sess, e := smux.Client(dconn, &smux.Config{
 			AcceptBacklog:          256,
 			EnableKeepAlive:        true,
 			KeepAliveInterval:      9 * time.Second,
@@ -316,14 +319,30 @@ func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 		if e != nil {
 			s.log.Printf("new mux client conn error,ERR:%s", e)
 			err = e
+			dconn.Close()
 			return
 		}
-		conn, e = c.OpenStream()
+		conn, e = sess.OpenStream()
 		if e != nil {
 			s.log.Printf("mux client conn open stream error,ERR:%s", e)
 			err = e
+			dconn.Close()
 			return
 		}
+		go func() {
+			defer func() {
+				_ = recover()
+			}()
+			timer := time.NewTicker(time.Second * 3)
+			for {
+				<-timer.C
+				if sess.NumStreams() == 0 {
+					sess.Close()
+					timer.Stop()
+					return
+				}
+			}
+		}()
 	}
 	return
 }

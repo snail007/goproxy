@@ -12,6 +12,7 @@ import (
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -28,12 +29,14 @@ type MuxClientArgs struct {
 	IsCompress   *bool
 	SessionCount *int
 	KCP          kcpcfg.KCPConfigArgs
+	Jumper       *string
 }
 type MuxClient struct {
 	cfg      MuxClientArgs
 	isStop   bool
 	sessions utils.ConcurrentMap
 	log      *logger.Logger
+	jumper   *jumper.Jumper
 }
 
 func NewMuxClient() services.Service {
@@ -64,6 +67,19 @@ func (s *MuxClient) CheckArgs() (err error) {
 		if err != nil {
 			return
 		}
+	}
+	if *s.cfg.Jumper != "" {
+		if *s.cfg.ParentType != "tls" && *s.cfg.ParentType != "tcp" {
+			err = fmt.Errorf("jumper only worked of -T is tls or tcp")
+			return
+		}
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
 	}
 	return
 }
@@ -182,15 +198,32 @@ func (s *MuxClient) Clean() {
 }
 func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
-		if err == nil {
-			conn = net.Conn(&_conn)
+		if s.jumper == nil {
+			var _conn tls.Conn
+			_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err == nil {
+				conn = net.Conn(&_conn)
+			}
+		} else {
+			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err != nil {
+				return nil, err
+			}
+			var _c net.Conn
+			_c, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn = net.Conn(tls.Client(_c, conf))
+			}
 		}
+
 	} else if *s.cfg.ParentType == "kcp" {
 		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
 	} else {
-		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+		if s.jumper == nil {
+			conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		}
 	}
 	return
 }

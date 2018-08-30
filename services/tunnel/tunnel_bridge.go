@@ -30,7 +30,6 @@ type TunnelBridgeArgs struct {
 	KeyBytes  []byte
 	Local     *string
 	Timeout   *int
-	Mux       *bool
 }
 type ServerConn struct {
 	//ClientLocalAddr string //tcp:2.2.22:333@ID

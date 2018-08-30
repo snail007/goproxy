@@ -1,5 +1,5 @@
 #!/bin/bash
-VER="5.3"
+VER="5.4"
 RELEASE="release-${VER}"
 rm -rf .cert
 mkdir .cert
@@ -60,12 +60,12 @@ CGO_ENABLED=0 GOOS=plan9 GOARCH=arm go build -o proxy && tar zcfv "${RELEASE}/pr
 #solaris
 CGO_ENABLED=0 GOOS=solaris GOARCH=amd64 go build -o proxy && tar zcfv "${RELEASE}/proxy-solaris-amd64.tar.gz" proxy direct blocked 
 #windows
-CGO_ENABLED=0 GOOS=windows GOARCH=386 go build  -ldflags="-H=windowsgui" -o proxy-wingui.exe
-CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o proxy.exe && tar zcfv "${RELEASE}/proxy-windows-386.tar.gz" proxy.exe proxy-wingui.exe direct blocked .cert/proxy.crt .cert/proxy.key
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H=windowsgui" -o proxy-wingui.exe
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o proxy.exe && tar zcfv "${RELEASE}/proxy-windows-amd64.tar.gz" proxy.exe proxy-wingui.exe direct blocked .cert/proxy.crt .cert/proxy.key
+CGO_ENABLED=0 GOOS=windows GOARCH=386 go build  -ldflags="-H=windowsgui" -o proxy-noconsole.exe
+CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o proxy.exe && tar zcfv "${RELEASE}/proxy-windows-386.tar.gz" proxy.exe proxy-noconsole.exe direct blocked .cert/proxy.crt .cert/proxy.key
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H=windowsgui" -o proxy-noconsole.exe
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o proxy.exe && tar zcfv "${RELEASE}/proxy-windows-amd64.tar.gz" proxy.exe proxy-noconsole.exe direct blocked .cert/proxy.crt .cert/proxy.key
 
-rm -rf proxy proxy.exe proxy-wingui.exe .cert
+rm -rf proxy proxy.exe proxy-noconsole.exe .cert
 
 #todo
 #1.release.sh        VER="xxx"

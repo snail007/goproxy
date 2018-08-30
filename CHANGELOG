@@ -1,4 +1,12 @@
 proxy更新日志
+v5.4
+1.优化了获取本地IP信息导致CPU过高的问题.
+2.所有服务都增加了--nolog参数,可以关闭日志输出,节省CPU.
+3.优化sdk,支持并发启动/关闭操作.
+4.修复了多连接版本的内网穿透,tserver连接不能正确释放的bug.
+5.内网穿透增加了client/tclient和server/tserver使用代理连接bridge/tbridge的功能,详细内容参考手册.
+6.TCP端口映射(TCP代理)增加了使用代理连接上级的功能,详细内容参考手册.
+
 v5.3
 1.优化了socks_client握手端口判断,避免了sstap测试UDP失败的问题.
 
