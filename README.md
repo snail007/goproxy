@@ -48,7 +48,8 @@ PR needs to explain what changes have been made and why you change them.
 - ...  
 
  
-This page is the v5.3 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
+This page is the v5.4 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
+
 
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -94,7 +95,8 @@ This page is the v5.3 manual, and the other version of the manual can be checked
     - [2.3 Common TCP third level proxy](#23common-tcp-third-level-proxy)
     - [2.4 TCP second level encrypted proxy](#24tcp-second-level-encrypted-proxy)
     - [2.5 TCP third level encrypted proxy](#25tcp-third-level-encrypted-proxy)
-    - [2.6 View help](#26view-help)
+    - [2.6 Connect parents proxy through other proxy](#26connect-parents-proxy-through-other-proxy)
+    - [2.7 View help](#27view-help)
 - [3.UDP proxy](#3udp-proxy)
     - [3.1 Common UDP first level proxy](#31common-udp-first-level-proxy)
     - [3.2 Common UDP second level proxy](#32common-udp-second-level-proxy)
@@ -110,7 +112,8 @@ This page is the v5.3 manual, and the other version of the manual can be checked
     - [4.5 Advanced usage 1](#45advanced-usage-1)
     - [4.6 Advanced usage 2](#46advanced-usage-2)
     - [4.7 -r parameters of server](#47-r-parameters-of-server)
-    - [4.8 View help](#48view-help)
+    - [4.8 Server and client connect bridge through proxy](#48server-and-client-connect-bridge-through-proxy)
+    - [4.9 View help](#49view-help)
 - [5.SOCKS5 proxy](#5socks5-proxy)
     - [5.1 Common SOCKS5 proxy](#51common-socks5-proxy)
     - [5.2 Common SOCKS5 second level proxy](#52common-socks5-second-level-proxy)
@@ -161,7 +164,8 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.3/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.4/proxy-linux-amd64.tar.gz  
+
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -175,10 +179,10 @@ chmod +x install.sh
 
 Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
 
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.3:
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.4:
 
 ```
-ARG GOPROXY_VERSION=v5.3
+ARG GOPROXY_VERSION=v5.4
 ```
 
 To Run:
@@ -502,7 +506,26 @@ TCP third level proxy (local)
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66 by encrypting the TCP tunnel.  
   
-#### **2.6.view help**  
+#### **2.6.Connect parents proxy through other proxy**  
+Sometimes the proxy network can not directly access the external network,which need to use a HTTPS or Socks5 proxy to access the Internet. then The -J parameter can help you connect to the parent proxy through the HTTPS or Socks5 proxy when proxy's TCP port is mapped, which can map external port to local.    
+-J param format:  
+
+https proxy:  
+proxy need authentication,username: username password:password  
+https://username:password@host:port  
+proxy don't need authentication  
+https://host:port  
+
+socks5 proxy:
+proxy need authentication,username: username password:password  
+socks5://username:password@host:port
+proxy don't need authentication  
+socks5://host:port
+
+host:proxy's domain or ip
+port:proxy's port
+  
+#### **2.7.view help**  
 `./proxy help tcp`  
   
 ### **3.UDP proxy**  
@@ -684,9 +707,28 @@ Procedure:
   If the --k parameter is specified, such as --k test, then `-r ":8080@:80"` CLIENT_KEY is 'test'.  
   If the --k parameter is not specified,then `-r ":8080@:80"`CLIENT_KEY is 'default'.  
   
-  4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`. 
+  4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`.
+  
+#### **4.8.server and client connect bridge through proxy**   
+Sometimes the server or client can not directly access the external network,which need to use a HTTPS or Socks5 proxy to access the Internet. then The -J parameter can help server and client connect to the bridge through the HTTPS or Socks5 proxy.    
+-J param format:  
 
-#### **4.8.view help**  
+https proxy:  
+proxy need authentication,username: username password:password  
+https://username:password@host:port  
+proxy don't need authentication  
+https://host:port  
+
+socks5 proxy:
+proxy need authentication,username: username password:password  
+socks5://username:password@host:port
+proxy don't need authentication  
+socks5://host:port
+
+host:proxy's domain or ip
+port:proxy's port
+
+#### **4.9.view help**  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  
