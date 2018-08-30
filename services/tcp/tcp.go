@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"io"
 	logger "log"
@@ -12,36 +13,36 @@ import (
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
 
 	"strconv"
 )
 
 type TCPArgs struct {
-	Parent              *string
-	CertFile            *string
-	KeyFile             *string
-	CertBytes           []byte
-	KeyBytes            []byte
-	Local               *string
-	ParentType          *string
-	LocalType           *string
-	Timeout             *int
-	CheckParentInterval *int
-	KCP                 kcpcfg.KCPConfigArgs
+	Parent     *string
+	CertFile   *string
+	KeyFile    *string
+	CertBytes  []byte
+	KeyBytes   []byte
+	Local      *string
+	ParentType *string
+	LocalType  *string
+	Timeout    *int
+	KCP        kcpcfg.KCPConfigArgs
+	Jumper     *string
 }
 
 type TCP struct {
-	outPool   utils.OutConn
 	cfg       TCPArgs
 	sc        *utils.ServerChannel
 	isStop    bool
 	userConns utils.ConcurrentMap
 	log       *logger.Logger
+	jumper    *jumper.Jumper
 }
 
 func NewTCP() services.Service {
 	return &TCP{
-		outPool:   utils.OutConn{},
 		cfg:       TCPArgs{},
 		isStop:    false,
 		userConns: utils.NewConcurrentMap(),
@@ -62,10 +63,23 @@ func (s *TCP) CheckArgs() (err error) {
 			return
 		}
 	}
+	if *s.cfg.Jumper != "" {
+		if *s.cfg.ParentType != "tls" && *s.cfg.ParentType != "tcp" {
+			err = fmt.Errorf("jumper only worked of -T is tls or tcp")
+			return
+		}
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
+	}
 	return
 }
 func (s *TCP) InitService() (err error) {
-	s.InitOutConnPool()
+
 	return
 }
 func (s *TCP) StopService() {
@@ -146,7 +160,7 @@ func (s *TCP) callback(inConn net.Conn) {
 }
 func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
 	var outConn net.Conn
-	outConn, err = s.outPool.Get()
+	outConn, err = s.GetParentConn()
 	if err != nil {
 		s.log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
 		utils.CloseConn(inConn)
@@ -219,17 +233,34 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	return
 
 }
-func (s *TCP) InitOutConnPool() {
-	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" || *s.cfg.ParentType == "kcp" {
-		//dur int, isTLS bool, certBytes, keyBytes []byte,
-		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutConn(
-			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType,
-			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
-			*s.cfg.Parent,
-			*s.cfg.Timeout,
-		)
+func (s *TCP) GetParentConn() (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		if s.jumper == nil {
+			var _conn tls.Conn
+			_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err == nil {
+				conn = net.Conn(&_conn)
+			}
+		} else {
+			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err != nil {
+				return nil, err
+			}
+			var _c net.Conn
+			_c, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn = net.Conn(tls.Client(_c, conf))
+			}
+		}
+
+	} else if *s.cfg.ParentType == "kcp" {
+		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+	} else {
+		if s.jumper == nil {
+			conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		}
 	}
+	return
 }

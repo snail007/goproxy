@@ -15,6 +15,7 @@ import (
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
 
 	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
@@ -38,6 +39,7 @@ type MuxServerArgs struct {
 	IsCompress   *bool
 	SessionCount *int
 	KCP          kcpcfg.KCPConfigArgs
+	Jumper       *string
 }
 
 type MuxUDPItem struct {
@@ -121,6 +123,7 @@ func (s *MuxServerManager) Start(args interface{}, log *logger.Logger) (err erro
 			SessionCount: s.cfg.SessionCount,
 			KCP:          s.cfg.KCP,
 			ParentType:   s.cfg.ParentType,
+			Jumper:       s.cfg.Jumper,
 		}, log)
 
 		if err != nil {
@@ -164,6 +167,7 @@ type MuxServer struct {
 	isStop   bool
 	udpConn  *net.Conn
 	log      *logger.Logger
+	jumper   *jumper.Jumper
 }
 
 func NewMuxServer() services.Service {
@@ -207,6 +211,19 @@ func (s *MuxServer) CheckArgs() (err error) {
 	if *s.cfg.Remote == "" {
 		err = fmt.Errorf("remote required")
 		return
+	}
+	if *s.cfg.Jumper != "" {
+		if *s.cfg.ParentType != "tls" && *s.cfg.ParentType != "tcp" {
+			err = fmt.Errorf("jumper only worked of -T is tls or tcp")
+			return
+		}
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
 	}
 	return
 }
@@ -378,15 +395,32 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 }
 func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
-		if err == nil {
-			conn = net.Conn(&_conn)
+		if s.jumper == nil {
+			var _conn tls.Conn
+			_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err == nil {
+				conn = net.Conn(&_conn)
+			}
+		} else {
+			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			if err != nil {
+				return nil, err
+			}
+			var _c net.Conn
+			_c, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn = net.Conn(tls.Client(_c, conf))
+			}
 		}
+
 	} else if *s.cfg.ParentType == "kcp" {
 		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
 	} else {
-		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+		if s.jumper == nil {
+			conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		}
 	}
 	return
 }

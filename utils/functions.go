@@ -108,6 +108,9 @@ func TlsConnect(host string, port, timeout int, certBytes, keyBytes, caCertBytes
 	}
 	return *tls.Client(_conn, conf), err
 }
+func TlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Config, err error) {
+	return getRequestTlsConfig(certBytes, keyBytes, caCertBytes)
+}
 func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Config, err error) {
 
 	var cert tls.Certificate

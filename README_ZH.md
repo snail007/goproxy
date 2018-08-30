@@ -87,14 +87,15 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.12 自定义加密](#112-自定义加密)
     - [1.13 压缩传输](#113-压缩传输)
     - [1.14 查看帮助](#114-查看帮助)
-- [2. TCP代理](#2tcp代理)
+- [2. TCP代理(端口映射)](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
     - [2.3 普通三级TCP代理](#23普通三级tcp代理)
     - [2.4 加密二级TCP代理](#24加密二级tcp代理)
     - [2.5 加密三级TCP代理](#25加密三级tcp代理)
-    - [2.6 查看帮助](#26查看帮助)
-- [3. UDP代理](#3udp代理)
+    - [2.6 通过代理连接上级](#26通过代理连接上级)
+    - [2.7 查看帮助](#27查看帮助)
+- [3. UDP代理(端口映射)](#3udp代理)
     - [3.1 普通一级UDP代理](#31普通一级udp代理)
     - [3.2 普通二级UDP代理](#32普通二级udp代理)
     - [3.3 普通三级UDP代理](#33普通三级udp代理)
@@ -109,7 +110,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [4.5 高级用法一](#45高级用法一)
     - [4.6 高级用法一](#46高级用法二)
     - [4.7 server的-r参数](#47server的-r参数)
-    - [4.8 查看帮助](#48查看帮助)
+    - [4.8 server和client通过代理连接bridge](#48server和client通过代理连接bridge)
+    - [4.9 查看帮助](#49查看帮助)
 - [5. SOCKS5代理](#5socks5代理)
     - [5.1 普通SOCKS5代理](#51普通socks5代理)
     - [5.2 普通二级SOCKS5代理](#52普通二级socks5代理)
@@ -506,7 +508,27 @@ VPS(IP:22.22.22.33)执行:
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
   
-#### **2.6.查看帮助**  
+#### **2.6.通过代理连接上级**  
+有时候proxy所在的网络不能直接访问外网,需要通过一个https或者socks5代理才能上网,那么这个时候  
+-J参数就可以帮助你让proxy的tcp端口映射的时候通过https或者socks5代理去连接上级-P,将外部端口映射到本地.    
+-J参数格式如下:  
+
+https代理写法:  
+代理需要认证,用户名:username 密码:password  
+https://username:password@host:port  
+代理不需要认证  
+https://host:port  
+
+socks5代理写法:
+代理需要认证,用户名:username 密码:password
+socks5://username:password@host:port
+代理不需要认证
+socks5://host:port
+
+host:代理的IP或者域名
+port:代理的端口
+
+#### **2.7.查看帮助**  
 `./proxy help tcp`  
   
 ### **3.UDP代理**  
@@ -693,7 +715,27 @@ server连接到bridge的时候,如果同时有多个client连接到同一个brid
   
   4.7.3.LOCAL_IP为空默认是:`0.0.0.0`,CLIENT_LOCAL_HOST为空默认是:`127.0.0.1`; 
 
-#### **4.8.查看帮助**  
+#### **4.8.server和client通过代理连接bridge**  
+有时候server或者client所在的网络不能直接访问外网,需要通过一个https或者socks5代理才能上网,那么这个时候  
+-J参数就可以帮助你让server或者client通过https或者socks5代理去连接bridge.  
+-J参数格式如下:  
+
+https代理写法:  
+代理需要认证,用户名:username 密码:password  
+https://username:password@host:port  
+代理不需要认证  
+https://host:port  
+
+socks5代理写法:
+代理需要认证,用户名:username 密码:password
+socks5://username:password@host:port
+代理不需要认证
+socks5://host:port
+
+host:代理的IP或者域名
+port:代理的端口
+
+#### **4.9.查看帮助**  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  
