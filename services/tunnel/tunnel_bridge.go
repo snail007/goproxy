@@ -123,7 +123,20 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 		s.log.Printf("mux server conn accept error,ERR:%s", err)
 		return
 	}
-
+	go func() {
+		defer func() {
+			_ = recover()
+		}()
+		timer := time.NewTicker(time.Second * 3)
+		for {
+			<-timer.C
+			if sess.NumStreams() == 0 {
+				sess.Close()
+				timer.Stop()
+				return
+			}
+		}
+	}()
 	var buf = make([]byte, 1024)
 	n, _ := inConn.Read(buf)
 	reader := bytes.NewReader(buf[:n])

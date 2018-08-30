@@ -183,7 +183,7 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 		}
 	}
 	if err == nil {
-		c, e := smux.Client(conn, &smux.Config{
+		sess, e := smux.Client(conn, &smux.Config{
 			AcceptBacklog:          256,
 			EnableKeepAlive:        true,
 			KeepAliveInterval:      9 * time.Second,
@@ -196,12 +196,26 @@ func (s *TunnelClient) GetConn() (conn net.Conn, err error) {
 			err = e
 			return
 		}
-		conn, e = c.OpenStream()
+		conn, e = sess.OpenStream()
 		if e != nil {
 			s.log.Printf("mux client conn open stream error,ERR:%s", e)
 			err = e
 			return
 		}
+		go func() {
+			defer func() {
+				_ = recover()
+			}()
+			timer := time.NewTicker(time.Second * 3)
+			for {
+				<-timer.C
+				if sess.NumStreams() == 0 {
+					sess.Close()
+					timer.Stop()
+					return
+				}
+			}
+		}()
 	}
 	return
 }
