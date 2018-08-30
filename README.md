@@ -95,7 +95,7 @@ This page is the v5.4 manual, and the other version of the manual can be checked
     - [2.4 TCP second level encrypted proxy](#24tcp-second-level-encrypted-proxy)
     - [2.5 TCP third level encrypted proxy](#25tcp-third-level-encrypted-proxy)
     - [2.6 Connect parents proxy through other proxy](#26connect-parents-proxy-through-other-proxy)
-    - [2.7 View help](#26view-help)
+    - [2.7 View help](#27view-help)
 - [3.UDP proxy](#3udp-proxy)
     - [3.1 Common UDP first level proxy](#31common-udp-first-level-proxy)
     - [3.2 Common UDP second level proxy](#32common-udp-second-level-proxy)
@@ -111,7 +111,7 @@ This page is the v5.4 manual, and the other version of the manual can be checked
     - [4.5 Advanced usage 1](#45advanced-usage-1)
     - [4.6 Advanced usage 2](#46advanced-usage-2)
     - [4.7 -r parameters of server](#47-r-parameters-of-server)
-    - [4.8 server and client connect bridge through proxy](#48server-and-client-connect-bridge-through-proxy)
+    - [4.8 Server and client connect bridge through proxy](#48server-and-client-connect-bridge-through-proxy)
     - [4.9 View help](#49view-help)
 - [5.SOCKS5 proxy](#5socks5-proxy)
     - [5.1 Common SOCKS5 proxy](#51common-socks5-proxy)
@@ -707,7 +707,7 @@ Procedure:
   
   4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`.
   
-#### **4.8.server和client通过代理连接bridge**   
+#### **4.8.server and client connect bridge through proxy**   
 Sometimes the server or client can not directly access the external network,which need to use a HTTPS or Socks5 proxy to access the Internet. then The -J parameter can help server and client connect to the bridge through the HTTPS or Socks5 proxy.    
 -J param format:  
 
