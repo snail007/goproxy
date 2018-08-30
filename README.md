@@ -1,12 +1,23 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
-Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet.  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet, secure DNS proxy.  
 
   
 ---  
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
-[中文手册](/README_ZH.md)  
+**[中文手册](/README_ZH.md)**  
+
+**[全平台图形界面版本](/gui/README.md)**  
+
+**[全平台SDK](/sdk/README.md)**   
+
+### How to contribute to the code (Pull Request)?  
+
+Pull Request is welcomed.   
+First, you need to clone the project to your account, and then modify the code on the dev branch.   
+Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
+PR needs to explain what changes have been made and why you change them.  
 
 ### Features  
 - chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
@@ -37,27 +48,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 prox
 - ...  
 
  
-This page is the v5.1 manual, and the other version of the manual can be checked by the following link.  
-- [v5.1 manual](https://github.com/snail007/goproxy/tree/v5.1)
-- [v4.9 manual](https://github.com/snail007/goproxy/tree/v4.9)
-- [v4.8 manual](https://github.com/snail007/goproxy/tree/v4.8)
-- [v4.7 manual](https://github.com/snail007/goproxy/tree/v4.7)
-- [v4.6 manual](https://github.com/snail007/goproxy/tree/v4.6)
-- [v4.5 manual](https://github.com/snail007/goproxy/tree/v4.5)
-- [v4.4 manual](https://github.com/snail007/goproxy/tree/v4.4)
-- [v4.3 manual](https://github.com/snail007/goproxy/tree/v4.3)
-- [v4.2 manual](https://github.com/snail007/goproxy/tree/v4.2)
-- [v4.0-4.1 manual](https://github.com/snail007/goproxy/tree/v4.1)
-- [v3.9 manual](https://github.com/snail007/goproxy/tree/v3.9)
-- [v3.8 manual](https://github.com/snail007/goproxy/tree/v3.8)
-- [v3.6-v3.7 manual](https://github.com/snail007/goproxy/tree/v3.6)
-- [v3.5 manual](https://github.com/snail007/goproxy/tree/v3.5)
-- [v3.4 manual](https://github.com/snail007/goproxy/tree/v3.4)
-- [v3.3 manual](https://github.com/snail007/goproxy/tree/v3.3)
-- [v3.2 manual](https://github.com/snail007/goproxy/tree/v3.2)
-- [v3.1 manual](https://github.com/snail007/goproxy/tree/v3.1)
-- [v3.0 manual](https://github.com/snail007/goproxy/tree/v3.0)
-- [v2.x manual](https://github.com/snail007/goproxy/tree/v2.2)  
+This page is the v5.4 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
 ### How to find the organization?  
 [Click to join the proxy group of gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
@@ -67,6 +58,7 @@ This page is the v5.1 manual, and the other version of the manual can be checked
 ### Installation
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
+- [Docker installation](#docker-installation)
 
 ### First use must read
 - [Environmental Science](#environmental-science)
@@ -102,7 +94,8 @@ This page is the v5.1 manual, and the other version of the manual can be checked
     - [2.3 Common TCP third level proxy](#23common-tcp-third-level-proxy)
     - [2.4 TCP second level encrypted proxy](#24tcp-second-level-encrypted-proxy)
     - [2.5 TCP third level encrypted proxy](#25tcp-third-level-encrypted-proxy)
-    - [2.6 View help](#26view-help)
+    - [2.6 Connect parents proxy through other proxy](#26connect-parents-proxy-through-other-proxy)
+    - [2.7 View help](#26view-help)
 - [3.UDP proxy](#3udp-proxy)
     - [3.1 Common UDP first level proxy](#31common-udp-first-level-proxy)
     - [3.2 Common UDP second level proxy](#32common-udp-second-level-proxy)
@@ -118,7 +111,8 @@ This page is the v5.1 manual, and the other version of the manual can be checked
     - [4.5 Advanced usage 1](#45advanced-usage-1)
     - [4.6 Advanced usage 2](#46advanced-usage-2)
     - [4.7 -r parameters of server](#47-r-parameters-of-server)
-    - [4.8 View help](#48view-help)
+    - [4.8 server and client connect bridge through proxy](#48server-and-client-connect-bridge-through-proxy)
+    - [4.9 View help](#49view-help)
 - [5.SOCKS5 proxy](#5socks5-proxy)
     - [5.1 Common SOCKS5 proxy](#51common-socks5-proxy)
     - [5.2 Common SOCKS5 second level proxy](#52common-socks5-second-level-proxy)
@@ -169,7 +163,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v4.7/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v5.4/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.Download the automatic installation script**  
 ```shell  
@@ -178,6 +172,36 @@ wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh  
 ./install.sh  
 ```  
+
+#### Docker installation 
+
+Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
+
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.4:
+
+```
+ARG GOPROXY_VERSION=v5.4
+```
+
+To Run:
+1. Clone the repository and cd into it.
+```
+sudo docker build .
+```
+2. Tag the image:
+```
+sudo docker tag <id from previous step>  snail007/goproxy:latest
+```
+3. Run! 
+Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
+```
+sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
+```
+4. View logs:
+```
+sudo docker logs -f goproxy
+```
+
   
 ## **First use must be read**  
   
@@ -480,7 +504,26 @@ TCP third level proxy (local)
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then access to the local 8080 port is to access the 8080 port of the 66.66.66.66 by encrypting the TCP tunnel.  
   
-#### **2.6.view help**  
+#### **2.6.Connect parents proxy through other proxy**  
+Sometimes the proxy network can not directly access the external network,which need to use a HTTPS or Socks5 proxy to access the Internet. then The -J parameter can help you connect to the parent proxy through the HTTPS or Socks5 proxy when proxy's TCP port is mapped, which can map external port to local.    
+-J param format:  
+
+https proxy:  
+proxy need authentication,username: username password:password  
+https://username:password@host:port  
+proxy don't need authentication  
+https://host:port  
+
+socks5 proxy:
+proxy need authentication,username: username password:password  
+socks5://username:password@host:port
+proxy don't need authentication  
+socks5://host:port
+
+host:proxy's domain or ip
+port:proxy's port
+  
+#### **2.7.view help**  
 `./proxy help tcp`  
   
 ### **3.UDP proxy**  
@@ -662,9 +705,28 @@ Procedure:
   If the --k parameter is specified, such as --k test, then `-r ":8080@:80"` CLIENT_KEY is 'test'.  
   If the --k parameter is not specified,then `-r ":8080@:80"`CLIENT_KEY is 'default'.  
   
-  4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`. 
+  4.7.3.LOCAL_IP is empty which means LOCAL_IP is `0.0.0.0`, CLIENT_LOCAL_HOST is empty which means LOCAL_IP is `127.0.0.1`.
+  
+#### **4.8.server和client通过代理连接bridge**   
+Sometimes the server or client can not directly access the external network,which need to use a HTTPS or Socks5 proxy to access the Internet. then The -J parameter can help server and client connect to the bridge through the HTTPS or Socks5 proxy.    
+-J param format:  
 
-#### **4.8.view help**  
+https proxy:  
+proxy need authentication,username: username password:password  
+https://username:password@host:port  
+proxy don't need authentication  
+https://host:port  
+
+socks5 proxy:
+proxy need authentication,username: username password:password  
+socks5://username:password@host:port
+proxy don't need authentication  
+socks5://host:port
+
+host:proxy's domain or ip
+port:proxy's port
+
+#### **4.9.view help**  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  
@@ -733,7 +795,7 @@ You can also be placed in a file, which is a line, a ‘username: password’, a
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 In addition, socks5 proxy also integrates external HTTP API authentication, we can specify a http url interface address through the --auth-url parameter,  
-Then when the user is connected, the proxy request this url by get way, with the following four parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
+Then when the user is connected, the proxy request this url by get way, with the following three parameters, if the return HTTP status code 204, on behalf of the authentication is successful.  
 In other cases, the authentication fails.  
 for example:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
@@ -810,7 +872,7 @@ through this way, When you visits the website by local proxy 8080, it visits the
 ### **6.Proxy protocol conversion** 
 
 #### **6.1.Functional introduction** 
-The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is conversed does not support UDP. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
+The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is also does support UDP when parent is Socks5. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
 
 #### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
 Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
@@ -1052,19 +1114,15 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 - HTTP (s) proxy support PAC?
 - Welcome joining group feedback...   
 
-### How to contribute to the code?  
-First, you need to clone the project to your account, and then modify the code on the dev branch.   
-Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
-PR needs to explain what changes have been made and why you change them.  
+### How to use the source code?  
 
-### How to use the source code?    
-Recommend go1.8.5, which does not guarantee that version >=1.9 can be used.   
+Recommend go1.10.1.   
 `go get github.com/snail007/goproxy`   
 use command cd to enter your go SRC directory   
 then cd to enter `github.com/snail007/goproxy`.    
 Direct compilation:`go build -o proxy`        
 execution: `go run *.go`       
-`utils` is a toolkit, and `service` is a specific service class.  
+`utils` is a toolkit, and `service` is a specific service class. 
 
 ### License  
 Proxy is licensed under GPLv3 license.  
