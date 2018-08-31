@@ -71,7 +71,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 
 ### 手册目录
 - [1. HTTP代理](#1http代理)
-    - [1.1 普通HTTP代理](#11普通http代理)
+    - [1.1 普通HTTP代理](#11普通一级http代理)
     - [1.2 普通二级HTTP代理](#12普通二级http代理)
     - [1.3 HTTP二级代理(加密)](#13http二级代理加密)
     - [1.4 HTTP三级代理(加密)](#14http三级代理加密)
