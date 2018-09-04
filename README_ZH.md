@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
 
 [点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
 
@@ -182,7 +182,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v6.0/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -1059,7 +1059,7 @@ SOCKS5支持级联认证,-A可以设置上级认证信息.
 
 #### **6.4 SS转HTTP(S)+SOCKS5+SS** 
 SPS上级和本地支持ss协议,上级可以是SPS或者标准的ss服务.  
-SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理,当上级是SOCKS5时SOCKS5和SS支持UDP功能.  
+SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理,当上级是SOCKS5时转换后的SOCKS5和SS支持UDP功能.  
 假设已经存在一个普通的SS或者SPS代理(开启了ss,加密方式:aes-256-cfb,密码:demo)：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,转换后的ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  
 `./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
