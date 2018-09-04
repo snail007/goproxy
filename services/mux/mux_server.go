@@ -42,15 +42,20 @@ type MuxServerArgs struct {
 	Jumper       *string
 }
 
-type MuxUDPItem struct {
+type MuxUDPPacketItem struct {
 	packet    *[]byte
 	localAddr *net.UDPAddr
 	srcAddr   *net.UDPAddr
 }
-
+type UDPConnItem struct {
+	conn      *net.Conn
+	touchtime int64
+	srcAddr   *net.UDPAddr
+	localAddr *net.UDPAddr
+	connid    string
+}
 type MuxServerManager struct {
 	cfg      MuxServerArgs
-	udpChn   chan MuxUDPItem
 	serverID string
 	servers  []*services.Service
 	log      *logger.Logger
@@ -59,7 +64,6 @@ type MuxServerManager struct {
 func NewMuxServerManager() services.Service {
 	return &MuxServerManager{
 		cfg:      MuxServerArgs{},
-		udpChn:   make(chan MuxUDPItem, 50000),
 		serverID: utils.Uniqueid(),
 		servers:  []*services.Service{},
 	}
@@ -160,23 +164,24 @@ func (s *MuxServerManager) InitService() (err error) {
 
 type MuxServer struct {
 	cfg      MuxServerArgs
-	udpChn   chan MuxUDPItem
 	sc       utils.ServerChannel
 	sessions utils.ConcurrentMap
 	lockChn  chan bool
 	isStop   bool
-	udpConn  *net.Conn
 	log      *logger.Logger
 	jumper   *jumper.Jumper
+	udpConns utils.ConcurrentMap
+	// writelock *sync.Mutex
 }
 
 func NewMuxServer() services.Service {
 	return &MuxServer{
 		cfg:      MuxServerArgs{},
-		udpChn:   make(chan MuxUDPItem, 50000),
 		lockChn:  make(chan bool, 1),
 		sessions: utils.NewConcurrentMap(),
 		isStop:   false,
+		udpConns: utils.NewConcurrentMap(),
+		// writelock: &sync.Mutex{},
 	}
 }
 
@@ -199,12 +204,9 @@ func (s *MuxServer) StopService() {
 	if s.sc.UDPListener != nil {
 		(*s.sc.UDPListener).Close()
 	}
-	if s.udpConn != nil {
-		(*s.udpConn).Close()
-	}
 }
 func (s *MuxServer) InitService() (err error) {
-	s.UDPConnDeamon()
+	s.UDPGCDeamon()
 	return
 }
 func (s *MuxServer) CheckArgs() (err error) {
@@ -242,11 +244,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
-			s.udpChn <- MuxUDPItem{
-				packet:    &packet,
-				localAddr: localAddr,
-				srcAddr:   srcAddr,
-			}
+			s.UDPSend(packet, localAddr, srcAddr)
 		})
 		if err != nil {
 			return
@@ -317,7 +315,9 @@ func (s *MuxServer) GetOutConn() (outConn net.Conn, ID string, err error) {
 	}
 	outConn, err = s.GetConn(fmt.Sprintf("%d", i))
 	if err != nil {
-		s.log.Printf("connection err: %s", err)
+		if !strings.Contains(err.Error(), "can not connect at same time") {
+			s.log.Printf("connection err: %s", err)
+		}
 		return
 	}
 	remoteAddr := "tcp:" + *s.cfg.Remote
@@ -424,87 +424,111 @@ func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
 	}
 	return
 }
-func (s *MuxServer) UDPConnDeamon() {
+func (s *MuxServer) UDPGCDeamon() {
+	gctime := int64(30)
+	go func() {
+		if s.isStop {
+			return
+		}
+		timer := time.NewTicker(time.Second)
+		for {
+			<-timer.C
+			gcKeys := []string{}
+			s.udpConns.IterCb(func(key string, v interface{}) {
+				if time.Now().Unix()-v.(*UDPConnItem).touchtime > gctime {
+					(*(v.(*UDPConnItem).conn)).Close()
+					gcKeys = append(gcKeys, key)
+					s.log.Printf("gc udp conn %s", v.(*UDPConnItem).connid)
+				}
+			})
+			for _, k := range gcKeys {
+				s.udpConns.Remove(k)
+			}
+			gcKeys = nil
+		}
+	}()
+}
+func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
+	var (
+		uc      *UDPConnItem
+		key     = srcAddr.String()
+		ID      string
+		err     error
+		outconn net.Conn
+	)
+	v, ok := s.udpConns.Get(key)
+	if !ok {
+		for {
+			outconn, ID, err = s.GetOutConn()
+			if err != nil && strings.Contains(err.Error(), "can not connect at same time") {
+				time.Sleep(time.Millisecond * 500)
+				continue
+			} else {
+				break
+			}
+		}
+		if err != nil {
+			s.log.Printf("connect to %s fail, err: %s", *s.cfg.Parent, err)
+			return
+		}
+		uc = &UDPConnItem{
+			conn:      &outconn,
+			srcAddr:   srcAddr,
+			localAddr: localAddr,
+			connid:    ID,
+		}
+		s.udpConns.Set(key, uc)
+		s.UDPRevecive(key, ID)
+	} else {
+		uc = v.(*UDPConnItem)
+	}
 	go func() {
 		defer func() {
-			if err := recover(); err != nil {
-				s.log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+			if e := recover(); e != nil {
+				(*uc.conn).Close()
+				s.udpConns.Remove(key)
+				s.log.Printf("udp sender crashed with error : %s", e)
 			}
 		}()
-		var outConn net.Conn
-		var ID string
-		var err error
+		uc.touchtime = time.Now().Unix()
+		(*uc.conn).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+		_, err = (*uc.conn).Write(utils.UDPPacket(srcAddr.String(), data))
+		(*uc.conn).SetWriteDeadline(time.Time{})
+		if err != nil {
+			s.log.Printf("write udp packet to %s fail ,flush err:%s ", *s.cfg.Parent, err)
+		}
+	}()
+}
+func (s *MuxServer) UDPRevecive(key, ID string) {
+	go func() {
+		s.log.Printf("udp conn %s connected", ID)
+		var uc *UDPConnItem
+		defer func() {
+			if uc != nil {
+				(*uc.conn).Close()
+			}
+			s.udpConns.Remove(key)
+			s.log.Printf("udp conn %s released", ID)
+		}()
+		v, ok := s.udpConns.Get(key)
+		if !ok {
+			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key, ID)
+			return
+		}
+		uc = v.(*UDPConnItem)
 		for {
-			if s.isStop {
-				return
-			}
-			item := <-s.udpChn
-		RETRY:
-			if s.isStop {
-				return
-			}
-			if outConn == nil {
-				for {
-					if s.isStop {
-						return
-					}
-					outConn, ID, err = s.GetOutConn()
-					if err != nil {
-						outConn = nil
-						utils.CloseConn(&outConn)
-						s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
-						time.Sleep(time.Second * 3)
-						continue
-					} else {
-						go func(outConn net.Conn, ID string) {
-							if s.udpConn != nil {
-								(*s.udpConn).Close()
-							}
-							s.udpConn = &outConn
-							for {
-								if s.isStop {
-									return
-								}
-								outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
-								outConn.SetDeadline(time.Time{})
-								if err != nil {
-									s.log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
-									s.log.Printf("UDP deamon connection %s exited", ID)
-									break
-								}
-								//s.log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
-								_srcAddr := strings.Split(srcAddrFromConn, ":")
-								if len(_srcAddr) != 2 {
-									s.log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
-									continue
-								}
-								port, _ := strconv.Atoi(_srcAddr[1])
-								dstAddr := &net.UDPAddr{IP: net.ParseIP(_srcAddr[0]), Port: port}
-								s.sc.UDPListener.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-								_, err = s.sc.UDPListener.WriteToUDP(body, dstAddr)
-								s.sc.UDPListener.SetDeadline(time.Time{})
-								if err != nil {
-									s.log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
-									continue
-								}
-								//s.log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
-							}
-						}(outConn, ID)
-						break
-					}
-				}
-			}
-			outConn.SetWriteDeadline(time.Now().Add(time.Second))
-			_, err = outConn.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
-			outConn.SetWriteDeadline(time.Time{})
+			_, body, err := utils.ReadUDPPacket(*uc.conn)
 			if err != nil {
-				utils.CloseConn(&outConn)
-				outConn = nil
-				s.log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
-				goto RETRY
+				if strings.Contains(err.Error(), "n != int(") {
+					continue
+				}
+				if err != io.EOF {
+					s.log.Printf("udp conn read udp packet fail , err: %s ", err)
+				}
+				return
 			}
-			//s.log.Printf("write packet %v", *item.packet)
+			uc.touchtime = time.Now().Unix()
+			go s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
 		}
 	}()
 }

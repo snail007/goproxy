@@ -345,7 +345,10 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (err error) {
 			isHTTPS = true
 			pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\n", address)))
 		}
+		pb.WriteString(fmt.Sprintf("Host: %s\r\n", address))
+		pb.WriteString(fmt.Sprintf("Proxy-Host: %s\r\n", address))
 		pb.WriteString("Proxy-Connection: Keep-Alive\r\n")
+		pb.WriteString("Connection: Keep-Alive\r\n")
 
 		u := ""
 		if *s.cfg.ParentAuth != "" {

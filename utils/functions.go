@@ -585,6 +585,26 @@ func RemoveProxyHeaders(head []byte) []byte {
 func InsertProxyHeaders(head []byte, headers string) []byte {
 	return bytes.Replace(head, []byte("\r\n"), []byte("\r\n"+headers), 1)
 }
+func IsNetClosedErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "use of closed network connection")
+}
+func IsNetTimeoutErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	e, ok := err.(net.Error)
+	return ok && e.Timeout()
+}
+func IsNetDeadlineErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "i/o deadline reached")
+}
+
+func IsNetRefusedErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "connection refused")
+}
+func IsNetSocketNotConnectedErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "socket is not connected")
+}
 
 // type sockaddr struct {
 // 	family uint16

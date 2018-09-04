@@ -18,10 +18,16 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -o proxy && tar zcfv "${REL
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-arm64-v7.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=5 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-arm-v5.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=5 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-arm64-v5.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-arm64-v8.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-arm-v8.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips64 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips64.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mips64le go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips64le.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=mipsle go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mipsle.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=mips GOMIPS=softfloat go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips-softfloat.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=mips64 GOMIPS=softfloat go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips64-softfloat.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=mips64le GOMIPS=softfloat go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mips64le-softfloat.tar.gz" proxy direct blocked 
+CGO_ENABLED=0 GOOS=linux GOARCH=mipsle GOMIPS=softfloat go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-mipsle-softfloat.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=ppc64 go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-ppc64.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-ppc64le.tar.gz" proxy direct blocked 
 CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o proxy && tar zcfv "${RELEASE}/proxy-linux-s390x.tar.gz" proxy direct blocked 

@@ -6,6 +6,7 @@ import (
 	"io"
 	logger "log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/golang/snappy"
@@ -31,12 +32,21 @@ type MuxClientArgs struct {
 	KCP          kcpcfg.KCPConfigArgs
 	Jumper       *string
 }
+type ClientUDPConnItem struct {
+	conn      *smux.Stream
+	touchtime int64
+	srcAddr   *net.UDPAddr
+	localAddr *net.UDPAddr
+	udpConn   *net.UDPConn
+	connid    string
+}
 type MuxClient struct {
 	cfg      MuxClientArgs
 	isStop   bool
 	sessions utils.ConcurrentMap
 	log      *logger.Logger
 	jumper   *jumper.Jumper
+	udpConns utils.ConcurrentMap
 }
 
 func NewMuxClient() services.Service {
@@ -44,10 +54,12 @@ func NewMuxClient() services.Service {
 		cfg:      MuxClientArgs{},
 		isStop:   false,
 		sessions: utils.NewConcurrentMap(),
+		udpConns: utils.NewConcurrentMap(),
 	}
 }
 
 func (s *MuxClient) InitService() (err error) {
+	s.UDPGCDeamon()
 	return
 }
 
@@ -178,7 +190,7 @@ func (s *MuxClient) Start(args interface{}, log *logger.Logger) (err error) {
 							stream.Close()
 							return
 						}
-						s.log.Printf("worker[%d] signal revecived,server %s stream %s %s", i, serverID, ID, clientLocalAddr)
+						//s.log.Printf("worker[%d] signal revecived,server %s stream %s %s", i, serverID, ID, clientLocalAddr)
 						protocol := clientLocalAddr[:3]
 						localAddr := clientLocalAddr[4:]
 						if protocol == "udp" {
@@ -228,76 +240,130 @@ func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 	return
 }
 func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
-
+	var item *ClientUDPConnItem
+	var body []byte
+	var err error
+	srcAddr := ""
+	defer func() {
+		if item != nil {
+			(*item).conn.Close()
+			(*item).udpConn.Close()
+			s.udpConns.Remove(srcAddr)
+			inConn.Close()
+		}
+	}()
 	for {
 		if s.isStop {
 			return
 		}
-		inConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		srcAddr, body, err := utils.ReadUDPPacket(inConn)
-		inConn.SetDeadline(time.Time{})
+		srcAddr, body, err = utils.ReadUDPPacket(inConn)
 		if err != nil {
-			s.log.Printf("udp packet revecived fail, err: %s", err)
-			s.log.Printf("connection %s released", ID)
-			inConn.Close()
-			break
-		} else {
-			//s.log.Printf("udp packet revecived:%s,%v", srcAddr, body)
-			go func() {
-				defer func() {
-					if e := recover(); e != nil {
-						s.log.Printf("client processUDPPacket crashed,err: %s", e)
-					}
-				}()
-				s.processUDPPacket(inConn, srcAddr, localAddr, body)
-			}()
-
+			if strings.Contains(err.Error(), "n != int(") {
+				continue
+			}
+			if !utils.IsNetDeadlineErr(err) && err != io.EOF {
+				s.log.Printf("udp packet revecived from bridge fail, err: %s", err)
+			}
+			return
 		}
-
+		if v, ok := s.udpConns.Get(srcAddr); !ok {
+			_srcAddr, _ := net.ResolveUDPAddr("udp", srcAddr)
+			zeroAddr, _ := net.ResolveUDPAddr("udp", ":")
+			_localAddr, _ := net.ResolveUDPAddr("udp", localAddr)
+			c, err := net.DialUDP("udp", zeroAddr, _localAddr)
+			if err != nil {
+				s.log.Printf("create local udp conn fail, err : %s", err)
+				inConn.Close()
+				return
+			}
+			item = &ClientUDPConnItem{
+				conn:      inConn,
+				srcAddr:   _srcAddr,
+				localAddr: _localAddr,
+				udpConn:   c,
+				connid:    ID,
+			}
+			s.udpConns.Set(srcAddr, item)
+			s.UDPRevecive(srcAddr, ID)
+		} else {
+			item = v.(*ClientUDPConnItem)
+		}
+		(*item).touchtime = time.Now().Unix()
+		go (*item).udpConn.Write(body)
+		//_, err = (*item).udpConn.Write(body)
+		// if err != nil {
+		// 	s.log.Printf("send udp packet to %s fail, err : %s", item.localAddr, err)
+		// 	return
+		// }
 	}
-	// }
 }
-func (s *MuxClient) processUDPPacket(inConn *smux.Stream, srcAddr, localAddr string, body []byte) {
-	dstAddr, err := net.ResolveUDPAddr("udp", localAddr)
-	if err != nil {
-		s.log.Printf("can't resolve address: %s", err)
-		inConn.Close()
-		return
-	}
-	clientSrcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
-	conn, err := net.DialUDP("udp", clientSrcAddr, dstAddr)
-	if err != nil {
-		s.log.Printf("connect to udp %s fail,ERR:%s", dstAddr.String(), err)
-		return
-	}
-	conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-	_, err = conn.Write(body)
-	conn.SetDeadline(time.Time{})
-	if err != nil {
-		s.log.Printf("send udp packet to %s fail,ERR:%s", dstAddr.String(), err)
-		return
-	}
-	//s.log.Printf("send udp packet to %s success", dstAddr.String())
-	buf := make([]byte, 1024)
-	conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-	length, _, err := conn.ReadFromUDP(buf)
-	conn.SetDeadline(time.Time{})
-	if err != nil {
-		s.log.Printf("read udp response from %s fail ,ERR:%s", dstAddr.String(), err)
-		return
-	}
-	respBody := buf[0:length]
-	//s.log.Printf("revecived udp packet from %s , %v", dstAddr.String(), respBody)
-	bs := utils.UDPPacket(srcAddr, respBody)
-	(*inConn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-	_, err = (*inConn).Write(bs)
-	(*inConn).SetDeadline(time.Time{})
-	if err != nil {
-		s.log.Printf("send udp response fail ,ERR:%s", err)
-		inConn.Close()
-		return
-	}
-	//s.log.Printf("send udp response success ,from:%s ,%d ,%v", dstAddr.String(), len(bs), bs)
+func (s *MuxClient) UDPRevecive(key, ID string) {
+	go func() {
+		s.log.Printf("udp conn %s connected", ID)
+		v, ok := s.udpConns.Get(key)
+		if !ok {
+			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key, ID)
+			return
+		}
+		cui := v.(*ClientUDPConnItem)
+		buf := utils.LeakyBuffer.Get()
+		defer func() {
+			utils.LeakyBuffer.Put(buf)
+			cui.conn.Close()
+			cui.udpConn.Close()
+			s.udpConns.Remove(key)
+			s.log.Printf("udp conn %s released", ID)
+		}()
+		for {
+			n, err := cui.udpConn.Read(buf)
+			if err != nil {
+				if !utils.IsNetClosedErr(err) {
+					s.log.Printf("udp conn read udp packet fail , err: %s ", err)
+				}
+				return
+			}
+			cui.touchtime = time.Now().Unix()
+			go func() {
+				cui.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+				_, err = cui.conn.Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
+				cui.conn.SetWriteDeadline(time.Time{})
+				if err != nil {
+					cui.udpConn.Close()
+					return
+				}
+			}()
+			// _, err = cui.conn.Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
+			// if err != nil {
+			// 	s.log.Printf("send udp packet to bridge fail, err : %s", err)
+			// 	return
+			// }
+		}
+	}()
+}
+func (s *MuxClient) UDPGCDeamon() {
+	gctime := int64(30)
+	go func() {
+		if s.isStop {
+			return
+		}
+		timer := time.NewTicker(time.Second)
+		for {
+			<-timer.C
+			gcKeys := []string{}
+			s.udpConns.IterCb(func(key string, v interface{}) {
+				if time.Now().Unix()-v.(*ClientUDPConnItem).touchtime > gctime {
+					(*(v.(*ClientUDPConnItem).conn)).Close()
+					(v.(*ClientUDPConnItem).udpConn).Close()
+					gcKeys = append(gcKeys, key)
+					s.log.Printf("gc udp conn %s", v.(*ClientUDPConnItem).connid)
+				}
+			})
+			for _, k := range gcKeys {
+				s.udpConns.Remove(k)
+			}
+			gcKeys = nil
+		}
+	}()
 }
 func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 	var err error
