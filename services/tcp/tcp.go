@@ -10,33 +10,35 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/jumper"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/services/kcpcfg"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/jumper"
+	"bitbucket.org/snail/proxy/utils/mapx"
 
 	"strconv"
 )
 
 type TCPArgs struct {
-	Parent     *string
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Local      *string
-	ParentType *string
-	LocalType  *string
-	Timeout    *int
-	KCP        kcpcfg.KCPConfigArgs
-	Jumper     *string
+	Parent              *string
+	CertFile            *string
+	KeyFile             *string
+	CertBytes           []byte
+	KeyBytes            []byte
+	Local               *string
+	ParentType          *string
+	LocalType           *string
+	Timeout             *int
+	CheckParentInterval *int
+	KCP                 kcpcfg.KCPConfigArgs
+	Jumper              *string
 }
 
 type TCP struct {
 	cfg       TCPArgs
 	sc        *utils.ServerChannel
 	isStop    bool
-	userConns utils.ConcurrentMap
+	userConns mapx.ConcurrentMap
 	log       *logger.Logger
 	jumper    *jumper.Jumper
 }
@@ -45,11 +47,11 @@ func NewTCP() services.Service {
 	return &TCP{
 		cfg:       TCPArgs{},
 		isStop:    false,
-		userConns: utils.NewConcurrentMap(),
+		userConns: mapx.NewConcurrentMap(),
 	}
 }
 func (s *TCP) CheckArgs() (err error) {
-	if *s.cfg.Parent == "" {
+	if len(*s.cfg.Parent) == 0 {
 		err = fmt.Errorf("parent required for %s %s", *s.cfg.LocalType, *s.cfg.Local)
 		return
 	}
@@ -88,7 +90,7 @@ func (s *TCP) StopService() {
 		if e != nil {
 			s.log.Printf("stop tcp service crashed,%s", e)
 		} else {
-			s.log.Printf("service tcp stopped")
+			s.log.Printf("service tcp stoped")
 		}
 	}()
 	s.isStop = true
@@ -111,7 +113,7 @@ func (s *TCP) Start(args interface{}, log *logger.Logger) (err error) {
 	if err = s.InitService(); err != nil {
 		return
 	}
-	s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
+	s.log.Printf("use %s parent %v", *s.cfg.ParentType, *s.cfg.Parent)
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
 	sc := utils.NewServerChannel(host, p, s.log)
@@ -141,6 +143,7 @@ func (s *TCP) callback(inConn net.Conn) {
 		}
 	}()
 	var err error
+	lbAddr := ""
 	switch *s.cfg.ParentType {
 	case "kcp":
 		fallthrough
@@ -154,11 +157,12 @@ func (s *TCP) callback(inConn net.Conn) {
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
 	}
 	if err != nil {
-		s.log.Printf("connect to %s parent %s fail, ERR:%s", *s.cfg.ParentType, *s.cfg.Parent, err)
+		s.log.Printf("connect to %s parent %s fail, ERR:%s", *s.cfg.ParentType, lbAddr, err)
 		utils.CloseConn(&inConn)
 	}
 }
 func (s *TCP) OutToTCP(inConn *net.Conn) (err error) {
+
 	var outConn net.Conn
 	outConn, err = s.GetParentConn()
 	if err != nil {

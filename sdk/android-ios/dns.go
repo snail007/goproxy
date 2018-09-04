@@ -11,10 +11,10 @@ import (
 
 	"golang.org/x/net/proxy"
 
+	services "bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/services/kcpcfg"
 	"github.com/miekg/dns"
 	gocache "github.com/pmylund/go-cache"
-	services "github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 )
 
 type DNSArgs struct {
@@ -76,7 +76,7 @@ func (s *DNS) InitService() (err error) {
 		nil,
 		&net.Dialer{
 			Timeout:   5 * time.Second,
-			KeepAlive: 2 * time.Second,
+			KeepAlive: 5 * time.Second,
 		},
 	)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *DNS) StopService() {
 		if e != nil {
 			s.log.Printf("stop dns service crashed,%s", e)
 		} else {
-			s.log.Printf("service dns stopped")
+			s.log.Printf("service dns stoped")
 		}
 	}()
 	Stop(s.serviceKey)

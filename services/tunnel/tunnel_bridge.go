@@ -9,8 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/mapx"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
@@ -37,8 +38,8 @@ type ServerConn struct {
 }
 type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
-	serverConns        utils.ConcurrentMap
-	clientControlConns utils.ConcurrentMap
+	serverConns        mapx.ConcurrentMap
+	clientControlConns mapx.ConcurrentMap
 	isStop             bool
 	log                *logger.Logger
 }
@@ -46,8 +47,8 @@ type TunnelBridge struct {
 func NewTunnelBridge() services.Service {
 	return &TunnelBridge{
 		cfg:                TunnelBridgeArgs{},
-		serverConns:        utils.NewConcurrentMap(),
-		clientControlConns: utils.NewConcurrentMap(),
+		serverConns:        mapx.NewConcurrentMap(),
+		clientControlConns: mapx.NewConcurrentMap(),
 		isStop:             false,
 	}
 }
@@ -69,7 +70,7 @@ func (s *TunnelBridge) StopService() {
 		if e != nil {
 			s.log.Printf("stop tbridge service crashed,%s", e)
 		} else {
-			s.log.Printf("service tbridge stopped")
+			s.log.Printf("service tbridge stoped")
 		}
 	}()
 	s.isStop = true

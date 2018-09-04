@@ -9,11 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/services/kcpcfg"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/jumper"
+	"bitbucket.org/snail/proxy/utils/mapx"
+
 	"github.com/golang/snappy"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/jumper"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -43,18 +45,18 @@ type ClientUDPConnItem struct {
 type MuxClient struct {
 	cfg      MuxClientArgs
 	isStop   bool
-	sessions utils.ConcurrentMap
+	sessions mapx.ConcurrentMap
 	log      *logger.Logger
 	jumper   *jumper.Jumper
-	udpConns utils.ConcurrentMap
+	udpConns mapx.ConcurrentMap
 }
 
 func NewMuxClient() services.Service {
 	return &MuxClient{
 		cfg:      MuxClientArgs{},
 		isStop:   false,
-		sessions: utils.NewConcurrentMap(),
-		udpConns: utils.NewConcurrentMap(),
+		sessions: mapx.NewConcurrentMap(),
+		udpConns: mapx.NewConcurrentMap(),
 	}
 }
 
@@ -101,7 +103,7 @@ func (s *MuxClient) StopService() {
 		if e != nil {
 			s.log.Printf("stop client service crashed,%s", e)
 		} else {
-			s.log.Printf("service client stopped")
+			s.log.Printf("service client stoped")
 		}
 	}()
 	s.isStop = true
@@ -341,7 +343,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 	}()
 }
 func (s *MuxClient) UDPGCDeamon() {
-	gctime := int64(30)
+	gctime := int64(60)
 	go func() {
 		if s.isStop {
 			return

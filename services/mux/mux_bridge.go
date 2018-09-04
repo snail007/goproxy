@@ -12,16 +12,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/services/kcpcfg"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/mapx"
+
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
-)
-
-const (
-	CONN_SERVER = uint8(4)
-	CONN_CLIENT = uint8(5)
 )
 
 type MuxBridgeArgs struct {
@@ -37,8 +34,8 @@ type MuxBridgeArgs struct {
 }
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
-	clientControlConns utils.ConcurrentMap
-	serverConns        utils.ConcurrentMap
+	clientControlConns mapx.ConcurrentMap
+	serverConns        mapx.ConcurrentMap
 	router             utils.ClientKeyRouter
 	l                  *sync.Mutex
 	isStop             bool
@@ -49,8 +46,8 @@ type MuxBridge struct {
 func NewMuxBridge() services.Service {
 	b := &MuxBridge{
 		cfg:                MuxBridgeArgs{},
-		clientControlConns: utils.NewConcurrentMap(),
-		serverConns:        utils.NewConcurrentMap(),
+		clientControlConns: mapx.NewConcurrentMap(),
+		serverConns:        mapx.NewConcurrentMap(),
 		l:                  &sync.Mutex{},
 		isStop:             false,
 	}
@@ -80,7 +77,7 @@ func (s *MuxBridge) StopService() {
 		if e != nil {
 			s.log.Printf("stop bridge service crashed,%s", e)
 		} else {
-			s.log.Printf("service bridge stopped")
+			s.log.Printf("service bridge stoped")
 		}
 	}()
 	s.isStop = true
@@ -88,7 +85,7 @@ func (s *MuxBridge) StopService() {
 		(*(*s.sc).Listener).Close()
 	}
 	for _, g := range s.clientControlConns.Items() {
-		for _, session := range g.(*utils.ConcurrentMap).Items() {
+		for _, session := range g.(*mapx.ConcurrentMap).Items() {
 			(session.(*smux.Session)).Close()
 		}
 	}
@@ -201,11 +198,11 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		s.l.Lock()
 		defer s.l.Unlock()
 		if !s.clientControlConns.Has(groupKey) {
-			item := utils.NewConcurrentMap()
+			item := mapx.NewConcurrentMap()
 			s.clientControlConns.Set(groupKey, &item)
 		}
 		_group, _ := s.clientControlConns.Get(groupKey)
-		group := _group.(*utils.ConcurrentMap)
+		group := _group.(*mapx.ConcurrentMap)
 		if v, ok := group.Get(index); ok {
 			v.(*smux.Session).Close()
 		}
@@ -254,7 +251,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			time.Sleep(time.Second * 3)
 			continue
 		}
-		group := _group.(*utils.ConcurrentMap)
+		group := _group.(*mapx.ConcurrentMap)
 		keys := group.Keys()
 		keysLen := len(keys)
 		i := 0
