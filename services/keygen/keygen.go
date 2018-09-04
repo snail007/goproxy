@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/snail/proxy/services"
-	"bitbucket.org/snail/proxy/utils"
-	"bitbucket.org/snail/proxy/utils/cert"
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/cert"
 )
 
 type KeygenArgs struct {

@@ -9,10 +9,10 @@ import (
 	"os"
 	"time"
 
-	"bitbucket.org/snail/proxy/services"
-	"bitbucket.org/snail/proxy/utils"
-	"bitbucket.org/snail/proxy/utils/jumper"
-	"bitbucket.org/snail/proxy/utils/mapx"
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/jumper"
+	"github.com/snail007/goproxy/utils/mapx"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"

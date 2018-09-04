@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/snail/proxy/utils"
+	"github.com/snail007/goproxy/utils"
 )
 
 const (

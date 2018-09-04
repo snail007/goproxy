@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/snail/proxy/utils/dnsx"
+	"github.com/snail007/goproxy/utils/dnsx"
 )
 
 // BackendConfig it's the configuration loaded

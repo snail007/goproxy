@@ -23,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"bitbucket.org/snail/proxy/services/kcpcfg"
-	"bitbucket.org/snail/proxy/utils/lb"
+	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/lb"
 
 	"golang.org/x/crypto/pbkdf2"
 
@@ -32,7 +32,7 @@ import (
 
 	"time"
 
-	"bitbucket.org/snail/proxy/utils/id"
+	"github.com/snail007/goproxy/utils/id"
 
 	kcp "github.com/xtaci/kcp-go"
 )

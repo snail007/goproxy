@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/net/proxy"
 
-	services "bitbucket.org/snail/proxy/services"
-	"bitbucket.org/snail/proxy/services/kcpcfg"
+	services "github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/miekg/dns"
 	gocache "github.com/pmylund/go-cache"
 )

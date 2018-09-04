@@ -3,7 +3,7 @@ package main
 import (
 	"C"
 
-	sdk "bitbucket.org/snail/proxy/sdk/android-ios"
+	sdk "github.com/snail007/goproxy/sdk/android-ios"
 )
 
 //export Start

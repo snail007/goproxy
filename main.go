@@ -6,22 +6,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"bitbucket.org/snail/certverify/check"
-	"bitbucket.org/snail/proxy/services"
+	"github.com/snail007/goproxy/services"
 )
 
 const APP_VERSION = "6.0"
 
 func main() {
-	isForever := false
-	for _, v := range os.Args[1:] {
-		if v == "--forever" {
-			isForever = true
-		}
-	}
-	if !isForever {
-		check.Init("proxy")
-	}
 	err := initConfig()
 	if err != nil {
 		log.Fatalf("err : %s", err)
