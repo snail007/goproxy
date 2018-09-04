@@ -71,17 +71,7 @@ func DialWithRawAddr(rawConn *net.Conn, rawaddr []byte, server string, cipher *C
 	} else {
 		c = NewConn(conn, cipher)
 	}
-	if cipher.ota {
-		if c.enc == nil {
-			if _, err = c.initEncrypt(); err != nil {
-				return
-			}
-		}
-		// since we have initEncrypt, we must send iv manually
-		conn.Write(cipher.iv)
-		rawaddr[0] |= OneTimeAuthMask
-		rawaddr = otaConnectAuth(cipher.iv, cipher.key, rawaddr)
-	}
+
 	if _, err = c.write(rawaddr); err != nil {
 		c.Close()
 		return nil, err
@@ -150,10 +140,7 @@ func (c *Conn) Read(b []byte) (n int, err error) {
 
 func (c *Conn) Write(b []byte) (n int, err error) {
 	nn := len(b)
-	if c.ota {
-		chunkId := c.GetAndIncrChunkId()
-		b = otaReqChunkAuth(c.iv, chunkId, b)
-	}
+
 	headerLen := len(b) - nn
 
 	n, err = c.write(b)
