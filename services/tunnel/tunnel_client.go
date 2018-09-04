@@ -9,16 +9,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/jumper"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/jumper"
+	"bitbucket.org/snail/proxy/utils/mapx"
+
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
-)
-
-const (
-	CONN_SERVER_MUX = uint8(6)
-	CONN_CLIENT_MUX = uint8(7)
 )
 
 type TunnelClientArgs struct {
@@ -35,7 +32,7 @@ type TunnelClient struct {
 	cfg       TunnelClientArgs
 	ctrlConn  net.Conn
 	isStop    bool
-	userConns utils.ConcurrentMap
+	userConns mapx.ConcurrentMap
 	log       *logger.Logger
 	jumper    *jumper.Jumper
 }
@@ -43,7 +40,7 @@ type TunnelClient struct {
 func NewTunnelClient() services.Service {
 	return &TunnelClient{
 		cfg:       TunnelClientArgs{},
-		userConns: utils.NewConcurrentMap(),
+		userConns: mapx.NewConcurrentMap(),
 		isStop:    false,
 	}
 }
@@ -84,7 +81,7 @@ func (s *TunnelClient) StopService() {
 		if e != nil {
 			s.log.Printf("stop tclient service crashed,%s", e)
 		} else {
-			s.log.Printf("service tclient stopped")
+			s.log.Printf("service tclient stoped")
 		}
 	}()
 	s.isStop = true

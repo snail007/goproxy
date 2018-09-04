@@ -1,5 +1,5 @@
 #/bin/bash
-VER="v5.5"
+VER="v5.3"
 
 #sudo rm /usr/local/go
 #sudo ln -s /usr/local/go1.10.1 /usr/local/go

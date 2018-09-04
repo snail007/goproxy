@@ -1,5 +1,5 @@
 #/bin/bash
-VER="v5.5"
+VER="v5.3"
 rm -rf sdk-ios-*.tar.gz
 rm -rf ios
 mkdir ios

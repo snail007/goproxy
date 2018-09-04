@@ -54,7 +54,7 @@ func NewClientConn(conn *net.Conn, network, target string, timeout time.Duration
 		s.header = header
 	}
 	if network == "udp" && target == "" {
-		target = "0.0.0.0:1"
+		target = "0.0.0.0:0"
 	}
 	s.addr = target
 	return s

@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/jumper"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/jumper"
+	"bitbucket.org/snail/proxy/utils/mapx"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
@@ -35,11 +36,17 @@ type TunnelServerArgs struct {
 	Mgr       *TunnelServerManager
 	Jumper    *string
 }
-type UDPItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
+type TunnelServer struct {
+	cfg       TunnelServerArgs
+	udpChn    chan UDPItem
+	sc        utils.ServerChannel
+	isStop    bool
+	udpConn   *net.Conn
+	userConns mapx.ConcurrentMap
+	log       *logger.Logger
+	jumper    *jumper.Jumper
 }
+
 type TunnelServerManager struct {
 	cfg      TunnelServerArgs
 	udpChn   chan UDPItem
@@ -136,24 +143,19 @@ func (s *TunnelServerManager) InitService() (err error) {
 	return
 }
 
-type TunnelServer struct {
-	cfg       TunnelServerArgs
-	udpChn    chan UDPItem
-	sc        utils.ServerChannel
-	isStop    bool
-	udpConn   *net.Conn
-	userConns utils.ConcurrentMap
-	log       *logger.Logger
-	jumper    *jumper.Jumper
-}
-
 func NewTunnelServer() services.Service {
 	return &TunnelServer{
 		cfg:       TunnelServerArgs{},
 		udpChn:    make(chan UDPItem, 50000),
 		isStop:    false,
-		userConns: utils.NewConcurrentMap(),
+		userConns: mapx.NewConcurrentMap(),
 	}
+}
+
+type UDPItem struct {
+	packet    *[]byte
+	localAddr *net.UDPAddr
+	srcAddr   *net.UDPAddr
 }
 
 func (s *TunnelServer) StopService() {
@@ -162,7 +164,7 @@ func (s *TunnelServer) StopService() {
 		if e != nil {
 			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			s.log.Printf("service server stopped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -214,7 +216,7 @@ func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
-		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
+		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.udpChn <- UDPItem{
 				packet:    &packet,
 				localAddr: localAddr,

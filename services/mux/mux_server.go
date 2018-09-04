@@ -12,14 +12,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
-	"github.com/snail007/goproxy/utils"
-	"github.com/snail007/goproxy/utils/jumper"
+	"bitbucket.org/snail/proxy/services"
+	"bitbucket.org/snail/proxy/services/kcpcfg"
+	"bitbucket.org/snail/proxy/utils"
+	"bitbucket.org/snail/proxy/utils/jumper"
+	"bitbucket.org/snail/proxy/utils/mapx"
 
 	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
+)
+
+const (
+	CONN_CLIENT_CONTROL = uint8(1)
+	CONN_SERVER         = uint8(4)
+	CONN_CLIENT         = uint8(5)
 )
 
 type MuxServerArgs struct {
@@ -41,19 +48,17 @@ type MuxServerArgs struct {
 	KCP          kcpcfg.KCPConfigArgs
 	Jumper       *string
 }
+type MuxServer struct {
+	cfg      MuxServerArgs
+	sc       utils.ServerChannel
+	sessions mapx.ConcurrentMap
+	lockChn  chan bool
+	isStop   bool
+	log      *logger.Logger
+	jumper   *jumper.Jumper
+	udpConns mapx.ConcurrentMap
+}
 
-type MuxUDPPacketItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
-}
-type UDPConnItem struct {
-	conn      *net.Conn
-	touchtime int64
-	srcAddr   *net.UDPAddr
-	localAddr *net.UDPAddr
-	connid    string
-}
 type MuxServerManager struct {
 	cfg      MuxServerArgs
 	serverID string
@@ -162,27 +167,26 @@ func (s *MuxServerManager) InitService() (err error) {
 	return
 }
 
-type MuxServer struct {
-	cfg      MuxServerArgs
-	sc       utils.ServerChannel
-	sessions utils.ConcurrentMap
-	lockChn  chan bool
-	isStop   bool
-	log      *logger.Logger
-	jumper   *jumper.Jumper
-	udpConns utils.ConcurrentMap
-	// writelock *sync.Mutex
-}
-
 func NewMuxServer() services.Service {
 	return &MuxServer{
 		cfg:      MuxServerArgs{},
 		lockChn:  make(chan bool, 1),
-		sessions: utils.NewConcurrentMap(),
+		sessions: mapx.NewConcurrentMap(),
 		isStop:   false,
-		udpConns: utils.NewConcurrentMap(),
-		// writelock: &sync.Mutex{},
 	}
+}
+
+type MuxUDPPacketItem struct {
+	packet    *[]byte
+	localAddr *net.UDPAddr
+	srcAddr   *net.UDPAddr
+}
+type UDPConnItem struct {
+	conn      *net.Conn
+	touchtime int64
+	srcAddr   *net.UDPAddr
+	localAddr *net.UDPAddr
+	connid    string
 }
 
 func (s *MuxServer) StopService() {
@@ -191,7 +195,7 @@ func (s *MuxServer) StopService() {
 		if e != nil {
 			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			s.log.Printf("service server stopped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -243,7 +247,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
-		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
+		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.UDPSend(packet, localAddr, srcAddr)
 		})
 		if err != nil {
@@ -425,7 +429,7 @@ func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
 	return
 }
 func (s *MuxServer) UDPGCDeamon() {
-	gctime := int64(30)
+	gctime := int64(60)
 	go func() {
 		if s.isStop {
 			return
