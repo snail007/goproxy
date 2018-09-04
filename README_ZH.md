@@ -172,7 +172,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
-安装完成,配置目录是/etc/proxy,更详细的使用方法参考下面的进一步了解.  
+安装完成,配置目录是/etc/proxy,更详细的使用方法请参考上面的手册目录,进一步了解你想要使用的功能.  
 如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
   
 #### 手动安装  
