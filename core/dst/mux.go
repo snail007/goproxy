@@ -6,6 +6,7 @@ package dst
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"net"
 	"sync"
@@ -78,8 +79,14 @@ func NewMux(conn net.PacketConn, packetSize int) *Mux {
 		}
 	}
 
-	go m.readerLoop()
-
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
+		m.readerLoop()
+	}()
 	return m
 }
 

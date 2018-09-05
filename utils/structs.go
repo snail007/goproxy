@@ -11,6 +11,7 @@ import (
 	logger "log"
 	"net"
 	"net/url"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -87,11 +88,21 @@ func (c *Checker) Stop() {
 }
 func (c *Checker) start() {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		//log.Printf("checker started")
 		for {
 			//log.Printf("checker did")
 			for _, v := range c.data.Items() {
 				go func(item CheckerItem) {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
 					if c.isNeedCheck(item) {
 						//log.Printf("check %s", item.Host)
 						var conn net.Conn

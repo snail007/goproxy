@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"runtime/pprof"
 	"time"
 
@@ -57,7 +58,7 @@ func initConfig() (err error) {
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version("v" + APP_VERSION + " enterprise version")
-	debug := app.Flag("debug", "debug log output").Default("false").Bool()
+	isDebug := app.Flag("debug", "debug log output").Default("false").Bool()
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
 	forever := app.Flag("forever", "run proxy in forever,fail and retry").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
@@ -120,7 +121,7 @@ func initConfig() (err error) {
 	httpArgs.LoadBalanceOnlyHA = http.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	httpArgs.RateLimit = http.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
 	httpArgs.BindListen = http.Flag("bind-listen", "using listener binding IP when connect to target").Short('B').Default("false").Bool()
-	httpArgs.Debug = debug
+	httpArgs.Debug = isDebug
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
 	tcpArgs.Parent = tcp.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("[]").Short('P').String()
@@ -243,7 +244,7 @@ func initConfig() (err error) {
 	socksArgs.LoadBalanceOnlyHA = socks.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	socksArgs.RateLimit = socks.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
 	socksArgs.BindListen = socks.Flag("bind-listen", "using listener binding IP when connect to target").Short('B').Default("false").Bool()
-	socksArgs.Debug = debug
+	socksArgs.Debug = isDebug
 
 	//########socks+http(s)#########
 	sps := app.Command("sps", "proxy on socks+http(s) mode")
@@ -283,7 +284,7 @@ func initConfig() (err error) {
 	spsArgs.LoadBalanceHashTarget = sps.Flag("lb-hashtarget", "use target address to choose parent for LB").Default("false").Bool()
 	spsArgs.LoadBalanceOnlyHA = sps.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	spsArgs.RateLimit = sps.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
-	spsArgs.Debug = debug
+	spsArgs.Debug = isDebug
 
 	//########dns#########
 	dns := app.Command("dns", "proxy on dns server mode")
@@ -313,8 +314,6 @@ func initConfig() (err error) {
 
 	//parse args
 	serviceName := kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	isDebug = *debug
 
 	//set kcp config
 
@@ -372,7 +371,7 @@ func initConfig() (err error) {
 	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
 
 	flags := logger.Ldate
-	if *debug {
+	if *isDebug {
 		flags |= logger.Lshortfile | logger.Lmicroseconds
 		cpuProfilingFile, _ = os.Create("cpu.prof")
 		memProfilingFile, _ = os.Create("memory.prof")
@@ -417,6 +416,11 @@ func initConfig() (err error) {
 			}
 		}
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			for {
 				if cmd != nil {
 					cmd.Process.Kill()
@@ -436,11 +440,21 @@ func initConfig() (err error) {
 				scanner := bufio.NewScanner(cmdReader)
 				scannerStdErr := bufio.NewScanner(cmdReaderStderr)
 				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
 					for scanner.Scan() {
 						fmt.Println(scanner.Text())
 					}
 				}()
 				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
 					for scannerStdErr.Scan() {
 						fmt.Println(scannerStdErr.Text())
 					}
@@ -462,7 +476,7 @@ func initConfig() (err error) {
 	}
 	if *logfile == "" {
 		poster()
-		if *debug {
+		if *isDebug {
 			log.Println("[profiling] cpu profiling save to file : cpu.prof")
 			log.Println("[profiling] memory profiling save to file : memory.prof")
 			log.Println("[profiling] block profiling save to file : block.prof")

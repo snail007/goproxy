@@ -1,8 +1,10 @@
 package udputils
 
 import (
+	"fmt"
 	logger "log"
 	"net"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -58,6 +60,11 @@ func (s *IOBinder) Clean(fn CleanFn) *IOBinder {
 func (s *IOBinder) AliveWithServeConn(srcAddr string, inTCPConn *net.Conn) *IOBinder {
 	s.inTCPConn = inTCPConn
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		buf := make([]byte, 1)
 		(*inTCPConn).SetReadDeadline(time.Time{})
 		if _, err := (*inTCPConn).Read(buf); err != nil {
@@ -66,6 +73,11 @@ func (s *IOBinder) AliveWithServeConn(srcAddr string, inTCPConn *net.Conn) *IOBi
 		}
 	}()
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		for {
 			(*inTCPConn).SetWriteDeadline(time.Now().Add(time.Second * 5))
 			if _, err := (*inTCPConn).Write([]byte{0x00}); err != nil {
@@ -82,6 +94,11 @@ func (s *IOBinder) AliveWithServeConn(srcAddr string, inTCPConn *net.Conn) *IOBi
 func (s *IOBinder) AliveWithClientConn(srcAddr string, outTCPConn *net.Conn) *IOBinder {
 	s.outTCPConn = outTCPConn
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		buf := make([]byte, 1)
 		(*outTCPConn).SetReadDeadline(time.Time{})
 		if _, err := (*outTCPConn).Read(buf); err != nil {
@@ -137,6 +154,11 @@ func (s *IOBinder) Run() (err error) {
 				return err
 			}
 			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
 				defer func() {
 					s.clean(srcAddr.String())
 				}()

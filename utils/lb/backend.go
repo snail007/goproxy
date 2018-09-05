@@ -2,8 +2,10 @@ package lb
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -112,6 +114,11 @@ func (b *Backend) StartHeartCheck() {
 }
 func (b *Backend) startMuxHeartCheck() {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		for {
 			if b.isStop {
 				return
@@ -142,6 +149,11 @@ func (b *Backend) startMuxHeartCheck() {
 // Monitoring the backend
 func (b *Backend) startTCPHeartCheck() {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		for {
 			if b.isStop {
 				return

@@ -178,6 +178,19 @@ func (s *SPS) StopService() {
 		} else {
 			s.log.Printf("service sps stoped")
 		}
+		s.basicAuth = utils.BasicAuth{}
+		s.cfg = SPSArgs{}
+		s.domainResolver = dnsx.DomainResolver{}
+		s.lb = nil
+		s.localCipher = nil
+		s.log = nil
+		s.parentCipher = nil
+		s.serverChannels = nil
+		s.udpLocalKey = nil
+		s.udpParentKey = nil
+		s.udpRelatedPacketConns = nil
+		s.userConns = nil
+		s = nil
 	}()
 	for _, sc := range s.serverChannels {
 		if sc.Listener != nil && *sc.Listener != nil {

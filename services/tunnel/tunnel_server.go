@@ -128,6 +128,11 @@ func (s *TunnelServerManager) StopService() {
 	for _, server := range s.servers {
 		(*server).Clean()
 	}
+	s.cfg = TunnelServerArgs{}
+	s.log = nil
+	s.serverID = ""
+	s.servers = nil
+	s = nil
 }
 func (s *TunnelServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
@@ -172,6 +177,14 @@ func (s *TunnelServer) StopService() {
 		} else {
 			s.log.Printf("service server stoped")
 		}
+		s.cfg = TunnelServerArgs{}
+		s.jumper = nil
+		s.log = nil
+		s.sc = utils.ServerChannel{}
+		s.udpConn = nil
+		s.udpConns = nil
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
 
@@ -353,6 +366,11 @@ func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 func (s *TunnelServer) UDPGCDeamon() {
 	gctime := int64(30)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		if s.isStop {
 			return
 		}
@@ -419,6 +437,11 @@ func (s *TunnelServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 }
 func (s *TunnelServer) UDPRevecive(key, ID string) {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		s.log.Printf("udp conn %s connected", ID)
 		var uc *TunnelUDPConnItem
 		defer func() {
@@ -446,7 +469,14 @@ func (s *TunnelServer) UDPRevecive(key, ID string) {
 				return
 			}
 			uc.touchtime = time.Now().Unix()
-			go s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
+				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
+			}()
 		}
 	}()
 }

@@ -7,6 +7,7 @@ import (
 	logger "log"
 	"math/rand"
 	"net"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -79,6 +80,14 @@ func (s *MuxBridge) StopService() {
 		} else {
 			s.log.Printf("service bridge stoped")
 		}
+		s.cfg = MuxBridgeArgs{}
+		s.clientControlConns = nil
+		s.l = nil
+		s.log = nil
+		s.router = utils.ClientKeyRouter{}
+		s.sc = nil
+		s.serverConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	if s.sc != nil && (*s.sc).Listener != nil {
@@ -209,6 +218,11 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		group.Set(index, session)
 		// s.clientControlConns.Set(key, session)
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			for {
 				if s.isStop {
 					return
@@ -277,10 +291,20 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			die1 := make(chan bool, 1)
 			die2 := make(chan bool, 1)
 			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
 				io.Copy(stream, inConn)
 				die1 <- true
 			}()
 			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
 				io.Copy(inConn, stream)
 				die2 <- true
 			}()

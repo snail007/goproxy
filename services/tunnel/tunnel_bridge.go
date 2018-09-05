@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/snail007/goproxy/services"
@@ -72,6 +73,11 @@ func (s *TunnelBridge) StopService() {
 		} else {
 			s.log.Printf("service tbridge stoped")
 		}
+		s.cfg = TunnelBridgeArgs{}
+		s.clientControlConns = nil
+		s.log = nil
+		s.serverConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	for _, sess := range s.clientControlConns.Items() {
@@ -178,7 +184,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			(*item.(*net.Conn)).SetWriteDeadline(time.Now().Add(time.Second * 3))
 			_, err := (*item.(*net.Conn)).Write(packet)
 			(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
-			if err != nil {
+			if err != nil && strings.Contains(err.Error(), "stream closed") {
 				s.log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
 				time.Sleep(time.Second * 3)
 				continue

@@ -6,6 +6,7 @@ package dst
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"sync"
 
@@ -52,7 +53,14 @@ func newSendBuffer(m *Mux) *sendBuffer {
 		scheduler: ratelimit.NewBucketWithRate(schedulerRate, schedulerCapacity),
 	}
 	b.cond = sync.NewCond(&b.mut)
-	go b.writerLoop()
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
+		b.writerLoop()
+	}()
 	return b
 }
 

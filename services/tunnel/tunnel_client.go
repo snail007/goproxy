@@ -7,6 +7,7 @@ import (
 	logger "log"
 	"net"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -40,7 +41,7 @@ type ClientUDPConnItem struct {
 }
 type TunnelClient struct {
 	cfg       TunnelClientArgs
-	ctrlConn  net.Conn
+	ctrlConn  *net.Conn
 	isStop    bool
 	userConns mapx.ConcurrentMap
 	log       *logger.Logger
@@ -96,10 +97,17 @@ func (s *TunnelClient) StopService() {
 		} else {
 			s.log.Printf("service tclient stoped")
 		}
+		s.cfg = TunnelClientArgs{}
+		s.ctrlConn = nil
+		s.jumper = nil
+		s.log = nil
+		s.udpConns = nil
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	if s.ctrlConn != nil {
-		s.ctrlConn.Close()
+		(*s.ctrlConn).Close()
 	}
 	for _, c := range s.userConns.Items() {
 		(*c.(*net.Conn)).Close()
@@ -121,27 +129,25 @@ func (s *TunnelClient) Start(args interface{}, log *logger.Logger) (err error) {
 			return
 		}
 		if s.ctrlConn != nil {
-			s.ctrlConn.Close()
+			(*s.ctrlConn).Close()
 		}
-
-		s.ctrlConn, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
+		var c net.Conn
+		c, err = s.GetInConn(CONN_CLIENT_CONTROL, *s.cfg.Key)
 		if err != nil {
 			s.log.Printf("control connection err: %s, retrying...", err)
 			time.Sleep(time.Second * 3)
-			if s.ctrlConn != nil {
-				s.ctrlConn.Close()
-			}
 			continue
 		}
+		s.ctrlConn = &c
 		for {
 			if s.isStop {
 				return
 			}
 			var ID, clientLocalAddr, serverID string
-			err = utils.ReadPacketData(s.ctrlConn, &ID, &clientLocalAddr, &serverID)
+			err = utils.ReadPacketData(*s.ctrlConn, &ID, &clientLocalAddr, &serverID)
 			if err != nil {
 				if s.ctrlConn != nil {
-					s.ctrlConn.Close()
+					(*s.ctrlConn).Close()
 				}
 				s.log.Printf("read connection signal err: %s, retrying...", err)
 				break
@@ -150,9 +156,23 @@ func (s *TunnelClient) Start(args interface{}, log *logger.Logger) (err error) {
 			protocol := clientLocalAddr[:3]
 			localAddr := clientLocalAddr[4:]
 			if protocol == "udp" {
-				go s.ServeUDP(localAddr, ID, serverID)
+				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
+					s.ServeUDP(localAddr, ID, serverID)
+				}()
 			} else {
-				go s.ServeConn(localAddr, ID, serverID)
+				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
+					s.ServeConn(localAddr, ID, serverID)
+				}()
 			}
 		}
 	}
@@ -301,11 +321,23 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 			item = v.(*ClientUDPConnItem)
 		}
 		(*item).touchtime = time.Now().Unix()
-		go (*item).udpConn.Write(body)
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
+			(*item).udpConn.Write(body)
+		}()
 	}
 }
 func (s *TunnelClient) UDPRevecive(key, ID string) {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		s.log.Printf("udp conn %s connected", ID)
 		v, ok := s.udpConns.Get(key)
 		if !ok {
@@ -331,6 +363,11 @@ func (s *TunnelClient) UDPRevecive(key, ID string) {
 			}
 			cui.touchtime = time.Now().Unix()
 			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
 				(*cui.conn).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 				_, err = (*cui.conn).Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
 				(*cui.conn).SetWriteDeadline(time.Time{})
@@ -345,6 +382,11 @@ func (s *TunnelClient) UDPRevecive(key, ID string) {
 func (s *TunnelClient) UDPGCDeamon() {
 	gctime := int64(30)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		if s.isStop {
 			return
 		}

@@ -189,6 +189,11 @@ func (s *Socks) InitService() (err error) {
 			return
 		}
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			//循环检查ssh网络连通性
 			for {
 				if s.isStop {
@@ -226,6 +231,21 @@ func (s *Socks) StopService() {
 		} else {
 			s.log.Printf("service socks stoped")
 		}
+		s.basicAuth = utils.BasicAuth{}
+		s.cfg = SocksArgs{}
+		s.checker = utils.Checker{}
+		s.domainResolver = dnsx.DomainResolver{}
+		s.lb = nil
+		s.lockChn = nil
+		s.log = nil
+		s.sc = nil
+		s.sshClient = nil
+		s.udpLocalKey = nil
+		s.udpParentKey = nil
+		s.udpRelatedPacketConns = nil
+		s.udpSC = utils.ServerChannel{}
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	if len(*s.cfg.Parent) > 0 {

@@ -11,10 +11,10 @@ import (
 
 	"golang.org/x/net/proxy"
 
-	services "github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/miekg/dns"
 	gocache "github.com/pmylund/go-cache"
+	services "github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/services/kcpcfg"
 )
 
 type DNSArgs struct {
@@ -58,6 +58,11 @@ func (s *DNS) InitService() (err error) {
 	s.cache = gocache.New(time.Second*time.Duration(*s.cfg.DNSTTL), time.Second*60)
 	s.cache.LoadFile(*s.cfg.CacheFile)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		for {
 			select {
 			case <-s.exitSig:
@@ -135,6 +140,11 @@ func (s *DNS) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	dns.HandleFunc(".", s.callback)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		log.Printf("dns server on udp %s", *s.cfg.Local)
 		err := dns.ListenAndServe(*s.cfg.Local, "udp", nil)
 		if err != nil {

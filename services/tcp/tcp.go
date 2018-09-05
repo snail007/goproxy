@@ -92,6 +92,12 @@ func (s *TCP) StopService() {
 		} else {
 			s.log.Printf("service tcp stoped")
 		}
+		s.cfg = TCPArgs{}
+		s.jumper = nil
+		s.log = nil
+		s.sc = nil
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	if s.sc.Listener != nil && *s.sc.Listener != nil {

@@ -181,6 +181,11 @@ func (s *HTTP) InitService() (err error) {
 			return
 		}
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			//循环检查ssh网络连通性
 			for {
 				if s.isStop {
@@ -218,6 +223,17 @@ func (s *HTTP) StopService() {
 		} else {
 			s.log.Printf("service http(s) stoped")
 		}
+		s.basicAuth = utils.BasicAuth{}
+		s.cfg = HTTPArgs{}
+		s.checker = utils.Checker{}
+		s.domainResolver = dnsx.DomainResolver{}
+		s.lb = nil
+		s.lockChn = nil
+		s.log = nil
+		s.serverChannels = nil
+		s.sshClient = nil
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	if len(*s.cfg.Parent) > 0 {

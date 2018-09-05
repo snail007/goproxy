@@ -21,6 +21,7 @@ v6.0 enterprise version
 10.SOCKS5代理支持级联认证.
 11.插件机制,定制功能可以使用插件方式开发了，热插拔，不需要修改goproxy二进制，可以插件so或者
 dylib注入.
+12.修复了tclient可能意外退出的bug.
 
 v5.4
 1.优化了获取本地IP信息导致CPU过高的问题.

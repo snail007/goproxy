@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"runtime/debug"
 
 	"math/rand"
 	"net"
@@ -133,7 +134,14 @@ func newConn(m *Mux, dst net.Addr) *Conn {
 }
 
 func (c *Conn) start() {
-	go c.reader()
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
+		c.reader()
+	}()
 }
 
 func (c *Conn) reader() {

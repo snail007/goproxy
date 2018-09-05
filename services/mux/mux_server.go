@@ -149,6 +149,11 @@ func (s *MuxServerManager) StopService() {
 	for _, server := range s.servers {
 		(*server).Clean()
 	}
+	s.cfg = MuxServerArgs{}
+	s.log = nil
+	s.serverID = ""
+	s.servers = nil
+	s = nil
 }
 func (s *MuxServerManager) CheckArgs() (err error) {
 	if *s.cfg.CertFile == "" || *s.cfg.KeyFile == "" {
@@ -198,6 +203,14 @@ func (s *MuxServer) StopService() {
 		} else {
 			s.log.Printf("service server stoped")
 		}
+		s.cfg = MuxServerArgs{}
+		s.jumper = nil
+		s.lockChn = nil
+		s.log = nil
+		s.sc = utils.ServerChannel{}
+		s.sessions = nil
+		s.udpConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	for _, sess := range s.sessions.Items() {
@@ -283,10 +296,20 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 				die1 := make(chan bool, 1)
 				die2 := make(chan bool, 1)
 				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
 					io.Copy(inConn, snappy.NewReader(outConn))
 					die1 <- true
 				}()
 				go func() {
+					defer func() {
+						if e := recover(); e != nil {
+							fmt.Printf("crashed:%s", string(debug.Stack()))
+						}
+					}()
 					io.Copy(snappy.NewWriter(outConn), inConn)
 					die2 <- true
 				}()
@@ -377,6 +400,11 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		s.sessions.Set(index, session)
 		s.log.Printf("session[%s] created", index)
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			for {
 				if s.isStop {
 					return
@@ -432,6 +460,11 @@ func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
 func (s *MuxServer) UDPGCDeamon() {
 	gctime := int64(30)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		if s.isStop {
 			return
 		}
@@ -506,6 +539,11 @@ func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 }
 func (s *MuxServer) UDPRevecive(key, ID string) {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		s.log.Printf("udp conn %s connected", ID)
 		var uc *MuxUDPConnItem
 		defer func() {
@@ -533,7 +571,14 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 				return
 			}
 			uc.touchtime = time.Now().Unix()
-			go s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
+				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
+			}()
 		}
 	}()
 }

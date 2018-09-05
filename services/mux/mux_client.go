@@ -6,6 +6,7 @@ import (
 	"io"
 	logger "log"
 	"net"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -106,6 +107,12 @@ func (s *MuxClient) StopService() {
 		} else {
 			s.log.Printf("service client stoped")
 		}
+		s.cfg = MuxClientArgs{}
+		s.jumper = nil
+		s.log = nil
+		s.sessions = nil
+		s.udpConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	for _, sess := range s.sessions.Items() {
@@ -297,6 +304,11 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 }
 func (s *MuxClient) UDPRevecive(key, ID string) {
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		s.log.Printf("udp conn %s connected", ID)
 		v, ok := s.udpConns.Get(key)
 		if !ok {
@@ -322,6 +334,11 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 			}
 			cui.touchtime = time.Now().Unix()
 			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
 				cui.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 				_, err = cui.conn.Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
 				cui.conn.SetWriteDeadline(time.Time{})
@@ -336,6 +353,11 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 func (s *MuxClient) UDPGCDeamon() {
 	gctime := int64(30)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		if s.isStop {
 			return
 		}
@@ -390,10 +412,20 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		die1 := make(chan bool, 1)
 		die2 := make(chan bool, 1)
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			io.Copy(outConn, snappy.NewReader(inConn))
 			die1 <- true
 		}()
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			io.Copy(snappy.NewWriter(inConn), outConn)
 			die2 <- true
 		}()
