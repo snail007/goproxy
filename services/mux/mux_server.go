@@ -182,11 +182,6 @@ func NewMuxServer() services.Service {
 	}
 }
 
-type MuxUDPPacketItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
-}
 type MuxUDPConnItem struct {
 	conn      *net.Conn
 	touchtime int64

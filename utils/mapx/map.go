@@ -192,24 +192,22 @@ func snapshot(m ConcurrentMap) (chans []chan Tuple) {
 	wg.Add(SHARD_COUNT)
 	// Foreach shard.
 	for index, shard := range m {
-		go func() {
+		go func(index int, shard *ConcurrentMapShared) {
 			defer func() {
 				if e := recover(); e != nil {
 					fmt.Printf("crashed:%s", string(debug.Stack()))
 				}
 			}()
-			func(index int, shard *ConcurrentMapShared) {
-				// Foreach key, value pair.
-				shard.RLock()
-				chans[index] = make(chan Tuple, len(shard.items))
-				wg.Done()
-				for key, val := range shard.items {
-					chans[index] <- Tuple{key, val}
-				}
-				shard.RUnlock()
-				close(chans[index])
-			}(index, shard)
-		}()
+			// Foreach key, value pair.
+			shard.RLock()
+			chans[index] = make(chan Tuple, len(shard.items))
+			wg.Done()
+			for key, val := range shard.items {
+				chans[index] <- Tuple{key, val}
+			}
+			shard.RUnlock()
+			close(chans[index])
+		}(index, shard)
 	}
 	wg.Wait()
 	return chans
