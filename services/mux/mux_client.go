@@ -36,6 +36,7 @@ type MuxClientArgs struct {
 }
 type ClientUDPConnItem struct {
 	conn      *smux.Stream
+	isActive  bool
 	touchtime int64
 	srcAddr   *net.UDPAddr
 	localAddr *net.UDPAddr
@@ -292,11 +293,6 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 		}
 		(*item).touchtime = time.Now().Unix()
 		go (*item).udpConn.Write(body)
-		//_, err = (*item).udpConn.Write(body)
-		// if err != nil {
-		// 	s.log.Printf("send udp packet to %s fail, err : %s", item.localAddr, err)
-		// 	return
-		// }
 	}
 }
 func (s *MuxClient) UDPRevecive(key, ID string) {
@@ -334,16 +330,11 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 					return
 				}
 			}()
-			// _, err = cui.conn.Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
-			// if err != nil {
-			// 	s.log.Printf("send udp packet to bridge fail, err : %s", err)
-			// 	return
-			// }
 		}
 	}()
 }
 func (s *MuxClient) UDPGCDeamon() {
-	gctime := int64(60)
+	gctime := int64(30)
 	go func() {
 		if s.isStop {
 			return

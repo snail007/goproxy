@@ -577,7 +577,7 @@ func BuildPacket(packetType uint8, data ...string) []byte {
 	binary.Write(pkg, binary.LittleEndian, packetType)
 	for _, d := range data {
 		bytes := []byte(d)
-		binary.Write(pkg, binary.LittleEndian, uint16(len(bytes)))
+		binary.Write(pkg, binary.LittleEndian, uint64(len(bytes)))
 		binary.Write(pkg, binary.LittleEndian, bytes)
 	}
 	return pkg.Bytes()

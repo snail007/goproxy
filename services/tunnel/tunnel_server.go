@@ -38,18 +38,17 @@ type TunnelServerArgs struct {
 }
 type TunnelServer struct {
 	cfg       TunnelServerArgs
-	udpChn    chan UDPItem
 	sc        utils.ServerChannel
 	isStop    bool
 	udpConn   *net.Conn
 	userConns mapx.ConcurrentMap
 	log       *logger.Logger
 	jumper    *jumper.Jumper
+	udpConns  mapx.ConcurrentMap
 }
 
 type TunnelServerManager struct {
 	cfg      TunnelServerArgs
-	udpChn   chan UDPItem
 	serverID string
 	servers  []*services.Service
 	log      *logger.Logger
@@ -58,7 +57,6 @@ type TunnelServerManager struct {
 func NewTunnelServerManager() services.Service {
 	return &TunnelServerManager{
 		cfg:      TunnelServerArgs{},
-		udpChn:   make(chan UDPItem, 50000),
 		serverID: utils.Uniqueid(),
 		servers:  []*services.Service{},
 	}
@@ -146,16 +144,24 @@ func (s *TunnelServerManager) InitService() (err error) {
 func NewTunnelServer() services.Service {
 	return &TunnelServer{
 		cfg:       TunnelServerArgs{},
-		udpChn:    make(chan UDPItem, 50000),
 		isStop:    false,
 		userConns: mapx.NewConcurrentMap(),
+		udpConns:  mapx.NewConcurrentMap(),
 	}
 }
 
-type UDPItem struct {
+type TunnelUDPPacketItem struct {
 	packet    *[]byte
 	localAddr *net.UDPAddr
 	srcAddr   *net.UDPAddr
+}
+type TunnelUDPConnItem struct {
+	conn      *net.Conn
+	isActive  bool
+	touchtime int64
+	srcAddr   *net.UDPAddr
+	localAddr *net.UDPAddr
+	connid    string
 }
 
 func (s *TunnelServer) StopService() {
@@ -183,7 +189,7 @@ func (s *TunnelServer) StopService() {
 	}
 }
 func (s *TunnelServer) InitService() (err error) {
-	s.UDPConnDeamon()
+	s.UDPGCDeamon()
 	return
 }
 func (s *TunnelServer) CheckArgs() (err error) {
@@ -217,11 +223,7 @@ func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
 	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
-			s.udpChn <- UDPItem{
-				packet:    &packet,
-				localAddr: localAddr,
-				srcAddr:   srcAddr,
-			}
+			s.UDPSend(packet, localAddr, srcAddr)
 		})
 		if err != nil {
 			return
@@ -348,89 +350,103 @@ func (s *TunnelServer) GetConn() (conn net.Conn, err error) {
 	}
 	return
 }
-func (s *TunnelServer) UDPConnDeamon() {
+func (s *TunnelServer) UDPGCDeamon() {
+	gctime := int64(30)
+	go func() {
+		if s.isStop {
+			return
+		}
+		timer := time.NewTicker(time.Second)
+		for {
+			<-timer.C
+			gcKeys := []string{}
+			s.udpConns.IterCb(func(key string, v interface{}) {
+				if time.Now().Unix()-v.(*TunnelUDPConnItem).touchtime > gctime {
+					(*(v.(*TunnelUDPConnItem).conn)).Close()
+					gcKeys = append(gcKeys, key)
+					s.log.Printf("gc udp conn %s", v.(*TunnelUDPConnItem).connid)
+				}
+			})
+			for _, k := range gcKeys {
+				s.udpConns.Remove(k)
+			}
+			gcKeys = nil
+		}
+	}()
+}
+func (s *TunnelServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
+	var (
+		uc      *TunnelUDPConnItem
+		key     = srcAddr.String()
+		ID      string
+		err     error
+		outconn net.Conn
+	)
+	v, ok := s.udpConns.Get(key)
+	if !ok {
+		outconn, ID, err = s.GetOutConn(CONN_SERVER)
+		if err != nil {
+			s.log.Printf("connect to %s fail, err: %s", *s.cfg.Parent, err)
+			return
+		}
+		uc = &TunnelUDPConnItem{
+			conn:      &outconn,
+			srcAddr:   srcAddr,
+			localAddr: localAddr,
+			connid:    ID,
+		}
+		s.udpConns.Set(key, uc)
+		s.UDPRevecive(key, ID)
+	} else {
+		uc = v.(*TunnelUDPConnItem)
+	}
 	go func() {
 		defer func() {
-			if err := recover(); err != nil {
-				s.log.Printf("udp conn deamon crashed with err : %s \nstack: %s", err, string(debug.Stack()))
+			if e := recover(); e != nil {
+				(*uc.conn).Close()
+				s.udpConns.Remove(key)
+				s.log.Printf("udp sender crashed with error : %s", e)
 			}
 		}()
-		var outConn net.Conn
-		// var hb utils.HeartbeatReadWriter
-		var ID string
-		// var cmdChn = make(chan bool, 1000)
-		var err error
+		uc.touchtime = time.Now().Unix()
+		(*uc.conn).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
+		_, err = (*uc.conn).Write(utils.UDPPacket(srcAddr.String(), data))
+		(*uc.conn).SetWriteDeadline(time.Time{})
+		if err != nil {
+			s.log.Printf("write udp packet to %s fail ,flush err:%s ", *s.cfg.Parent, err)
+		}
+	}()
+}
+func (s *TunnelServer) UDPRevecive(key, ID string) {
+	go func() {
+		s.log.Printf("udp conn %s connected", ID)
+		var uc *TunnelUDPConnItem
+		defer func() {
+			if uc != nil {
+				(*uc.conn).Close()
+			}
+			s.udpConns.Remove(key)
+			s.log.Printf("udp conn %s released", ID)
+		}()
+		v, ok := s.udpConns.Get(key)
+		if !ok {
+			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key, ID)
+			return
+		}
+		uc = v.(*TunnelUDPConnItem)
 		for {
-			if s.isStop {
-				return
-			}
-			item := <-s.udpChn
-		RETRY:
-			if s.isStop {
-				return
-			}
-			if outConn == nil {
-				for {
-					if s.isStop {
-						return
-					}
-					outConn, ID, err = s.GetOutConn(CONN_SERVER)
-					if err != nil {
-						// cmdChn <- true
-						outConn = nil
-						utils.CloseConn(&outConn)
-						s.log.Printf("connect to %s fail, err: %s, retrying...", *s.cfg.Parent, err)
-						time.Sleep(time.Second * 3)
-						continue
-					} else {
-						go func(outConn net.Conn, ID string) {
-							if s.udpConn != nil {
-								(*s.udpConn).Close()
-							}
-							s.udpConn = &outConn
-							for {
-								if s.isStop {
-									return
-								}
-								srcAddrFromConn, body, err := utils.ReadUDPPacket(outConn)
-								if err == io.EOF || err == io.ErrUnexpectedEOF {
-									s.log.Printf("UDP deamon connection %s exited", ID)
-									break
-								}
-								if err != nil {
-									s.log.Printf("parse revecived udp packet fail, err: %s ,%v", err, body)
-									continue
-								}
-								//s.log.Printf("udp packet revecived over parent , local:%s", srcAddrFromConn)
-								_srcAddr := strings.Split(srcAddrFromConn, ":")
-								if len(_srcAddr) != 2 {
-									s.log.Printf("parse revecived udp packet fail, addr error : %s", srcAddrFromConn)
-									continue
-								}
-								port, _ := strconv.Atoi(_srcAddr[1])
-								dstAddr := &net.UDPAddr{IP: net.ParseIP(_srcAddr[0]), Port: port}
-								_, err = s.sc.UDPListener.WriteToUDP(body, dstAddr)
-								if err != nil {
-									s.log.Printf("udp response to local %s fail,ERR:%s", srcAddrFromConn, err)
-									continue
-								}
-								//s.log.Printf("udp response to local %s success , %v", srcAddrFromConn, body)
-							}
-						}(outConn, ID)
-						break
-					}
-				}
-			}
-			outConn.SetWriteDeadline(time.Now().Add(time.Second))
-			_, err = outConn.Write(utils.UDPPacket(item.srcAddr.String(), *item.packet))
-			outConn.SetWriteDeadline(time.Time{})
+			_, body, err := utils.ReadUDPPacket(*uc.conn)
 			if err != nil {
-				utils.CloseConn(&outConn)
-				outConn = nil
-				s.log.Printf("write udp packet to %s fail ,flush err:%s ,retrying...", *s.cfg.Parent, err)
-				goto RETRY
+				if strings.Contains(err.Error(), "n != int(") {
+					continue
+				}
+				if err != io.EOF {
+					s.log.Printf("udp conn read udp packet fail , err: %s ", err)
+				}
+				return
 			}
-			//s.log.Printf("write packet %v", *item.packet)
+			uc.touchtime = time.Now().Unix()
+			go s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
 		}
 	}()
 }

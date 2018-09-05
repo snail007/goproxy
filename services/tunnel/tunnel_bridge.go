@@ -141,6 +141,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 	var buf = make([]byte, 1024)
 	n, _ := inConn.Read(buf)
 	reader := bytes.NewReader(buf[:n])
+
 	//reader := bufio.NewReader(inConn)
 
 	var connType uint8
