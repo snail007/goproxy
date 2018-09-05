@@ -9,11 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/snappy"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
+	"github.com/snail007/goproxy/utils/mapx"
+
+	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -34,6 +36,7 @@ type MuxClientArgs struct {
 }
 type ClientUDPConnItem struct {
 	conn      *smux.Stream
+	isActive  bool
 	touchtime int64
 	srcAddr   *net.UDPAddr
 	localAddr *net.UDPAddr
@@ -43,18 +46,18 @@ type ClientUDPConnItem struct {
 type MuxClient struct {
 	cfg      MuxClientArgs
 	isStop   bool
-	sessions utils.ConcurrentMap
+	sessions mapx.ConcurrentMap
 	log      *logger.Logger
 	jumper   *jumper.Jumper
-	udpConns utils.ConcurrentMap
+	udpConns mapx.ConcurrentMap
 }
 
 func NewMuxClient() services.Service {
 	return &MuxClient{
 		cfg:      MuxClientArgs{},
 		isStop:   false,
-		sessions: utils.NewConcurrentMap(),
-		udpConns: utils.NewConcurrentMap(),
+		sessions: mapx.NewConcurrentMap(),
+		udpConns: mapx.NewConcurrentMap(),
 	}
 }
 
@@ -101,7 +104,7 @@ func (s *MuxClient) StopService() {
 		if e != nil {
 			s.log.Printf("stop client service crashed,%s", e)
 		} else {
-			s.log.Printf("service client stopped")
+			s.log.Printf("service client stoped")
 		}
 	}()
 	s.isStop = true
@@ -290,11 +293,6 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 		}
 		(*item).touchtime = time.Now().Unix()
 		go (*item).udpConn.Write(body)
-		//_, err = (*item).udpConn.Write(body)
-		// if err != nil {
-		// 	s.log.Printf("send udp packet to %s fail, err : %s", item.localAddr, err)
-		// 	return
-		// }
 	}
 }
 func (s *MuxClient) UDPRevecive(key, ID string) {
@@ -332,11 +330,6 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 					return
 				}
 			}()
-			// _, err = cui.conn.Write(utils.UDPPacket(cui.srcAddr.String(), buf[:n]))
-			// if err != nil {
-			// 	s.log.Printf("send udp packet to bridge fail, err : %s", err)
-			// 	return
-			// }
 		}
 	}()
 }

@@ -16,10 +16,17 @@ import (
 	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
+	"github.com/snail007/goproxy/utils/mapx"
 
 	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
+)
+
+const (
+	CONN_CLIENT_CONTROL = uint8(1)
+	CONN_SERVER         = uint8(4)
+	CONN_CLIENT         = uint8(5)
 )
 
 type MuxServerArgs struct {
@@ -41,19 +48,17 @@ type MuxServerArgs struct {
 	KCP          kcpcfg.KCPConfigArgs
 	Jumper       *string
 }
+type MuxServer struct {
+	cfg      MuxServerArgs
+	sc       utils.ServerChannel
+	sessions mapx.ConcurrentMap
+	lockChn  chan bool
+	isStop   bool
+	log      *logger.Logger
+	jumper   *jumper.Jumper
+	udpConns mapx.ConcurrentMap
+}
 
-type MuxUDPPacketItem struct {
-	packet    *[]byte
-	localAddr *net.UDPAddr
-	srcAddr   *net.UDPAddr
-}
-type UDPConnItem struct {
-	conn      *net.Conn
-	touchtime int64
-	srcAddr   *net.UDPAddr
-	localAddr *net.UDPAddr
-	connid    string
-}
 type MuxServerManager struct {
 	cfg      MuxServerArgs
 	serverID string
@@ -162,27 +167,27 @@ func (s *MuxServerManager) InitService() (err error) {
 	return
 }
 
-type MuxServer struct {
-	cfg      MuxServerArgs
-	sc       utils.ServerChannel
-	sessions utils.ConcurrentMap
-	lockChn  chan bool
-	isStop   bool
-	log      *logger.Logger
-	jumper   *jumper.Jumper
-	udpConns utils.ConcurrentMap
-	// writelock *sync.Mutex
-}
-
 func NewMuxServer() services.Service {
 	return &MuxServer{
 		cfg:      MuxServerArgs{},
 		lockChn:  make(chan bool, 1),
-		sessions: utils.NewConcurrentMap(),
+		sessions: mapx.NewConcurrentMap(),
 		isStop:   false,
-		udpConns: utils.NewConcurrentMap(),
-		// writelock: &sync.Mutex{},
+		udpConns: mapx.NewConcurrentMap(),
 	}
+}
+
+type MuxUDPPacketItem struct {
+	packet    *[]byte
+	localAddr *net.UDPAddr
+	srcAddr   *net.UDPAddr
+}
+type MuxUDPConnItem struct {
+	conn      *net.Conn
+	touchtime int64
+	srcAddr   *net.UDPAddr
+	localAddr *net.UDPAddr
+	connid    string
 }
 
 func (s *MuxServer) StopService() {
@@ -191,7 +196,7 @@ func (s *MuxServer) StopService() {
 		if e != nil {
 			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			s.log.Printf("service server stopped")
+			s.log.Printf("service server stoped")
 		}
 	}()
 	s.isStop = true
@@ -243,7 +248,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	p, _ := strconv.Atoi(port)
 	s.sc = utils.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
-		err = s.sc.ListenUDP(func(packet []byte, localAddr, srcAddr *net.UDPAddr) {
+		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.UDPSend(packet, localAddr, srcAddr)
 		})
 		if err != nil {
@@ -435,10 +440,10 @@ func (s *MuxServer) UDPGCDeamon() {
 			<-timer.C
 			gcKeys := []string{}
 			s.udpConns.IterCb(func(key string, v interface{}) {
-				if time.Now().Unix()-v.(*UDPConnItem).touchtime > gctime {
-					(*(v.(*UDPConnItem).conn)).Close()
+				if time.Now().Unix()-v.(*MuxUDPConnItem).touchtime > gctime {
+					(*(v.(*MuxUDPConnItem).conn)).Close()
 					gcKeys = append(gcKeys, key)
-					s.log.Printf("gc udp conn %s", v.(*UDPConnItem).connid)
+					s.log.Printf("gc udp conn %s", v.(*MuxUDPConnItem).connid)
 				}
 			})
 			for _, k := range gcKeys {
@@ -450,7 +455,7 @@ func (s *MuxServer) UDPGCDeamon() {
 }
 func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 	var (
-		uc      *UDPConnItem
+		uc      *MuxUDPConnItem
 		key     = srcAddr.String()
 		ID      string
 		err     error
@@ -471,7 +476,7 @@ func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.log.Printf("connect to %s fail, err: %s", *s.cfg.Parent, err)
 			return
 		}
-		uc = &UDPConnItem{
+		uc = &MuxUDPConnItem{
 			conn:      &outconn,
 			srcAddr:   srcAddr,
 			localAddr: localAddr,
@@ -480,7 +485,7 @@ func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 		s.udpConns.Set(key, uc)
 		s.UDPRevecive(key, ID)
 	} else {
-		uc = v.(*UDPConnItem)
+		uc = v.(*MuxUDPConnItem)
 	}
 	go func() {
 		defer func() {
@@ -502,7 +507,7 @@ func (s *MuxServer) UDPSend(data []byte, localAddr, srcAddr *net.UDPAddr) {
 func (s *MuxServer) UDPRevecive(key, ID string) {
 	go func() {
 		s.log.Printf("udp conn %s connected", ID)
-		var uc *UDPConnItem
+		var uc *MuxUDPConnItem
 		defer func() {
 			if uc != nil {
 				(*uc.conn).Close()
@@ -515,7 +520,7 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key, ID)
 			return
 		}
-		uc = v.(*UDPConnItem)
+		uc = v.(*MuxUDPConnItem)
 		for {
 			_, body, err := utils.ReadUDPPacket(*uc.conn)
 			if err != nil {

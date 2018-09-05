@@ -1,8 +1,9 @@
-package utils
+package iolimiter
 
 import (
 	"context"
 	"io"
+	"net"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -20,6 +21,86 @@ type Writer struct {
 	w       io.Writer
 	limiter *rate.Limiter
 	ctx     context.Context
+}
+
+type conn struct {
+	net.Conn
+	r            io.Reader
+	w            io.Writer
+	readLimiter  *rate.Limiter
+	writeLimiter *rate.Limiter
+	ctx          context.Context
+}
+
+//NewtRateLimitConn sets rate limit (bytes/sec) to the Conn read and write.
+func NewtConn(c net.Conn, bytesPerSec float64) net.Conn {
+	s := &conn{
+		Conn: c,
+		r:    c,
+		w:    c,
+		ctx:  context.Background(),
+	}
+	s.readLimiter = rate.NewLimiter(rate.Limit(bytesPerSec), burstLimit)
+	s.readLimiter.AllowN(time.Now(), burstLimit) // spend initial burst
+	s.writeLimiter = rate.NewLimiter(rate.Limit(bytesPerSec), burstLimit)
+	s.writeLimiter.AllowN(time.Now(), burstLimit) // spend initial burst
+	return s
+}
+
+//NewtRateLimitReaderConn sets rate limit (bytes/sec) to the Conn read.
+func NewReaderConn(c net.Conn, bytesPerSec float64) net.Conn {
+	s := &conn{
+		Conn: c,
+		r:    c,
+		w:    c,
+		ctx:  context.Background(),
+	}
+	s.readLimiter = rate.NewLimiter(rate.Limit(bytesPerSec), burstLimit)
+	s.readLimiter.AllowN(time.Now(), burstLimit) // spend initial burst
+	return s
+}
+
+//NewtRateLimitWriterConn sets rate limit (bytes/sec) to the Conn write.
+func NewWriterConn(c net.Conn, bytesPerSec float64) net.Conn {
+	s := &conn{
+		Conn: c,
+		r:    c,
+		w:    c,
+		ctx:  context.Background(),
+	}
+	s.writeLimiter = rate.NewLimiter(rate.Limit(bytesPerSec), burstLimit)
+	s.writeLimiter.AllowN(time.Now(), burstLimit) // spend initial burst
+	return s
+}
+
+// Read reads bytes into p.
+func (s *conn) Read(p []byte) (int, error) {
+	if s.readLimiter == nil {
+		return s.r.Read(p)
+	}
+	n, err := s.r.Read(p)
+	if err != nil {
+		return n, err
+	}
+	if err := s.readLimiter.WaitN(s.ctx, n); err != nil {
+		return n, err
+	}
+	return n, nil
+}
+
+// Write writes bytes from p.
+func (s *conn) Write(p []byte) (int, error) {
+	if s.writeLimiter == nil {
+		return s.w.Write(p)
+	}
+	n, err := s.w.Write(p)
+	if err != nil {
+		return n, err
+	}
+	if err := s.writeLimiter.WaitN(s.ctx, n); err != nil {
+		return n, err
+	}
+	return n, err
 }
 
 // NewReader returns a reader that implements io.Reader with rate limiting.

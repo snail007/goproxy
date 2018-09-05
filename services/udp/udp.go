@@ -2,6 +2,7 @@ package udp
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -13,8 +14,8 @@ import (
 	"time"
 
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/mapx"
 )
 
 type UDPArgs struct {
@@ -29,23 +30,21 @@ type UDPArgs struct {
 	CheckParentInterval *int
 }
 type UDP struct {
-	p       utils.ConcurrentMap
-	outPool utils.OutConn
-	cfg     UDPArgs
-	sc      *utils.ServerChannel
-	isStop  bool
-	log     *logger.Logger
+	p      mapx.ConcurrentMap
+	cfg    UDPArgs
+	sc     *utils.ServerChannel
+	isStop bool
+	log    *logger.Logger
 }
 
 func NewUDP() services.Service {
 	return &UDP{
-		outPool: utils.OutConn{},
-		p:       utils.NewConcurrentMap(),
-		isStop:  false,
+		p:      mapx.NewConcurrentMap(),
+		isStop: false,
 	}
 }
 func (s *UDP) CheckArgs() (err error) {
-	if *s.cfg.Parent == "" {
+	if len(*s.cfg.Parent) == 0 {
 		err = fmt.Errorf("parent required for udp %s", *s.cfg.Local)
 		return
 	}
@@ -62,9 +61,7 @@ func (s *UDP) CheckArgs() (err error) {
 	return
 }
 func (s *UDP) InitService() (err error) {
-	if *s.cfg.ParentType != "udp" {
-		s.InitOutConnPool()
-	}
+
 	return
 }
 func (s *UDP) StopService() {
@@ -73,7 +70,7 @@ func (s *UDP) StopService() {
 		if e != nil {
 			s.log.Printf("stop udp service crashed,%s", e)
 		} else {
-			s.log.Printf("service udp stopped")
+			s.log.Printf("service udp stoped")
 		}
 	}()
 	s.isStop = true
@@ -109,7 +106,7 @@ func (s *UDP) Start(args interface{}, log *logger.Logger) (err error) {
 func (s *UDP) Clean() {
 	s.StopService()
 }
-func (s *UDP) callback(packet []byte, localAddr, srcAddr *net.UDPAddr) {
+func (s *UDP) callback(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 	defer func() {
 		if err := recover(); err != nil {
 			s.log.Printf("udp conn handler crashed with err : %s \nstack: %s", err, string(debug.Stack()))
@@ -134,7 +131,7 @@ func (s *UDP) GetConn(connKey string) (conn net.Conn, isNew bool, err error) {
 	isNew = !s.p.Has(connKey)
 	var _conn interface{}
 	if isNew {
-		_conn, err = s.outPool.Get()
+		_conn, err = s.GetParentConn()
 		if err != nil {
 			return nil, false, err
 		}
@@ -245,17 +242,15 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) (err erro
 	//s.log.Printf("send udp response to cluster success ,from:%s", dstAddr.String())
 	return
 }
-func (s *UDP) InitOutConnPool() {
-	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" {
-		//dur int, isTLS bool, certBytes, keyBytes []byte,
-		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutConn(
-			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType,
-			kcpcfg.KCPConfigArgs{},
-			s.cfg.CertBytes, s.cfg.KeyBytes, nil,
-			*s.cfg.Parent,
-			*s.cfg.Timeout,
-		)
+func (s *UDP) GetParentConn() (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else {
+		conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
 	}
+	return
 }

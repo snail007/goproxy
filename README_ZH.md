@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
+Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
 
 [点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
 
@@ -33,10 +33,16 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - 集成外部API，HTTP(S),SOCKS5代理认证功能可以与外部HTTP API集成，可以方便的通过外部系统控制代理用户．  
 - 反向代理,支持直接把域名解析到proxy监听的ip,然后proxy就会帮你代理访问需要访问的HTTP(S)网站.
 - 透明HTTP(S)代理,配合iptables,在网关直接把出去的80,443方向的流量转发到proxy,就能实现无感知的智能路由器代理.  
-- 协议转换，可以把已经存在的HTTP(S)或SOCKS5代理转换为一个端口同时支持HTTP(S)和SOCKS5代理，转换后的SOCKS5代理不支持UDP功能,同时支持强大的级联认证功能。
+- 协议转换，可以把已经存在的HTTP(S)或SOCKS5或SS代理转换为一个端口同时支持HTTP(S)和SOCKS5和SS代理，转换后的SOCKS5和SS代理如果上级是SOCKS5代理,那么支持UDP功能,同时支持强大的级联认证功能。
 - 自定义底层加密传输，http(s)\sps\socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义一个密码即可。
 - 底层压缩高效传输，http(s)\sps\socks代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在加密之后还可以对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的。
 - 安全的DNS代理，可以通过本地的proxy提供的DNS代理服务器与上级代理加密通讯实现安全防污染的DNS查询。
+- 负载均衡,高可用,HTTP(S)\SOCKS5\SPS代理支持上级负载均衡和高可用,多个上级重复-P参数即可.
+- 指定出口IP,HTTP(S)\SOCKS5\SPS代理支持客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP
+- 支持限速,HTTP(S)\SOCKS5\SPS代理支持限速.
+- SOCKS5代理支持级联认证.
+- 证书参数使用base64数据,默认情况下-C,-K参数是crt证书和key文件的路径,如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+
 
 ### Why need these?  
 - 当由于某某原因,我们不能访问我们在其它地方的服务,我们可以通过多个相连的proxy节点建立起一个安全的隧道访问我们的服务.  
@@ -70,6 +76,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 - [安全建议](#安全建议)
 
 ### 手册目录
+- [负载均衡和高可用](#负载均衡和高可用)
 - [1. HTTP代理](#1http代理)
     - [1.1 普通HTTP代理](#11普通一级http代理)
     - [1.2 普通二级HTTP代理](#12普通二级http代理)
@@ -86,7 +93,11 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [1.11 自定义DNS](#111-自定义dns)
     - [1.12 自定义加密](#112-自定义加密)
     - [1.13 压缩传输](#113-压缩传输)
-    - [1.14 查看帮助](#114-查看帮助)
+    - [1.14 负载均衡](#114-负载均衡)
+    - [1.15 限速](#115-限速)
+    - [1.16 指定出口IP](#116-指定出口ip)
+    - [1.17 证书参数使用base64数据](#117-证书参数使用base64数据)
+    - [1.18 查看帮助](#118-查看帮助)
 - [2. TCP代理(端口映射)](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -126,18 +137,27 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
     - [5.9 自定义DNS](#59自定义dns)
     - [5.10 自定义加密](#510-自定义加密)
     - [5.11 压缩传输](#511-压缩传输)
-    - [5.12 查看帮助](#512查看帮助)
+    - [5.12 负载均衡](#512-负载均衡)
+    - [5.13 限速](#513-限速)
+    - [5.14 指定出口IP](#514-指定出口ip)
+    - [5.15 级联认证](#515-级联认证)
+    - [5.16 证书参数使用base64数据](#516-证书参数使用base64数据)
+    - [5.17 查看帮助](#517查看帮助)
 - [6. 代理协议转换](#6代理协议转换)
     - [6.1 功能介绍](#61-功能介绍)
-    - [6.2 HTTP(S)转HTTP(S)+SOCKS5](#62-https转httpssocks5)
-    - [6.3 SOCKS5转HTTP(S)+SOCKS5](#63-socks5转httpssocks5)
-    - [6.4 链式连接](#64-链式连接)
-    - [6.5 监听多个端口](#65-监听多个端口)
-    - [6.6 认证功能](#66-认证功能)
-    - [6.7 自定义加密](#67-自定义加密)
-    - [6.8 压缩传输](#68-压缩传输)
-    - [6.9 禁用协议](#69-禁用协议)
-    - [6.10 查看帮助](#610-查看帮助)
+    - [6.2 HTTP(S)转HTTP(S)+SOCKS5+SS](#62-https转httpssocks5ss)
+    - [6.3 SOCKS5转HTTP(S)+SOCKS5+SS](#63-socks5转httpssocks5ss)
+    - [6.4 SS转HTTP(S)+SOCKS5+SS](#64-ss转httpssocks5ss)
+    - [6.5 链式连接](#65-链式连接)
+    - [6.6 监听多个端口](#66-监听多个端口)
+    - [6.7 认证功能](#67-认证功能)
+    - [6.8 自定义加密](#68-自定义加密)
+    - [6.9 压缩传输](#69-压缩传输)
+    - [6.10 禁用协议](#610-禁用协议)
+    - [6.11 限速](#611-限速)
+    - [6.12 指定出口IP](#612-指定出口ip)
+    - [6.13 证书参数使用base64数据](#613-证书参数使用base64数据)
+    - [6.14 查看帮助](#614-查看帮助)
 - [7. KCP配置](#7kcp配置)
     - [7.1 配置介绍](#71-配置介绍)
     - [7.2 详细配置](#72-详细配置)
@@ -152,7 +172,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5代理服务�
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
-安装完成,配置目录是/etc/proxy,更详细的使用方法参考下面的进一步了解.  
+安装完成,配置目录是/etc/proxy,更详细的使用方法请参考上面的手册目录,进一步了解你想要使用的功能.  
 如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
   
 #### 手动安装  
@@ -161,7 +181,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v6.0/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -259,6 +279,32 @@ proxy会fork子进程,然后监控子进程,如果子进程异常退出,5秒后�
 当VPS在nat设备后面,vps上网卡IP都是内网IP,这个时候可以通过-g参数添加vps的外网ip防止死循环.  
 假设你的vps外网ip是23.23.23.23,下面命令通过-g参数设置23.23.23.23  
 `./proxy http -g "23.23.23.23"`  
+
+### **负载均衡和高可用**
+
+HTTP(S)\SOCKS5\SPS代理支持上级负载均衡和高可用,多个上级重复-P参数即可.
+
+负载均衡策略支持5种,可以通过`--lb-method`参数指定:
+
+roundrobin 轮流使用
+
+leastconn  使用最小连接数的
+
+leasttime  使用连接时间最小的
+
+hash     使用根据客户端地址计算出一个固定上级
+
+weight    根据每个上级的权重和连接数情况,选择出一个上级
+
+提示:
+
+负载均衡检查时间间隔可以通过`--lb-retrytime`设置,单位毫秒
+
+负载均衡连接超时时间可以通过`--lb-timeout`设置,单位毫秒
+
+如果负载均衡策略是权重(weight),-P格式为:2.2.2.2:3880@1,1就是权重,大于0的整数.
+
+如果负载均衡策略是hash,默认是根据客户端地址选择上级,可以通过开关`--lb-hashtarget`使用访问的目标地址选择上级.
 
 ### **1.HTTP代理**  
 #### **1.1.普通一级HTTP代理**  
@@ -461,7 +507,43 @@ proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加�
 `proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
 
-#### **1.14 查看帮助**  
+### **1.14 负载均衡**  
+
+HTTP(S)代理支持上级负载均衡,多个上级重复-P参数即可.
+
+`proxy http --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080`
+
+#### **1.14.1 设置重试间隔和超时时间**  
+
+`proxy http --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
+
+#### **1.14.2 设置权重**  
+
+`proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -t tcp -p :33080`
+
+#### **1.14.3 使用目标地址选择上级**  
+
+`proxy http --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
+
+### **1.15 限速**  
+
+限速100K,通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.
+
+`proxy http -t tcp -p 2.2.2.2:33080 -l 100K`
+
+### **1.16 指定出口IP**  
+
+`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。
+
+`proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
+
+### **1.17 证书参数使用base64数据**  
+
+默认情况下-C,-K参数是crt证书和key文件的路径,
+
+如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+
+#### **1.18 查看帮助**  
 `./proxy help http`  
   
 ### **2.TCP代理**  
@@ -890,41 +972,98 @@ proxy的socks代理在tcp之上可以通过自定义加密和tls标准加密以�
 `proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
 
-#### **5.12.查看帮助**  
+
+#### **5.12 负载均衡**  
+
+SOCKS代理支持上级负载均衡,多个上级重复-P参数即可.
+
+`proxy socks --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080  -p :33080 -t tcp`
+
+#### **5.12.1 设置重试间隔和超时时间**  
+
+`proxy socks --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
+
+#### **5.12.2 设置权重**  
+
+`proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -p :33080 -t tcp`
+
+#### **5.12.3 使用目标地址选择上级**  
+
+`proxy socks --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
+
+#### **5.13 限速**  
+
+限速100K,通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.
+
+`proxy socks -t tcp -p 2.2.2.2:33080 -l 100K`
+
+#### **5.14 指定出口IP**  
+
+`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。
+
+`proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`
+
+#### **5.15 级联认证**  
+
+SOCKS5支持级联认证,-A可以设置上级认证信息.
+
+上级:
+
+`proxy socks -t tcp -p 2.2.2.2:33080 -a user:pass`
+
+本地:
+
+`proxy socks -T tcp -P 2.2.2.2:33080 -A user:pass -t tcp -p :33080`
+
+#### **5.16 证书参数使用base64数据**  
+
+默认情况下-C,-K参数是crt证书和key文件的路径,
+
+如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+
+
+#### **5.17.查看帮助**  
 `./proxy help socks`  
 
 ### **6.代理协议转换** 
 
 #### **6.1 功能介绍** 
-代理协议转换使用的是sps子命令(socks+https的缩写)，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理；sps可以把已经存在的http(s)代理或者socks5代理转换为一个端口同时支持http(s)和socks5代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理，当上级是SOCKS5时仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
+代理协议转换使用的是sps子命令，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理或者ss代理；sps可以把已经存在的http(s)代理或者socks5代理或ss代理转换为一个端口同时支持http(s)和socks5和ss的代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理，当上级是SOCKS5或者SS时仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
 
-#### **6.2 HTTP(S)转HTTP(S)+SOCKS5** 
-假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+#### **6.2 HTTP(S)转HTTP(S)+SOCKS5+SS** 
+假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`
 
-假设已经存在一个tls的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
+假设已经存在一个tls的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080，tls需要证书文件,ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`   
 
-假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
-#### **6.3 SOCKS5转HTTP(S)+SOCKS5** 
-假设已经存在一个普通的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+#### **6.3 SOCKS5转HTTP(S)+SOCKS5+SS** 
+假设已经存在一个普通的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,ss加密方式:aes-192-cfb,ss密码:pass。    
 命令如下：  
-`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`
 
-假设已经存在一个tls的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080，tls需要证书文件。  
+假设已经存在一个tls的socks5代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080，tls需要证书文件,ss加密方式:aes-192-cfb,ss密码:pass。   
 命令如下：  
-`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`   
 
-假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5的普通代理,转换后的本地端口为18080。  
+假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
-#### **6.4 链式连接**   
+#### **6.4 SS转HTTP(S)+SOCKS5+SS** 
+SPS上级和本地支持ss协议,上级可以是SPS或者标准的ss服务.  
+SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理,当上级是SOCKS5时转换后的SOCKS5和SS支持UDP功能.  
+假设已经存在一个普通的SS或者SPS代理(开启了ss,加密方式:aes-256-cfb,密码:demo)：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,转换后的ss加密方式:aes-192-cfb,ss密码:pass。  
+命令如下：  
+`./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
+
+#### **6.5 链式连接**   
 ![6.4](/docs/images/sps-tls.png)  
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
 vps01：2.2.2.2  
@@ -944,11 +1083,11 @@ vps02：3.3.3.3
 
 完成。  
 
-#### **6.5 监听多个端口**   
+#### **6.6 监听多个端口**   
 一般情况下监听一个端口就可以，不过如果作为反向代理需要同时监听80和443两个端口，那么-p参数是支持的，  
 格式是：`-p 0.0.0.0:80,0.0.0.0:443`，多个绑定用逗号分隔即可。  
 
-#### **6.6 认证功能**   
+#### **6.7 认证功能**   
 sps支持http(s)\socks5代理认证,可以级联认证,有四个重要的信息:  
 1:用户发送认证信息`user-auth`。   
 2:设置的本地认证信息`local-auth`。  
@@ -991,7 +1130,7 @@ target:如果客户端是http(s)代理请求,这里代表的是请求的完整ur
 如果没有-A参数,连接上级不使用认证.  
 
 
-#### **6.7 自定义加密**  
+#### **6.8 自定义加密**  
 proxy的sps代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据,除此之外还支持在tls和kcp之后进行  
 自定义加密,也就是说自定义加密和tls|kcp是可以联合使用的,内部采用AES256加密,使用的时候只需要自己定义  
 一个密码即可,加密分为两个部分,一部分是本地(-z)是否加密解密,一部分是与上级(-Z)传输是否加密解密.      
@@ -1019,7 +1158,7 @@ proxy的sps代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp
 `proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
 这样通过本地代理8080访问网站的时候就是通过与上级加密传输访问目标网站.  
 
-#### **6.8 压缩传输**  
+#### **6.9 压缩传输**  
 proxy的sps代理在tcp之上可以通过自定义加密和tls标准加密以及kcp协议加密tcp数据,在自定义加密之前还可以  
 对数据进行压缩,也就是说压缩功能和自定义加密和tls|kcp是可以联合使用的,压缩分为两个部分,   
 一部分是本地(-m)是否压缩传输,一部分是与上级(-M)传输是否压缩.    
@@ -1045,8 +1184,7 @@ proxy的sps代理在tcp之上可以通过自定义加密和tls标准加密以及
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 这样通过本地代理8080访问网站的时候就是通过与上级压缩传输访问目标网站.  
 
-
-#### **6.9 禁用协议** 
+#### **6.10 禁用协议**  
 SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可以通过参数禁用某个协议  
 比如:  
 1.禁用HTTP(S)代理功能只保留SOCKS5代理功能,参数:`--disable-http`.   
@@ -1055,7 +1193,31 @@ SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可
 1.禁用SOCKS5代理功能只保留HTTP(S)代理功能,参数:`--disable-socks`.   
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`   
 
-#### **6.10 查看帮助** 
+#### **6.11 限速**  
+
+假设存在SOCKS5上级:
+
+`proxy socks -p 2.2.2.2:33080 -z password -t tcp`
+
+sps下级,限速100K
+
+`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp -p :33080`
+
+通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.
+
+#### **6.12 指定出口IP**  
+
+`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。
+
+`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
+
+#### **6.13 证书参数使用base64数据**  
+
+默认情况下-C,-K参数是crt证书和key文件的路径,
+
+如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+
+#### **6.14 查看帮助** 
 `./proxy help sps`  
 
 ### **7.KCP配置**   

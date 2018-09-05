@@ -3,10 +3,13 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -17,14 +20,16 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/lb"
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"context"
 	"strconv"
-	"strings"
+
 	"time"
 
 	"github.com/snail007/goproxy/utils/id"
@@ -33,6 +38,12 @@ import (
 )
 
 func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
+	ioBind(dst, src, fn, log, true)
+}
+func IoBindNoClose(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger) {
+	ioBind(dst, src, fn, log, false)
+}
+func ioBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interface{}), log *logger.Logger, close bool) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -68,20 +79,41 @@ func IoBind(dst io.ReadWriteCloser, src io.ReadWriteCloser, fn func(err interfac
 		case err = <-e2:
 			//log.Printf("e2")
 		}
-		src.Close()
-		dst.Close()
+		func() {
+			defer func() {
+				_ = recover()
+			}()
+			if close {
+				src.Close()
+			}
+		}()
+		func() {
+			defer func() {
+				_ = recover()
+			}()
+			if close {
+				dst.Close()
+			}
+		}()
 		if fn != nil {
 			fn(err)
 		}
 	}()
 }
 func ioCopy(dst io.ReadWriter, src io.ReadWriter) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+		}
+	}()
 	buf := LeakyBuffer.Get()
 	defer LeakyBuffer.Put(buf)
 	n := 0
 	for {
 		n, err = src.Read(buf)
 		if n > 0 {
+			if n > len(buf) {
+				n = len(buf)
+			}
 			if _, e := dst.Write(buf[0:n]); e != nil {
 				return e
 			}
@@ -122,6 +154,7 @@ func getRequestTlsConfig(certBytes, keyBytes, caCertBytes []byte) (conf *tls.Con
 	caBytes := certBytes
 	if caCertBytes != nil {
 		caBytes = caCertBytes
+
 	}
 	ok := serverCertPool.AppendCertsFromPEM(caBytes)
 	if !ok {
@@ -211,6 +244,98 @@ func CloseConn(conn *net.Conn) {
 		(*conn).SetDeadline(time.Now().Add(time.Millisecond))
 		(*conn).Close()
 	}
+}
+func Keygen() (err error) {
+	CList := []string{"AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AT", "AU", "AZ", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BR", "BS", "BW", "BY", "BZ", "CA", "CF", "CG", "CH", "CK", "CL", "CM", "CN", "CO", "CR", "CS", "CU", "CY", "CZ", "DE", "DJ", "DK", "DO", "DZ", "EC", "EE", "EG", "ES", "ET", "FI", "FJ", "FR", "GA", "GB", "GD", "GE", "GF", "GH", "GI", "GM", "GN", "GR", "GT", "GU", "GY", "HK", "HN", "HT", "HU", "ID", "IE", "IL", "IN", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KP", "KR", "KT", "KW", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "MG", "ML", "MM", "MN", "MO", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL", "NO", "NP", "NR", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PR", "PT", "PY", "QA", "RO", "RU", "SA", "SB", "SC", "SD", "SE", "SG", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "ST", "SV", "SY", "SZ", "TD", "TG", "TH", "TJ", "TM", "TN", "TO", "TR", "TT", "TW", "TZ", "UA", "UG", "US", "UY", "UZ", "VC", "VE", "VN", "YE", "YU", "ZA", "ZM", "ZR", "ZW"}
+	domainSubfixList := []string{".com", ".edu", ".gov", ".int", ".mil", ".net", ".org", ".biz", ".info", ".pro", ".name", ".museum", ".coop", ".aero", ".xxx", ".idv", ".ac", ".ad", ".ae", ".af", ".ag", ".ai", ".al", ".am", ".an", ".ao", ".aq", ".ar", ".as", ".at", ".au", ".aw", ".az", ".ba", ".bb", ".bd", ".be", ".bf", ".bg", ".bh", ".bi", ".bj", ".bm", ".bn", ".bo", ".br", ".bs", ".bt", ".bv", ".bw", ".by", ".bz", ".ca", ".cc", ".cd", ".cf", ".cg", ".ch", ".ci", ".ck", ".cl", ".cm", ".cn", ".co", ".cr", ".cu", ".cv", ".cx", ".cy", ".cz", ".de", ".dj", ".dk", ".dm", ".do", ".dz", ".ec", ".ee", ".eg", ".eh", ".er", ".es", ".et", ".eu", ".fi", ".fj", ".fk", ".fm", ".fo", ".fr", ".ga", ".gd", ".ge", ".gf", ".gg", ".gh", ".gi", ".gl", ".gm", ".gn", ".gp", ".gq", ".gr", ".gs", ".gt", ".gu", ".gw", ".gy", ".hk", ".hm", ".hn", ".hr", ".ht", ".hu", ".id", ".ie", ".il", ".im", ".in", ".io", ".iq", ".ir", ".is", ".it", ".je", ".jm", ".jo", ".jp", ".ke", ".kg", ".kh", ".ki", ".km", ".kn", ".kp", ".kr", ".kw", ".ky", ".kz", ".la", ".lb", ".lc", ".li", ".lk", ".lr", ".ls", ".lt", ".lu", ".lv", ".ly", ".ma", ".mc", ".md", ".mg", ".mh", ".mk", ".ml", ".mm", ".mn", ".mo", ".mp", ".mq", ".mr", ".ms", ".mt", ".mu", ".mv", ".mw", ".mx", ".my", ".mz", ".na", ".nc", ".ne", ".nf", ".ng", ".ni", ".nl", ".no", ".np", ".nr", ".nu", ".nz", ".om", ".pa", ".pe", ".pf", ".pg", ".ph", ".pk", ".pl", ".pm", ".pn", ".pr", ".ps", ".pt", ".pw", ".py", ".qa", ".re", ".ro", ".ru", ".rw", ".sa", ".sb", ".sc", ".sd", ".se", ".sg", ".sh", ".si", ".sj", ".sk", ".sl", ".sm", ".sn", ".so", ".sr", ".st", ".sv", ".sy", ".sz", ".tc", ".td", ".tf", ".tg", ".th", ".tj", ".tk", ".tl", ".tm", ".tn", ".to", ".tp", ".tr", ".tt", ".tv", ".tw", ".tz", ".ua", ".ug", ".uk", ".um", ".us", ".uy", ".uz", ".va", ".vc", ".ve", ".vg", ".vi", ".vn", ".vu", ".wf", ".ws", ".ye", ".yt", ".yu", ".yr", ".za", ".zm", ".zw"}
+	C := CList[int(RandInt(4))%len(CList)]
+	ST := RandString(int(RandInt(4) % 10))
+	O := RandString(int(RandInt(4) % 10))
+	CN := strings.ToLower(RandString(int(RandInt(4)%10)) + domainSubfixList[int(RandInt(4))%len(domainSubfixList)])
+	//log.Printf("C: %s, ST: %s, O: %s, CN: %s", C, ST, O, CN)
+	var out []byte
+	if len(os.Args) == 3 && os.Args[2] == "ca" {
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out ca.key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -key ca.key -x509 -days 36500 -out ca.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, "*."+CN)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+	} else if len(os.Args) == 5 && os.Args[2] == "ca" && os.Args[3] != "" && os.Args[4] != "" {
+		certBytes, _ := ioutil.ReadFile("ca.crt")
+		block, _ := pem.Decode(certBytes)
+		if block == nil || certBytes == nil {
+			panic("failed to parse ca certificate PEM")
+		}
+		x509Cert, _ := x509.ParseCertificate(block.Bytes)
+		if x509Cert == nil {
+			panic("failed to parse block")
+		}
+		name := os.Args[3]
+		days := os.Args[4]
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out "+name+".key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -key %s.key -out %s.csr -subj /C=%s/ST=%s/O=%s/CN=%s", name, name, C, ST, O, CN)
+		fmt.Printf("%s", cmdStr)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr = fmt.Sprintf("openssl x509 -req -days %s -in %s.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out %s.crt", days, name, name)
+		fmt.Printf("%s", cmdStr)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+
+		fmt.Println(string(out))
+	} else if len(os.Args) == 3 && os.Args[2] == "usage" {
+		fmt.Println(`proxy keygen //generate proxy.crt and proxy.key
+proxy keygen ca //generate ca.crt and ca.key
+proxy keygen ca client0 30 //generate client0.crt client0.key and use ca.crt sign it with 30 days
+	`)
+	} else if len(os.Args) == 2 {
+		cmd := exec.Command("sh", "-c", "openssl genrsa -out proxy.key 2048")
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+
+		cmdStr := fmt.Sprintf("openssl req -new -key proxy.key -x509 -days 36500 -out proxy.crt -subj /C=%s/ST=%s/O=%s/CN=%s", C, ST, O, CN)
+		cmd = exec.Command("sh", "-c", cmdStr)
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			logger.Printf("err:%s", err)
+			return
+		}
+		fmt.Println(string(out))
+	}
+
+	return
 }
 
 var allInterfaceAddrCache []net.IP
@@ -310,10 +435,10 @@ func ReadUDPPacket(_reader io.Reader) (srcAddr string, packet []byte, err error)
 	return
 }
 func Uniqueid() string {
-	return xid.New().String()
-	// var src = rand.NewSource(time.Now().UnixNano())
-	// s := fmt.Sprintf("%d", src.Int63())
-	// return s[len(s)-5:len(s)-1] + fmt.Sprintf("%d", uint64(time.Now().UnixNano()))[8:]
+	str := fmt.Sprintf("%d%s", time.Now().UnixNano(), xid.New().String())
+	hash := sha1.New()
+	hash.Write([]byte(str))
+	return hex.EncodeToString(hash.Sum(nil))
 }
 func RandString(strlen int) string {
 	codes := "QWERTYUIOPLKJHGFDSAZXCVBNMabcdefghijklmnopqrstuvwxyz0123456789"
@@ -338,15 +463,15 @@ func RandInt(strLen int) int64 {
 	i, _ := strconv.ParseInt(string(data), 10, 64)
 	return i
 }
-func ReadData(r io.Reader) (data string, err error) {
-	var len uint16
+func ReadBytes(r io.Reader) (data []byte, err error) {
+	var len uint64
 	err = binary.Read(r, binary.LittleEndian, &len)
 	if err != nil {
 		return
 	}
 	var n int
-	_data := make([]byte, len)
-	n, err = r.Read(_data)
+	data = make([]byte, len)
+	n, err = r.Read(data)
 	if err != nil {
 		return
 	}
@@ -354,9 +479,37 @@ func ReadData(r io.Reader) (data string, err error) {
 		err = fmt.Errorf("error data len")
 		return
 	}
+	return
+}
+func ReadData(r io.Reader) (data string, err error) {
+	_data, err := ReadBytes(r)
+	if err != nil {
+		return
+	}
 	data = string(_data)
 	return
 }
+
+//non typed packet with Bytes
+func ReadPacketBytes(r io.Reader, data ...*[]byte) (err error) {
+	for _, d := range data {
+		*d, err = ReadBytes(r)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func BuildPacketBytes(data ...[]byte) []byte {
+	pkg := new(bytes.Buffer)
+	for _, d := range data {
+		binary.Write(pkg, binary.LittleEndian, uint64(len(d)))
+		binary.Write(pkg, binary.LittleEndian, d)
+	}
+	return pkg.Bytes()
+}
+
+//non typed packet with string
 func ReadPacketData(r io.Reader, data ...*string) (err error) {
 	for _, d := range data {
 		*d, err = ReadData(r)
@@ -366,13 +519,50 @@ func ReadPacketData(r io.Reader, data ...*string) (err error) {
 	}
 	return
 }
-func ReadPacket(r io.Reader, typ *uint8, data ...*string) (err error) {
+func BuildPacketData(data ...string) []byte {
+	pkg := new(bytes.Buffer)
+	for _, d := range data {
+		bytes := []byte(d)
+		binary.Write(pkg, binary.LittleEndian, uint64(len(bytes)))
+		binary.Write(pkg, binary.LittleEndian, bytes)
+	}
+	return pkg.Bytes()
+}
+
+//typed packet with bytes
+func ReadBytesPacket(r io.Reader, packetType *uint8, data ...*[]byte) (err error) {
 	var connType uint8
 	err = binary.Read(r, binary.LittleEndian, &connType)
 	if err != nil {
 		return
 	}
-	*typ = connType
+	*packetType = connType
+	for _, d := range data {
+		*d, err = ReadBytes(r)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func BuildBytesPacket(packetType uint8, data ...[]byte) []byte {
+	pkg := new(bytes.Buffer)
+	binary.Write(pkg, binary.LittleEndian, packetType)
+	for _, d := range data {
+		binary.Write(pkg, binary.LittleEndian, uint64(len(d)))
+		binary.Write(pkg, binary.LittleEndian, d)
+	}
+	return pkg.Bytes()
+}
+
+//typed packet with string
+func ReadPacket(r io.Reader, packetType *uint8, data ...*string) (err error) {
+	var connType uint8
+	err = binary.Read(r, binary.LittleEndian, &connType)
+	if err != nil {
+		return
+	}
+	*packetType = connType
 	for _, d := range data {
 		*d, err = ReadData(r)
 		if err != nil {
@@ -381,25 +571,18 @@ func ReadPacket(r io.Reader, typ *uint8, data ...*string) (err error) {
 	}
 	return
 }
-func BuildPacket(typ uint8, data ...string) []byte {
+
+func BuildPacket(packetType uint8, data ...string) []byte {
 	pkg := new(bytes.Buffer)
-	binary.Write(pkg, binary.LittleEndian, typ)
+	binary.Write(pkg, binary.LittleEndian, packetType)
 	for _, d := range data {
 		bytes := []byte(d)
-		binary.Write(pkg, binary.LittleEndian, uint16(len(bytes)))
+		binary.Write(pkg, binary.LittleEndian, uint64(len(bytes)))
 		binary.Write(pkg, binary.LittleEndian, bytes)
 	}
 	return pkg.Bytes()
 }
-func BuildPacketData(data ...string) []byte {
-	pkg := new(bytes.Buffer)
-	for _, d := range data {
-		bytes := []byte(d)
-		binary.Write(pkg, binary.LittleEndian, uint16(len(bytes)))
-		binary.Write(pkg, binary.LittleEndian, bytes)
-	}
-	return pkg.Bytes()
-}
+
 func SubStr(str string, start, end int) string {
 	if len(str) == 0 {
 		return ""
@@ -419,12 +602,21 @@ func SubBytes(bytes []byte, start, end int) []byte {
 	return bytes[start:end]
 }
 func TlsBytes(cert, key string) (certBytes, keyBytes []byte, err error) {
-	certBytes, err = ioutil.ReadFile(cert)
+	base64Prefix := "base64://"
+	if strings.HasPrefix(cert, base64Prefix) {
+		certBytes, err = base64.StdEncoding.DecodeString(cert[len(base64Prefix):])
+	} else {
+		certBytes, err = ioutil.ReadFile(cert)
+	}
 	if err != nil {
 		err = fmt.Errorf("err : %s", err)
 		return
 	}
-	keyBytes, err = ioutil.ReadFile(key)
+	if strings.HasPrefix(key, base64Prefix) {
+		keyBytes, err = base64.StdEncoding.DecodeString(key[len(base64Prefix):])
+	} else {
+		keyBytes, err = ioutil.ReadFile(key)
+	}
 	if err != nil {
 		err = fmt.Errorf("err : %s", err)
 		return
@@ -495,7 +687,7 @@ func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, er
 	body, err = ioutil.ReadAll(resp.Body)
 	return
 }
-func IsIternalIP(domainOrIP string, always bool) bool {
+func IsInternalIP(domainOrIP string, always bool) bool {
 	var outIPs []net.IP
 	var err error
 	var isDomain bool
@@ -507,7 +699,7 @@ func IsIternalIP(domainOrIP string, always bool) bool {
 	}
 
 	if isDomain {
-		outIPs, err = MyLookupIP(domainOrIP)
+		outIPs, err = LookupIP(domainOrIP)
 	} else {
 		outIPs = []net.IP{net.ParseIP(domainOrIP)}
 	}
@@ -515,6 +707,7 @@ func IsIternalIP(domainOrIP string, always bool) bool {
 	if err != nil {
 		return false
 	}
+
 	for _, ip := range outIPs {
 		if ip.IsLoopback() {
 			return true
@@ -522,7 +715,7 @@ func IsIternalIP(domainOrIP string, always bool) bool {
 		if ip.To4().Mask(net.IPv4Mask(255, 0, 0, 0)).String() == "10.0.0.0" {
 			return true
 		}
-		if ip.To4().Mask(net.IPv4Mask(255, 0, 0, 0)).String() == "192.168.0.0" {
+		if ip.To4().Mask(net.IPv4Mask(255, 255, 0, 0)).String() == "192.168.0.0" {
 			return true
 		}
 		if ip.To4().Mask(net.IPv4Mask(255, 0, 0, 0)).String() == "172.0.0.0" {
@@ -585,6 +778,41 @@ func RemoveProxyHeaders(head []byte) []byte {
 func InsertProxyHeaders(head []byte, headers string) []byte {
 	return bytes.Replace(head, []byte("\r\n"), []byte("\r\n"+headers), 1)
 }
+func LBMethod(key string) int {
+	typs := map[string]int{"weight": lb.SELECT_WEITHT, "leasttime": lb.SELECT_LEASTTIME, "leastconn": lb.SELECT_LEASTCONN, "hash": lb.SELECT_HASH, "roundrobin": lb.SELECT_ROUNDROBIN}
+	return typs[key]
+}
+func UDPCopy(dst, src *net.UDPConn, dstAddr net.Addr, readTimeout time.Duration, beforeWriteFn func(data []byte) []byte, deferFn func(e interface{})) {
+	go func() {
+		defer func() {
+			deferFn(recover())
+		}()
+		buf := LeakyBuffer.Get()
+		defer LeakyBuffer.Put(buf)
+		for {
+			if readTimeout > 0 {
+				src.SetReadDeadline(time.Now().Add(readTimeout))
+			}
+			n, err := src.Read(buf)
+			if readTimeout > 0 {
+				src.SetReadDeadline(time.Time{})
+			}
+			if err != nil {
+				if IsNetClosedErr(err) || IsNetTimeoutErr(err) || IsNetRefusedErr(err) {
+					return
+				}
+				continue
+			}
+			_, err = dst.WriteTo(beforeWriteFn(buf[:n]), dstAddr)
+			if err != nil {
+				if IsNetClosedErr(err) {
+					return
+				}
+				continue
+			}
+		}
+	}()
+}
 func IsNetClosedErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "use of closed network connection")
 }
@@ -595,15 +823,17 @@ func IsNetTimeoutErr(err error) bool {
 	e, ok := err.(net.Error)
 	return ok && e.Timeout()
 }
-func IsNetDeadlineErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "i/o deadline reached")
-}
-
 func IsNetRefusedErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "connection refused")
 }
+func IsNetDeadlineErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "i/o deadline reached")
+}
 func IsNetSocketNotConnectedErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "socket is not connected")
+}
+func NewDefaultLogger() *logger.Logger {
+	return logger.New(os.Stderr, "", logger.LstdFlags)
 }
 
 // type sockaddr struct {
@@ -667,7 +897,8 @@ func IsNetSocketNotConnectedErr(err error) bool {
 net.LookupIP may cause  deadlock in windows
 https://github.com/golang/go/issues/24178
 */
-func MyLookupIP(host string) ([]net.IP, error) {
+
+func LookupIP(host string) ([]net.IP, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(3))
 	defer func() {
