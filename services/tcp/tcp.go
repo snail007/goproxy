@@ -3,7 +3,6 @@ package tcp
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	logger "log"
 	"net"
 	"runtime/debug"
@@ -225,9 +224,9 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 			if strings.Contains(err.Error(), "n != int(") {
 				continue
 			}
-			if !utils.IsNetDeadlineErr(err) && err != io.EOF && !utils.IsNetClosedErr(err) {
-				s.log.Printf("udp packet revecived from client fail, err: %s", err)
-			}
+			// if !utils.IsNetDeadlineErr(err) && err != io.EOF && !utils.IsNetClosedErr(err) {
+			// 	s.log.Printf("udp packet revecived from client fail, err: %s", err)
+			// }
 			return
 		}
 		localAddr := *s.cfg.Parent
