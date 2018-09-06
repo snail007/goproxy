@@ -200,7 +200,7 @@ int main() {
 ```
 
 #### 编译test-proxy.c ####  
-`export LD_LIBRARY_PATH=./ && gcc -o test-proxy test.c libproxy-sdk.so`  
+`export LD_LIBRARY_PATH=./ && gcc -o test-proxy test-proxy.c libproxy-sdk.so`  
 
 #### 执行 ####  
 `./test-proxy`  

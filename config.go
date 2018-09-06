@@ -57,7 +57,7 @@ func initConfig() (err error) {
 	kcpArgs := kcpcfg.KCPConfigArgs{}
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
-	app.Author("snail").Version("v" + APP_VERSION + " enterprise version")
+	app.Author("snail").Version(APP_VERSION)
 	isDebug := app.Flag("debug", "debug log output").Default("false").Bool()
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
 	forever := app.Flag("forever", "run proxy in forever,fail and retry").Default("false").Bool()

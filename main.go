@@ -11,7 +11,7 @@ import (
 	"github.com/snail007/goproxy/services"
 )
 
-const APP_VERSION = "6.0"
+var APP_VERSION = "No Version Provided"
 
 func main() {
 	err := initConfig()
