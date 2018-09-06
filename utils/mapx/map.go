@@ -1,7 +1,9 @@
-package utils
+package mapx
 
 import (
 	"encoding/json"
+	"fmt"
+	"runtime/debug"
 	"sync"
 )
 
@@ -150,7 +152,14 @@ type Tuple struct {
 func (m ConcurrentMap) Iter() <-chan Tuple {
 	chans := snapshot(m)
 	ch := make(chan Tuple)
-	go fanIn(chans, ch)
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
+		fanIn(chans, ch)
+	}()
 	return ch
 }
 
@@ -162,7 +171,14 @@ func (m ConcurrentMap) IterBuffered() <-chan Tuple {
 		total += cap(c)
 	}
 	ch := make(chan Tuple, total)
-	go fanIn(chans, ch)
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
+		fanIn(chans, ch)
+	}()
 	return ch
 }
 
@@ -177,6 +193,11 @@ func snapshot(m ConcurrentMap) (chans []chan Tuple) {
 	// Foreach shard.
 	for index, shard := range m {
 		go func(index int, shard *ConcurrentMapShared) {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			// Foreach key, value pair.
 			shard.RLock()
 			chans[index] = make(chan Tuple, len(shard.items))
@@ -197,12 +218,19 @@ func fanIn(chans []chan Tuple, out chan Tuple) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(chans))
 	for _, ch := range chans {
-		go func(ch chan Tuple) {
-			for t := range ch {
-				out <- t
-			}
-			wg.Done()
-		}(ch)
+		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
+			func(ch chan Tuple) {
+				for t := range ch {
+					out <- t
+				}
+				wg.Done()
+			}(ch)
+		}()
 	}
 	wg.Wait()
 	close(out)
@@ -244,19 +272,31 @@ func (m ConcurrentMap) Keys() []string {
 	count := m.Count()
 	ch := make(chan string, count)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Printf("crashed:%s", string(debug.Stack()))
+			}
+		}()
 		// Foreach shard.
 		wg := sync.WaitGroup{}
 		wg.Add(SHARD_COUNT)
 		for _, shard := range m {
-			go func(shard *ConcurrentMapShared) {
-				// Foreach key, value pair.
-				shard.RLock()
-				for key := range shard.items {
-					ch <- key
-				}
-				shard.RUnlock()
-				wg.Done()
-			}(shard)
+			go func() {
+				defer func() {
+					if e := recover(); e != nil {
+						fmt.Printf("crashed:%s", string(debug.Stack()))
+					}
+				}()
+				func(shard *ConcurrentMapShared) {
+					// Foreach key, value pair.
+					shard.RLock()
+					for key := range shard.items {
+						ch <- key
+					}
+					shard.RUnlock()
+					wg.Done()
+				}(shard)
+			}()
 		}
 		wg.Wait()
 		close(ch)

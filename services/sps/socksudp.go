@@ -1,50 +1,17 @@
 package sps
 
 import (
-	"crypto/md5"
 	"fmt"
 	"net"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/snail007/goproxy/utils"
 	goaes "github.com/snail007/goproxy/utils/aes"
-	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/socks"
 )
 
-func (s *SPS) ParentUDPKey() (key []byte) {
-	switch *s.cfg.ParentType {
-	case "tcp":
-		if *s.cfg.ParentKey != "" {
-			v := fmt.Sprintf("%x", md5.Sum([]byte(*s.cfg.ParentKey)))
-			return []byte(v)[:24]
-		}
-	case "tls":
-		return s.cfg.KeyBytes[:24]
-	case "kcp":
-		v := fmt.Sprintf("%x", md5.Sum([]byte(*s.cfg.KCP.Key)))
-		return []byte(v)[:24]
-	}
-	return
-}
-func (s *SPS) LocalUDPKey() (key []byte) {
-	switch *s.cfg.LocalType {
-	case "tcp":
-		if *s.cfg.LocalKey != "" {
-			v := fmt.Sprintf("%x", md5.Sum([]byte(*s.cfg.LocalKey)))
-			return []byte(v)[:24]
-		}
-	case "tls":
-		return s.cfg.KeyBytes[:24]
-	case "kcp":
-		v := fmt.Sprintf("%x", md5.Sum([]byte(*s.cfg.KCP.Key)))
-		return []byte(v)[:24]
-	}
-	return
-}
 func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -123,41 +90,19 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 		}
 	}()
 	//parent proxy
-	outconn, err := s.outPool.Get()
+	lbAddr := s.lb.Select((*inConn).RemoteAddr().String(), *s.cfg.LoadBalanceOnlyHA)
+
+	outconn, err := s.GetParentConn(lbAddr)
 	//outconn, err := s.GetParentConn(nil, nil, "", false)
 	if err != nil {
 		clean("connnect fail", fmt.Sprintf("%s", err))
 		return
 	}
-	if *s.cfg.ParentCompress {
-		outconn = utils.NewCompConn(outconn)
-	}
-	if *s.cfg.ParentKey != "" {
-		outconn = conncrypt.New(outconn, &conncrypt.Config{
-			Password: *s.cfg.ParentKey,
-		})
-	}
-
 	s.log.Printf("connect %s for udp", serverConn.Target())
 	//socks client
-	var client *socks.ClientConn
-	auth := serverConn.AuthData()
-	if *s.cfg.ParentAuth != "" {
-		a := strings.Split(*s.cfg.ParentAuth, ":")
-		if len(a) != 2 {
-			err = fmt.Errorf("parent auth data format error")
-			return
-		}
-		client = socks.NewClientConn(&outconn, "udp", serverConn.Target(), time.Millisecond*time.Duration(*s.cfg.Timeout), &socks.Auth{User: a[0], Password: a[1]}, nil)
-	} else {
-		if !s.IsBasicAuth() && auth.Password != "" && auth.User != "" {
-			client = socks.NewClientConn(&outconn, "udp", serverConn.Target(), time.Millisecond*time.Duration(*s.cfg.Timeout), &auth, nil)
-		} else {
-			client = socks.NewClientConn(&outconn, "udp", serverConn.Target(), time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
-		}
-	}
 
-	if err = client.Handshake(); err != nil {
+	client, err := s.HandshakeSocksParent(&outconn, "udp", serverConn.Target(), serverConn.AuthData(), false)
+	if err != nil {
 		clean("handshake fail", fmt.Sprintf("%s", err))
 		return
 	}
@@ -181,9 +126,9 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	//s.log.Printf("parent udp address %s", client.UDPAddr)
 	destAddr, _ = net.ResolveUDPAddr("udp", client.UDPAddr)
 	//relay
-	buf := utils.LeakyBuffer.Get()
-	defer utils.LeakyBuffer.Put(buf)
 	for {
+		buf := utils.LeakyBuffer.Get()
+		defer utils.LeakyBuffer.Put(buf)
 		n, srcAddr, err := udpListener.ReadFromUDP(buf)
 		if err != nil {
 			s.log.Printf("udp listener read fail, %s", err.Error())
@@ -208,76 +153,42 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 		} else {
 			err = p.Parse(buf[:n])
 		}
+		//err = p.Parse(buf[:n])
 		if err != nil {
 			s.log.Printf("udp listener parse packet fail, %s", err.Error())
 			continue
 		}
-
-		port, _ := strconv.Atoi(p.Port())
-
 		if v, ok := s.udpRelatedPacketConns.Get(srcAddr.String()); !ok {
-			if destAddr == nil {
-				destAddr = &net.UDPAddr{IP: net.ParseIP(p.Host()), Port: port}
-			}
 			outUDPConn, err = net.DialUDP("udp", localAddr, destAddr)
 			if err != nil {
 				s.log.Printf("create out udp conn fail , %s , from : %s", err, srcAddr)
 				continue
 			}
 			s.udpRelatedPacketConns.Set(srcAddr.String(), outUDPConn)
-			go func() {
-				defer func() {
-					if e := recover(); e != nil {
-						s.log.Printf("udp out->local io copy crashed:\n%s\n%s", e, string(debug.Stack()))
-					}
-				}()
-				defer s.udpRelatedPacketConns.Remove(srcAddr.String())
-				//out->local io copy
-				buf := utils.LeakyBuffer.Get()
-				defer utils.LeakyBuffer.Put(buf)
-				for {
-					outUDPConn.SetReadDeadline(time.Now().Add(time.Second * 5))
-					n, err := outUDPConn.Read(buf)
-					outUDPConn.SetReadDeadline(time.Time{})
+			utils.UDPCopy(udpListener, outUDPConn, srcAddr, 0, func(data []byte) []byte {
+				//forward to local
+				var v []byte
+				//convert parent data to raw
+				if len(s.udpParentKey) > 0 {
+					v, err = goaes.Decrypt(s.udpParentKey, data)
 					if err != nil {
-						s.log.Printf("read out udp data fail , %s , from : %s", err, srcAddr)
-						if isClosedErr(err) {
-							return
-						}
-						continue
+						s.log.Printf("udp outconn parse packet fail, %s", err.Error())
+						return []byte{}
 					}
-					//var dlen = n
-					//forward to local
-					var v []byte
-					//convert parent data to raw
-					if len(s.udpParentKey) > 0 {
-						v, err = goaes.Decrypt(s.udpParentKey, buf[:n])
-						if err != nil {
-							s.log.Printf("udp outconn parse packet fail, %s", err.Error())
-							continue
-						}
-					} else {
-						v = buf[:n]
-					}
-					//now v is raw, try convert v to local
-					if len(s.udpLocalKey) > 0 {
-						v, _ = goaes.Encrypt(s.udpLocalKey, v)
-					}
-					_, err = udpListener.WriteTo(v, srcAddr)
-					// _, err = udpListener.WriteTo(buf[:n], srcAddr)
-
-					if err != nil {
-						s.udpRelatedPacketConns.Remove(srcAddr.String())
-						s.log.Printf("write out data to local fail , %s , from : %s", err, srcAddr)
-						if isClosedErr(err) {
-							return
-						}
-						continue
-					} else {
-						//s.log.Printf("send udp data to local success , len %d, for : %s", dlen, srcAddr)
-					}
+				} else {
+					v = data
 				}
-			}()
+				//now v is raw, try convert v to local
+				if len(s.udpLocalKey) > 0 {
+					v, _ = goaes.Encrypt(s.udpLocalKey, v)
+				}
+				return v
+			}, func(err interface{}) {
+				s.udpRelatedPacketConns.Remove(srcAddr.String())
+				if err != nil {
+					s.log.Printf("udp out->local io copy crashed:\n%s\n%s", err, string(debug.Stack()))
+				}
+			})
 		} else {
 			outUDPConn = v.(*net.UDPConn)
 		}

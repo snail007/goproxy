@@ -281,6 +281,9 @@ func (p *PacketUDP) Build(destAddr string, data []byte) (err error) {
 	return
 }
 func (p *PacketUDP) Parse(b []byte) (err error) {
+	if len(b) < 9 {
+		return fmt.Errorf("too short packet")
+	}
 	p.frag = uint8(b[2])
 	if p.frag != 0 {
 		err = fmt.Errorf("FRAG only support for 0 , %v ,%v", p.frag, b[:4])
@@ -290,13 +293,22 @@ func (p *PacketUDP) Parse(b []byte) (err error) {
 	p.atype = b[3]
 	switch p.atype {
 	case ATYP_IPV4: //IP V4
+		if len(b) < 11 {
+			return fmt.Errorf("too short packet")
+		}
 		p.dstHost = net.IPv4(b[4], b[5], b[6], b[7]).String()
 		portIndex = 8
 	case ATYP_DOMAIN: //域名
 		domainLen := uint8(b[4])
+		if len(b) < int(domainLen)+7 {
+			return fmt.Errorf("too short packet")
+		}
 		p.dstHost = string(b[5 : 5+domainLen]) //b[4]表示域名的长度
 		portIndex = int(5 + domainLen)
 	case ATYP_IPV6: //IP V6
+		if len(b) < 22 {
+			return fmt.Errorf("too short packet")
+		}
 		p.dstHost = net.IP{b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15], b[16], b[17], b[18], b[19]}.String()
 		portIndex = 20
 	}
@@ -333,7 +345,9 @@ func (p *PacketUDP) Bytes() []byte {
 func (p *PacketUDP) Host() string {
 	return p.dstHost
 }
-
+func (p *PacketUDP) Addr() string {
+	return net.JoinHostPort(p.dstHost, p.dstPort)
+}
 func (p *PacketUDP) Port() string {
 	return p.dstPort
 }

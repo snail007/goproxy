@@ -139,7 +139,7 @@ func (sc *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 	}
 	return
 }
-func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *net.UDPAddr)) (err error) {
+func (sc *ServerChannel) ListenUDP(fn func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr)) (err error) {
 	addr := &net.UDPAddr{IP: net.ParseIP(sc.ip), Port: sc.port}
 	l, err := net.ListenUDP("udp", addr)
 	if err == nil {
@@ -161,7 +161,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 								sc.log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
-						fn(packet, addr, srcAddr)
+						fn(l, packet, addr, srcAddr)
 					}()
 				} else {
 					sc.errAcceptHandler(err)
@@ -172,6 +172,7 @@ func (sc *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *ne
 	}
 	return
 }
+
 func (sc *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn), log *logger.Logger) (err error) {
 	lis, err := kcp.ListenWithOptions(fmt.Sprintf("%s:%d", sc.ip, sc.port), config.Block, *config.DataShard, *config.ParityShard)
 	if err == nil {

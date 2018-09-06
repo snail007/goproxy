@@ -7,10 +7,12 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
+	"github.com/snail007/goproxy/utils/mapx"
 
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
@@ -37,8 +39,8 @@ type ServerConn struct {
 }
 type TunnelBridge struct {
 	cfg                TunnelBridgeArgs
-	serverConns        utils.ConcurrentMap
-	clientControlConns utils.ConcurrentMap
+	serverConns        mapx.ConcurrentMap
+	clientControlConns mapx.ConcurrentMap
 	isStop             bool
 	log                *logger.Logger
 }
@@ -46,8 +48,8 @@ type TunnelBridge struct {
 func NewTunnelBridge() services.Service {
 	return &TunnelBridge{
 		cfg:                TunnelBridgeArgs{},
-		serverConns:        utils.NewConcurrentMap(),
-		clientControlConns: utils.NewConcurrentMap(),
+		serverConns:        mapx.NewConcurrentMap(),
+		clientControlConns: mapx.NewConcurrentMap(),
 		isStop:             false,
 	}
 }
@@ -69,8 +71,13 @@ func (s *TunnelBridge) StopService() {
 		if e != nil {
 			s.log.Printf("stop tbridge service crashed,%s", e)
 		} else {
-			s.log.Printf("service tbridge stopped")
+			s.log.Printf("service tbridge stoped")
 		}
+		s.cfg = TunnelBridgeArgs{}
+		s.clientControlConns = nil
+		s.log = nil
+		s.serverConns = nil
+		s = nil
 	}()
 	s.isStop = true
 	for _, sess := range s.clientControlConns.Items() {
@@ -123,10 +130,24 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 		s.log.Printf("mux server conn accept error,ERR:%s", err)
 		return
 	}
-
+	go func() {
+		defer func() {
+			_ = recover()
+		}()
+		timer := time.NewTicker(time.Second * 3)
+		for {
+			<-timer.C
+			if sess.NumStreams() == 0 {
+				sess.Close()
+				timer.Stop()
+				return
+			}
+		}
+	}()
 	var buf = make([]byte, 1024)
 	n, _ := inConn.Read(buf)
 	reader := bytes.NewReader(buf[:n])
+
 	//reader := bufio.NewReader(inConn)
 
 	var connType uint8
@@ -163,7 +184,7 @@ func (s *TunnelBridge) callback(inConn net.Conn) {
 			(*item.(*net.Conn)).SetWriteDeadline(time.Now().Add(time.Second * 3))
 			_, err := (*item.(*net.Conn)).Write(packet)
 			(*item.(*net.Conn)).SetWriteDeadline(time.Time{})
-			if err != nil {
+			if err != nil && strings.Contains(err.Error(), "stream closed") {
 				s.log.Printf("%s client control conn write signal fail, err: %s, retrying...", key, err)
 				time.Sleep(time.Second * 3)
 				continue

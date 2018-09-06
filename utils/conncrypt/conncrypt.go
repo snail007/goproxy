@@ -12,8 +12,8 @@ import (
 )
 
 //Confg defaults
-const DefaultIterations = 1024
-const DefaultKeySize = 24 //256bits
+const DefaultIterations = 2048
+const DefaultKeySize = 32 //256bits
 var DefaultHashFunc = sha256.New
 var DefaultSalt = []byte(`
 (;QUHj.BQ?RXzYSO]ifkXp/G!kFmWyXyEV6Nt!d|@bo+N$L9+<d$|g6e26T}

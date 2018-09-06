@@ -44,7 +44,7 @@ func (s *Socks) LocalUDPKey() (key []byte) {
 	}
 	return
 }
-func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, request socks.Request) {
+func (s *Socks) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	defer func() {
 		if e := recover(); e != nil {
 			s.log.Printf("udp local->out io copy crashed:\n%s\n%s", e, string(debug.Stack()))
@@ -54,23 +54,12 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		utils.CloseConn(inConn)
 		return
 	}
-	srcIP, _, _ := net.SplitHostPort((*inConn).RemoteAddr().String())
 	inconnRemoteAddr := (*inConn).RemoteAddr().String()
 	localAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 0}
-	udpListener, err := net.ListenUDP("udp", localAddr)
-	if err != nil {
-		(*inConn).Close()
-		udpListener.Close()
-		s.log.Printf("udp bind fail , %s", err)
-		return
-	}
-	host, _, _ := net.SplitHostPort((*inConn).LocalAddr().String())
-	_, port, _ := net.SplitHostPort(udpListener.LocalAddr().String())
-	if len(*s.cfg.LocalIPS) > 0 {
-		host = (*s.cfg.LocalIPS)[0]
-	}
-	s.log.Printf("proxy udp on %s , for %s", net.JoinHostPort(host, port), inconnRemoteAddr)
-	request.UDPReply(socks.REP_SUCCESS, net.JoinHostPort(host, port))
+	udpListener := serverConn.UDPConnListener
+	srcIP, _, _ := net.SplitHostPort((*inConn).RemoteAddr().String())
+	s.log.Printf("proxy udp on %s , for %s", udpListener.LocalAddr(), inconnRemoteAddr)
+
 	s.userConns.Set(inconnRemoteAddr, inConn)
 	var (
 		outUDPConn       *net.UDPConn
@@ -134,15 +123,15 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		}
 	}()
 	useProxy := true
-	if *s.cfg.Parent != "" {
-		dstHost, _, _ := net.SplitHostPort(request.Addr())
-		if utils.IsIternalIP(dstHost, *s.cfg.Always) {
+	if len(*s.cfg.Parent) > 0 {
+		dstHost, _, _ := net.SplitHostPort(serverConn.Target())
+		if utils.IsInternalIP(dstHost, *s.cfg.Always) {
 			useProxy = false
 		} else {
 			var isInMap bool
-			useProxy, isInMap, _, _ = s.checker.IsBlocked(request.Addr())
+			useProxy, isInMap, _, _ = s.checker.IsBlocked(serverConn.Target())
 			if !isInMap {
-				s.checker.Add(request.Addr(), s.Resolve(request.Addr()))
+				s.checker.Add(serverConn.Target(), s.Resolve(serverConn.Target()))
 			}
 		}
 	} else {
@@ -150,13 +139,17 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 	}
 	if useProxy {
 		//parent proxy
-		outconn, err := s.getOutConn(nil, nil, "", false)
+		lbAddr := s.lb.Select((*inConn).RemoteAddr().String(), *s.cfg.LoadBalanceOnlyHA)
+		outconn, err := s.GetParentConn(lbAddr, serverConn)
+		//outconn, err := s.GetParentConn(nil, nil, "", false)
 		if err != nil {
 			clean("connnect fail", fmt.Sprintf("%s", err))
 			return
 		}
-		client := socks.NewClientConn(&outconn, "udp", request.Addr(), time.Millisecond*time.Duration(*s.cfg.Timeout), nil, nil)
-		if err = client.Handshake(); err != nil {
+
+		client, err := s.HandshakeSocksParent(&outconn, "udp", serverConn.Target(), serverConn.AuthData(), false)
+
+		if err != nil {
 			clean("handshake fail", fmt.Sprintf("%s", err))
 			return
 		}
@@ -179,7 +172,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 		//s.log.Printf("parent udp address %s", client.UDPAddr)
 		destAddr, _ = net.ResolveUDPAddr("udp", client.UDPAddr)
 	}
-	s.log.Printf("use proxy %v : udp %s", useProxy, request.Addr())
+	s.log.Printf("use proxy %v : udp %s", useProxy, serverConn.Target())
 	//relay
 	for {
 		buf := utils.LeakyBuffer.Get()
@@ -245,6 +238,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, methodReq socks.MethodsRequest, reque
 						}
 						continue
 					}
+
 					//var dlen = n
 					if useProxy {
 						//forward to local

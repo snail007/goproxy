@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,12 @@ import (
 
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/services/kcpcfg"
+	"github.com/snail007/goproxy/utils/datasize"
+	"github.com/snail007/goproxy/utils/dnsx"
+	"github.com/snail007/goproxy/utils/iolimiter"
+	"github.com/snail007/goproxy/utils/lb"
+	"github.com/snail007/goproxy/utils/mapx"
+
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 
@@ -20,72 +27,85 @@ import (
 )
 
 type HTTPArgs struct {
-	Parent              *string
-	CertFile            *string
-	KeyFile             *string
-	CaCertFile          *string
-	CaCertBytes         []byte
-	CertBytes           []byte
-	KeyBytes            []byte
-	Local               *string
-	Always              *bool
-	HTTPTimeout         *int
-	Interval            *int
-	Blocked             *string
-	Direct              *string
-	AuthFile            *string
-	Auth                *[]string
-	AuthURL             *string
-	AuthURLOkCode       *int
-	AuthURLTimeout      *int
-	AuthURLRetry        *int
-	ParentType          *string
-	LocalType           *string
-	Timeout             *int
-	CheckParentInterval *int
-	SSHKeyFile          *string
-	SSHKeyFileSalt      *string
-	SSHPassword         *string
-	SSHUser             *string
-	SSHKeyBytes         []byte
-	SSHAuthMethod       ssh.AuthMethod
-	KCP                 kcpcfg.KCPConfigArgs
-	LocalIPS            *[]string
-	DNSAddress          *string
-	DNSTTL              *int
-	LocalKey            *string
-	ParentKey           *string
-	LocalCompress       *bool
-	ParentCompress      *bool
+	Parent                *[]string
+	CertFile              *string
+	KeyFile               *string
+	CaCertFile            *string
+	CaCertBytes           []byte
+	CertBytes             []byte
+	KeyBytes              []byte
+	Local                 *string
+	Always                *bool
+	HTTPTimeout           *int
+	Interval              *int
+	Blocked               *string
+	Direct                *string
+	AuthFile              *string
+	Auth                  *[]string
+	AuthURL               *string
+	AuthURLOkCode         *int
+	AuthURLTimeout        *int
+	AuthURLRetry          *int
+	ParentType            *string
+	LocalType             *string
+	Timeout               *int
+	CheckParentInterval   *int
+	SSHKeyFile            *string
+	SSHKeyFileSalt        *string
+	SSHPassword           *string
+	SSHUser               *string
+	SSHKeyBytes           []byte
+	SSHAuthMethod         ssh.AuthMethod
+	KCP                   kcpcfg.KCPConfigArgs
+	LocalIPS              *[]string
+	DNSAddress            *string
+	DNSTTL                *int
+	LocalKey              *string
+	ParentKey             *string
+	LocalCompress         *bool
+	ParentCompress        *bool
+	LoadBalanceMethod     *string
+	LoadBalanceTimeout    *int
+	LoadBalanceRetryTime  *int
+	LoadBalanceHashTarget *bool
+	LoadBalanceOnlyHA     *bool
+
+	RateLimit      *string
+	RateLimitBytes float64
+	BindListen     *bool
+	Debug          *bool
 }
 type HTTP struct {
-	outPool        utils.OutConn
 	cfg            HTTPArgs
 	checker        utils.Checker
 	basicAuth      utils.BasicAuth
 	sshClient      *ssh.Client
 	lockChn        chan bool
-	domainResolver utils.DomainResolver
+	domainResolver dnsx.DomainResolver
 	isStop         bool
 	serverChannels []*utils.ServerChannel
-	userConns      utils.ConcurrentMap
+	userConns      mapx.ConcurrentMap
 	log            *logger.Logger
+	lb             *lb.Group
 }
 
 func NewHTTP() services.Service {
 	return &HTTP{
-		outPool:        utils.OutConn{},
 		cfg:            HTTPArgs{},
 		checker:        utils.Checker{},
 		basicAuth:      utils.BasicAuth{},
 		lockChn:        make(chan bool, 1),
 		isStop:         false,
 		serverChannels: []*utils.ServerChannel{},
-		userConns:      utils.NewConcurrentMap(),
+		userConns:      mapx.NewConcurrentMap(),
 	}
 }
 func (s *HTTP) CheckArgs() (err error) {
-	if *s.cfg.Parent != "" && *s.cfg.ParentType == "" {
+
+	if len(*s.cfg.Parent) == 1 && (*s.cfg.Parent)[0] == "" {
+		(*s.cfg.Parent) = []string{}
+	}
+	if len(*s.cfg.Parent) > 0 && *s.cfg.ParentType == "" {
 		err = fmt.Errorf("parent type unkown,use -T <tls|tcp|ssh|kcp>")
 		return
 	}
@@ -133,15 +153,26 @@ func (s *HTTP) CheckArgs() (err error) {
 			s.cfg.SSHAuthMethod = ssh.PublicKeys(SSHSigner)
 		}
 	}
+	if *s.cfg.RateLimit != "0" && *s.cfg.RateLimit != "" {
+		var size uint64
+		size, err = datasize.Parse(*s.cfg.RateLimit)
+		if err != nil {
+			err = fmt.Errorf("parse rate limit size error,ERR:%s", err)
+			return
+		}
+		s.cfg.RateLimitBytes = float64(size)
+	}
 	return
 }
 func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
-	if *s.cfg.Parent != "" {
+	//init lb
+	if len(*s.cfg.Parent) > 0 {
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+		s.InitLB()
 	}
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = utils.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
+		(*s).domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	if *s.cfg.ParentType == "ssh" {
 		err = s.ConnectSSH()
@@ -150,12 +181,17 @@ func (s *HTTP) InitService() (err error) {
 			return
 		}
 		go func() {
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Printf("crashed:%s", string(debug.Stack()))
+				}
+			}()
 			//循环检查ssh网络连通性
 			for {
 				if s.isStop {
 					return
 				}
-				conn, err := utils.ConnectHost(s.Resolve(*s.cfg.Parent), *s.cfg.Timeout*2)
+				conn, err := utils.ConnectHost(s.Resolve(s.lb.Select("", *s.cfg.LoadBalanceOnlyHA)), *s.cfg.Timeout*2)
 				if err == nil {
 					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 					_, err = conn.Write([]byte{0})
@@ -185,11 +221,22 @@ func (s *HTTP) StopService() {
 		if e != nil {
 			s.log.Printf("stop http(s) service crashed,%s", e)
 		} else {
-			s.log.Printf("service http(s) stopped")
+			s.log.Printf("service http(s) stoped")
 		}
+		s.basicAuth = utils.BasicAuth{}
+		s.cfg = HTTPArgs{}
+		s.checker = utils.Checker{}
+		s.domainResolver = dnsx.DomainResolver{}
+		s.lb = nil
+		s.lockChn = nil
+		s.log = nil
+		s.serverChannels = nil
+		s.sshClient = nil
+		s.userConns = nil
+		s = nil
 	}()
 	s.isStop = true
-	if *s.cfg.Parent != "" {
+	if len(*s.cfg.Parent) > 0 {
 		s.checker.Stop()
 	}
 	if s.sshClient != nil {
@@ -203,6 +250,9 @@ func (s *HTTP) StopService() {
 			(*sc.UDPListener).Close()
 		}
 	}
+	if s.lb != nil {
+		s.lb.Stop()
+	}
 }
 func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 	s.log = log
@@ -215,9 +265,8 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 		return
 	}
 
-	if *s.cfg.Parent != "" {
-		s.log.Printf("use %s parent %s", *s.cfg.ParentType, *s.cfg.Parent)
-		s.InitOutConnPool()
+	if len(*s.cfg.Parent) > 0 {
+		s.log.Printf("use %s parent %v [ %s ]", *s.cfg.ParentType, *s.cfg.Parent, strings.ToUpper(*s.cfg.LoadBalanceMethod))
 	}
 
 	for _, addr := range strings.Split(*s.cfg.Local, ",") {
@@ -272,9 +321,9 @@ func (s *HTTP) callback(inConn net.Conn) {
 	address := req.Host
 	host, _, _ := net.SplitHostPort(address)
 	useProxy := false
-	if !utils.IsIternalIP(host, *s.cfg.Always) {
+	if !utils.IsInternalIP(host, *s.cfg.Always) {
 		useProxy = true
-		if *s.cfg.Parent == "" {
+		if len(*s.cfg.Parent) == 0 {
 			useProxy = false
 		} else if *s.cfg.Always {
 			useProxy = true
@@ -290,17 +339,17 @@ func (s *HTTP) callback(inConn net.Conn) {
 
 	s.log.Printf("use proxy : %v, %s", useProxy, address)
 
-	err = s.OutToTCP(useProxy, address, &inConn, &req)
+	lbAddr, err := s.OutToTCP(useProxy, address, &inConn, &req)
 	if err != nil {
-		if *s.cfg.Parent == "" {
+		if len(*s.cfg.Parent) == 0 {
 			s.log.Printf("connect to %s fail, ERR:%s", address, err)
 		} else {
-			s.log.Printf("connect to %s parent %s fail", *s.cfg.ParentType, *s.cfg.Parent)
+			s.log.Printf("connect to %s parent %v fail", *s.cfg.ParentType, lbAddr)
 		}
 		utils.CloseConn(&inConn)
 	}
 }
-func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (err interface{}) {
+func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *utils.HTTPRequest) (lbAddr string, err interface{}) {
 	inAddr := (*inConn).RemoteAddr().String()
 	inLocalAddr := (*inConn).LocalAddr().String()
 	//防止死循环
@@ -317,25 +366,26 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			return
 		}
 		if useProxy {
-			if *s.cfg.ParentType == "ssh" {
-				outConn, err = s.getSSHConn(address)
-			} else {
-				// s.log.Printf("%v", s.outPool)
-				outConn, err = s.outPool.Get()
+			// s.log.Printf("%v", s.outPool)
+			selectAddr := (*inConn).RemoteAddr().String()
+			if utils.LBMethod(*s.cfg.LoadBalanceMethod) == lb.SELECT_HASH && *s.cfg.LoadBalanceHashTarget {
+				selectAddr = address
 			}
+			lbAddr = s.lb.Select(selectAddr, *s.cfg.LoadBalanceOnlyHA)
+			outConn, err = s.GetParentConn(lbAddr)
 		} else {
-			outConn, err = utils.ConnectHost(s.Resolve(address), *s.cfg.Timeout)
+			outConn, err = s.GetDirectConn(s.Resolve(address), inLocalAddr)
 		}
 		tryCount++
 		if err == nil || tryCount > maxTryCount {
 			break
 		} else {
-			s.log.Printf("connect to %s , err:%s,retrying...", *s.cfg.Parent, err)
+			s.log.Printf("connect to %s , err:%s,retrying...", lbAddr, err)
 			time.Sleep(time.Second * 2)
 		}
 	}
 	if err != nil {
-		s.log.Printf("connect to %s , err:%s", *s.cfg.Parent, err)
+		s.log.Printf("connect to %s , err:%s", lbAddr, err)
 		utils.CloseConn(inConn)
 		return
 	}
@@ -347,6 +397,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 			Password: *s.cfg.ParentKey,
 		})
 	}
+
 	outAddr := outConn.RemoteAddr().String()
 	//outLocalAddr := outConn.LocalAddr().String()
 	if req.IsHTTPS() && (!useProxy || *s.cfg.ParentType == "ssh") {
@@ -355,29 +406,39 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	} else {
 		//https或者http,上级是代理,proxy需要转发
 		outConn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-		//直连目标或上级非代理或非SNI,清理HTTP头部的代理头信息.
-		if (!useProxy || *s.cfg.ParentType == "ssh") && !req.IsSNI {
+		//直连目标或上级非代理或非SNI,,清理HTTP头部的代理头信息
+		if !useProxy || *s.cfg.ParentType == "ssh" && !req.IsSNI {
 			_, err = outConn.Write(utils.RemoveProxyHeaders(req.HeadBuf))
 		} else {
 			_, err = outConn.Write(req.HeadBuf)
 		}
 		outConn.SetDeadline(time.Time{})
 		if err != nil {
-			s.log.Printf("write to %s , err:%s", *s.cfg.Parent, err)
+			s.log.Printf("write to %s , err:%s", lbAddr, err)
 			utils.CloseConn(inConn)
 			return
 		}
 	}
 
+	if s.cfg.RateLimitBytes > 0 {
+		outConn = iolimiter.NewReaderConn(outConn, s.cfg.RateLimitBytes)
+	}
+
 	utils.IoBind((*inConn), outConn, func(err interface{}) {
 		s.log.Printf("conn %s - %s released [%s]", inAddr, outAddr, req.Host)
 		s.userConns.Remove(inAddr)
+		if len(*s.cfg.Parent) > 0 {
+			s.lb.DecreaseConns(lbAddr)
+		}
 	}, s.log)
 	s.log.Printf("conn %s - %s connected [%s]", inAddr, outAddr, req.Host)
 	if c, ok := s.userConns.Get(inAddr); ok {
 		(*c.(*net.Conn)).Close()
 	}
 	s.userConns.Set(inAddr, inConn)
+	if len(*s.cfg.Parent) > 0 {
+		s.lb.IncreasConns(lbAddr)
+	}
 	return
 }
 
@@ -434,24 +495,11 @@ func (s *HTTP) ConnectSSH() (err error) {
 	if s.sshClient != nil {
 		s.sshClient.Close()
 	}
-	s.sshClient, err = ssh.Dial("tcp", s.Resolve(*s.cfg.Parent), &config)
+	s.sshClient, err = ssh.Dial("tcp", s.Resolve(s.lb.Select("", *s.cfg.LoadBalanceOnlyHA)), &config)
 	<-s.lockChn
 	return
 }
-func (s *HTTP) InitOutConnPool() {
-	if *s.cfg.ParentType == "tls" || *s.cfg.ParentType == "tcp" || *s.cfg.ParentType == "kcp" {
-		//dur int, isTLS bool, certBytes, keyBytes []byte,
-		//parent string, timeout int, InitialCap int, MaxCap int
-		s.outPool = utils.NewOutConn(
-			*s.cfg.CheckParentInterval,
-			*s.cfg.ParentType,
-			s.cfg.KCP,
-			s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes,
-			s.Resolve(*s.cfg.Parent),
-			*s.cfg.Timeout,
-		)
-	}
-}
+
 func (s *HTTP) InitBasicAuth() (err error) {
 	if *s.cfg.DNSAddress != "" {
 		s.basicAuth = utils.NewBasicAuth(&(*s).domainResolver, s.log)
@@ -477,6 +525,27 @@ func (s *HTTP) InitBasicAuth() (err error) {
 	}
 	return
 }
+func (s *HTTP) InitLB() {
+	configs := lb.BackendsConfig{}
+	for _, addr := range *s.cfg.Parent {
+		_addrInfo := strings.Split(addr, "@")
+		_addr := _addrInfo[0]
+		weight := 1
+		if len(_addrInfo) == 2 {
+			weight, _ = strconv.Atoi(_addrInfo[1])
+		}
+		configs = append(configs, &lb.BackendConfig{
+			Address:       _addr,
+			Weight:        weight,
+			ActiveAfter:   1,
+			InactiveAfter: 2,
+			Timeout:       time.Duration(*s.cfg.LoadBalanceTimeout) * time.Millisecond,
+			RetryTime:     time.Duration(*s.cfg.LoadBalanceRetryTime) * time.Millisecond,
+		})
+	}
+	LB := lb.NewGroup(utils.LBMethod(*s.cfg.LoadBalanceMethod), configs, &s.domainResolver, s.log, *s.cfg.Debug)
+	s.lb = &LB
+}
 func (s *HTTP) IsBasicAuth() bool {
 	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0 || *s.cfg.AuthURL != ""
 }
@@ -494,7 +563,7 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 		if *s.cfg.DNSAddress != "" {
 			outIPs = []net.IP{net.ParseIP(s.Resolve(outDomain))}
 		} else {
-			outIPs, err = utils.MyLookupIP(outDomain)
+			outIPs, err = utils.LookupIP(outDomain)
 		}
 		if err == nil {
 			for _, ip := range outIPs {
@@ -529,4 +598,40 @@ func (s *HTTP) Resolve(address string) string {
 		return address
 	}
 	return ip
+}
+func (s *HTTP) GetParentConn(address string) (conn net.Conn, err error) {
+	if *s.cfg.ParentType == "tls" {
+		var _conn tls.Conn
+		_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+		if err == nil {
+			conn = net.Conn(&_conn)
+		}
+	} else if *s.cfg.ParentType == "kcp" {
+		conn, err = utils.ConnectKCPHost(address, s.cfg.KCP)
+	} else if *s.cfg.ParentType == "ssh" {
+		var e interface{}
+		conn, e = s.getSSHConn(address)
+		if e != nil {
+			err = fmt.Errorf("%s", e)
+		}
+	} else {
+		conn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+	}
+	return
+}
+func (s *HTTP) GetDirectConn(address string, localAddr string) (conn net.Conn, err error) {
+	if !*s.cfg.BindListen {
+		return utils.ConnectHost(address, *s.cfg.Timeout)
+	}
+	ip, _, _ := net.SplitHostPort(localAddr)
+	if utils.IsInternalIP(ip, false) {
+		return utils.ConnectHost(address, *s.cfg.Timeout)
+	}
+	local, _ := net.ResolveTCPAddr("tcp", ip+":0")
+	d := net.Dialer{
+		Timeout:   time.Millisecond * time.Duration(*s.cfg.Timeout),
+		LocalAddr: local,
+	}
+	conn, err = d.Dial("tcp", address)
+	return
 }

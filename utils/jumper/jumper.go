@@ -51,7 +51,10 @@ func (j *Jumper) dialHTTPS(address string, timeout time.Duration) (conn net.Conn
 	}
 	pb := new(bytes.Buffer)
 	pb.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\n", address)))
+	pb.WriteString(fmt.Sprintf("Host: %s\r\n", address))
+	pb.WriteString(fmt.Sprintf("Proxy-Host: %s\r\n", address))
 	pb.WriteString("Proxy-Connection: Keep-Alive\r\n")
+	pb.WriteString("Connection: Keep-Alive\r\n")
 	if j.proxyURL.User != nil {
 		p, _ := j.proxyURL.User.Password()
 		u := fmt.Sprintf("%s:%s", j.proxyURL.User.Username(), p)

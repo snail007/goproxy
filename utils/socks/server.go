@@ -98,6 +98,12 @@ func (s *ServerConn) Method() uint8 {
 func (s *ServerConn) Target() string {
 	return s.target
 }
+func (s *ServerConn) Host() string {
+	return s.dstHost
+}
+func (s *ServerConn) Port() string {
+	return s.dstPort
+}
 func (s *ServerConn) Handshake() (err error) {
 	remoteAddr := (*s.conn).RemoteAddr()
 	//协商开始
