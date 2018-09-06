@@ -148,7 +148,7 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [6.1 Functional introduction](#61functional-introduction)
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
     - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
-    - [6.4 SS转HTTP(S)+SOCKS5+SS](#64-ss转httpssocks5ss)
+    - [6.4 SS to HTTP(S)+SOCKS5+SS](#64-ss-to-httpssocks5ss)
     - [6.5 Chain style connection](#65chain-style-connection)
     - [6.6 Listening on multiple ports](#66listening-on-multiple-ports)
     - [6.7 Authentication](#67authentication)
@@ -493,30 +493,30 @@ Local third level execution:
 `proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy. 
 
-### **1.14 负载均衡**  
-HTTP(S)代理支持上级负载均衡,多个上级重复-P参数即可.   
+### **1.14 Load balance**  
+HTTP (S) proxy supports superior load balance, and multiple -P parameters can be repeated by multiple superiors.   
 `proxy http --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080`   
 
-#### **1.14.1 设置重试间隔和超时时间**  
+#### **1.14.1 Set retry interval and timeout time**  
 `proxy http --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`   
 
-#### **1.14.2 设置权重**  
+#### **1.14.2 Set weight**  
 `proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -t tcp -p :33080`
 
-#### **1.14.3 使用目标地址选择上级**  
+#### **1.14.3 Use target address to select superior**  
 `proxy http --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
 
-### **1.15 限速**  
-限速100K,通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.   
+### **1.15 Speed limit**  
+The speed limit is 100K, which can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited.   
 `proxy http -t tcp -p 2.2.2.2:33080 -l 100K`
 
-### **1.16 指定出口IP**  
-`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。    
+### **1.16 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
 
-### **1.17 证书参数使用base64数据**  
-默认情况下-C,-K参数是crt证书和key文件的路径,
-如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+### **1.17 Certificate parameters using Base64 data**  
+By default, the -C and -K parameters are the paths of CRT certificates and key files,
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
 
 #### **1.18.view help**  
 `./proxy help http`  
@@ -927,37 +927,37 @@ Local third level execution:
 `proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.    
 
-#### **5.12 负载均衡**  
-SOCKS代理支持上级负载均衡,多个上级重复-P参数即可.   
+#### **5.12 Load balance**  
+SOCKS proxy supports the load balancing of superior authorities, and the -P parameters can be repeated by multiple superiors.   
 `proxy socks --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080  -p :33080 -t tcp`
 
-#### **5.12.1 设置重试间隔和超时时间**  
+#### **5.12.1 Set retry interval and timeout time**  
 `proxy socks --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
-#### **5.12.2 设置权重**  
+#### **5.12.2 Set weight**  
 `proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -p :33080 -t tcp`
 
-#### **5.12.3 使用目标地址选择上级**  
+#### **5.12.3 Use target address to select parent proxy**  
 `proxy socks --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
-#### **5.13 限速**  
-限速100K,通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.   
+#### **5.13 Speed limit**  
+The speed limit is 100K, which can be specified through the -l parameter, for example: 100K 1.5M. 0 means unlimited.   
 `proxy socks -t tcp -p 2.2.2.2:33080 -l 100K`
 
-#### **5.14 指定出口IP**  
-`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。    
+#### **5.14 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
 `proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`
 
-#### **5.15 级联认证**  
-SOCKS5支持级联认证,-A可以设置上级认证信息.    
-上级:
+#### **5.15 Cascade authentication**  
+SOCKS5 supports cascading authentication, and -A can set up parents proxy's authentication information..    
+parents proxy:
 `proxy socks -t tcp -p 2.2.2.2:33080 -a user:pass`
-本地:
+localhost:
 `proxy socks -T tcp -P 2.2.2.2:33080 -A user:pass -t tcp -p :33080`
 
-#### **5.16 证书参数使用base64数据**  
-默认情况下-C,-K参数是crt证书和key文件的路径,    
-如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.   
+#### **5.16 Certificate parameters using Base64 data**  
+By default, the -C and -K parameters are the paths of CRT certificates and key files,    
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding..   
 
 #### **5.17.view help**  
 `./proxy help socks`  
@@ -993,11 +993,11 @@ Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we 
 command：  
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
-#### **6.4 SS转HTTP(S)+SOCKS5+SS** 
-SPS上级和本地支持ss协议,上级可以是SPS或者标准的ss服务.  
-SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理,当上级是SOCKS5时转换后的SOCKS5和SS支持UDP功能.  
-假设已经存在一个普通的SS或者SPS代理(开启了ss,加密方式:aes-256-cfb,密码:demo)：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,转换后的ss加密方式:aes-192-cfb,ss密码:pass。  
-命令如下：  	命令如下：  
+#### **6.4 SS to HTTP(S)+SOCKS5+SS** 
+SPS support the SS protocol with the local authorities. The parent proxy can be SPS or standard SS services.  
+By default, SPS provides three proxies, HTTP (S), SOCKS5 and SPS. the converted SOCKS5 and SS support UDP when the parent proxy is SOCKS5.  
+Suppose there is an ordinary SS or SPS proxy (open SS, encryption: aes-256-cfb, password: Demo)：127.0.0.1:8080,Now we turn it into a common proxy that supports both http (s) and Socks5 and ss. The converted local port is 18080, and the converted ss encryption mode is aes-192-cfb, ss password:pass.  
+command：  
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  	`./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
 
 #### **6.5.Chain style connection** 
@@ -1108,26 +1108,26 @@ Local third level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.    
 
-#### **6.10 禁用协议**  	
-SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可以通过参数禁用某个协议  	SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可以通过参数禁用某个协议  
-比如:  	比如:  
-1.禁用HTTP(S)代理功能只保留SOCKS5代理功能,参数:`--disable-http`.   	1.禁用HTTP(S)代理功能只保留SOCKS5代理功能,参数:`--disable-http`.   
+#### **6.10 Disable protocol**  	
+SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可以通过参数禁用某个协议  	  
+for example:  
+1.禁用HTTP(S)代理功能只保留SOCKS5代理功能,参数:`--disable-http`.   
 @@ -1055,7 +1193,31 @@ SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可
-1.禁用SOCKS5代理功能只保留HTTP(S)代理功能,参数:`--disable-socks`.   	1.禁用SOCKS5代理功能只保留HTTP(S)代理功能,参数:`--disable-socks`.   
-`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`         	`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http` 
+1.禁用SOCKS5代理功能只保留HTTP(S)代理功能,参数:`--disable-socks`.     
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`    
 
-#### **6.11 限速**  
-假设存在SOCKS5上级:
+#### **6.11 Speed limit**  
+Suppose there has a SOCKS5 parent proxy:
 `proxy socks -p 2.2.2.2:33080 -z password -t tcp`
-sps下级,限速100K
+SPS lower speed limit 100K
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp -p :33080`
-通过`-l`参数即可指定,比如:100K 1.5M . 0意味着无限制.
+It can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited..
 
-#### **6.12 指定出口IP**  
-`--bind-listen`参数，就可以开启客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。
+#### **6.12 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP.
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
 
-#### **6.13 证书参数使用base64数据**  
+#### **6.13 Certificate parameters using Base64 data**  
 默认情况下-C,-K参数是crt证书和key文件的路径,
 如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
 
