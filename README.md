@@ -286,14 +286,14 @@ HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Mu
 Load balancing have 5 kinds of policy, It can be specified by the `--lb-method` parameter.:
 roundrobin take turns
 leastconn  Using minimum connection number
-leasttime  使用连接时间最小的
-hash     使用根据客户端地址计算出一个固定上级
-weight    根据每个上级的权重和连接数情况,选择出一个上级
-提示:
-负载均衡检查时间间隔可以通过`--lb-retrytime`设置,单位毫秒
-负载均衡连接超时时间可以通过`--lb-timeout`设置,单位毫秒
-如果负载均衡策略是权重(weight),-P格式为:2.2.2.2:3880@1,1就是权重,大于0的整数.
-如果负载均衡策略是hash,默认是根据客户端地址选择上级,可以通过开关`--lb-hashtarget`使用访问的目标地址选择上级.
+leasttime  Use minimum connection time
+hash     Use the client address to calculate a fixed superior
+weight    According to the weight and connection number of each superior, choose a superior
+Tips:
+The load balance check interval can be set by `--lb-retrytime`, unit milliseconds.
+Load balancing connection timeout can be set by `--lb-timeout`, unit milliseconds.
+If the load balance policy is weighted (weight), the -P format is: 2.2.2.2:3880@1,1 is the weight which is greater than 0.
+If the load balance strategy is hash, the default is to select the parent based on the client address, and the parent can be selected by switching `- lb-hashtarget', using the access destination address.
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
