@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	socks5c "github.com/snail007/goproxy/core/proxy/common/socks5"
+	socks5c "github.com/snail007/goproxy/core/lib/socks5"
 )
 
 type BasicAuther interface {
