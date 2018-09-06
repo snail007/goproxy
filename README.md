@@ -37,11 +37,11 @@ PR needs to explain what changes have been made and why you change them.
 - Custom underlying encrypted transmission, HTTP(s)\sps\socks proxy can encrypt TCP data through TLS standard encryption and KCP protocol encryption. In addition, it also supports custom encryption after TLS and KCP. That is to say, custom encryption and tls|kcp can be used together. The internal uses AES256 encryption, and it only needs to define one password by yourself when is used.   
 - Low level compression and efficient transmission，The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
 - The secure DNS proxy, Through the DNS proxy provided by the local proxy, you can encrypted communicate with the father proxy to realize the DNS query of security and pollution prevention.
-- 负载均衡,高可用,HTTP(S)\SOCKS5\SPS代理支持上级负载均衡和高可用,多个上级重复-P参数即可.
-- 指定出口IP,HTTP(S)\SOCKS5\SPS代理支持客户端用入口IP连接过来的,就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP
-- 支持限速,HTTP(S)\SOCKS5\SPS代理支持限速.
-- SOCKS5代理支持级联认证.
-- 证书参数使用base64数据,默认情况下-C,-K参数是crt证书和key文件的路径,如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+- Load balance,High availability,HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Multiple superiors repeat -P parameters.
+- Designated exporting IP,HTTP(S)\SOCKS5\SPS proxy supports the client to connect with the entry IP,Using the entry IP as the  exporting IP to visit the target website。If the entry IP is the intranet IP，Exporting IP will not use entry IP
+- Support speed limit. HTTP (S) \SOCKS5\SPS proxy supports speed limit.
+- SOCKS5 proxy supports cascade authentication.
+- Certificate parameters use base64 data. By default, the - C, - K parameters are the path of the CRT certificate and key file. If “base64://” begins, the subsequent data is thought to be Base64 encoded which will be decoded and used.
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -77,7 +77,7 @@ This page is the v6.0 manual, and the other version of the manual can be checked
 - [Safety advice](#safety-advice)
 
 ### Manual catalogues
-- [负载均衡和高可用](#负载均衡和高可用)
+- [Load balance and high available](#load-balance-and-high-available)
 - [1.HTTP proxy](#1http-proxy)
     - [1.1 Common HTTP proxy](#11common-http-proxy)
     - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
@@ -94,10 +94,10 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [1.11 Custom DNS](#111custom-dns)
     - [1.12 Custom encryption](#112-custom-encryption)
     - [1.13 Compressed transmission](#113-compressed-transmission)
-    - [1.14 负载均衡](#114-负载均衡)
-    - [1.15 限速](#115-限速)
-    - [1.16 指定出口IP](#116-指定出口ip)
-    - [1.17 证书参数使用base64数据](#117-证书参数使用base64数据)
+    - [1.14 load balance](#114-load-balance)
+    - [1.15 speed limit](#115-speed-limit)
+    - [1.16 Designated exporting IP](#116-designated-export-ip)
+    - [1.17 Certificate parameters using Base64 data](#117-certificate-parameters-using-Base64-data)
     - [1.18 View help](#118view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
@@ -138,11 +138,11 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [5.9 Custom DNS](#59custom-dns)
     - [5.10 Custom encryption](#510custom-encryption)
     - [5.11 Compressed transmission](#511compressed-transmission)
-    - [5.12 负载均衡](#512-负载均衡)
-    - [5.13 限速](#513-限速)
-    - [5.14 指定出口IP](#514-指定出口ip)
-    - [5.15 级联认证](#515-级联认证)
-    - [5.16 证书参数使用base64数据](#516-证书参数使用base64数据)
+    - [5.12 load balance](#512-load-balance)
+    - [5.13 speed limit](#513-speed-limit)
+    - [5.14 Designated exporting IP](#514-designated-exporting-ip)
+    - [5.15 Cascade authentication](#515-Cascade-authentication)
+    - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-Base64-data)
     - [5.17 View help](#517view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
@@ -154,10 +154,10 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [6.7 Authentication](#67authentication)
     - [6.8 Custom encryption](#68-custom-encryption)
     - [6.9 Compressed transmission](#69-compressed-transmission)
-    - [6.10 禁用协议](#610-禁用协议)
-    - [6.11 限速](#611-限速)
-    - [6.12 指定出口IP](#612-指定出口ip)
-    - [6.13 证书参数使用base64数据](#613-证书参数使用base64数据)
+    - [6.10 Disable-protocol](#610-disable-protocol)
+    - [6.11 speed limit](#611-speed-limit)
+    - [6.12 Designated exporting IP](#612-designated-exporting-ip)
+    - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-Base64-data)
     - [6.14 View Help](#614view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
@@ -281,11 +281,11 @@ When vps is behind the NAT, the network card IP on VPS is an internal network IP
 Assuming that your VPS outer external network IP is 23.23.23.23, the following command sets the 23.23.23.23 through the -g parameter.  
 `./proxy http -g "23.23.23.23"`  
 
-### **负载均衡和高可用**
-HTTP(S)\SOCKS5\SPS代理支持上级负载均衡和高可用,多个上级重复-P参数即可.
-负载均衡策略支持5种,可以通过`--lb-method`参数指定:
-roundrobin 轮流使用
-leastconn  使用最小连接数的
+### **Load balance and high available**
+HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Multiple superiors repeat -P parameters.    
+Load balancing have 5 kinds of policy, It can be specified by the `--lb-method` parameter.:
+roundrobin take turns
+leastconn  Using minimum connection number
 leasttime  使用连接时间最小的
 hash     使用根据客户端地址计算出一个固定上级
 weight    根据每个上级的权重和连接数情况,选择出一个上级
