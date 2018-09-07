@@ -141,8 +141,8 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [5.12 load balance](#512-load-balance)
     - [5.13 speed limit](#513-speed-limit)
     - [5.14 Designated exporting IP](#514-designated-exporting-ip)
-    - [5.15 Cascade authentication](#515-Cascade-authentication)
-    - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-Base64-data)
+    - [5.15 Cascade authentication](#515-cascade-authentication)
+    - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-base64-data)
     - [5.17 View help](#517view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
@@ -157,7 +157,7 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [6.10 Disable-protocol](#610-disable-protocol)
     - [6.11 speed limit](#611-speed-limit)
     - [6.12 Designated exporting IP](#612-designated-exporting-ip)
-    - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-Base64-data)
+    - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-base64-data)
     - [6.14 View Help](#614view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
@@ -1109,11 +1109,11 @@ Local third level execution:
 through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.    
 
 #### **6.10 Disable protocol**  	
-SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可以通过参数禁用某个协议  	  
+By default, SPS's port supports two proxy protocols, http (s) and socks5, and we can disable a protocol with parameters.  	 
 for example:  
-1.禁用HTTP(S)代理功能只保留SOCKS5代理功能,参数:`--disable-http`.   
-@@ -1055,7 +1193,31 @@ SPS默认情况下一个端口支持http(s)和socks5两种代理协议,我们可
-1.禁用SOCKS5代理功能只保留HTTP(S)代理功能,参数:`--disable-socks`.     
+1.Disable the HTTP (S) proxy, retaining only the SOCKS5 proxy,parameter:`--disable-http`.   
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`
+1.Disable the SOCKS5 proxy, retaining only the HTTP (S) proxy,parameter:`--disable-socks`.     
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`    
 
 #### **6.11 Speed limit**  
@@ -1128,8 +1128,8 @@ The `- bind-listen` parameter opens the client's ability to access the target si
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
 
 #### **6.13 Certificate parameters using Base64 data**  
-默认情况下-C,-K参数是crt证书和key文件的路径,
-如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
+By default, the -C and -K parameters are the paths of CRT certificates and key files,
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
 
 #### **6.14.view help** 
 `./proxy help sps` 
