@@ -1088,8 +1088,8 @@ Local third level execution:
 through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
 
 #### **6.9 Compressed transmission**  
-HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.
-That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.
+HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.    
+That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.    
 The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
 
 **two level example**  
@@ -1102,7 +1102,7 @@ through this way, When you visits the website by local proxy 8080, it visits the
 **three level example**  
 First level VPS (ip:2.2.2.2) execution:  
 `proxy sps -t tcp -m -p :7777`  
-Second level VPS (ip:3.3.3.3) execution::  
+Second level VPS (ip:3.3.3.3) execution:  
 `proxy sps -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
 Local third level execution:  
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
@@ -1111,25 +1111,25 @@ through this way, When you visits the website by local proxy 8080, it visits the
 #### **6.10 Disable protocol**  	
 By default, SPS's port supports two proxy protocols, http (s) and socks5, and we can disable a protocol with parameters.  	 
 for example:  
-1.Disable the HTTP (S) proxy, retaining only the SOCKS5 proxy,parameter:`--disable-http`.   
-`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`
-1.Disable the SOCKS5 proxy, retaining only the HTTP (S) proxy,parameter:`--disable-socks`.     
+1.Disable the HTTP (S) proxy, retaining only the SOCKS5 proxy,parameter:`--disable-http`.       
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`    
+1.Disable the SOCKS5 proxy, retaining only the HTTP (S) proxy,parameter:`--disable-socks`.     
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`     
 
 #### **6.11 Speed limit**  
-Suppose there has a SOCKS5 parent proxy:
-`proxy socks -p 2.2.2.2:33080 -z password -t tcp`
-SPS lower speed limit 100K
-`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp -p :33080`
-It can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited..
+Suppose there has a SOCKS5 parent proxy:    
+`proxy socks -p 2.2.2.2:33080 -z password -t tcp`   
+SPS lower speed limit 100K    
+`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp -p :33080`   
+It can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited.    
 
 #### **6.12 Designated exporting IP**  
-The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP.
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP.   
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
 
 #### **6.13 Certificate parameters using Base64 data**  
-By default, the -C and -K parameters are the paths of CRT certificates and key files,
-If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
+By default, the -C and -K parameters are the paths of CRT certificates and key files,   
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.    
 
 #### **6.14.view help** 
 `./proxy help sps` 
@@ -1168,7 +1168,7 @@ If you want to get a more detailed configuration and explanation of the KCP para
 ### **8.DNS anti pollution server** 
 
 #### **8.1.Introduction** 
-It is well known that DNS is a service which use UDP protocol and 53 port，But with the development of network, some well-known DNS servers also support TCP protocol's DNS query，such as google's 8.8.8.8，Proxy's DNS anti pollution server theory is starting a local DNS proxy server，It uses TCP to conduct DNS queries through father proxy. If it encrypted communicate with father proxy，Then you can make a safe and pollution-free DNS analysis.
+It is well known that DNS is a service which use UDP protocol and 53 port，But with the development of network, some well-known DNS servers also support TCP protocol's DNS query，such as google's 8.8.8.8，Proxy's DNS anti pollution server theory is starting a local DNS proxy server，It uses TCP to conduct DNS queries through father proxy. If it encrypted communicate with father proxy，Then you can make a safe and pollution-free DNS analysis.    
 
 #### **8.2.Use examples** 
 
@@ -1186,24 +1186,24 @@ Then the local UDP port 53 provides the DNS analysis.
 
 ***8.2.3 TLS encrypted HTTP(S) father proxy***   
 Suppose there is a father proxy：2.2.2.2:33080  
-The orders executed by father proxy：
-`proxy http -t tls -C proxy.crt -K proxy.key -p :33080`
+The orders executed by father proxy：    
+`proxy http -t tls -C proxy.crt -K proxy.key -p :33080`   
 local execution：  
 `proxy dns -S http -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
-Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
+Then the local UDP port 53 provides a security and anti pollution DNS analysis.   
 
 ***8.2.4 TLS encrypted SOCKS5 father proxy***   
-Suppose there is a father proxy：2.2.2.2:33080  
-The orders executed by father proxy：
-`proxy socks -t tls -C proxy.crt -K proxy.key -p :33080`
+Suppose there is a father proxy：2.2.2.2:33080   
+The orders executed by father proxy：    
+`proxy socks -t tls -C proxy.crt -K proxy.key -p :33080`    
 local execution：  
-`proxy dns -S socks -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`  
+`proxy dns -S socks -T tls -P 2.2.2.2:33080  -C proxy.crt -K proxy.key -p :53`     
 Then the local UDP port 53 provides a security and anti pollution DNS analysis.  
 
 ***8.2.5 KCP encrypted HTTP(S) father proxy***   
 Suppose there is a father proxy：2.2.2.2:33080  
 The orders executed by father proxy：
-`proxy http -t kcp -p :33080`
+`proxy http -t kcp -p :33080`   
 local execution：  
 `proxy dns -S http -T kcp -P 2.2.2.2:33080 -p :53`  
 Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
@@ -1211,23 +1211,23 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 ***8.2.6 KCP encrypted SOCKS5 father proxy***   
 Suppose there is a father proxy：2.2.2.2:33080  
 The orders executed by father proxy：
-`proxy socks -t kcp -p :33080`
+`proxy socks -t kcp -p :33080`    
 local execution：  
-`proxy dns -S socks -T kcp -P 2.2.2.2:33080 -p :53`  
+`proxy dns -S socks -T kcp -P 2.2.2.2:33080 -p :53`     
 Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
 
 ***8.2.7 Custom encrypted HTTP(S) father proxy***   
 Suppose there is a father proxy：2.2.2.2:33080  
 The orders executed by father proxy：
-`proxy http -t tcp -p :33080 -z password`
+`proxy http -t tcp -p :33080 -z password`   
 local execution：  
-`proxy dns -S http -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
+`proxy dns -S http -T tcp -Z password -P 2.2.2.2:33080 -p :53`      
 Then the local UDP port 53 provides a security and anti pollution DNS analysis. 
 
 ***8.2.8 Custom encrypted SOCKS5 father proxy***   
 Suppose there is a father proxy：2.2.2.2:33080  
 The orders executed by father proxy：
-`proxy socks -t kcp -p :33080 -z password`
+`proxy socks -t kcp -p :33080 -z password`    
 local execution：  
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
 Then the local UDP port 53 provides a security and anti pollution DNS analysis.
