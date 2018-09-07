@@ -1,5 +1,5 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
-Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5 proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet, secure DNS proxy.  
+Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet, secure DNS proxy.  
 
   
 ---  
@@ -33,10 +33,15 @@ PR needs to explain what changes have been made and why you change them.
 - The integrated external API, HTTP (S): SOCKS5 proxy authentication can be integrated with the external HTTP API, which can easily control the user's access through the external system.  
 - Reverse proxy: goproxy supports directly parsing the domain to proxy monitor IP, and then proxy will help you to access the HTTP (S) site that you need to access.
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
-- Protocol conversion: The existing HTTP (S) or SOCKS5 proxy can be converted to a proxy which support both HTTP (S) and SOCKS5 by one port, but the converted SOCKS5 proxy does not support the UDP function.Also support powerful cascading authentication.  
+- Protocol conversion: The existing HTTP (S) or SOCKS5 or ss proxy can be converted to a proxy which support HTTP (S), SOCKS5 and ss by one port, if the converted SOCKS5 and ss proxy's parent proxy is SOCKS5, which can support the UDP function.Also support powerful cascading authentication.  
 - Custom underlying encrypted transmission, HTTP(s)\sps\socks proxy can encrypt TCP data through TLS standard encryption and KCP protocol encryption. In addition, it also supports custom encryption after TLS and KCP. That is to say, custom encryption and tls|kcp can be used together. The internal uses AES256 encryption, and it only needs to define one password by yourself when is used.   
 - Low level compression and efficient transmission，The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
 - The secure DNS proxy, Through the DNS proxy provided by the local proxy, you can encrypted communicate with the father proxy to realize the DNS query of security and pollution prevention.
+- Load balance,High availability,HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Multiple superiors repeat -P parameters.
+- Designated exporting IP,HTTP(S)\SOCKS5\SPS proxy supports the client to connect with the entry IP,Using the entry IP as the  exporting IP to visit the target website。If the entry IP is the intranet IP，Exporting IP will not use entry IP
+- Support speed limit. HTTP (S) \SOCKS5\SPS proxy supports speed limit.
+- SOCKS5 proxy supports cascade authentication.
+- Certificate parameters use base64 data. By default, the - C, - K parameters are the path of the CRT certificate and key file. If “base64://” begins, the subsequent data is thought to be Base64 encoded which will be decoded and used.
   
 ### Why need these?  
 - Because for some reason, we cannot access our services elsewhere. We can build a secure tunnel to access our services through multiple connected proxy nodes.  
@@ -48,7 +53,7 @@ PR needs to explain what changes have been made and why you change them.
 - ...  
 
  
-This page is the v5.4 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
+This page is the v6.0 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
 
 
 ### How to find the organization?  
@@ -72,6 +77,7 @@ This page is the v5.4 manual, and the other version of the manual can be checked
 - [Safety advice](#safety-advice)
 
 ### Manual catalogues
+- [Load balance and high available](#load-balance-and-high-available)
 - [1.HTTP proxy](#1http-proxy)
     - [1.1 Common HTTP proxy](#11common-http-proxy)
     - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
@@ -88,7 +94,11 @@ This page is the v5.4 manual, and the other version of the manual can be checked
     - [1.11 Custom DNS](#111custom-dns)
     - [1.12 Custom encryption](#112-custom-encryption)
     - [1.13 Compressed transmission](#113-compressed-transmission)
-    - [1.14 View help](#114view-help)
+    - [1.14 load balance](#114-load-balance)
+    - [1.15 speed limit](#115-speed-limit)
+    - [1.16 Designated exporting IP](#116-designated-export-ip)
+    - [1.17 Certificate parameters using Base64 data](#117-certificate-parameters-using-Base64-data)
+    - [1.18 View help](#118view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -128,17 +138,27 @@ This page is the v5.4 manual, and the other version of the manual can be checked
     - [5.9 Custom DNS](#59custom-dns)
     - [5.10 Custom encryption](#510custom-encryption)
     - [5.11 Compressed transmission](#511compressed-transmission)
-    - [5.12 View help](#512view-help)
+    - [5.12 load balance](#512-load-balance)
+    - [5.13 speed limit](#513-speed-limit)
+    - [5.14 Designated exporting IP](#514-designated-exporting-ip)
+    - [5.15 Cascade authentication](#515-cascade-authentication)
+    - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-base64-data)
+    - [5.17 View help](#517view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
     - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
-    - [6.4 Chain style connection](#64chain-style-connection)
-    - [6.5 Listening on multiple ports](#65listening-on-multiple-ports)
-    - [6.6 Authentication](#66authentication)
-    - [6.7 Custom encryption](#67-custom-encryption)
-    - [6.8 Compressed transmission](#68-compressed-transmission)
-    - [6.9 View Help](#69view-help)
+    - [6.4 SS to HTTP(S)+SOCKS5+SS](#64-ss-to-httpssocks5ss)
+    - [6.5 Chain style connection](#65chain-style-connection)
+    - [6.6 Listening on multiple ports](#66listening-on-multiple-ports)
+    - [6.7 Authentication](#67authentication)
+    - [6.8 Custom encryption](#68-custom-encryption)
+    - [6.9 Compressed transmission](#69-compressed-transmission)
+    - [6.10 Disable-protocol](#610-disable-protocol)
+    - [6.11 speed limit](#611-speed-limit)
+    - [6.12 Designated exporting IP](#612-designated-exporting-ip)
+    - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-base64-data)
+    - [6.14 View Help](#614view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
@@ -155,7 +175,7 @@ tips:all operations require root permissions.
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
-The installation is completed, the configuration directory is /etc/proxy, more detailed use of the method referred to the following manual for further understanding.  
+The installation is completed, the configuration directory is /etc/proxy, For more detailed usage, please refer to the manual above to further understand the functions you want to use.  
 If the installation fails or your VPS is not a linux64 system, please follow the semi-automatic step below:  
   
 #### Manual installation 
@@ -164,7 +184,7 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 Download address: https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v5.4/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v6.0/proxy-linux-amd64.tar.gz  
 
 ```  
 #### **2.Download the automatic installation script**  
@@ -179,10 +199,10 @@ chmod +x install.sh
 
 Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
 
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 5.4:
+The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 6.0:
 
 ```
-ARG GOPROXY_VERSION=v5.4
+ARG GOPROXY_VERSION=v6.0
 ```
 
 To Run:
@@ -260,6 +280,20 @@ for example: `proxy http -p ":9090" --forever --log proxy.log --daemon`  
 When vps is behind the NAT, the network card IP on VPS is an internal network IP, and then you can add the VPS's external network IP to prevent the dead cycle by -g parameter.  
 Assuming that your VPS outer external network IP is 23.23.23.23, the following command sets the 23.23.23.23 through the -g parameter.  
 `./proxy http -g "23.23.23.23"`  
+
+### **Load balance and high available**
+HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Multiple superiors repeat -P parameters.    
+Load balancing have 5 kinds of policy, It can be specified by the `--lb-method` parameter.:
+roundrobin take turns
+leastconn  Using minimum connection number
+leasttime  Use minimum connection time
+hash     Use the client address to calculate a fixed superior
+weight    According to the weight and connection number of each superior, choose a superior
+Tips:
+The load balance check interval can be set by `--lb-retrytime`, unit milliseconds.
+Load balancing connection timeout can be set by `--lb-timeout`, unit milliseconds.
+If the load balance policy is weighted (weight), the -P format is: 2.2.2.2:3880@1,1 is the weight which is greater than 0.
+If the load balance strategy is hash, the default is to select the parent based on the client address, and the parent can be selected by switching `- lb-hashtarget', using the access destination address.
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  
@@ -457,9 +491,34 @@ Second level VPS (ip:3.3.3.3) execution:
 `proxy http -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
 Local third level execution:  
 `proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
-through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy. 
 
-#### **1.14.view help**  
+### **1.14 Load balance**  
+HTTP (S) proxy supports superior load balance, and multiple -P parameters can be repeated by multiple superiors.   
+`proxy http --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080`   
+
+#### **1.14.1 Set retry interval and timeout time**  
+`proxy http --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`   
+
+#### **1.14.2 Set weight**  
+`proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -t tcp -p :33080`
+
+#### **1.14.3 Use target address to select superior**  
+`proxy http --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
+
+### **1.15 Speed limit**  
+The speed limit is 100K, which can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited.   
+`proxy http -t tcp -p 2.2.2.2:33080 -l 100K`
+
+### **1.16 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
+`proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
+
+### **1.17 Certificate parameters using Base64 data**  
+By default, the -C and -K parameters are the paths of CRT certificates and key files,
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
+
+#### **1.18.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
@@ -866,43 +925,82 @@ Second level VPS (ip:3.3.3.3) execution:
 `proxy socks -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
 Local third level execution:  
 `proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
-through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.  
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.    
 
-#### **5.12.view help**  
+#### **5.12 Load balance**  
+SOCKS proxy supports the load balancing of superior authorities, and the -P parameters can be repeated by multiple superiors.   
+`proxy socks --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080  -p :33080 -t tcp`
+
+#### **5.12.1 Set retry interval and timeout time**  
+`proxy socks --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
+
+#### **5.12.2 Set weight**  
+`proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -p :33080 -t tcp`
+
+#### **5.12.3 Use target address to select parent proxy**  
+`proxy socks --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
+
+#### **5.13 Speed limit**  
+The speed limit is 100K, which can be specified through the -l parameter, for example: 100K 1.5M. 0 means unlimited.   
+`proxy socks -t tcp -p 2.2.2.2:33080 -l 100K`
+
+#### **5.14 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
+`proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`
+
+#### **5.15 Cascade authentication**  
+SOCKS5 supports cascading authentication, and -A can set up parents proxy's authentication information..    
+parents proxy:
+`proxy socks -t tcp -p 2.2.2.2:33080 -a user:pass`
+localhost:
+`proxy socks -T tcp -P 2.2.2.2:33080 -A user:pass -t tcp -p :33080`
+
+#### **5.16 Certificate parameters using Base64 data**  
+By default, the -C and -K parameters are the paths of CRT certificates and key files,    
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding..   
+
+#### **5.17.view help**  
 `./proxy help socks`  
 
 ### **6.Proxy protocol conversion** 
 
 #### **6.1.Functional introduction** 
-The proxy protocol conversion use the SPS subcommand (abbreviation of socks+https), SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is also does support UDP when parent is Socks5. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
+The proxy protocol conversion use the SPS subcommand, SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is also does support UDP when parent is Socks5. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
 
 #### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
-Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`
 
-Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080, TLS needs certificate file，ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`   
 
-Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time. The local port after transformation is 18080.  
+Suppose there is a KCP HTTP (s) proxy (password: demo123): 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
+`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
 #### **6.3.SOCKS5 to HTTP(S) + SOCKS5** 
-Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+Suppose there is a common Socks5 proxy: 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time, and the local port after transformation is 18080. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080`
+`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`
 
-Suppose there is a TLS Socks5 proxy: 127.0.0.1:8080. Now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time. The local port after transformation is 18080, TLS needs certificate file.  
+Suppose there is a TLS Socks5 proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080, TLS needs certificate file. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key`   
+`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`   
 
-Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that support HTTP (s) and Socks5 at the same time, and the local port after transformation is 18080.  
+Suppose there is a KCP Socks5 proxy (password: demo123): 127.0.0.1:8080, now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time, and the local port after transformation is 18080. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
-#### **6.4.Chain style connection** 
+#### **6.4 SS to HTTP(S)+SOCKS5+SS** 
+SPS support the SS protocol with the local authorities. The parent proxy can be SPS or standard SS services.  
+By default, SPS provides three proxies, HTTP (S), SOCKS5 and SPS. the converted SOCKS5 and SS support UDP when the parent proxy is SOCKS5.  
+Suppose there is an ordinary SS or SPS proxy (open SS, encryption: aes-256-cfb, password: Demo)：127.0.0.1:8080,Now we turn it into a common proxy that supports both http (s) and Socks5 and ss. The converted local port is 18080, and the converted ss encryption mode is aes-192-cfb, ss password:pass.  
+command：  
+`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123`  	`./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
+
+#### **6.5.Chain style connection** 
 ![6.4](/docs/images/sps-tls.png)  
 It is mentioned above that multiple SPS nodes can be connected to build encrypted channels, assuming you have the following VPS and a PC.  
 vps01：2.2.2.2  
@@ -922,11 +1020,11 @@ Then run a SPS node on the PC，excute：
 
 finish。  
 
-#### **6.5.Listening on multiple ports**   
+#### **6.6.Listening on multiple ports**   
 In general, listening one port is enough, but if you need to monitor 80 and 443 ports at the same time as a reverse proxy, the -p parameter can support it.  
 The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by a comma.  
 
-#### **6.6.Authentication** 
+#### **6.7.Authentication** 
 SPS supports HTTP(s)\socks5 proxy authentication, which can concatenate authentication, there are four important information:  
 1:Users send authentication information`user-auth`。   
 2:Local authentication information set up`local-auth`。  
@@ -968,7 +1066,7 @@ target: if the client is the HTTP (s) proxy request, this represents the complet
 If there is no -a or -F or --auth-url parameters, local authentication is closed.  
 If there is no -A parameter, the connection to the father proxy does not use authentication.  
 
-#### **6.7 Custom encryption**  
+#### **6.8 Custom encryption**  
 HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.
 Custom encryption requires both ends are proxy. Next, we use two level example and three level example as examples:  
 Suppose there is already a HTTP (s) proxy:`6.6.6.6:6666`  
@@ -989,7 +1087,7 @@ Local third level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`  
 through this way, When you visits the website by local proxy 8080, it visits the target website by encryption transmission with the parents proxy.  
 
-#### **6.8 Compressed transmission**  
+#### **6.9 Compressed transmission**  
 HTTP(s) proxy can encrypt TCP data through TCP standard encryption and KCP protocol encryption, and can also compress data before custom encryption.
 That is to say, compression and custom encryption and tls|kcp can be used together, compression is divided into two parts, the one is whether the local (-z) is compressed transmission, the other is whether the parents (-Z) is compressed transmission.
 The compression requires both ends are proxy. Compression also protects the (encryption) data in certain extent. we use two level example and three level example as examples:  
@@ -1008,9 +1106,32 @@ Second level VPS (ip:3.3.3.3) execution::
 `proxy sps -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888` 
 Local third level execution:  
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`  
-through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.
+through this way, When you visits the website by local proxy 8080, it visits the target website by compressed transmission with the parents proxy.    
 
-#### **6.9.view help** 
+#### **6.10 Disable protocol**  	
+By default, SPS's port supports two proxy protocols, http (s) and socks5, and we can disable a protocol with parameters.  	 
+for example:  
+1.Disable the HTTP (S) proxy, retaining only the SOCKS5 proxy,parameter:`--disable-http`.   
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`
+1.Disable the SOCKS5 proxy, retaining only the HTTP (S) proxy,parameter:`--disable-socks`.     
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`    
+
+#### **6.11 Speed limit**  
+Suppose there has a SOCKS5 parent proxy:
+`proxy socks -p 2.2.2.2:33080 -z password -t tcp`
+SPS lower speed limit 100K
+`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp -p :33080`
+It can be specified through the `-l` parameter, for example: 100K 1.5M. 0 means unlimited..
+
+#### **6.12 Designated exporting IP**  
+The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP.
+`proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
+
+#### **6.13 Certificate parameters using Base64 data**  
+By default, the -C and -K parameters are the paths of CRT certificates and key files,
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
+
+#### **6.14.view help** 
 `./proxy help sps` 
 
 ### **7.KCP Configuration**   
