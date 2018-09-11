@@ -39,8 +39,11 @@ func (c *CompStream) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func (c *CompStream) Close() error {
-	return c.conn.Close()
+func (c *CompStream) Close() (err error) {
+	err = c.conn.Close()
+	c.r = nil
+	c.w = nil
+	return
 }
 func (c *CompStream) LocalAddr() net.Addr {
 	return c.conn.LocalAddr()

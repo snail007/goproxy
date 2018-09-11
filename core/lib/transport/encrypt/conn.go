@@ -38,3 +38,10 @@ func (s *Conn) Read(b []byte) (n int, err error) {
 func (s *Conn) Write(b []byte) (n int, err error) {
 	return s.w.Write(b)
 }
+func (s *Conn) Close() (err error) {
+	err = s.Conn.Close()
+	s.Cipher = nil
+	s.r = nil
+	s.w = nil
+	return err
+}
