@@ -177,7 +177,7 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	domainSlice := strings.Split(u.Hostname(), ".")
 	if len(domainSlice) > 1 {
 		subSlice := domainSlice[:len(domainSlice)-1]
-		topDomain := strings.Join(domainSlice[len(domainSlice)-1:], ".")
+		topDomain := domainSlice[len(domainSlice)-1:][0]
 		checkDomain := topDomain
 		if !blockedMap && c.directMap.Has(checkDomain) {
 			return true
