@@ -273,11 +273,7 @@ func (s *SPS) callback(inConn net.Conn) {
 	var err error
 	lbAddr := ""
 	switch *s.cfg.ParentType {
-	case "kcp":
-		fallthrough
-	case "tcp":
-		fallthrough
-	case "tls":
+	case "kcp", "tcp", "tls":
 		lbAddr, err = s.OutToTCP(&inConn)
 	default:
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
