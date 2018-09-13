@@ -145,7 +145,7 @@ func (s *SPS) CheckArgs() (err error) {
 func (s *SPS) InitService() (err error) {
 
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
+		s.domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 
 	if len(*s.cfg.Parent) > 0 {

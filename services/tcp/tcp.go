@@ -208,8 +208,8 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	srcAddr := ""
 	defer func() {
 		if item != nil {
-			(*(*item).conn).Close()
-			(*item).udpConn.Close()
+			(*item.conn).Close()
+			item.udpConn.Close()
 			s.udpConns.Remove(srcAddr)
 			(*inConn).Close()
 		}
@@ -252,8 +252,8 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 		} else {
 			item = v.(*UDPConnItem)
 		}
-		(*item).touchtime = time.Now().Unix()
-		go (*item).udpConn.Write(body)
+		item.touchtime = time.Now().Unix()
+		go item.udpConn.Write(body)
 	}
 }
 func (s *TCP) UDPRevecive(key string) {
