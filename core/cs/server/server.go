@@ -230,7 +230,6 @@ func (s *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.
 				}
 			}()
 			for {
-				//var conn net.Conn
 				conn, err := lis.AcceptKCP()
 				if err == nil {
 					go func() {

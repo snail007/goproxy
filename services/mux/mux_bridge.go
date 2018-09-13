@@ -216,7 +216,6 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 			v.(*smux.Session).Close()
 		}
 		group.Set(index, session)
-		// s.clientControlConns.Set(key, session)
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {

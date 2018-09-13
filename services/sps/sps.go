@@ -363,7 +363,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 			request.HTTPSReply()
 			//s.log.Printf("https reply: %s", request.Host)
 		} else {
-			//forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
 			forwardBytes = request.HeadBuf
 		}
 		address = request.Host
@@ -412,7 +411,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 		selectAddr = address
 	}
 	lbAddr = s.lb.Select(selectAddr, *s.cfg.LoadBalanceOnlyHA)
-	//lbAddr = s.lb.Select((*inConn).RemoteAddr().String())
 	outConn, err = s.GetParentConn(lbAddr)
 	if err != nil {
 		s.log.Printf("connect to %s , err:%s", lbAddr, err)
