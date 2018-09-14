@@ -90,7 +90,7 @@ func (c *Checker) start() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		//log.Printf("checker started")
@@ -100,7 +100,7 @@ func (c *Checker) start() {
 				go func(item CheckerItem) {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 						}
 					}()
 					if c.isNeedCheck(item) {
@@ -176,17 +176,9 @@ func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	}
 	domainSlice := strings.Split(u.Hostname(), ".")
 	if len(domainSlice) > 1 {
-		subSlice := domainSlice[:len(domainSlice)-1]
-		topDomain := domainSlice[len(domainSlice)-1:][0]
-		checkDomain := topDomain
-		if !blockedMap && c.directMap.Has(checkDomain) {
-			return true
-		}
-		if blockedMap && c.blockedMap.Has(checkDomain) {
-			return true
-		}
-		for i := len(subSlice) - 1; i >= 0; i-- {
-			checkDomain = subSlice[i] + "." + checkDomain
+		checkDomain := ""
+		for i := len(domainSlice) - 1; i >= 0; i-- {
+			checkDomain = strings.Join(domainSlice[i:], ".")
 			if !blockedMap && c.directMap.Has(checkDomain) {
 				return true
 			}
