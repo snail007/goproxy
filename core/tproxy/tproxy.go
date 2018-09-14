@@ -81,7 +81,7 @@ func dtoi(s string, i0 int) (n int, i int, ok bool) {
 	return n, i, true
 }
 
-// IPTcpAddrToUnixSocksAddr ---
+// IPTcpAddrToUnixSocksAddr returns Sockaddr for specified TCP addr.
 func IPTcpAddrToUnixSocksAddr(addr string) (sa unix.Sockaddr, err error) {
 	if Debug {
 		fmt.Println("DEBUG: IPTcpAddrToUnixSocksAddr recieved address:", addr)
@@ -97,7 +97,7 @@ func IPTcpAddrToUnixSocksAddr(addr string) (sa unix.Sockaddr, err error) {
 	return ipToSocksAddr(ipType(addr), tcpAddr.IP, tcpAddr.Port, tcpAddr.Zone)
 }
 
-// IPv6UdpAddrToUnixSocksAddr ---
+// IPv6UdpAddrToUnixSocksAddr returns Sockaddr for specified IPv6 addr.
 func IPv6UdpAddrToUnixSocksAddr(addr string) (sa unix.Sockaddr, err error) {
 	tcpAddr, err := net.ResolveTCPAddr("udp6", addr)
 	if err != nil {
