@@ -139,6 +139,10 @@ func (s *MuxServerManager) Start(args interface{}, log *logger.Logger) (err erro
 			KCP:          s.cfg.KCP,
 			ParentType:   s.cfg.ParentType,
 			Jumper:       s.cfg.Jumper,
+			TCPSMethod:   s.cfg.TCPSMethod,
+			TCPSPassword: s.cfg.TCPSPassword,
+			TOUMethod:    s.cfg.TOUMethod,
+			TOUPassword:  s.cfg.TOUPassword,
 		}, log)
 
 		if err != nil {
@@ -299,7 +303,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					io.Copy(inConn, snappy.NewReader(outConn))
@@ -308,7 +312,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					io.Copy(snappy.NewWriter(outConn), inConn)
@@ -403,7 +407,7 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -475,7 +479,7 @@ func (s *MuxServer) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -554,7 +558,7 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -587,7 +591,7 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)

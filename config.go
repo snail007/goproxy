@@ -432,7 +432,7 @@ func initConfig() (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -456,7 +456,7 @@ func initConfig() (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					for scanner.Scan() {
@@ -466,7 +466,7 @@ func initConfig() (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					for scannerStdErr.Scan() {

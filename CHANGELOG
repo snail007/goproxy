@@ -7,6 +7,9 @@ v6.1
 4.内网穿透增加了TCPS和TOU协议,
   TCPS提供了多种自定义加密TCP方式传输.
   TOU提供了TCP over UDP,多种自定义加密UDP方式传输TCP数据.
+5.优化了DST,防止意外crash.
+6.修复了mapx的Keys()方法的bug导致内网穿透bridge不稳定的问题.
+
 
 v6.0 企业版开源啦
 本次更新主要是把企业版开源,把企业版代码合并到现在的开源goproxy当中,继续遵循GPLv3,免费开源,

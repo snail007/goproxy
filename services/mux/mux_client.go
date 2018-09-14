@@ -8,6 +8,7 @@ import (
 	"net"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/snappy"
@@ -145,7 +146,7 @@ func (s *MuxClient) Start(args interface{}, log *logger.Logger) (err error) {
 			defer func() {
 				e := recover()
 				if e != nil {
-					s.log.Printf("session worker crashed: %s", e)
+					s.log.Printf("session worker crashed: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -159,7 +160,16 @@ func (s *MuxClient) Start(args interface{}, log *logger.Logger) (err error) {
 					continue
 				}
 				conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
-				_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, fmt.Sprintf("%s-%d", *s.cfg.Key, i)))
+				g := sync.WaitGroup{}
+				g.Add(1)
+				go func() {
+					defer func() {
+						_ = recover()
+						g.Done()
+					}()
+					_, err = conn.Write(utils.BuildPacket(CONN_CLIENT, fmt.Sprintf("%s-%d", *s.cfg.Key, i)))
+				}()
+				g.Wait()
 				conn.SetDeadline(time.Time{})
 				if err != nil {
 					conn.Close()
@@ -316,14 +326,17 @@ func (s *MuxClient) ServeUDP(inConn *smux.Stream, localAddr, ID string) {
 			item = v.(*ClientUDPConnItem)
 		}
 		(*item).touchtime = time.Now().Unix()
-		go (*item).udpConn.Write(body)
+		go func() {
+			defer func() { _ = recover() }()
+			(*item).udpConn.Write(body)
+		}()
 	}
 }
 func (s *MuxClient) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -353,7 +366,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				cui.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -372,7 +385,7 @@ func (s *MuxClient) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -431,7 +444,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(outConn, snappy.NewReader(inConn))
@@ -440,7 +453,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(snappy.NewWriter(inConn), outConn)

@@ -131,7 +131,11 @@ func (s *MuxBridge) Start(args interface{}, log *logger.Logger) (err error) {
 		return
 	}
 	s.sc = &sc
-	s.log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+	if *s.cfg.LocalType == "tou" {
+		s.log.Printf("%s bridge on %s", *s.cfg.LocalType, sc.UDPListener.LocalAddr())
+	} else {
+		s.log.Printf("%s bridge on %s", *s.cfg.LocalType, (*sc.Listener).Addr())
+	}
 	return
 }
 func (s *MuxBridge) Clean() {
@@ -211,20 +215,25 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		index := keyInfo[1]
 		s.l.Lock()
 		defer s.l.Unlock()
+		var group *mapx.ConcurrentMap
 		if !s.clientControlConns.Has(groupKey) {
-			item := mapx.NewConcurrentMap()
-			s.clientControlConns.Set(groupKey, &item)
+			_g := mapx.NewConcurrentMap()
+			group = &_g
+			s.clientControlConns.Set(groupKey, group)
+			//s.log.Printf("init client session group %s", groupKey)
+		} else {
+			_group, _ := s.clientControlConns.Get(groupKey)
+			group = _group.(*mapx.ConcurrentMap)
 		}
-		_group, _ := s.clientControlConns.Get(groupKey)
-		group := _group.(*mapx.ConcurrentMap)
 		if v, ok := group.Get(index); ok {
 			v.(*smux.Session).Close()
 		}
 		group.Set(index, session)
+		//s.log.Printf("set client session %s to group %s,grouplen:%d", index, groupKey, group.Count())
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -236,10 +245,12 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 					defer s.l.Unlock()
 					if sess, ok := group.Get(index); ok && sess.(*smux.Session).IsClosed() {
 						group.Remove(index)
+						//s.log.Printf("client session %s removed from group %s, grouplen:%d", key, groupKey, group.Count())
 						s.log.Printf("client connection %s released", key)
 					}
 					if group.IsEmpty() {
 						s.clientControlConns.Remove(groupKey)
+						//s.log.Printf("client session group %s removed", groupKey)
 					}
 					break
 				}
@@ -263,6 +274,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 		if key == "*" {
 			key = s.router.GetKey()
 		}
+		//s.log.Printf("server get client session %s", key)
 		_group, ok := s.clientControlConns.Get(key)
 		if !ok {
 			s.log.Printf("client %s session not exists for server stream %s, retrying...", key, serverID)
@@ -270,8 +282,12 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			continue
 		}
 		group := _group.(*mapx.ConcurrentMap)
-		keys := group.Keys()
+		keys := []string{}
+		group.IterCb(func(key string, v interface{}) {
+			keys = append(keys, key)
+		})
 		keysLen := len(keys)
+		//s.log.Printf("client session %s , len:%d , keysLen: %d", key, group.Count(), keysLen)
 		i := 0
 		if keysLen > 0 {
 			i = rand.Intn(keysLen)
@@ -297,7 +313,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(stream, inConn)
@@ -306,7 +322,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(inConn, stream)

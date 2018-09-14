@@ -82,7 +82,7 @@ func NewMux(conn net.PacketConn, packetSize int) *Mux {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		m.readerLoop()

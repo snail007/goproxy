@@ -137,7 +137,7 @@ func (c *Conn) start() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		c.reader()
@@ -433,6 +433,12 @@ func (c *Conn) String() string {
 // Read can be made to time out and return a Error with Timeout() == true
 // after a fixed time limit; see SetDeadline and SetReadDeadline.
 func (c *Conn) Read(b []byte) (n int, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			n = 0
+			err = io.EOF
+		}
+	}()
 	c.inbufMut.Lock()
 	defer c.inbufMut.Unlock()
 	for c.inbuf.Len() == 0 {
@@ -497,6 +503,9 @@ func (c *Conn) Write(b []byte) (n int, err error) {
 // Close closes the connection.
 // Any blocked Read or Write operations will be unblocked and return errors.
 func (c *Conn) Close() error {
+	defer func() {
+		_ = recover()
+	}()
 	c.closeOnce.Do(func() {
 		if debugConnection {
 			log.Println(c, "explicit close start")
