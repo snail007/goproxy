@@ -172,7 +172,7 @@ func (s *HTTP) InitService() (err error) {
 		s.InitLB()
 	}
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
+		s.domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	if *s.cfg.ParentType == "ssh" {
 		err = s.ConnectSSH()
