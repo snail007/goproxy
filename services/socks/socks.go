@@ -462,11 +462,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, serverConn *socks.ServerConn) {
 }
 func (s *Socks) GetParentConn(parentAddress string, serverConn *socks.ServerConn) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
-	case "kcp":
-		fallthrough
-	case "tls":
-		fallthrough
-	case "tcp":
+	case "kcp", "tls", "tcp":
 		if *s.cfg.ParentType == "tls" {
 			var _conn tls.Conn
 			_conn, err = utils.TlsConnectHost(parentAddress, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)

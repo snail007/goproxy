@@ -141,9 +141,7 @@ func (s *UDP) callback(listener *net.UDPConn, packet []byte, localAddr, srcAddr 
 		}
 	}()
 	switch *s.cfg.ParentType {
-	case "tcp":
-		fallthrough
-	case "tls":
+	case "tcp", "tls":
 		s.OutToTCP(packet, localAddr, srcAddr)
 	case "udp":
 		s.OutToUDP(packet, localAddr, srcAddr)
