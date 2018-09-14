@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils/datasize"
 	"github.com/snail007/goproxy/utils/dnsx"
 	"github.com/snail007/goproxy/utils/iolimiter"
@@ -183,7 +183,7 @@ func (s *HTTP) InitService() (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			//循环检查ssh网络连通性

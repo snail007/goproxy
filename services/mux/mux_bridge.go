@@ -8,30 +8,33 @@ import (
 	"math/rand"
 	"net"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	srvtransport "github.com/snail007/goproxy/core/cs/server"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/mapx"
-
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
 
 type MuxBridgeArgs struct {
-	CertFile   *string
-	KeyFile    *string
-	CertBytes  []byte
-	KeyBytes   []byte
-	Local      *string
-	LocalType  *string
-	Timeout    *int
-	IsCompress *bool
-	KCP        kcpcfg.KCPConfigArgs
+	CertFile     *string
+	KeyFile      *string
+	CertBytes    []byte
+	KeyBytes     []byte
+	Local        *string
+	LocalType    *string
+	Timeout      *int
+	IsCompress   *bool
+	KCP          kcpcfg.KCPConfigArgs
+	TCPSMethod   *string
+	TCPSPassword *string
+	TOUMethod    *string
+	TOUPassword  *string
 }
 type MuxBridge struct {
 	cfg                MuxBridgeArgs
@@ -40,7 +43,7 @@ type MuxBridge struct {
 	router             utils.ClientKeyRouter
 	l                  *sync.Mutex
 	isStop             bool
-	sc                 *utils.ServerChannel
+	sc                 *srvtransport.ServerChannel
 	log                *logger.Logger
 }
 
@@ -112,15 +115,17 @@ func (s *MuxBridge) Start(args interface{}, log *logger.Logger) (err error) {
 		return
 	}
 
-	host, port, _ := net.SplitHostPort(*s.cfg.Local)
-	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p, s.log)
+	sc := srvtransport.NewServerChannelHost(*s.cfg.Local, s.log)
 	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.handler)
 	} else if *s.cfg.LocalType == "tls" {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.handler)
+		err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.handler)
 	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.handler, s.log)
+	} else if *s.cfg.LocalType == "tcps" {
+		err = sc.ListenTCPS(*s.cfg.TCPSMethod, *s.cfg.TCPSPassword, false, s.handler)
+	} else if *s.cfg.LocalType == "tou" {
+		err = sc.ListenTOU(*s.cfg.TOUMethod, *s.cfg.TOUPassword, false, s.handler)
 	}
 	if err != nil {
 		return
@@ -219,7 +224,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -292,7 +297,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(stream, inConn)
@@ -301,7 +306,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(inConn, stream)

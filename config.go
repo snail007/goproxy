@@ -12,12 +12,14 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"runtime/pprof"
+	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
+	encryptconn "github.com/snail007/goproxy/core/lib/transport/encrypt"
 	sdk "github.com/snail007/goproxy/sdk/android-ios"
 	services "github.com/snail007/goproxy/services"
 	httpx "github.com/snail007/goproxy/services/http"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	keygenx "github.com/snail007/goproxy/services/keygen"
 	mux "github.com/snail007/goproxy/services/mux"
 	socksx "github.com/snail007/goproxy/services/socks"
@@ -147,7 +149,7 @@ func initConfig() (err error) {
 	//########mux-server#########
 	muxServer := app.Command("server", "proxy on mux server mode")
 	muxServerArgs.Parent = muxServer.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
-	muxServerArgs.ParentType = muxServer.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Default("tls").Short('T').Enum("tls", "tcp", "kcp")
+	muxServerArgs.ParentType = muxServer.Flag("parent-type", "parent protocol type <tls|tcp|tcps|kcp|tou>").Default("tls").Short('T').Enum("tls", "tcp", "tcps", "kcp", "tou")
 	muxServerArgs.CertFile = muxServer.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxServerArgs.KeyFile = muxServer.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxServerArgs.Timeout = muxServer.Flag("timeout", "tcp timeout with milliseconds").Short('i').Default("2000").Int()
@@ -157,11 +159,15 @@ func initConfig() (err error) {
 	muxServerArgs.IsCompress = muxServer.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxServerArgs.SessionCount = muxServer.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
 	muxServerArgs.Jumper = muxServer.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
+	muxServerArgs.TCPSMethod = muxServer.Flag("tcps-method", "method of parent tcps's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxServerArgs.TCPSPassword = muxServer.Flag("tcps-password", "password of parent tcps's encrpyt/decrypt").Default("snail007's_goproxy").String()
+	muxServerArgs.TOUMethod = muxServer.Flag("tou-method", "method of parent tou's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxServerArgs.TOUPassword = muxServer.Flag("tou-password", "password of parent tou's encrpyt/decrypt").Default("snail007's_goproxy").String()
 
 	//########mux-client#########
 	muxClient := app.Command("client", "proxy on mux client mode")
 	muxClientArgs.Parent = muxClient.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
-	muxClientArgs.ParentType = muxClient.Flag("parent-type", "parent protocol type <tls|tcp|kcp>").Default("tls").Short('T').Enum("tls", "tcp", "kcp")
+	muxClientArgs.ParentType = muxClient.Flag("parent-type", "parent protocol type <tls|tcp|tcps|kcp|tou>").Default("tls").Short('T').Enum("tls", "tcp", "tcps", "kcp", "tou")
 	muxClientArgs.CertFile = muxClient.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	muxClientArgs.KeyFile = muxClient.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxClientArgs.Timeout = muxClient.Flag("timeout", "tcp timeout with milliseconds").Short('i').Default("2000").Int()
@@ -169,6 +175,10 @@ func initConfig() (err error) {
 	muxClientArgs.IsCompress = muxClient.Flag("c", "compress data when tcp|tls mode").Default("false").Bool()
 	muxClientArgs.SessionCount = muxClient.Flag("session-count", "session count which connect to bridge").Short('n').Default("10").Int()
 	muxClientArgs.Jumper = muxClient.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
+	muxClientArgs.TCPSMethod = muxClient.Flag("tcps-method", "method of parent tcps's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxClientArgs.TCPSPassword = muxClient.Flag("tcps-password", "password of parent tcps's encrpyt/decrypt").Default("snail007's_goproxy").String()
+	muxClientArgs.TOUMethod = muxClient.Flag("tou-method", "method of parent tou's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxClientArgs.TOUPassword = muxClient.Flag("tou-password", "password of parent tou's encrpyt/decrypt").Default("snail007's_goproxy").String()
 
 	//########mux-bridge#########
 	muxBridge := app.Command("bridge", "proxy on mux bridge mode")
@@ -176,7 +186,11 @@ func initConfig() (err error) {
 	muxBridgeArgs.KeyFile = muxBridge.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	muxBridgeArgs.Timeout = muxBridge.Flag("timeout", "tcp timeout with milliseconds").Short('i').Default("2000").Int()
 	muxBridgeArgs.Local = muxBridge.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	muxBridgeArgs.LocalType = muxBridge.Flag("local-type", "local protocol type <tls|tcp|kcp>").Default("tls").Short('t').Enum("tls", "tcp", "kcp")
+	muxBridgeArgs.LocalType = muxBridge.Flag("local-type", "local protocol type <tls|tcp|tcps|kcp|tou>").Default("tls").Short('t').Enum("tls", "tcp", "tcps", "kcp", "tou")
+	muxBridgeArgs.TCPSMethod = muxBridge.Flag("tcps-method", "method of local tcps's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxBridgeArgs.TCPSPassword = muxBridge.Flag("tcps-password", "password of local tcps's encrpyt/decrypt").Default("snail007's_goproxy").String()
+	muxBridgeArgs.TOUMethod = muxBridge.Flag("tou-method", "method of local tou's encrpyt/decrypt, these below are supported :\n"+strings.Join(encryptconn.GetCipherMethods(), ",")).Default("aes-192-cfb").String()
+	muxBridgeArgs.TOUPassword = muxBridge.Flag("tou-password", "password of local tou's encrpyt/decrypt").Default("snail007's_goproxy").String()
 
 	//########tunnel-server#########
 	tunnelServer := app.Command("tserver", "proxy on tunnel server mode")
@@ -418,7 +432,7 @@ func initConfig() (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -442,7 +456,7 @@ func initConfig() (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 						}
 					}()
 					for scanner.Scan() {
@@ -452,7 +466,7 @@ func initConfig() (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 						}
 					}()
 					for scannerStdErr.Scan() {

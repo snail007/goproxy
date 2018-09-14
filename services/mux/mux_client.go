@@ -10,13 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/snappy"
+	clienttransport "github.com/snail007/goproxy/core/cs/client"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
+	encryptconn "github.com/snail007/goproxy/core/lib/transport/encrypt"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
 	"github.com/snail007/goproxy/utils/mapx"
-
-	"github.com/golang/snappy"
 	//"github.com/xtaci/smux"
 	smux "github.com/hashicorp/yamux"
 )
@@ -34,6 +35,10 @@ type MuxClientArgs struct {
 	SessionCount *int
 	KCP          kcpcfg.KCPConfigArgs
 	Jumper       *string
+	TCPSMethod   *string
+	TCPSPassword *string
+	TOUMethod    *string
+	TOUPassword  *string
 }
 type ClientUDPConnItem struct {
 	conn      *smux.Stream
@@ -222,7 +227,7 @@ func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
 		if s.jumper == nil {
 			var _conn tls.Conn
-			_conn, err = utils.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
+			_conn, err = clienttransport.TlsConnectHost(*s.cfg.Parent, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, nil)
 			if err == nil {
 				conn = net.Conn(&_conn)
 			}
@@ -239,10 +244,22 @@ func (s *MuxClient) getParentConn() (conn net.Conn, err error) {
 		}
 
 	} else if *s.cfg.ParentType == "kcp" {
-		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+		conn, err = clienttransport.KCPConnectHost(*s.cfg.Parent, s.cfg.KCP)
+	} else if *s.cfg.ParentType == "tcps" {
+		if s.jumper == nil {
+			conn, err = clienttransport.TCPSConnectHost(*s.cfg.Parent, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword, false, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn, err = encryptconn.NewConn(conn, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword)
+			}
+		}
+
+	} else if *s.cfg.ParentType == "tou" {
+		conn, err = clienttransport.TOUConnectHost(*s.cfg.Parent, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword, false, *s.cfg.Timeout)
 	} else {
 		if s.jumper == nil {
-			conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
+			conn, err = clienttransport.TCPConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
 		} else {
 			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
 		}
@@ -306,7 +323,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -336,7 +353,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 					}
 				}()
 				cui.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -355,7 +372,7 @@ func (s *MuxClient) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -414,7 +431,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(outConn, snappy.NewReader(inConn))
@@ -423,7 +440,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(snappy.NewWriter(inConn), outConn)
