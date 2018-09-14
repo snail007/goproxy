@@ -159,7 +159,7 @@ func (s *TunnelClient) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 						}
 					}()
 					s.ServeUDP(localAddr, ID, serverID)
@@ -168,7 +168,7 @@ func (s *TunnelClient) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 						}
 					}()
 					s.ServeConn(localAddr, ID, serverID)
@@ -324,7 +324,7 @@ func (s *TunnelClient) ServeUDP(localAddr, ID, serverID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			(*item).udpConn.Write(body)
@@ -335,7 +335,7 @@ func (s *TunnelClient) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -365,7 +365,7 @@ func (s *TunnelClient) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 					}
 				}()
 				(*cui.conn).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -384,7 +384,7 @@ func (s *TunnelClient) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {

@@ -173,7 +173,7 @@ func (s *UDP) OutToUDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -215,7 +215,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			s.log.Printf("udp conn %s <--> %s connected", srcAddr.String(), localAddr.String())
@@ -237,7 +237,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 						}
 					}()
 					(*(s.sc).UDPListener).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -274,7 +274,7 @@ func (s *UDP) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -351,7 +351,7 @@ func (s *UDP) UDPRevecive(key string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", key)
@@ -384,7 +384,7 @@ func (s *UDP) UDPRevecive(key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)

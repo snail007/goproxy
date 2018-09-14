@@ -306,7 +306,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -336,7 +336,7 @@ func (s *MuxClient) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 					}
 				}()
 				cui.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -355,7 +355,7 @@ func (s *MuxClient) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -414,7 +414,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(outConn, snappy.NewReader(inConn))
@@ -423,7 +423,7 @@ func (s *MuxClient) ServeConn(inConn *smux.Stream, localAddr, ID string) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			io.Copy(snappy.NewWriter(inConn), outConn)

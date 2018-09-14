@@ -191,7 +191,7 @@ func (s *Socks) InitService() (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			//循环检查ssh网络连通性

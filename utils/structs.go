@@ -90,7 +90,7 @@ func (c *Checker) start() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		//log.Printf("checker started")
@@ -100,7 +100,7 @@ func (c *Checker) start() {
 				go func(item CheckerItem) {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 						}
 					}()
 					if c.isNeedCheck(item) {

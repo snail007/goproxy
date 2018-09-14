@@ -219,7 +219,7 @@ func (s *MuxBridge) handler(inConn net.Conn) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -292,7 +292,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(stream, inConn)
@@ -301,7 +301,7 @@ func (s *MuxBridge) callback(inConn net.Conn, serverID, key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 					}
 				}()
 				io.Copy(inConn, stream)

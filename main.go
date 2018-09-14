@@ -36,7 +36,7 @@ func Clean(s *services.Service) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
 			}
 		}()
 		for _ = range signalChan {
