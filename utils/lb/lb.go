@@ -126,6 +126,7 @@ func (g *Group) Reset(addrs []string) {
 		configs = append(configs, &c)
 	}
 	(*g.selector).Reset(configs, g.dr, g.log)
+	g.bks = (*g.selector).Backends()
 }
 func (g *Group) Backends() []*Backend {
 	return (*g.selector).Backends()
