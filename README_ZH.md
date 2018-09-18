@@ -13,6 +13,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 
 **[全平台SDK](/sdk/README.md)**
 
+**[GoProxy特殊授权](/AUTHORIZATION.md)**
+
 ### 如何贡献代码(Pull Request)?  
 
 欢迎加入一起发展壮大proxy.首先需要clone本项目到自己的帐号下面,   
