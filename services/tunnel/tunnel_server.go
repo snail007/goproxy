@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
@@ -38,7 +39,7 @@ type TunnelServerArgs struct {
 }
 type TunnelServer struct {
 	cfg       TunnelServerArgs
-	sc        utils.ServerChannel
+	sc        server.ServerChannel
 	isStop    bool
 	udpConn   *net.Conn
 	userConns mapx.ConcurrentMap
@@ -180,7 +181,7 @@ func (s *TunnelServer) StopService() {
 		s.cfg = TunnelServerArgs{}
 		s.jumper = nil
 		s.log = nil
-		s.sc = utils.ServerChannel{}
+		s.sc = server.ServerChannel{}
 		s.udpConn = nil
 		s.udpConns = nil
 		s.userConns = nil
@@ -233,7 +234,7 @@ func (s *TunnelServer) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	s.sc = utils.NewServerChannel(host, p, s.log)
+	s.sc = server.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.UDPSend(packet, localAddr, srcAddr)
@@ -368,7 +369,7 @@ func (s *TunnelServer) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -439,7 +440,7 @@ func (s *TunnelServer) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -472,7 +473,7 @@ func (s *TunnelServer) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)

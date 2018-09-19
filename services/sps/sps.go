@@ -15,8 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/datasize"
@@ -78,7 +79,7 @@ type SPS struct {
 	cfg                   SPSArgs
 	domainResolver        dnsx.DomainResolver
 	basicAuth             utils.BasicAuth
-	serverChannels        []*utils.ServerChannel
+	serverChannels        []*server.ServerChannel
 	userConns             mapx.ConcurrentMap
 	log                   *logger.Logger
 	localCipher           *ss.Cipher
@@ -93,7 +94,7 @@ func NewSPS() services.Service {
 	return &SPS{
 		cfg:                   SPSArgs{},
 		basicAuth:             utils.BasicAuth{},
-		serverChannels:        []*utils.ServerChannel{},
+		serverChannels:        []*server.ServerChannel{},
 		userConns:             mapx.NewConcurrentMap(),
 		udpRelatedPacketConns: mapx.NewConcurrentMap(),
 	}
@@ -145,7 +146,7 @@ func (s *SPS) CheckArgs() (err error) {
 func (s *SPS) InitService() (err error) {
 
 	if *s.cfg.DNSAddress != "" {
-		(*s).domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
+		s.domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 
 	if len(*s.cfg.Parent) > 0 {
@@ -230,12 +231,12 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p, s.log)
+			sc := server.NewServerChannel(host, p, s.log)
 			s.serverChannels = append(s.serverChannels, &sc)
 			if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == "tls" {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
+				err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
@@ -273,11 +274,7 @@ func (s *SPS) callback(inConn net.Conn) {
 	var err error
 	lbAddr := ""
 	switch *s.cfg.ParentType {
-	case "kcp":
-		fallthrough
-	case "tcp":
-		fallthrough
-	case "tls":
+	case "kcp", "tcp", "tls":
 		lbAddr, err = s.OutToTCP(&inConn)
 	default:
 		err = fmt.Errorf("unkown parent type %s", *s.cfg.ParentType)
@@ -363,7 +360,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 			request.HTTPSReply()
 			//s.log.Printf("https reply: %s", request.Host)
 		} else {
-			//forwardBytes = bytes.TrimRight(request.HeadBuf,"\r\n")
 			forwardBytes = request.HeadBuf
 		}
 		address = request.Host
@@ -412,7 +408,6 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 		selectAddr = address
 	}
 	lbAddr = s.lb.Select(selectAddr, *s.cfg.LoadBalanceOnlyHA)
-	//lbAddr = s.lb.Select((*inConn).RemoteAddr().String())
 	outConn, err = s.GetParentConn(lbAddr)
 	if err != nil {
 		s.log.Printf("connect to %s , err:%s", lbAddr, err)

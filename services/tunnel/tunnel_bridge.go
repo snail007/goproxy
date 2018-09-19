@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/mapx"
@@ -98,9 +99,9 @@ func (s *TunnelBridge) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p, s.log)
+	sc := server.NewServerChannel(host, p, s.log)
 
-	err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
+	err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	if err != nil {
 		return
 	}

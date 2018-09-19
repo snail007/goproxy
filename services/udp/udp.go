@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/mapx"
@@ -30,7 +31,7 @@ type UDPArgs struct {
 type UDP struct {
 	p                mapx.ConcurrentMap
 	cfg              UDPArgs
-	sc               *utils.ServerChannel
+	sc               *server.ServerChannel
 	isStop           bool
 	log              *logger.Logger
 	outUDPConnCtxMap mapx.ConcurrentMap
@@ -121,7 +122,7 @@ func (s *UDP) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p, s.log)
+	sc := server.NewServerChannel(host, p, s.log)
 	s.sc = &sc
 	err = sc.ListenUDP(s.callback)
 	if err != nil {
@@ -141,9 +142,7 @@ func (s *UDP) callback(listener *net.UDPConn, packet []byte, localAddr, srcAddr 
 		}
 	}()
 	switch *s.cfg.ParentType {
-	case "tcp":
-		fallthrough
-	case "tls":
+	case "tcp", "tls":
 		s.OutToTCP(packet, localAddr, srcAddr)
 	case "udp":
 		s.OutToUDP(packet, localAddr, srcAddr)
@@ -175,7 +174,7 @@ func (s *UDP) OutToUDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -217,7 +216,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			s.log.Printf("udp conn %s <--> %s connected", srcAddr.String(), localAddr.String())
@@ -239,7 +238,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 						}
 					}()
 					(*(s.sc).UDPListener).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -276,7 +275,7 @@ func (s *UDP) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -353,7 +352,7 @@ func (s *UDP) UDPRevecive(key string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", key)
@@ -386,7 +385,7 @@ func (s *UDP) UDPRevecive(key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)

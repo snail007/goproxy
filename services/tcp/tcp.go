@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
 	"github.com/snail007/goproxy/utils/mapx"
@@ -43,7 +44,7 @@ type UDPConnItem struct {
 }
 type TCP struct {
 	cfg       TCPArgs
-	sc        *utils.ServerChannel
+	sc        *server.ServerChannel
 	isStop    bool
 	userConns mapx.ConcurrentMap
 	log       *logger.Logger
@@ -131,12 +132,12 @@ func (s *TCP) Start(args interface{}, log *logger.Logger) (err error) {
 	s.log.Printf("use %s parent %v", *s.cfg.ParentType, *s.cfg.Parent)
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p, s.log)
+	sc := server.NewServerChannel(host, p, s.log)
 
 	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.callback)
 	} else if *s.cfg.LocalType == "tls" {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
+		err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 	}
@@ -160,11 +161,7 @@ func (s *TCP) callback(inConn net.Conn) {
 	var err error
 	lbAddr := ""
 	switch *s.cfg.ParentType {
-	case "kcp":
-		fallthrough
-	case "tcp":
-		fallthrough
-	case "tls":
+	case "kcp", "tcp", "tls":
 		err = s.OutToTCP(&inConn)
 	case "udp":
 		s.OutToUDP(&inConn)
@@ -208,8 +205,8 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 	srcAddr := ""
 	defer func() {
 		if item != nil {
-			(*(*item).conn).Close()
-			(*item).udpConn.Close()
+			(*item.conn).Close()
+			item.udpConn.Close()
 			s.udpConns.Remove(srcAddr)
 			(*inConn).Close()
 		}
@@ -252,15 +249,15 @@ func (s *TCP) OutToUDP(inConn *net.Conn) (err error) {
 		} else {
 			item = v.(*UDPConnItem)
 		}
-		(*item).touchtime = time.Now().Unix()
-		go (*item).udpConn.Write(body)
+		item.touchtime = time.Now().Unix()
+		go item.udpConn.Write(body)
 	}
 }
 func (s *TCP) UDPRevecive(key string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", key)
@@ -290,7 +287,7 @@ func (s *TCP) UDPRevecive(key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				(*cui.conn).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -309,7 +306,7 @@ func (s *TCP) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {

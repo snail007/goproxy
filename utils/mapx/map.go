@@ -152,14 +152,7 @@ type Tuple struct {
 func (m ConcurrentMap) Iter() <-chan Tuple {
 	chans := snapshot(m)
 	ch := make(chan Tuple)
-	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
-			}
-		}()
-		fanIn(chans, ch)
-	}()
+	go fanIn(chans, ch)
 	return ch
 }
 
@@ -171,14 +164,7 @@ func (m ConcurrentMap) IterBuffered() <-chan Tuple {
 		total += cap(c)
 	}
 	ch := make(chan Tuple, total)
-	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
-			}
-		}()
-		fanIn(chans, ch)
-	}()
+	go fanIn(chans, ch)
 	return ch
 }
 
@@ -193,11 +179,6 @@ func snapshot(m ConcurrentMap) (chans []chan Tuple) {
 	// Foreach shard.
 	for index, shard := range m {
 		go func(index int, shard *ConcurrentMapShared) {
-			defer func() {
-				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
-				}
-			}()
 			// Foreach key, value pair.
 			shard.RLock()
 			chans[index] = make(chan Tuple, len(shard.items))
@@ -215,22 +196,25 @@ func snapshot(m ConcurrentMap) (chans []chan Tuple) {
 
 // fanIn reads elements from channels `chans` into channel `out`
 func fanIn(chans []chan Tuple, out chan Tuple) {
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
+		}
+	}()
 	wg := sync.WaitGroup{}
 	wg.Add(len(chans))
 	for _, ch := range chans {
-		go func() {
+		go func(ch chan Tuple) {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
-			func(ch chan Tuple) {
-				for t := range ch {
-					out <- t
-				}
-				wg.Done()
-			}(ch)
-		}()
+			for t := range ch {
+				out <- t
+			}
+			wg.Done()
+		}(ch)
 	}
 	wg.Wait()
 	close(out)
@@ -274,29 +258,27 @@ func (m ConcurrentMap) Keys() []string {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		// Foreach shard.
 		wg := sync.WaitGroup{}
 		wg.Add(SHARD_COUNT)
 		for _, shard := range m {
-			go func() {
+			go func(shard *ConcurrentMapShared) {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
-				func(shard *ConcurrentMapShared) {
-					// Foreach key, value pair.
-					shard.RLock()
-					for key := range shard.items {
-						ch <- key
-					}
-					shard.RUnlock()
-					wg.Done()
-				}(shard)
-			}()
+				// Foreach key, value pair.
+				shard.RLock()
+				for key := range shard.items {
+					ch <- key
+				}
+				shard.RUnlock()
+				wg.Done()
+			}(shard)
 		}
 		wg.Wait()
 		close(ch)

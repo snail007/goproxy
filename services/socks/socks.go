@@ -12,8 +12,9 @@ import (
 	"strings"
 	"time"
 
+	server "github.com/snail007/goproxy/core/cs/server"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
 	"github.com/snail007/goproxy/utils/datasize"
@@ -80,8 +81,8 @@ type Socks struct {
 	basicAuth             utils.BasicAuth
 	sshClient             *ssh.Client
 	lockChn               chan bool
-	udpSC                 utils.ServerChannel
-	sc                    *utils.ServerChannel
+	udpSC                 server.ServerChannel
+	sc                    *server.ServerChannel
 	domainResolver        dnsx.DomainResolver
 	isStop                bool
 	userConns             mapx.ConcurrentMap
@@ -191,7 +192,7 @@ func (s *Socks) InitService() (err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
 				}
 			}()
 			//循环检查ssh网络连通性
@@ -243,7 +244,7 @@ func (s *Socks) StopService() {
 		s.udpLocalKey = nil
 		s.udpParentKey = nil
 		s.udpRelatedPacketConns = nil
-		s.udpSC = utils.ServerChannel{}
+		s.udpSC = server.ServerChannel{}
 		s.userConns = nil
 		s = nil
 	}()
@@ -283,11 +284,11 @@ func (s *Socks) Start(args interface{}, log *logger.Logger) (err error) {
 	if len(*s.cfg.Parent) > 0 {
 		s.log.Printf("use %s parent %v [ %s ]", *s.cfg.ParentType, *s.cfg.Parent, strings.ToUpper(*s.cfg.LoadBalanceMethod))
 	}
-	sc := utils.NewServerChannelHost(*s.cfg.Local, s.log)
+	sc := server.NewServerChannelHost(*s.cfg.Local, s.log)
 	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.socksConnCallback)
 	} else if *s.cfg.LocalType == "tls" {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.socksConnCallback)
+		err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.socksConnCallback)
 	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.socksConnCallback, s.log)
 	}
@@ -462,11 +463,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, serverConn *socks.ServerConn) {
 }
 func (s *Socks) GetParentConn(parentAddress string, serverConn *socks.ServerConn) (outConn net.Conn, err interface{}) {
 	switch *s.cfg.ParentType {
-	case "kcp":
-		fallthrough
-	case "tls":
-		fallthrough
-	case "tcp":
+	case "kcp", "tls", "tcp":
 		if *s.cfg.ParentType == "tls" {
 			var _conn tls.Conn
 			_conn, err = utils.TlsConnectHost(parentAddress, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)

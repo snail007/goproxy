@@ -36,6 +36,7 @@ type Group struct {
 	lock     *sync.Mutex
 	last     *Backend
 	debug    bool
+	bks      []*Backend
 }
 
 func NewGroup(selectType int, configs BackendsConfig, dr *dnsx.DomainResolver, log *log.Logger, debug bool) Group {
@@ -68,9 +69,13 @@ func NewGroup(selectType int, configs BackendsConfig, dr *dnsx.DomainResolver, l
 		dr:       dr,
 		lock:     &sync.Mutex{},
 		debug:    debug,
+		bks:      bks,
 	}
 }
 func (g *Group) Select(srcAddr string, onlyHa bool) (addr string) {
+	if len(g.bks) == 1 {
+		return g.bks[0].Address
+	}
 	if onlyHa {
 		g.lock.Lock()
 		defer g.lock.Unlock()
@@ -121,6 +126,7 @@ func (g *Group) Reset(addrs []string) {
 		configs = append(configs, &c)
 	}
 	(*g.selector).Reset(configs, g.dr, g.log)
+	g.bks = (*g.selector).Backends()
 }
 func (g *Group) Backends() []*Backend {
 	return (*g.selector).Backends()

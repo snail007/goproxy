@@ -56,7 +56,7 @@ func newSendBuffer(m *Mux) *sendBuffer {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		b.writerLoop()

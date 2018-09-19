@@ -10,7 +10,9 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 **[全平台图形界面版本](/gui/README.md)**  
 
-**[全平台SDK](/sdk/README.md)**   
+**[全平台SDK](/sdk/README.md)**
+
+**[GoProxy特殊授权](/AUTHORIZATION.md)**
 
 ### How to contribute to the code (Pull Request)?  
 

@@ -13,8 +13,8 @@ import (
 
 	"github.com/miekg/dns"
 	gocache "github.com/pmylund/go-cache"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	services "github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 )
 
 type DNSArgs struct {
@@ -60,7 +60,7 @@ func (s *DNS) InitService() (err error) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		for {
@@ -142,7 +142,7 @@ func (s *DNS) Start(args interface{}, log *logger.Logger) (err error) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		log.Printf("dns server on udp %s", *s.cfg.Local)

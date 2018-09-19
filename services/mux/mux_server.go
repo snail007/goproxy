@@ -12,8 +12,11 @@ import (
 	"strings"
 	"time"
 
+	clienttransport "github.com/snail007/goproxy/core/cs/client"
+	server "github.com/snail007/goproxy/core/cs/server"
+	"github.com/snail007/goproxy/core/lib/kcpcfg"
+	encryptconn "github.com/snail007/goproxy/core/lib/transport/encrypt"
 	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/services/kcpcfg"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/jumper"
 	"github.com/snail007/goproxy/utils/mapx"
@@ -47,10 +50,14 @@ type MuxServerArgs struct {
 	SessionCount *int
 	KCP          kcpcfg.KCPConfigArgs
 	Jumper       *string
+	TCPSMethod   *string
+	TCPSPassword *string
+	TOUMethod    *string
+	TOUPassword  *string
 }
 type MuxServer struct {
 	cfg      MuxServerArgs
-	sc       utils.ServerChannel
+	sc       server.ServerChannel
 	sessions mapx.ConcurrentMap
 	lockChn  chan bool
 	isStop   bool
@@ -133,6 +140,10 @@ func (s *MuxServerManager) Start(args interface{}, log *logger.Logger) (err erro
 			KCP:          s.cfg.KCP,
 			ParentType:   s.cfg.ParentType,
 			Jumper:       s.cfg.Jumper,
+			TCPSMethod:   s.cfg.TCPSMethod,
+			TCPSPassword: s.cfg.TCPSPassword,
+			TOUMethod:    s.cfg.TOUMethod,
+			TOUPassword:  s.cfg.TOUPassword,
 		}, log)
 
 		if err != nil {
@@ -202,7 +213,7 @@ func (s *MuxServer) StopService() {
 		s.jumper = nil
 		s.lockChn = nil
 		s.log = nil
-		s.sc = utils.ServerChannel{}
+		s.sc = server.ServerChannel{}
 		s.sessions = nil
 		s.udpConns = nil
 		s = nil
@@ -254,7 +265,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	s.sc = utils.NewServerChannel(host, p, s.log)
+	s.sc = server.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.UDPSend(packet, localAddr, srcAddr)
@@ -293,7 +304,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					io.Copy(inConn, snappy.NewReader(outConn))
@@ -302,7 +313,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed:%s", string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 						}
 					}()
 					io.Copy(snappy.NewWriter(outConn), inConn)
@@ -397,7 +408,7 @@ func (s *MuxServer) GetConn(index string) (conn net.Conn, err error) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed:%s", string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 				}
 			}()
 			for {
@@ -443,6 +454,18 @@ func (s *MuxServer) getParentConn() (conn net.Conn, err error) {
 
 	} else if *s.cfg.ParentType == "kcp" {
 		conn, err = utils.ConnectKCPHost(*s.cfg.Parent, s.cfg.KCP)
+	} else if *s.cfg.ParentType == "tcps" {
+		if s.jumper == nil {
+			conn, err = clienttransport.TCPSConnectHost(*s.cfg.Parent, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword, false, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(*s.cfg.Parent, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn, err = encryptconn.NewConn(conn, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword)
+			}
+		}
+
+	} else if *s.cfg.ParentType == "tou" {
+		conn, err = clienttransport.TOUConnectHost(*s.cfg.Parent, *s.cfg.TCPSMethod, *s.cfg.TCPSPassword, false, *s.cfg.Timeout)
 	} else {
 		if s.jumper == nil {
 			conn, err = utils.ConnectHost(*s.cfg.Parent, *s.cfg.Timeout)
@@ -457,7 +480,7 @@ func (s *MuxServer) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -536,7 +559,7 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed:%s", string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", ID)
@@ -569,7 +592,7 @@ func (s *MuxServer) UDPRevecive(key, ID string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed:%s", string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)
