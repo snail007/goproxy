@@ -13,6 +13,7 @@ import (
 	"time"
 
 	clienttransport "github.com/snail007/goproxy/core/cs/client"
+	server "github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	encryptconn "github.com/snail007/goproxy/core/lib/transport/encrypt"
 	"github.com/snail007/goproxy/services"
@@ -56,7 +57,7 @@ type MuxServerArgs struct {
 }
 type MuxServer struct {
 	cfg      MuxServerArgs
-	sc       utils.ServerChannel
+	sc       server.ServerChannel
 	sessions mapx.ConcurrentMap
 	lockChn  chan bool
 	isStop   bool
@@ -212,7 +213,7 @@ func (s *MuxServer) StopService() {
 		s.jumper = nil
 		s.lockChn = nil
 		s.log = nil
-		s.sc = utils.ServerChannel{}
+		s.sc = server.ServerChannel{}
 		s.sessions = nil
 		s.udpConns = nil
 		s = nil
@@ -264,7 +265,7 @@ func (s *MuxServer) Start(args interface{}, log *logger.Logger) (err error) {
 	}
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	s.sc = utils.NewServerChannel(host, p, s.log)
+	s.sc = server.NewServerChannel(host, p, s.log)
 	if *s.cfg.IsUDP {
 		err = s.sc.ListenUDP(func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr) {
 			s.UDPSend(packet, localAddr, srcAddr)

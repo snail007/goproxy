@@ -120,7 +120,7 @@ func (s *ServerChannel) listenTLS(ip string, port int, certBytes, keyBytes, caCe
 		config.ClientCAs = clientCertPool
 		config.ClientAuth = tls.RequireAndVerifyClientCert
 	}
-	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
+	_ln, err := tls.Listen("tcp", net.JoinHostPort(ip, fmt.Sprintf("%d", port)), config)
 	if err == nil {
 		ln = &_ln
 	}
@@ -141,7 +141,7 @@ func (s *ServerChannel) ListenTCPS(method, password string, compress bool, fn fu
 }
 func (s *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 	var l net.Listener
-	l, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.ip, s.port))
+	l, err = net.Listen("tcp", net.JoinHostPort(s.ip, fmt.Sprintf("%d", s.port)))
 	if err == nil {
 		s.Listener = &l
 		go func() {
@@ -172,7 +172,7 @@ func (s *ServerChannel) ListenTCP(fn func(conn net.Conn)) (err error) {
 	}
 	return
 }
-func (s *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *net.UDPAddr)) (err error) {
+func (s *ServerChannel) ListenUDP(fn func(listener *net.UDPConn, packet []byte, localAddr, srcAddr *net.UDPAddr)) (err error) {
 	addr := &net.UDPAddr{IP: net.ParseIP(s.ip), Port: s.port}
 	l, err := net.ListenUDP("udp", addr)
 	if err == nil {
@@ -194,7 +194,7 @@ func (s *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *net
 								s.log.Printf("udp data handler crashed , err : %s , \ntrace:%s", e, string(debug.Stack()))
 							}
 						}()
-						fn(packet, addr, srcAddr)
+						fn(s.UDPListener, packet, addr, srcAddr)
 					}()
 				} else {
 					s.errAcceptHandler(err)
@@ -207,7 +207,7 @@ func (s *ServerChannel) ListenUDP(fn func(packet []byte, localAddr, srcAddr *net
 	return
 }
 func (s *ServerChannel) ListenKCP(config kcpcfg.KCPConfigArgs, fn func(conn net.Conn), log *logger.Logger) (err error) {
-	lis, err := kcp.ListenWithOptions(fmt.Sprintf("%s:%d", s.ip, s.port), config.Block, *config.DataShard, *config.ParityShard)
+	lis, err := kcp.ListenWithOptions(net.JoinHostPort(s.ip, fmt.Sprintf("%d", s.port)), config.Block, *config.DataShard, *config.ParityShard)
 	if err == nil {
 		if err = lis.SetDSCP(*config.DSCP); err != nil {
 			log.Println("SetDSCP:", err)

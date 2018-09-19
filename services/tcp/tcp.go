@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
@@ -43,7 +44,7 @@ type UDPConnItem struct {
 }
 type TCP struct {
 	cfg       TCPArgs
-	sc        *utils.ServerChannel
+	sc        *server.ServerChannel
 	isStop    bool
 	userConns mapx.ConcurrentMap
 	log       *logger.Logger
@@ -131,12 +132,12 @@ func (s *TCP) Start(args interface{}, log *logger.Logger) (err error) {
 	s.log.Printf("use %s parent %v", *s.cfg.ParentType, *s.cfg.Parent)
 	host, port, _ := net.SplitHostPort(*s.cfg.Local)
 	p, _ := strconv.Atoi(port)
-	sc := utils.NewServerChannel(host, p, s.log)
+	sc := server.NewServerChannel(host, p, s.log)
 
 	if *s.cfg.LocalType == "tcp" {
 		err = sc.ListenTCP(s.callback)
 	} else if *s.cfg.LocalType == "tls" {
-		err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
+		err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, nil, s.callback)
 	} else if *s.cfg.LocalType == "kcp" {
 		err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 	}

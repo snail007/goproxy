@@ -525,7 +525,7 @@ HTTP(S)代理支持上级负载均衡,多个上级重复-P参数即可.
 
 #### **1.14.3 使用目标地址选择上级**  
 
-`proxy http --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
+`proxy http --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
 
 ### **1.15 限速**  
 
@@ -991,7 +991,7 @@ SOCKS代理支持上级负载均衡,多个上级重复-P参数即可.
 
 #### **5.12.3 使用目标地址选择上级**  
 
-`proxy socks --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
+`proxy socks --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
 #### **5.13 限速**  
 

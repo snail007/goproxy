@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	server "github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils/datasize"
@@ -83,7 +84,7 @@ type HTTP struct {
 	lockChn        chan bool
 	domainResolver dnsx.DomainResolver
 	isStop         bool
-	serverChannels []*utils.ServerChannel
+	serverChannels []*server.ServerChannel
 	userConns      mapx.ConcurrentMap
 	log            *logger.Logger
 	lb             *lb.Group
@@ -96,7 +97,7 @@ func NewHTTP() services.Service {
 		basicAuth:      utils.BasicAuth{},
 		lockChn:        make(chan bool, 1),
 		isStop:         false,
-		serverChannels: []*utils.ServerChannel{},
+		serverChannels: []*server.ServerChannel{},
 		userConns:      mapx.NewConcurrentMap(),
 	}
 }
@@ -273,11 +274,11 @@ func (s *HTTP) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p, s.log)
+			sc := server.NewServerChannel(host, p, s.log)
 			if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == "tls" {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
+				err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == "kcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}

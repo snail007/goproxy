@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/snail007/goproxy/core/cs/server"
 	"github.com/snail007/goproxy/core/lib/kcpcfg"
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
@@ -78,7 +79,7 @@ type SPS struct {
 	cfg                   SPSArgs
 	domainResolver        dnsx.DomainResolver
 	basicAuth             utils.BasicAuth
-	serverChannels        []*utils.ServerChannel
+	serverChannels        []*server.ServerChannel
 	userConns             mapx.ConcurrentMap
 	log                   *logger.Logger
 	localCipher           *ss.Cipher
@@ -93,7 +94,7 @@ func NewSPS() services.Service {
 	return &SPS{
 		cfg:                   SPSArgs{},
 		basicAuth:             utils.BasicAuth{},
-		serverChannels:        []*utils.ServerChannel{},
+		serverChannels:        []*server.ServerChannel{},
 		userConns:             mapx.NewConcurrentMap(),
 		udpRelatedPacketConns: mapx.NewConcurrentMap(),
 	}
@@ -230,12 +231,12 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 		if addr != "" {
 			host, port, _ := net.SplitHostPort(addr)
 			p, _ := strconv.Atoi(port)
-			sc := utils.NewServerChannel(host, p, s.log)
+			sc := server.NewServerChannel(host, p, s.log)
 			s.serverChannels = append(s.serverChannels, &sc)
 			if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == "tls" {
-				err = sc.ListenTls(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
+				err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
 			} else if *s.cfg.LocalType == "tcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
