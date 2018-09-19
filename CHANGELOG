@@ -9,7 +9,7 @@ v6.1
   TOU提供了TCP over UDP,多种自定义加密UDP方式传输TCP数据.
 5.优化了DST,防止意外crash.
 6.修复了mapx的Keys()方法的bug导致内网穿透bridge不稳定的问题.
-
+7.修复了部分服务不能绑定IPv6地址的bug.
 
 v6.0 企业版开源啦
 本次更新主要是把企业版开源,把企业版代码合并到现在的开源goproxy当中,继续遵循GPLv3,免费开源,
