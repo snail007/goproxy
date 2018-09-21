@@ -235,7 +235,7 @@ func (ba *BasicAuth) AddFromFile(file string) (n int, err error) {
 	}
 	userpassArr := strings.Split(strings.Replace(string(_content), "\r", "", -1), "\n")
 	for _, userpass := range userpassArr {
-		if strings.HasPrefix("#", userpass) {
+		if strings.HasPrefix(userpass, "#") {
 			continue
 		}
 		u := strings.Split(strings.Trim(userpass, " "), ":")
