@@ -35,13 +35,13 @@ func NewConn(c net.Conn, method, password string) (conn net.Conn, err error) {
 }
 func (s *Conn) Read(b []byte) (n int, err error) {
 	if s.r == nil {
-		return 0, fmt.Errorf("use of closed connection")
+		return 0, fmt.Errorf("use of closed network connection")
 	}
 	return s.r.Read(b)
 }
 func (s *Conn) Write(b []byte) (n int, err error) {
 	if s.w == nil {
-		return 0, fmt.Errorf("use of closed connection")
+		return 0, fmt.Errorf("use of closed network connection")
 	}
 	return s.w.Write(b)
 }
