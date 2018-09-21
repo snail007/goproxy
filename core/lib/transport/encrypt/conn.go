@@ -2,6 +2,7 @@ package encrypt
 
 import (
 	"crypto/cipher"
+	"fmt"
 	"io"
 	"net"
 
@@ -33,15 +34,23 @@ func NewConn(c net.Conn, method, password string) (conn net.Conn, err error) {
 	return
 }
 func (s *Conn) Read(b []byte) (n int, err error) {
+	if s.r == nil {
+		return 0, fmt.Errorf("use of closed connection")
+	}
 	return s.r.Read(b)
 }
 func (s *Conn) Write(b []byte) (n int, err error) {
+	if s.w == nil {
+		return 0, fmt.Errorf("use of closed connection")
+	}
 	return s.w.Write(b)
 }
 func (s *Conn) Close() (err error) {
-	err = s.Conn.Close()
-	s.Cipher = nil
-	s.r = nil
-	s.w = nil
-	return err
+	if s.Cipher != nil {
+		err = s.Conn.Close()
+		s.Cipher = nil
+		s.r = nil
+		s.w = nil
+	}
+	return
 }
