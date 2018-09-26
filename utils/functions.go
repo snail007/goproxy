@@ -371,9 +371,18 @@ func RandInt(strLen int) int64 {
 	return i
 }
 func ReadBytes(r io.Reader) (data []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("read bytes fail ,err : %s", e)
+		}
+	}()
 	var len uint64
 	err = binary.Read(r, binary.LittleEndian, &len)
 	if err != nil {
+		return
+	}
+	if len == 0 || len > ^uint64(0) {
+		err = fmt.Errorf("data len out of range, %d", len)
 		return
 	}
 	var n int

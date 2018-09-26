@@ -183,7 +183,7 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 下载地址:https://github.com/snail007/goproxy/releases  
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v6.1/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v6.2/proxy-linux-amd64.tar.gz  
 ```  
 #### **2.下载自动安装脚本**  
 ```shell  
@@ -380,7 +380,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 
 ##### ***1.7.1 ssh用户名和密码的方式***   
 本地HTTP(S)代理28080端口,执行:  
-`./proxy http -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
+`./proxy http -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
 ##### ***1.7.2 ssh用户名和密钥的方式***   
 本地HTTP(S)代理28080端口,执行:  
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
@@ -879,7 +879,7 @@ SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.
 
 ##### ***5.6.1 ssh用户名和密码的方式***  
 本地SOCKS5代理28080端口,执行:  
-`./proxy socks -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
+`./proxy socks -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
 ##### ***5.6.2 ssh用户名和密钥的方式***  
 本地SOCKS5代理28080端口,执行:  
 `./proxy socks -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
