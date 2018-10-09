@@ -155,7 +155,7 @@ func (m ConcurrentMap) Iter() <-chan Tuple {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		fanIn(chans, ch)
@@ -174,7 +174,7 @@ func (m ConcurrentMap) IterBuffered() <-chan Tuple {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		fanIn(chans, ch)
@@ -195,7 +195,7 @@ func snapshot(m ConcurrentMap) (chans []chan Tuple) {
 		go func(index int, shard *ConcurrentMapShared) {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 				}
 			}()
 			// Foreach key, value pair.
@@ -221,7 +221,7 @@ func fanIn(chans []chan Tuple, out chan Tuple) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 				}
 			}()
 			func(ch chan Tuple) {
@@ -274,7 +274,7 @@ func (m ConcurrentMap) Keys() []string {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		// Foreach shard.
@@ -284,7 +284,7 @@ func (m ConcurrentMap) Keys() []string {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 					}
 				}()
 				func(shard *ConcurrentMapShared) {

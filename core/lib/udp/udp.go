@@ -62,7 +62,7 @@ func (s *IOBinder) AliveWithServeConn(srcAddr string, inTCPConn *net.Conn) *IOBi
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		buf := make([]byte, 1)
@@ -75,7 +75,7 @@ func (s *IOBinder) AliveWithServeConn(srcAddr string, inTCPConn *net.Conn) *IOBi
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		for {
@@ -96,7 +96,7 @@ func (s *IOBinder) AliveWithClientConn(srcAddr string, outTCPConn *net.Conn) *IO
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 			}
 		}()
 		buf := make([]byte, 1)
@@ -156,7 +156,7 @@ func (s *IOBinder) Run() (err error) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:",e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:\n%s",e, string(debug.Stack()))
 					}
 				}()
 				defer func() {
