@@ -366,7 +366,7 @@ func (s *UDP) UDPRevecive(key string) {
 		}()
 		v, ok := s.udpConns.Get(key)
 		if !ok {
-			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key)
+			s.log.Printf("[warn] udp conn not exists for %s", key)
 			return
 		}
 		uc = v.(*UDPConnItem)
