@@ -82,6 +82,3 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $OPTS  -ldflags "$X" -o proxy.e
 
 rm -rf proxy proxy.exe proxy-noconsole.exe .cert
 
-#todo
-#1.install_auto.sh   goproxy/releases/download/vxxx
-#2.README        goproxy/releases/download/vxxx

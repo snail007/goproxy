@@ -58,6 +58,17 @@ func (s *DNS) InitService() (err error) {
 	s.cache = gocache.New(time.Second*time.Duration(*s.cfg.DNSTTL), time.Second*60)
 	s.cache.LoadFile(*s.cfg.CacheFile)
 	go func() {
+		for {
+			select {
+			case <-s.exitSig:
+				return
+			case <-time.After(time.Second * 300):
+				s.cache.DeleteExpired()
+				s.cache.SaveFile(*s.cfg.CacheFile)
+			}
+		}
+	}()
+	go func() {
 		defer func() {
 			if e := recover(); e != nil {
 				fmt.Printf("crashed, err: %s\nstack:%s", e, string(debug.Stack()))
