@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/Yawning/chacha20"
+  packages = ["."]
+  revision = "e3b1f968fc6397b51d963fee8ec8711a47bc0ce8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/alecthomas/template"
   packages = [
     ".",
@@ -27,6 +33,12 @@
   name = "github.com/hashicorp/yamux"
   packages = ["."]
   revision = "3520598351bb3500a49ae9563f5539666ae0a27c"
+
+[[projects]]
+  name = "github.com/juju/ratelimit"
+  packages = ["."]
+  revision = "59fac5042749a5afb9af70e813da1dd5474f0167"
+  version = "1.0.1"
 
 [[projects]]
   name = "github.com/klauspost/cpuid"
@@ -121,6 +133,12 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "dad3d9fb7b6e83d0f9ac8f54670f6334c3a287b4"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/time"
   packages = ["rate"]
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
@@ -134,6 +152,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eab0ef29432489696d8bfd524757dcb03a83f91c329f2d05c36da70df850360d"
+  inputs-digest = "15e4e23c0695db1458b3dc5514c8765be091a420c923b24bb9e186f43400995f"
   solver-name = "gps-cdcl"
   solver-version = 1

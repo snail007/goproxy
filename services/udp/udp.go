@@ -174,7 +174,7 @@ func (s *UDP) OutToUDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -216,7 +216,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 		go func() {
 			defer func() {
 				if e := recover(); e != nil {
-					fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+					fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 				}
 			}()
 			s.log.Printf("udp conn %s <--> %s connected", srcAddr.String(), localAddr.String())
@@ -238,7 +238,7 @@ func (s *UDP) OutToUDP(packet []byte, localAddr, srcAddr *net.UDPAddr) {
 				go func() {
 					defer func() {
 						if e := recover(); e != nil {
-							fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+							fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 						}
 					}()
 					(*(s.sc).UDPListener).SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
@@ -275,7 +275,7 @@ func (s *UDP) UDPGCDeamon() {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 			}
 		}()
 		if s.isStop {
@@ -352,7 +352,7 @@ func (s *UDP) UDPRevecive(key string) {
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+				fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 			}
 		}()
 		s.log.Printf("udp conn %s connected", key)
@@ -366,7 +366,7 @@ func (s *UDP) UDPRevecive(key string) {
 		}()
 		v, ok := s.udpConns.Get(key)
 		if !ok {
-			s.log.Printf("[warn] udp conn not exists for %s, connid : %s", key)
+			s.log.Printf("[warn] udp conn not exists for %s", key)
 			return
 		}
 		uc = v.(*UDPConnItem)
@@ -385,7 +385,7 @@ func (s *UDP) UDPRevecive(key string) {
 			go func() {
 				defer func() {
 					if e := recover(); e != nil {
-						fmt.Printf("crashed, err: %s\nstack:", e, string(debug.Stack()))
+						fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 					}
 				}()
 				s.sc.UDPListener.WriteToUDP(body, uc.srcAddr)

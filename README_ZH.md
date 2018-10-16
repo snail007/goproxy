@@ -171,21 +171,27 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 提示:所有操作需要root权限.  
 #### 自动安装
 #### **0.如果你的VPS是linux64位的系统,那么只需要执行下面一句,就可以完成自动安装和配置.**  
+
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
+
 安装完成,配置目录是/etc/proxy,更详细的使用方法请参考上面的手册目录,进一步了解你想要使用的功能.  
 如果安装失败或者你的vps不是linux64位系统,请按照下面的半自动步骤安装:  
   
 #### 手动安装  
 
 #### **1.下载proxy**  
-下载地址:https://github.com/snail007/goproxy/releases  
+下载地址:https://github.com/snail007/goproxy/releases/latest   
+下面以v6.2为例,如果有最新版,请使用最新版链接.   
+
 ```shell  
 cd /root/proxy/  
 wget https://github.com/snail007/goproxy/releases/download/v6.2/proxy-linux-amd64.tar.gz  
 ```  
+
 #### **2.下载自动安装脚本**  
+
 ```shell  
 cd /root/proxy/  
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
