@@ -23,6 +23,7 @@ import (
 	"github.com/snail007/goproxy/utils/datasize"
 	"github.com/snail007/goproxy/utils/dnsx"
 	"github.com/snail007/goproxy/utils/iolimiter"
+	"github.com/snail007/goproxy/utils/jumper"
 	"github.com/snail007/goproxy/utils/lb"
 	"github.com/snail007/goproxy/utils/mapx"
 	"github.com/snail007/goproxy/utils/sni"
@@ -74,6 +75,7 @@ type SPSArgs struct {
 	RateLimit      *string
 	RateLimitBytes float64
 	Debug          *bool
+	Jumper         *string
 }
 type SPS struct {
 	cfg                   SPSArgs
@@ -88,6 +90,7 @@ type SPS struct {
 	lb                    *lb.Group
 	udpLocalKey           []byte
 	udpParentKey          []byte
+	jumper                *jumper.Jumper
 }
 
 func NewSPS() services.Service {
@@ -141,6 +144,19 @@ func (s *SPS) CheckArgs() (err error) {
 	}
 	s.udpLocalKey = s.LocalUDPKey()
 	s.udpParentKey = s.ParentUDPKey()
+	if *s.cfg.Jumper != "" {
+		if *s.cfg.ParentType != "tls" && *s.cfg.ParentType != "tcp" {
+			err = fmt.Errorf("jumper only worked of -T is tls or tcp")
+			return
+		}
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
+	}
 	return
 }
 func (s *SPS) InitService() (err error) {
@@ -184,6 +200,7 @@ func (s *SPS) StopService() {
 		s.domainResolver = dnsx.DomainResolver{}
 		s.lb = nil
 		s.localCipher = nil
+		s.jumper = nil
 		s.log = nil
 		s.parentCipher = nil
 		s.serverChannels = nil
@@ -635,15 +652,32 @@ func (s *SPS) Resolve(address string) string {
 }
 func (s *SPS) GetParentConn(address string) (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
-		if err == nil {
-			conn = net.Conn(&_conn)
+		if s.jumper == nil {
+			var _conn tls.Conn
+			_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			if err == nil {
+				conn = net.Conn(&_conn)
+			}
+		} else {
+			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			if err != nil {
+				return nil, err
+			}
+			var _c net.Conn
+			_c, err = s.jumper.Dial(address, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn = net.Conn(tls.Client(_c, conf))
+			}
 		}
+
 	} else if *s.cfg.ParentType == "kcp" {
 		conn, err = utils.ConnectKCPHost(address, s.cfg.KCP)
 	} else {
-		conn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+		if s.jumper == nil {
+			conn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(address, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		}
 	}
 	if err == nil {
 		if *s.cfg.ParentCompress {

@@ -166,6 +166,19 @@ func (s *HTTP) CheckArgs() (err error) {
 		}
 		s.cfg.RateLimitBytes = float64(size)
 	}
+	if *s.cfg.Jumper != "" {
+		if *s.cfg.ParentType != "tls" && *s.cfg.ParentType != "tcp" {
+			err = fmt.Errorf("jumper only worked of -T is tls or tcp")
+			return
+		}
+		var j jumper.Jumper
+		j, err = jumper.New(*s.cfg.Jumper, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		if err != nil {
+			err = fmt.Errorf("parse jumper fail, err %s", err)
+			return
+		}
+		s.jumper = &j
+	}
 	return
 }
 func (s *HTTP) InitService() (err error) {
@@ -234,6 +247,7 @@ func (s *HTTP) StopService() {
 		s.lb = nil
 		s.lockChn = nil
 		s.log = nil
+		s.jumper = nil
 		s.serverChannels = nil
 		s.sshClient = nil
 		s.userConns = nil

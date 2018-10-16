@@ -116,7 +116,7 @@ func initConfig() (err error) {
 	httpArgs.ParentKey = http.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
 	httpArgs.LocalCompress = http.Flag("local-compress", "auto compress/decompress data on local connection").Short('m').Default("false").Bool()
 	httpArgs.ParentCompress = http.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
-	httpArgs.LoadBalanceMethod = http.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("hash").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
+	httpArgs.LoadBalanceMethod = http.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("roundrobin").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
 	httpArgs.LoadBalanceTimeout = http.Flag("lb-timeout", "tcp milliseconds timeout of connecting to parent").Default("500").Int()
 	httpArgs.LoadBalanceRetryTime = http.Flag("lb-retrytime", "sleep time milliseconds after checking").Default("1000").Int()
 	httpArgs.LoadBalanceHashTarget = http.Flag("lb-hashtarget", "use target address to choose parent for LB").Default("false").Bool()
@@ -252,7 +252,7 @@ func initConfig() (err error) {
 	socksArgs.ParentKey = socks.Flag("parent-key", "the password for auto encrypt/decrypt parent connection data").Short('Z').Default("").String()
 	socksArgs.LocalCompress = socks.Flag("local-compress", "auto compress/decompress data on local connection").Short('m').Default("false").Bool()
 	socksArgs.ParentCompress = socks.Flag("parent-compress", "auto compress/decompress data on parent connection").Short('M').Default("false").Bool()
-	socksArgs.LoadBalanceMethod = socks.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("hash").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
+	socksArgs.LoadBalanceMethod = socks.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("roundrobin").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
 	socksArgs.LoadBalanceTimeout = socks.Flag("lb-timeout", "tcp milliseconds timeout of connecting to parent").Default("500").Int()
 	socksArgs.LoadBalanceRetryTime = socks.Flag("lb-retrytime", "sleep time milliseconds after checking").Default("1000").Int()
 	socksArgs.LoadBalanceHashTarget = socks.Flag("lb-hashtarget", "use target address to choose parent for LB").Default("false").Bool()
@@ -293,12 +293,13 @@ func initConfig() (err error) {
 	spsArgs.DisableHTTP = sps.Flag("disable-http", "disable http(s) proxy").Default("false").Bool()
 	spsArgs.DisableSocks5 = sps.Flag("disable-socks", "disable socks proxy").Default("false").Bool()
 	spsArgs.DisableSS = sps.Flag("disable-ss", "disable ss proxy").Default("false").Bool()
-	spsArgs.LoadBalanceMethod = sps.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("hash").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
+	spsArgs.LoadBalanceMethod = sps.Flag("lb-method", "load balance method when use multiple parent,can be <roundrobin|leastconn|leasttime|hash|weight>").Default("roundrobin").Enum("roundrobin", "weight", "leastconn", "leasttime", "hash")
 	spsArgs.LoadBalanceTimeout = sps.Flag("lb-timeout", "tcp milliseconds timeout of connecting to parent").Default("500").Int()
 	spsArgs.LoadBalanceRetryTime = sps.Flag("lb-retrytime", "sleep time milliseconds after checking").Default("1000").Int()
 	spsArgs.LoadBalanceHashTarget = sps.Flag("lb-hashtarget", "use target address to choose parent for LB").Default("false").Bool()
 	spsArgs.LoadBalanceOnlyHA = sps.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	spsArgs.RateLimit = sps.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
+	spsArgs.Jumper = sps.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 	spsArgs.Debug = isDebug
 
 	//########dns#########
