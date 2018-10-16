@@ -141,6 +141,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	httpArgs.LoadBalanceOnlyHA = http.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	httpArgs.RateLimit = http.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
 	httpArgs.BindListen = http.Flag("bind-listen", "using listener binding IP when connect to target").Short('B').Default("false").Bool()
+	httpArgs.Jumper = http.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
 	httpArgs.Debug = debug
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")

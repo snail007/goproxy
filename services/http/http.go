@@ -18,6 +18,7 @@ import (
 	"github.com/snail007/goproxy/utils/datasize"
 	"github.com/snail007/goproxy/utils/dnsx"
 	"github.com/snail007/goproxy/utils/iolimiter"
+	"github.com/snail007/goproxy/utils/jumper"
 	"github.com/snail007/goproxy/utils/lb"
 	"github.com/snail007/goproxy/utils/mapx"
 
@@ -75,6 +76,7 @@ type HTTPArgs struct {
 	RateLimitBytes float64
 	BindListen     *bool
 	Debug          *bool
+	Jumper         *string
 }
 type HTTP struct {
 	cfg            HTTPArgs
@@ -88,6 +90,7 @@ type HTTP struct {
 	userConns      mapx.ConcurrentMap
 	log            *logger.Logger
 	lb             *lb.Group
+	jumper         *jumper.Jumper
 }
 
 func NewHTTP() services.Service {
@@ -602,11 +605,24 @@ func (s *HTTP) Resolve(address string) string {
 }
 func (s *HTTP) GetParentConn(address string) (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
-		var _conn tls.Conn
-		_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
-		if err == nil {
-			conn = net.Conn(&_conn)
+		if s.jumper == nil {
+			var _conn tls.Conn
+			_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			if err == nil {
+				conn = net.Conn(&_conn)
+			}
+		} else {
+			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			if err != nil {
+				return nil, err
+			}
+			var _c net.Conn
+			_c, err = s.jumper.Dial(address, time.Millisecond*time.Duration(*s.cfg.Timeout))
+			if err == nil {
+				conn = net.Conn(tls.Client(_c, conf))
+			}
 		}
+
 	} else if *s.cfg.ParentType == "kcp" {
 		conn, err = utils.ConnectKCPHost(address, s.cfg.KCP)
 	} else if *s.cfg.ParentType == "ssh" {
@@ -616,7 +632,11 @@ func (s *HTTP) GetParentConn(address string) (conn net.Conn, err error) {
 			err = fmt.Errorf("%s", e)
 		}
 	} else {
-		conn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+		if s.jumper == nil {
+			conn, err = utils.ConnectHost(address, *s.cfg.Timeout)
+		} else {
+			conn, err = s.jumper.Dial(address, time.Millisecond*time.Duration(*s.cfg.Timeout))
+		}
 	}
 	return
 }
