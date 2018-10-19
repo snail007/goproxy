@@ -34,11 +34,12 @@ import (
 )
 
 var (
-	app                                                                                                       *kingpin.Application
-	service                                                                                                   *services.ServiceItem
-	cmd                                                                                                       *exec.Cmd
-	cpuProfilingFile, memProfilingFile, blockProfilingFile, goroutineProfilingFile, threadcreateProfilingFile *os.File
-	isDebug                                                                                                   bool
+	app     *kingpin.Application
+	service *services.ServiceItem
+	cmd     *exec.Cmd
+	cpuProfilingFile, memProfilingFile, blockProfilingFile,
+	goroutineProfilingFile, threadcreateProfilingFile *os.File
+	isDebug *bool
 )
 
 func initConfig() (err error) {
@@ -60,7 +61,7 @@ func initConfig() (err error) {
 	//build srvice args
 	app = kingpin.New("proxy", "happy with proxy")
 	app.Author("snail").Version(APP_VERSION)
-	isDebug := app.Flag("debug", "debug log output").Default("false").Bool()
+	isDebug = app.Flag("debug", "debug log output").Default("false").Bool()
 	daemon := app.Flag("daemon", "run proxy in background").Default("false").Bool()
 	forever := app.Flag("forever", "run proxy in forever,fail and retry").Default("false").Bool()
 	logfile := app.Flag("log", "log file path").Default("").String()
@@ -299,7 +300,7 @@ func initConfig() (err error) {
 	spsArgs.LoadBalanceHashTarget = sps.Flag("lb-hashtarget", "use target address to choose parent for LB").Default("false").Bool()
 	spsArgs.LoadBalanceOnlyHA = sps.Flag("lb-onlyha", "use only `high availability mode` to choose parent for LB").Default("false").Bool()
 	spsArgs.RateLimit = sps.Flag("rate-limit", "rate limit (bytes/second) of each connection, such as: 100K 1.5M . 0 means no limitation").Short('l').Default("0").String()
-	spsArgs.Jumper = sps.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Short('J').Default("").String()
+	spsArgs.Jumper = sps.Flag("jumper", "https or socks5 proxies used when connecting to parent, only worked of -T is tls or tcp, format is https://username:password@host:port https://host:port or socks5://username:password@host:port socks5://host:port").Default("").String()
 	spsArgs.Debug = isDebug
 
 	//########dns#########
