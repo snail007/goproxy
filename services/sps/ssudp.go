@@ -27,9 +27,9 @@ func (s *SPS) RunSSUDP(addr string) (err error) {
 				s.log.Printf("udp local->out io copy crashed:\n%s\n%s", e, string(debug.Stack()))
 			}
 		}()
+		buf := utils.LeakyBuffer.Get()
+		defer utils.LeakyBuffer.Put(buf)
 		for {
-			buf := utils.LeakyBuffer.Get()
-			defer utils.LeakyBuffer.Put(buf)
 			n, srcAddr, err := listener.ReadFrom(buf)
 			if err != nil {
 				s.log.Printf("read from client error %s", err)
