@@ -126,9 +126,9 @@ func (s *SPS) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	//s.log.Printf("parent udp address %s", client.UDPAddr)
 	destAddr, _ = net.ResolveUDPAddr("udp", client.UDPAddr)
 	//relay
+	buf := utils.LeakyBuffer.Get()
+	defer utils.LeakyBuffer.Put(buf)
 	for {
-		buf := utils.LeakyBuffer.Get()
-		defer utils.LeakyBuffer.Put(buf)
 		n, srcAddr, err := udpListener.ReadFromUDP(buf)
 		if err != nil {
 			s.log.Printf("udp listener read fail, %s", err.Error())

@@ -24,8 +24,9 @@ func (s socks5Dialer) Dial(network, addr string) (net.Conn, error) {
 }
 
 func New(proxyURL string, timeout time.Duration) (j Jumper, err error) {
-	u, err := url.Parse(proxyURL)
-	if err != nil {
+	u, e := url.Parse(proxyURL)
+	if e != nil {
+		err = e
 		return
 	}
 	j = Jumper{
@@ -34,7 +35,7 @@ func New(proxyURL string, timeout time.Duration) (j Jumper, err error) {
 	}
 	return
 }
-func (j *Jumper) Dial(address string, timeout time.Duration) (conn net.Conn, err error) {
+func (j *Jumper) Dial(address string, timeout time.Duration) (net.Conn, error) {
 	switch j.proxyURL.Scheme {
 	case "https":
 		return j.dialHTTPS(address, timeout)
@@ -70,10 +71,10 @@ func (j *Jumper) dialHTTPS(address string, timeout time.Duration) (conn net.Conn
 	}
 	reply := make([]byte, 1024)
 	conn.SetDeadline(time.Now().Add(timeout))
-	n, err := conn.Read(reply)
+	n, e := conn.Read(reply)
 	conn.SetDeadline(time.Time{})
-	if err != nil {
-		err = fmt.Errorf("error read reply from proxy: %s", err)
+	if e != nil {
+		err = fmt.Errorf("error read reply from proxy: %s", e)
 		conn.Close()
 		conn = nil
 		return
@@ -94,9 +95,9 @@ func (j *Jumper) dialSOCKS5(address string, timeout time.Duration) (conn net.Con
 	} else {
 		auth = nil
 	}
-	dialSocksProxy, err := proxy.SOCKS5("tcp", j.proxyURL.Host, auth, socks5Dialer{timeout: timeout})
-	if err != nil {
-		err = fmt.Errorf("error connecting to proxy: %s", err)
+	dialSocksProxy, e := proxy.SOCKS5("tcp", j.proxyURL.Host, auth, socks5Dialer{timeout: timeout})
+	if e != nil {
+		err = fmt.Errorf("error connecting to proxy: %s", e)
 		return
 	}
 	return dialSocksProxy.Dial("tcp", address)
