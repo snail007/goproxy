@@ -193,7 +193,7 @@ func (s *SPS) StopService() {
 		if e != nil {
 			s.log.Printf("stop sps service crashed,%s", e)
 		} else {
-			s.log.Printf("service sps stoped")
+			s.log.Printf("service sps stopped")
 		}
 		s.basicAuth = utils.BasicAuth{}
 		s.cfg = SPSArgs{}
@@ -254,7 +254,7 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 				err = sc.ListenTCP(s.callback)
 			} else if *s.cfg.LocalType == "tls" {
 				err = sc.ListenTLS(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes, s.callback)
-			} else if *s.cfg.LocalType == "tcp" {
+			} else if *s.cfg.LocalType == "kcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
 			if *s.cfg.ParentServiceType == "socks" {

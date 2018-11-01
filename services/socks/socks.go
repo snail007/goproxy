@@ -230,7 +230,7 @@ func (s *Socks) StopService() {
 		if e != nil {
 			s.log.Printf("stop socks service crashed,%s", e)
 		} else {
-			s.log.Printf("service socks stoped")
+			s.log.Printf("service socks stopped")
 		}
 		s.basicAuth = utils.BasicAuth{}
 		s.cfg = SocksArgs{}

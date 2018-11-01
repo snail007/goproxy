@@ -176,7 +176,7 @@ func (s *TunnelServer) StopService() {
 		if e != nil {
 			s.log.Printf("stop server service crashed,%s", e)
 		} else {
-			s.log.Printf("service server stoped")
+			s.log.Printf("service server stopped")
 		}
 		s.cfg = TunnelServerArgs{}
 		s.jumper = nil
