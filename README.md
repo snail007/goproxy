@@ -323,7 +323,7 @@ accessing the local 8080 port is accessing the proxy port 38080 above VPS.  
   
 HTTP second level proxy(local windows)  
 `./proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-In your windos system, the mode of the program that needs to surf the Internet by proxy is setted up as HTTP mode, the address is 127.0.0.1, the port is: 8080, the program can go through the encrypted channel through VPS to surf on the internet.  
+In your windows system, the mode of the program that needs to surf the Internet by proxy is setted up as HTTP mode, the address is 127.0.0.1, the port is: 8080, the program can go through the encrypted channel through VPS to surf on the internet.  
   
 #### **1.4.HTTP third level encrypted proxy**  
 ![1.4](/docs/images/http-tls-3.png)  
@@ -513,7 +513,7 @@ The speed limit is 100K, which can be specified through the `-l` parameter, for 
 `proxy http -t tcp -p 2.2.2.2:33080 -l 100K`
 
 ### **1.16 Designated exporting IP**  
-The `- bind-listen` parameter opens the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
+The `--bind-listen` parameter open the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
 
 ### **1.17 Certificate parameters using Base64 data**  
