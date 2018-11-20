@@ -66,6 +66,7 @@ type HTTPArgs struct {
 	ParentKey             *string
 	LocalCompress         *bool
 	ParentCompress        *bool
+	CloseIntelligent      *bool
 	LoadBalanceMethod     *string
 	LoadBalanceTimeout    *int
 	LoadBalanceRetryTime  *int
@@ -185,7 +186,8 @@ func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
 	//init lb
 	if len(*s.cfg.Parent) > 0 {
-		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+		s.log.Printf("CloseIntelligent: %v", *s.cfg.CloseIntelligent)
+		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log, *s.cfg.CloseIntelligent)
 		s.InitLB()
 	}
 	if *s.cfg.DNSAddress != "" {
