@@ -64,6 +64,7 @@ type SocksArgs struct {
 	ParentKey             *string
 	LocalCompress         *bool
 	ParentCompress        *bool
+	CloseIntelligent      *bool
 	LoadBalanceMethod     *string
 	LoadBalanceTimeout    *int
 	LoadBalanceRetryTime  *int
@@ -180,7 +181,7 @@ func (s *Socks) InitService() (err error) {
 		(*s).domainResolver = dnsx.NewDomainResolver(*s.cfg.DNSAddress, *s.cfg.DNSTTL, s.log)
 	}
 	if len(*s.cfg.Parent) > 0 {
-		s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log)
+		s.checker = utils.NewChecker(*s.cfg.Timeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log, *s.cfg.CloseIntelligent)
 		s.InitLB()
 	}
 	if *s.cfg.ParentType == "ssh" {

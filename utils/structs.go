@@ -24,13 +24,14 @@ import (
 )
 
 type Checker struct {
-	data       mapx.ConcurrentMap
-	blockedMap mapx.ConcurrentMap
-	directMap  mapx.ConcurrentMap
-	interval   int64
-	timeout    int
-	isStop     bool
-	log        *logger.Logger
+	data             mapx.ConcurrentMap
+	blockedMap       mapx.ConcurrentMap
+	directMap        mapx.ConcurrentMap
+	interval         int64
+	timeout          int
+	isStop           bool
+	closeIntelligent bool
+	log              *logger.Logger
 }
 type CheckerItem struct {
 	Domain       string
@@ -43,13 +44,14 @@ type CheckerItem struct {
 //NewChecker args:
 //timeout : tcp timeout milliseconds ,connect to host
 //interval: recheck domain interval seconds
-func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger) Checker {
+func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger, CloseIntelligent bool) Checker {
 	ch := Checker{
-		data:     mapx.NewConcurrentMap(),
-		interval: interval,
-		timeout:  timeout,
-		isStop:   false,
-		log:      log,
+		data:             mapx.NewConcurrentMap(),
+		interval:         interval,
+		timeout:          timeout,
+		isStop:           false,
+		closeIntelligent: CloseIntelligent,
+		log:              log,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -164,9 +166,11 @@ func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, succes
 		//log.Printf("%s not in map, blocked true", address)
 		return true, false, 0, 0
 	}
-	item := _item.(CheckerItem)
-
-	return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
+	if !c.closeIntelligent {
+		item := _item.(CheckerItem)
+		return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
+	}
+	return true, false, 0, 0
 }
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
