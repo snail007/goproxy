@@ -46,6 +46,7 @@ type SocksArgs struct {
 	SSHAuthMethod         ssh.AuthMethod
 	Timeout               *int
 	Always                *bool
+	ProxyInternalIp       *bool
 	Interval              *int
 	Blocked               *string
 	Direct                *string
@@ -386,7 +387,7 @@ func (s *Socks) proxyTCP(inConn *net.Conn, serverConn *socks.ServerConn) {
 			if len(*s.cfg.Parent) > 0 {
 				host, _, _ := net.SplitHostPort(serverConn.Target())
 				useProxy := false
-				if utils.IsInternalIP(host, *s.cfg.Always) {
+				if utils.IsInternalIP(host, *s.cfg.Always, *s.cfg.ProxyInternalIp) {
 					useProxy = false
 				} else {
 					var isInMap bool
@@ -652,7 +653,7 @@ func (s *Socks) GetDirectConn(address string, localAddr string) (conn net.Conn, 
 		return utils.ConnectHost(address, *s.cfg.Timeout)
 	}
 	ip, _, _ := net.SplitHostPort(localAddr)
-	if utils.IsInternalIP(ip, false) {
+	if utils.IsInternalIP(ip, false, false) {
 		return utils.ConnectHost(address, *s.cfg.Timeout)
 	}
 	local, _ := net.ResolveTCPAddr("tcp", ip+":0")

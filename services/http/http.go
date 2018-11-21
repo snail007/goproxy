@@ -38,6 +38,7 @@ type HTTPArgs struct {
 	KeyBytes              []byte
 	Local                 *string
 	Always                *bool
+	ProxyInternalIp       *bool
 	HTTPTimeout           *int
 	Interval              *int
 	Blocked               *string
@@ -341,7 +342,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	address := req.Host
 	host, _, _ := net.SplitHostPort(address)
 	useProxy := false
-	if !utils.IsInternalIP(host, *s.cfg.Always) {
+	if !utils.IsInternalIP(host, *s.cfg.Always, *s.cfg.ProxyInternalIp) {
 		useProxy = true
 		if len(*s.cfg.Parent) == 0 {
 			useProxy = false
@@ -661,7 +662,7 @@ func (s *HTTP) GetDirectConn(address string, localAddr string) (conn net.Conn, e
 		return utils.ConnectHost(address, *s.cfg.Timeout)
 	}
 	ip, _, _ := net.SplitHostPort(localAddr)
-	if utils.IsInternalIP(ip, false) {
+	if utils.IsInternalIP(ip, false, false) {
 		return utils.ConnectHost(address, *s.cfg.Timeout)
 	}
 	local, _ := net.ResolveTCPAddr("tcp", ip+":0")

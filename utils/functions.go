@@ -603,7 +603,7 @@ func HttpGet(URL string, timeout int, host ...string) (body []byte, code int, er
 	body, err = ioutil.ReadAll(resp.Body)
 	return
 }
-func IsInternalIP(domainOrIP string, always bool) bool {
+func IsInternalIP(domainOrIP string, always, proxyInternalIp bool) bool {
 	var outIPs []net.IP
 	var err error
 	var isDomain bool
@@ -627,6 +627,9 @@ func IsInternalIP(domainOrIP string, always bool) bool {
 	for _, ip := range outIPs {
 		if ip.IsLoopback() {
 			return true
+		}
+		if proxyInternalIp {
+			return false
 		}
 		if ip.To4().Mask(net.IPv4Mask(255, 0, 0, 0)).String() == "10.0.0.0" {
 			return true

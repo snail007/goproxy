@@ -125,7 +125,7 @@ func (s *Socks) proxyUDP(inConn *net.Conn, serverConn *socks.ServerConn) {
 	useProxy := true
 	if len(*s.cfg.Parent) > 0 {
 		dstHost, _, _ := net.SplitHostPort(serverConn.Target())
-		if utils.IsInternalIP(dstHost, *s.cfg.Always) {
+		if utils.IsInternalIP(dstHost, *s.cfg.Always, *s.cfg.ProxyInternalIp) {
 			useProxy = false
 		} else {
 			var isInMap bool
