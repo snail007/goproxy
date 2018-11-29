@@ -102,6 +102,19 @@ func (s *conn) Write(p []byte) (int, error) {
 	}
 	return n, err
 }
+func (s *conn) Close() error {
+	if s.Conn != nil {
+		e := s.Conn.Close()
+		s.Conn = nil
+		s.r = nil
+		s.w = nil
+		s.readLimiter = nil
+		s.writeLimiter = nil
+		s.ctx = nil
+		return e
+	}
+	return nil
+}
 
 // NewReader returns a reader that implements io.Reader with rate limiting.
 func NewReader(r io.Reader) *Reader {
