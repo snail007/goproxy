@@ -172,11 +172,13 @@ func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, succes
 	case "parent":
 		return true, true, 0, 0
 	case "intelligent":
+		fallthrough
+	default:
 		item := _item.(CheckerItem)
 		return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
 	}
-	return true, false, 0, 0
 }
+
 func (c *Checker) domainIsInMap(address string, blockedMap bool) bool {
 	u, err := url.Parse("http://" + address)
 	if err != nil {
