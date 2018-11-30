@@ -377,6 +377,11 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理.  
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
+默认情况下,如果访问的目标不在direct里面,proxy会智能判断是否使用上级访问目标.  
+现在可以使用参数--close-intelligent关闭这个特性,使不在direct里面的目标都走上级.  
+
+`./proxy http --close-intelligent -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+
 #### **1.7.HTTP(S)通过SSH中转**  
 ![1.7](/docs/images/http-ssh-1.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
