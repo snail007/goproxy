@@ -186,7 +186,6 @@ func (s *HTTP) InitService() (err error) {
 	s.InitBasicAuth()
 	//init lb
 	if len(*s.cfg.Parent) > 0 {
-		s.log.Printf("CloseIntelligent: %v", *s.cfg.CloseIntelligent)
 		s.checker = utils.NewChecker(*s.cfg.HTTPTimeout, int64(*s.cfg.Interval), *s.cfg.Blocked, *s.cfg.Direct, s.log, *s.cfg.CloseIntelligent)
 		s.InitLB()
 	}

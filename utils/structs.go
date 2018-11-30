@@ -44,13 +44,13 @@ type CheckerItem struct {
 //NewChecker args:
 //timeout : tcp timeout milliseconds ,connect to host
 //interval: recheck domain interval seconds
-func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger, CloseIntelligent bool) Checker {
+func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger, closeIntelligent bool) Checker {
 	ch := Checker{
 		data:             mapx.NewConcurrentMap(),
 		interval:         interval,
 		timeout:          timeout,
 		isStop:           false,
-		closeIntelligent: CloseIntelligent,
+		closeIntelligent: closeIntelligent,
 		log:              log,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
