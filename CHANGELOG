@@ -2,9 +2,11 @@ proxy更新日志
 
 v6.6
 1.优化了limitconn的关闭逻辑,释放更多资源.
-2.http(s)\socks代理增加了--close-intelligent,关闭智能判断,
-默认情况下,如果访问的目标不在direct里面,proxy会智能判断是否使用上级访问目标,
-现在可以使用参数--close-intelligent关闭这个特性,使不在direct里面的目标都走上级. 
+2.http(s)\socks代理增加了--intelligent,智能模式设置,可以是intelligent|direct|parent三者之一,
+默认是:intelligent.每个值的含义如下.
+--intelligent=direct,不在blocked里面的目标都直连. 
+--intelligent=parent,不在direct里面的目标都走上级. 
+--intelligent=intelligent,blocked和direct里面都没有的目标,智能判断是否使用上级访问目标. 
 
 v6.5
 1.修复了合并企业版遗留的一些bug. 

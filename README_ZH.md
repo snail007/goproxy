@@ -99,7 +99,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
     - [1.15 限速](#115-限速)
     - [1.16 指定出口IP](#116-指定出口ip)
     - [1.17 证书参数使用base64数据](#117-证书参数使用base64数据)
-    - [1.18 查看帮助](#118-查看帮助)
+    - [1.18 智能模式](#118-智能模式)
+    - [1.19 查看帮助](#119-查看帮助)
 - [2. TCP代理(端口映射)](#2tcp代理)
     - [2.1 普通一级TCP代理](#21普通一级tcp代理)
     - [2.2 普通二级TCP代理](#22普通二级tcp代理)
@@ -144,7 +145,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
     - [5.14 指定出口IP](#514-指定出口ip)
     - [5.15 级联认证](#515-级联认证)
     - [5.16 证书参数使用base64数据](#516-证书参数使用base64数据)
-    - [5.17 查看帮助](#517查看帮助)
+    - [5.17 智能模式](#517-智能模式)
+    - [5.18 查看帮助](#518-查看帮助)
 - [6. 代理协议转换](#6代理协议转换)
     - [6.1 功能介绍](#61-功能介绍)
     - [6.2 HTTP(S)转HTTP(S)+SOCKS5+SS](#62-https转httpssocks5ss)
@@ -376,11 +378,6 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 #### **1.6.HTTP代理流量强制走上级HTTP代理**  
 默认情况下,proxy会智能判断一个网站域名是否无法访问,如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理.  
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-  
-默认情况下,如果访问的目标不在direct里面,proxy会智能判断是否使用上级访问目标.  
-现在可以使用参数--close-intelligent关闭这个特性,使不在direct里面的目标都走上级.  
-
-`./proxy http --close-intelligent -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 #### **1.7.HTTP(S)通过SSH中转**  
 ![1.7](/docs/images/http-ssh-1.png)  
@@ -556,7 +553,15 @@ HTTP(S)代理支持上级负载均衡,多个上级重复-P参数即可.
 
 如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
 
-#### **1.18 查看帮助**  
+#### **1.18 智能模式**  
+智能模式设置,可以是intelligent|direct|parent三者之一.  
+默认是:intelligent.  
+每个值的含义如下:  
+`--intelligent=direct`,不在blocked里面的目标都直连.  
+`--intelligent=parent`,不在direct里面的目标都走上级.  
+`--intelligent=intelligent`,blocked和direct里面都没有的目标,智能判断是否使用上级访问目标.  
+
+#### **1.19 查看帮助**  
 `./proxy help http`  
   
 ### **2.TCP代理**  
@@ -1035,7 +1040,15 @@ SOCKS5支持级联认证,-A可以设置上级认证信息.
 如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
 
 
-#### **5.17.查看帮助**  
+#### **5.17 智能模式**  
+智能模式设置,可以是intelligent|direct|parent三者之一.  
+默认是:intelligent.  
+每个值的含义如下:  
+`--intelligent=direct`,不在blocked里面的目标都直连.  
+`--intelligent=parent`,不在direct里面的目标都走上级.  
+`--intelligent=intelligent`,blocked和direct里面都没有的目标,智能判断是否使用上级访问目标.  
+
+#### **5.18.查看帮助**  
 `./proxy help socks`  
 
 ### **6.代理协议转换** 

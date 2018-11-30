@@ -24,14 +24,14 @@ import (
 )
 
 type Checker struct {
-	data             mapx.ConcurrentMap
-	blockedMap       mapx.ConcurrentMap
-	directMap        mapx.ConcurrentMap
-	interval         int64
-	timeout          int
-	isStop           bool
-	closeIntelligent bool
-	log              *logger.Logger
+	data        mapx.ConcurrentMap
+	blockedMap  mapx.ConcurrentMap
+	directMap   mapx.ConcurrentMap
+	interval    int64
+	timeout     int
+	isStop      bool
+	intelligent string
+	log         *logger.Logger
 }
 type CheckerItem struct {
 	Domain       string
@@ -44,14 +44,14 @@ type CheckerItem struct {
 //NewChecker args:
 //timeout : tcp timeout milliseconds ,connect to host
 //interval: recheck domain interval seconds
-func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger, closeIntelligent bool) Checker {
+func NewChecker(timeout int, interval int64, blockedFile, directFile string, log *logger.Logger, intelligent string) Checker {
 	ch := Checker{
-		data:             mapx.NewConcurrentMap(),
-		interval:         interval,
-		timeout:          timeout,
-		isStop:           false,
-		closeIntelligent: closeIntelligent,
-		log:              log,
+		data:        mapx.NewConcurrentMap(),
+		interval:    interval,
+		timeout:     timeout,
+		isStop:      false,
+		intelligent: intelligent,
+		log:         log,
 	}
 	ch.blockedMap = ch.loadMap(blockedFile)
 	ch.directMap = ch.loadMap(directFile)
@@ -166,7 +166,12 @@ func (c *Checker) IsBlocked(domain string) (blocked, isInMap bool, failN, succes
 		//log.Printf("%s not in map, blocked true", address)
 		return true, false, 0, 0
 	}
-	if !c.closeIntelligent {
+	switch c.intelligent {
+	case "direct":
+		return false, true, 0, 0
+	case "parent":
+		return true, true, 0, 0
+	case "intelligent":
 		item := _item.(CheckerItem)
 		return (item.FailCount >= item.SuccessCount) && (time.Now().Unix()-item.Lasttime < 1800), true, item.FailCount, item.SuccessCount
 	}
