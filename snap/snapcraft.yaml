@@ -1,0 +1,33 @@
+name: goproxy
+base: core18
+summary: High performance HTTP(S), websocket, TCP, UDP,Secure DNS, Socks5 proxy server
+description: |
+  Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5,
+  ss proxy server implemented by golang. It supports parent proxy,nat
+  forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission,
+  protocol conversion. you can expose a local server behind a NAT or firewall to
+  the internet, secure DNS proxy.
+
+adopt-info: goproxy
+confinement: strict
+
+apps:
+  goproxy:
+    command: bin/goproxy
+
+parts:
+  goproxy:
+    plugin: go
+    source: ./
+    go-importpath: github.com/snail007/goproxy
+    go-channel: 1.11/stable
+    parse-info: []
+    override-pull: |
+        snapcraftctl pull
+        version="$(git describe --tags --always --dirty)"
+        [ -n "$(echo $version | grep '-')" ] && grade=devel || grade=stable
+        snapcraftctl set-version "$version"
+        snapcraftctl set-grade "$grade"
+    build-packages:
+      - git
+      - build-essential
