@@ -98,7 +98,8 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [1.15 speed limit](#115-speed-limit)
     - [1.16 Designated exporting IP](#116-designated-export-ip)
     - [1.17 Certificate parameters using Base64 data](#117-certificate-parameters-using-Base64-data)
-    - [1.18 View help](#118view-help)
+    - [1.18 Intelligent mode](#118-intelligent-mode)
+    - [1.19 View help](#119view-help)
 - [2.TCP proxy](#2tcp-proxy)
     - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
     - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
@@ -143,7 +144,8 @@ This page is the v6.0 manual, and the other version of the manual can be checked
     - [5.14 Designated exporting IP](#514-designated-exporting-ip)
     - [5.15 Cascade authentication](#515-cascade-authentication)
     - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-base64-data)
-    - [5.17 View help](#517view-help)
+    - [5.17 Intelligent mode](#517-intelligent-mode)
+    - [5.18 View help](#518view-help)
 - [6.Proxy protocol conversion](#6proxy-protocol-conversion)
     - [6.1 Functional introduction](#61functional-introduction)
     - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
@@ -518,7 +520,15 @@ The `- bind-listen` parameter opens the client's ability to access the target si
 By default, the -C and -K parameters are the paths of CRT certificates and key files,
 If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.
 
-#### **1.18.view help**  
+#### **1.18 Intelligent mode**  
+Intelligent mode setting which can be one of intelligent|direct|parent.  
+default:intelligent.  
+The meaning of each value is as follows:  
+`--intelligent=direct`, Targets that are not in blocked directly connected.  
+`--intelligent=parent`, Targets that are not in direct connect to parent proxy.  
+`--intelligent=intelligent`, Targets that are not in direct and blocked Neither can intelligently judge on whether to connetc parent proxy.  
+
+#### **1.19.view help**  
 `./proxy help http`  
   
 ### **2.TCP proxy**  
@@ -957,9 +967,17 @@ localhost:
 
 #### **5.16 Certificate parameters using Base64 data**  
 By default, the -C and -K parameters are the paths of CRT certificates and key files,    
-If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding..   
+If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.   
 
-#### **5.17.view help**  
+#### **5.17 Intelligent mode**  
+Intelligent mode setting which can be one of intelligent|direct|parent.  
+default:intelligent.  
+The meaning of each value is as follows:  
+`--intelligent=direct`, Targets that are not in blocked directly connected.  
+`--intelligent=parent`, Targets that are not in direct connect to parent proxy.  
+`--intelligent=intelligent`, Targets that are not in direct and blocked Neither can intelligently judge on whether to connetc parent proxy. 
+
+#### **5.18.view help**  
 `./proxy help socks`  
 
 ### **6.Proxy protocol conversion** 
