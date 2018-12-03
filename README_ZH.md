@@ -366,11 +366,12 @@ weight    根据每个上级的权重和连接数情况,选择出一个上级
 比如:  
 `./proxy http -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
 用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
-带上user,pass,ip,target四个参数:  
-http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
+带上user,pass,ip,local_ip,target五个参数:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&local_ip={LOCAL_IP}&target={TARGET}  
 user:用户名  
 pass:密码  
 ip:用户的IP,比如:192.168.1.200  
+local_ip:用户访问的服务器的IP,比如:3.3.3.3  
 target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.com:80  
 
 如果没有-a或-F或--auth-url参数,就是关闭Basic认证.   
@@ -915,11 +916,12 @@ SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.
 比如:  
 `./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
 用户连接的时候,proxy会GET方式请求这url("http://test.com/auth.php"),  
-带上user,pass,ip,三个参数:  
-http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}  
+带上user,pass,ip,local_ip四个参数:  
+http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&local_ip={LOCAL_IP}  
 user:用户名  
 pass:密码  
 ip:用户的IP,比如:192.168.1.200  
+local_ip:用户访问的服务器的IP,比如:3.3.3.3   
 
 如果没有-a或-F或--auth-url参数,就是关闭认证.    
 

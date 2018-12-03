@@ -268,18 +268,18 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
-func (ba *BasicAuth) CheckUserPass(user, pass, ip, target string) (ok bool) {
+func (ba *BasicAuth) CheckUserPass(user, pass, userIP, localIP, target string) (ok bool) {
 
-	return ba.Check(user+":"+pass, ip, target)
+	return ba.Check(user+":"+pass, userIP, localIP, target)
 }
-func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
+func (ba *BasicAuth) Check(userpass string, userIP, localIP, target string) (ok bool) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) == 2 {
 		if p, _ok := ba.data.Get(u[0]); _ok {
 			return p.(string) == u[1]
 		}
 		if ba.authURL != "" {
-			err := ba.checkFromURL(userpass, ip, target)
+			err := ba.checkFromURL(userpass, userIP, localIP, target)
 			if err == nil {
 				return true
 			}
@@ -289,7 +289,7 @@ func (ba *BasicAuth) Check(userpass string, ip, target string) (ok bool) {
 	}
 	return
 }
-func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
+func (ba *BasicAuth) checkFromURL(userpass, userIP, localIP, target string) (err error) {
 	u := strings.Split(strings.Trim(userpass, " "), ":")
 	if len(u) != 2 {
 		return
@@ -301,7 +301,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 	} else {
 		URL += "?"
 	}
-	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&target=%s", u[0], u[1], ip, url.QueryEscape(target))
+	URL += fmt.Sprintf("user=%s&pass=%s&ip=%s&local_ip=%s&target=%s", u[0], u[1], userIP, localIP, url.QueryEscape(target))
 	getURL := URL
 	var domain string
 	if ba.dns != nil {
@@ -318,7 +318,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 		if err == nil && code == ba.authOkCode {
 			break
 		} else if err != nil {
-			err = fmt.Errorf("auth fail from url %s,resonse err:%s , %s", URL, err, ip)
+			err = fmt.Errorf("auth fail from url %s,resonse err:%s , %s -> %s", URL, err, userIP, localIP)
 		} else {
 			if len(body) > 0 {
 				err = fmt.Errorf(string(body[0:100]))
@@ -329,7 +329,7 @@ func (ba *BasicAuth) checkFromURL(userpass, ip, target string) (err error) {
 			if len(b) > 50 {
 				b = b[:50]
 			}
-			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s , %s", URL, code, ba.authOkCode, ip, b)
+			err = fmt.Errorf("auth fail from url %s,resonse code: %d, except: %d , %s -> %s, %s", URL, code, ba.authOkCode, userIP, localIP, b)
 		}
 		if err != nil && tryCount < ba.authRetry {
 			ba.log.Print(err)
@@ -483,7 +483,8 @@ func (req *HTTPRequest) GetAuthDataStr() (basicInfo string, err error) {
 	return
 }
 func (req *HTTPRequest) BasicAuth() (err error) {
-	addr := strings.Split((*req.conn).RemoteAddr().String(), ":")
+	userIP := strings.Split((*req.conn).RemoteAddr().String(), ":")
+	localIP := strings.Split((*req.conn).LocalAddr().String(), ":")
 	URL := ""
 	if req.IsHTTPS() {
 		URL = "https://" + req.Host
@@ -494,7 +495,7 @@ func (req *HTTPRequest) BasicAuth() (err error) {
 	if err != nil {
 		return
 	}
-	authOk := (*req.basicAuth).Check(string(user), addr[0], URL)
+	authOk := (*req.basicAuth).Check(string(user), userIP[0], localIP[0], URL)
 	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
 		fmt.Fprintf((*req.conn), "HTTP/1.1 %s Proxy Authentication Required\r\n\r\nProxy Authentication Required", "407")

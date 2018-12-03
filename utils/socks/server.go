@@ -106,6 +106,7 @@ func (s *ServerConn) Port() string {
 }
 func (s *ServerConn) Handshake() (err error) {
 	remoteAddr := (*s.conn).RemoteAddr()
+	localAddr := (*s.conn).LocalAddr()
 	//协商开始
 	//method select request
 	var methodReq MethodsRequest
@@ -172,8 +173,9 @@ func (s *ServerConn) Handshake() (err error) {
 		s.password = string(r[2+r[1]+1:])
 		//err = fmt.Errorf("user:%s,pass:%s", user, pass)
 		//auth
-		_addr := strings.Split(remoteAddr.String(), ":")
-		if s.auth == nil || s.auth.CheckUserPass(s.user, s.password, _addr[0], "") {
+		_userAddr := strings.Split(remoteAddr.String(), ":")
+		_localAddr := strings.Split(localAddr.String(), ":")
+		if s.auth == nil || s.auth.CheckUserPass(s.user, s.password, _userAddr[0], _localAddr[0], "") {
 			(*s.conn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(s.timeout)))
 			_, err = (*s.conn).Write([]byte{0x01, 0x00})
 			(*s.conn).SetDeadline(time.Time{})
