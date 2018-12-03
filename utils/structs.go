@@ -268,6 +268,11 @@ func (ba *BasicAuth) Add(userpassArr []string) (n int) {
 	}
 	return
 }
+func (ba *BasicAuth) Delete(userArr []string) {
+	for _, u := range userArr {
+		ba.data.Remove(u)
+	}
+}
 func (ba *BasicAuth) CheckUserPass(user, pass, userIP, localIP, target string) (ok bool) {
 
 	return ba.Check(user+":"+pass, userIP, localIP, target)
