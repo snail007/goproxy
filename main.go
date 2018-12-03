@@ -39,7 +39,7 @@ func Clean(s *services.Service) {
 				fmt.Printf("crashed, err: %s\nstack:\n%s", e, string(debug.Stack()))
 			}
 		}()
-		for _ = range signalChan {
+		for range signalChan {
 			log.Println("Received an interrupt, stopping services...")
 			if s != nil && *s != nil {
 				(*s).Clean()
@@ -55,4 +55,5 @@ func Clean(s *services.Service) {
 		}
 	}()
 	<-cleanupDone
+	os.Exit(0)
 }
