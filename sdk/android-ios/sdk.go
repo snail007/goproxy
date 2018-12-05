@@ -483,11 +483,11 @@ func Version() string {
 	return SDK_VERSION
 }
 func StartProfiling(storePath string) {
-	if isProfiling {
+	if !isProfiling {
+		isProfiling = true
 		if storePath == "" {
 			storePath = "."
 		}
-		isProfiling = true
 		cpuProfilingFile, _ = os.Create(filepath.Join(storePath, "cpu.prof"))
 		memProfilingFile, _ = os.Create(filepath.Join(storePath, "memory.prof"))
 		blockProfilingFile, _ = os.Create(filepath.Join(storePath, "block.prof"))
