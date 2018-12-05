@@ -482,14 +482,19 @@ func Stop(serviceID string) {
 func Version() string {
 	return SDK_VERSION
 }
-func StartProfiling() {
-	isProfiling = true
-	cpuProfilingFile, _ = os.Create("cpu.prof")
-	memProfilingFile, _ = os.Create("memory.prof")
-	blockProfilingFile, _ = os.Create("block.prof")
-	goroutineProfilingFile, _ = os.Create("goroutine.prof")
-	threadcreateProfilingFile, _ = os.Create("threadcreate.prof")
-	pprof.StartCPUProfile(cpuProfilingFile)
+func StartProfiling(storePath string) {
+	if isProfiling {
+		if storePath == "" {
+			storePath = "."
+		}
+		isProfiling = true
+		cpuProfilingFile, _ = os.Create(filepath.Join(storePath, "cpu.prof"))
+		memProfilingFile, _ = os.Create(filepath.Join(storePath, "memory.prof"))
+		blockProfilingFile, _ = os.Create(filepath.Join(storePath, "block.prof"))
+		goroutineProfilingFile, _ = os.Create(filepath.Join(storePath, "goroutine.prof"))
+		threadcreateProfilingFile, _ = os.Create(filepath.Join(storePath, "threadcreate.prof"))
+		pprof.StartCPUProfile(cpuProfilingFile)
+	}
 }
 func StopProfiling() {
 	if isProfiling {
