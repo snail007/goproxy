@@ -39,6 +39,9 @@ func GetService(name string) *ServiceItem {
 func Stop(name string) {
 	if s, ok := servicesMap.Load(name); ok && s.(*ServiceItem).S != nil {
 		s.(*ServiceItem).S.Clean()
+		*s.(*ServiceItem) = ServiceItem{}
+		s = nil
+		servicesMap.Store(name, nil)
 		servicesMap.Delete(name)
 	}
 }

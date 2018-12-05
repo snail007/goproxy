@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/snail007/goproxy/core/lib/kcpcfg"
@@ -31,6 +32,9 @@ var SDK_VERSION = "No Version Provided"
 
 var (
 	app *kingpin.Application
+	cpuProfilingFile, memProfilingFile, blockProfilingFile,
+	goroutineProfilingFile, threadcreateProfilingFile *os.File
+	isProfiling bool
 )
 
 type LogCallback interface {
@@ -147,6 +151,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	//########tcp#########
 	tcp := app.Command("tcp", "proxy on tcp mode")
 	tcpArgs.Parent = tcp.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
+	kcpArgs.NoComp = app.Flag("kcp-nocomp", "disable compression").Default("false").Bool()
 	tcpArgs.CertFile = tcp.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
 	tcpArgs.KeyFile = tcp.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
 	tcpArgs.Timeout = tcp.Flag("timeout", "tcp timeout milliseconds when connect to real server or parent proxy").Short('e').Default("2000").Int()
@@ -476,4 +481,28 @@ func Stop(serviceID string) {
 
 func Version() string {
 	return SDK_VERSION
+}
+func StartProfiling() {
+	isProfiling = true
+	cpuProfilingFile, _ = os.Create("cpu.prof")
+	memProfilingFile, _ = os.Create("memory.prof")
+	blockProfilingFile, _ = os.Create("block.prof")
+	goroutineProfilingFile, _ = os.Create("goroutine.prof")
+	threadcreateProfilingFile, _ = os.Create("threadcreate.prof")
+	pprof.StartCPUProfile(cpuProfilingFile)
+}
+func StopProfiling() {
+	if isProfiling {
+		isProfiling = false
+		goroutine := pprof.Lookup("goroutine")
+		goroutine.WriteTo(goroutineProfilingFile, 1)
+		heap := pprof.Lookup("heap")
+		heap.WriteTo(memProfilingFile, 1)
+		block := pprof.Lookup("block")
+		block.WriteTo(blockProfilingFile, 1)
+		threadcreate := pprof.Lookup("threadcreate")
+		threadcreate.WriteTo(threadcreateProfilingFile, 1)
+		pprof.StopCPUProfile()
+	}
+
 }
