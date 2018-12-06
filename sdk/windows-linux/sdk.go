@@ -21,5 +21,15 @@ func Version() (ver *C.char) {
 	return C.CString(sdk.Version())
 }
 
+//export StartProfiling
+func StartProfiling(storePath *C.char) {
+	sdk.StartProfiling(C.GoString(storePath))
+}
+
+//export StopProfiling
+func StopProfiling() {
+	sdk.StopProfiling()
+}
+
 func main() {
 }
