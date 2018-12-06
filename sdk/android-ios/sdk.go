@@ -498,6 +498,7 @@ func StartProfiling(storePath string) {
 func StopProfiling() {
 	if isProfiling {
 		isProfiling = false
+		pprof.StopCPUProfile()
 		goroutine := pprof.Lookup("goroutine")
 		goroutine.WriteTo(goroutineProfilingFile, 1)
 		heap := pprof.Lookup("heap")
@@ -506,7 +507,6 @@ func StopProfiling() {
 		block.WriteTo(blockProfilingFile, 1)
 		threadcreate := pprof.Lookup("threadcreate")
 		threadcreate.WriteTo(threadcreateProfilingFile, 1)
-		pprof.StopCPUProfile()
 	}
 
 }
