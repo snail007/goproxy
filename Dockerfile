@@ -39,7 +39,7 @@ RUN set -eux; \
 		x86) export GO386='387' ;; \
 	esac; \
 	\
-	wget -O go.tgz "https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz"; \
+	wget -O go.tgz "https://dl.google.com/go/go$GOLANG_VERSION.src.tar.gz"; \
 	echo '567b1cc66c9704d1c019c50bef946272e911ec6baf244310f87f4e678be155f2 *go.tgz' | sha256sum -c -; \
 	tar -C /usr/local -xzf go.tgz; \
 	rm go.tgz; \
@@ -76,7 +76,7 @@ RUN apk update; apk upgrade; \
     CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o proxy; \
     chmod 0777 proxy
     
-FROM 1.10.3-stretch 
+FROM golang:1.10.3-stretch 
 RUN mkdir /proxy && chmod 0777 /proxy
-COPY --from=builder builder /go/src/github.com/snail007/goproxy/proxy /proxy/
+COPY --from=builder /go/src/github.com/snail007/goproxy/proxy /proxy/
 CMD cd /proxy  && /proxy ${OPTS}
