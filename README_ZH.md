@@ -1,7 +1,7 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
 Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
 
-[点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群:189618940  
+[点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群: 7930152191 (2群), 189618940 (1群满)  
 
 ---  
   
@@ -1368,7 +1368,7 @@ utils是工具包,service是具体的每个服务类.
 ### License  
 Proxy is licensed under GPLv3 license.  
 ### Contact  
-QQ交流群:189618940  
+官方QQ交流群: 7930152191 (2群), 189618940 (1群满)  
   
   
 ### Donation  
