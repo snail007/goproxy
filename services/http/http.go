@@ -210,7 +210,7 @@ func (s *HTTP) InitService() (err error) {
 					return
 				}
 				conn, err := utils.ConnectHost(s.Resolve(s.lb.Select("", *s.cfg.LoadBalanceOnlyHA)), *s.cfg.Timeout*2)
-				if err == nil {
+				if err == nil && conn != nil {
 					conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(*s.cfg.Timeout)))
 					_, err = conn.Write([]byte{0})
 					conn.SetDeadline(time.Time{})
@@ -386,12 +386,17 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 		}
 		if useProxy {
 			// s.log.Printf("%v", s.outPool)
-			selectAddr := (*inConn).RemoteAddr().String()
-			if utils.LBMethod(*s.cfg.LoadBalanceMethod) == lb.SELECT_HASH && *s.cfg.LoadBalanceHashTarget {
-				selectAddr = address
+			if *s.cfg.ParentType == "ssh" {
+				outConn, err = s.getSSHConn(address)
+			} else {
+				selectAddr := (*inConn).RemoteAddr().String()
+				if utils.LBMethod(*s.cfg.LoadBalanceMethod) == lb.SELECT_HASH && *s.cfg.LoadBalanceHashTarget {
+					selectAddr = address
+				}
+				lbAddr = s.lb.Select(selectAddr, *s.cfg.LoadBalanceOnlyHA)
+				outConn, err = s.GetParentConn(lbAddr)
 			}
-			lbAddr = s.lb.Select(selectAddr, *s.cfg.LoadBalanceOnlyHA)
-			outConn, err = s.GetParentConn(lbAddr)
+
 		} else {
 			outConn, err = s.GetDirectConn(s.Resolve(address), inLocalAddr)
 		}
@@ -515,6 +520,9 @@ func (s *HTTP) ConnectSSH() (err error) {
 		s.sshClient.Close()
 	}
 	s.sshClient, err = ssh.Dial("tcp", s.Resolve(s.lb.Select("", *s.cfg.LoadBalanceOnlyHA)), &config)
+	if err != nil {
+		s.log.Printf("connect to ssh %s fail", s.sshClient.RemoteAddr())
+	}
 	<-s.lockChn
 	return
 }
