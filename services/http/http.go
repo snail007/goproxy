@@ -521,7 +521,7 @@ func (s *HTTP) ConnectSSH() (err error) {
 	}
 	s.sshClient, err = ssh.Dial("tcp", s.Resolve(s.lb.Select("", *s.cfg.LoadBalanceOnlyHA)), &config)
 	if err != nil {
-		s.log.Printf("connect to ssh %s fail", s.sshClient.RemoteAddr())
+		s.log.Printf("connect to ssh %s fail", s.cfg.Parent)
 	}
 	<-s.lockChn
 	return
