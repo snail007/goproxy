@@ -8,11 +8,11 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
   
 **[中文手册](/README_ZH.md)**  
 
-**[全平台图形界面版本](/gui/README.md)**  
+**[Full-platform graphical interface version](/gui/README.md)**  
 
-**[全平台SDK](/sdk/README.md)**
+**[Full platform SDK](/sdk/README.md)**
 
-**[GoProxy特殊授权](/AUTHORIZATION.md)**
+**[GoProxy special authorization](/AUTHORIZATION.md)**
 
 ### How to contribute to the code (Pull Request)?  
 
@@ -1252,12 +1252,12 @@ local execution：
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
 Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 
-### TODO  
+### TODO
 - HTTP, socks proxy which has multi parents proxy load balancing?
 - HTTP (s) proxy support PAC?
-- Welcome joining group feedback...   
+- Welcome joining group feedback...
 
-### How to use the source code?  
+### How to use the source code?
 
 Recommend go1.10.1.   
 `go get github.com/snail007/goproxy`   
@@ -1265,20 +1265,19 @@ use command cd to enter your go SRC directory
 then cd to enter `github.com/snail007/goproxy`.    
 Direct compilation:`go build -o proxy`        
 execution: `go run *.go`       
-`utils` is a toolkit, and `service` is a specific service class. 
+`utils` is a toolkit, and `service` is a specific service class.
 
 ### License  
-Proxy is licensed under GPLv3 license.  
+Proxy is licensed under GPLv3 license.
+
 ### Contact  
-proxy QQ group:189618940  
+proxy QQ group:189618940
   
 ### Donation  
-if proxy help you a lot,you can support us by:  
-### AliPay   
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
-  
-### Wechat Pay  
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
+if proxy help you a lot,you can support us by:
 
+### AliPay
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>
   
-  
+### Wechat Pay
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>

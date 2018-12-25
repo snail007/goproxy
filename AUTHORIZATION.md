@@ -1,13 +1,13 @@
-# GoProxy特殊授权
+# GoProxy special authorization
 
-1.goproxy采用GPLv3源代码开放协议,未经许可,基于本项目开发的软件,衍生软件,相关软件,必须严格遵守GPLv3,否则一经发现,
-将严厉追责.
+1. gproxy uses GPLv3 source code open agreement, without permission, based on the project development software, derivative software, related software, must strictly abide by GPLv3, otherwise once found,
+Will be harshly punished.
 
-2.如果公司或个人使用本项目代码开发相关软件,衍生软件,又不想遵守GPLv3协议,需要取得作者的"GoProxy特殊授权"书面授权.
+2. If the company or individual uses the project code to develop related software, derivative software, and does not want to comply with the GPLv3 agreement, need to obtain the author's "GoProxy special authorization" written authorization.
 
-3.如果本页面查询不到"GoProxy特殊授权"书面授权信息,则"GoProxy特殊授权"书面授权无效.
+3. If "GoPro special authorization"is not available on this page,the" GoPro special authorization"is invalid.
 
-4.下面列出了有效的授权编号和有效期.
+4. A valid authorization number and expiration date are listed below.
 
-授权编号 | 授权有效期
+Authorization number | Authorization validity period
 :--- | :---

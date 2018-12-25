@@ -1,13 +1,13 @@
 # Proxy-GUI
-基于proxy的各平台SDK,作者和众多热心人士开发了各平台的GUI版本的proxy,下面分平台介绍.  
+Based on the proxy platform SDK, the author and many enthusiasts have developed the GUI version of the proxy for each platform.
 
 ## Windows
 
-- 官方java版本,项目主页:[goproxy-jui](https://github.com/snail007/goproxy-jui)
+- Official java version, Project Homepage:[goproxy-jui](https://github.com/snail007/goproxy-jui)
 
 ## Linux
 
-- 官方java版本,项目主页:[goproxy-jui](https://github.com/snail007/goproxy-jui)
+- Official java version, Project Homepage:[goproxy-jui](https://github.com/snail007/goproxy-jui)
 
 ## MacOS
 
@@ -15,13 +15,13 @@
 
 ## Android
 
-- proxy-go,一个非官方实现版本,界面比较简陋,但是够用.下载地址:[proxy-go](https://github.com/snail007/goproxy-gui-stuff/releases/tag/proxy-go-release)
+- proxy-go,An unofficial implementation version, the interface is relatively simple, but enough.Download address:[proxy-go](https://github.com/snail007/goproxy-gui-stuff/releases/tag/proxy-go-release)
 
 
 ## IOS
 
 - Coming Soon ...
 
-## 跨平台
+## Cross-platform
 
-- proxy-web,一个跨平台的web UI版本,项目主页:[proxy-web](https://github.com/yincongcyincong/proxy-web)
+- proxy-web,A cross-platform web UI version,project home page:[proxy-web](https://github.com/yincongcyincong/proxy-web)
