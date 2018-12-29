@@ -417,7 +417,7 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 	muxClientArgs.KCP = kcpArgs
 	dnsArgs.KCP = kcpArgs
 
-	log := logger.New(os.Stderr, "", logger.Ldate|logger.Ltime)
+	log := logger.New(os.Stdout, "", logger.Ldate|logger.Ltime)
 	flags := logger.Ldate
 	if *debug {
 		flags |= logger.Lshortfile | logger.Lmicroseconds
