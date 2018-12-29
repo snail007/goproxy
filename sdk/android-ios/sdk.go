@@ -37,7 +37,6 @@ var (
 	goroutineProfilingFile, threadcreateProfilingFile *os.File
 	isProfiling   bool
 	profilingLock = &sync.Mutex{}
-	startStopLock = &sync.Mutex{}
 )
 
 type LogCallback interface {
@@ -478,8 +477,6 @@ func StartWithLog(serviceID, serviceArgsStr string, loggerCallback LogCallback) 
 }
 
 func Stop(serviceID string) {
-	startStopLock.Lock()
-	defer startStopLock.Unlock()
 	services.Stop(serviceID)
 }
 
