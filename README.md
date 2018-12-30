@@ -1271,7 +1271,7 @@ execution: `go run *.go`
 Proxy is licensed under GPLv3 license.
 
 ### Contact  
-proxy QQ group: 7930152191 , 189618940 (full)
+proxy QQ group: 793015219 , 189618940 (full)
   
 ### Donation  
 if proxy help you a lot,you can support us by:
