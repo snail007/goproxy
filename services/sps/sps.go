@@ -257,6 +257,9 @@ func (s *SPS) Start(args interface{}, log *logger.Logger) (err error) {
 			} else if *s.cfg.LocalType == "kcp" {
 				err = sc.ListenKCP(s.cfg.KCP, s.callback, s.log)
 			}
+			if err != nil {
+				return
+			}
 			if *s.cfg.ParentServiceType == "socks" {
 				err = s.RunSSUDP(addr)
 			} else {

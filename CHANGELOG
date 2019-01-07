@@ -1,4 +1,7 @@
 proxy更新日志
+v6.9
+1.修复了sps的start潜在的crash问题.
+
 v6.8
 1.HTTP(S)\SOCKS5代理,API认证功能,发送给认证接口的参数增加了本地IP,local_ip字段,
  代表用户访问的是本地服务器的哪个IP.
