@@ -1,6 +1,8 @@
 proxy更新日志
+
 v6.9
 1.修复了sps的start潜在的crash问题.
+2.sps代理增加了--parent-tls-single参数用来支持单向tls上级。
 
 v6.8
 1.HTTP(S)\SOCKS5代理,API认证功能,发送给认证接口的参数增加了本地IP,local_ip字段,

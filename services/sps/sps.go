@@ -71,6 +71,7 @@ type SPSArgs struct {
 	LoadBalanceRetryTime  *int
 	LoadBalanceHashTarget *bool
 	LoadBalanceOnlyHA     *bool
+	ParentTLSSingle       *bool
 
 	RateLimit      *string
 	RateLimitBytes float64
@@ -121,9 +122,11 @@ func (s *SPS) CheckArgs() (err error) {
 		return
 	}
 	if *s.cfg.ParentType == "tls" || *s.cfg.LocalType == "tls" {
-		s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
-		if err != nil {
-			return
+		if !*s.cfg.ParentTLSSingle {
+			s.cfg.CertBytes, s.cfg.KeyBytes, err = utils.TlsBytes(*s.cfg.CertFile, *s.cfg.KeyFile)
+			if err != nil {
+				return
+			}
 		}
 		if *s.cfg.CaCertFile != "" {
 			s.cfg.CaCertBytes, err = ioutil.ReadFile(*s.cfg.CaCertFile)
@@ -657,12 +660,21 @@ func (s *SPS) GetParentConn(address string) (conn net.Conn, err error) {
 	if *s.cfg.ParentType == "tls" {
 		if s.jumper == nil {
 			var _conn tls.Conn
-			_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			if *s.cfg.ParentTLSSingle {
+				_conn, err = utils.SingleTlsConnectHost(address, *s.cfg.Timeout, s.cfg.CaCertBytes)
+			} else {
+				_conn, err = utils.TlsConnectHost(address, *s.cfg.Timeout, s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			}
 			if err == nil {
 				conn = net.Conn(&_conn)
 			}
 		} else {
-			conf, err := utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			var conf *tls.Config
+			if *s.cfg.ParentTLSSingle {
+				conf, err = utils.SingleTlsConfig(s.cfg.CaCertBytes)
+			} else {
+				conf, err = utils.TlsConfig(s.cfg.CertBytes, s.cfg.KeyBytes, s.cfg.CaCertBytes)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -720,7 +732,9 @@ func (s *SPS) ParentUDPKey() (key []byte) {
 			return []byte(v)[:24]
 		}
 	case "tls":
-		return s.cfg.KeyBytes[:24]
+		if s.cfg.KeyBytes != nil {
+			return s.cfg.KeyBytes[:24]
+		}
 	case "kcp":
 		v := fmt.Sprintf("%x", md5.Sum([]byte(*s.cfg.KCP.Key)))
 		return []byte(v)[:24]
