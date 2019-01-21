@@ -73,6 +73,7 @@ func NewGroup(selectType int, configs BackendsConfig, dr *dnsx.DomainResolver, l
 	}
 }
 func (g *Group) Select(srcAddr string, onlyHa bool) (addr string) {
+	addr=""
 	if len(g.bks) == 1 {
 		return g.bks[0].Address
 	}
