@@ -13,6 +13,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/snail007/goproxy/core/cs/server"
@@ -20,6 +21,7 @@ import (
 	"github.com/snail007/goproxy/services"
 	"github.com/snail007/goproxy/utils"
 	"github.com/snail007/goproxy/utils/conncrypt"
+	cryptool "github.com/snail007/goproxy/utils/crypt"
 	"github.com/snail007/goproxy/utils/datasize"
 	"github.com/snail007/goproxy/utils/dnsx"
 	"github.com/snail007/goproxy/utils/iolimiter"
@@ -92,6 +94,8 @@ type SPS struct {
 	udpLocalKey           []byte
 	udpParentKey          []byte
 	jumper                *jumper.Jumper
+	parentAuthData        *sync.Map
+	parentCipherData      *sync.Map
 }
 
 func NewSPS() services.Service {
@@ -101,6 +105,8 @@ func NewSPS() services.Service {
 		serverChannels:        []*server.ServerChannel{},
 		userConns:             mapx.NewConcurrentMap(),
 		udpRelatedPacketConns: mapx.NewConcurrentMap(),
+		parentAuthData:        &sync.Map{},
+		parentCipherData:      &sync.Map{},
 	}
 }
 func (s *SPS) CheckArgs() (err error) {
@@ -169,7 +175,10 @@ func (s *SPS) InitService() (err error) {
 	}
 
 	if len(*s.cfg.Parent) > 0 {
-		s.InitLB()
+		err = s.InitLB()
+		if err != nil {
+			return
+		}
 	}
 
 	err = s.InitBasicAuth()
@@ -211,6 +220,8 @@ func (s *SPS) StopService() {
 		s.udpParentKey = nil
 		s.udpRelatedPacketConns = nil
 		s.userConns = nil
+		s.parentAuthData = nil
+		s.parentCipherData = nil
 		s = nil
 	}()
 	for _, sc := range s.serverChannels {
@@ -437,8 +448,8 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 		utils.CloseConn(inConn)
 		return
 	}
-
-	if *s.cfg.ParentAuth != "" || *s.cfg.ParentSSKey != "" || s.IsBasicAuth() {
+	ParentAuth := s.getParentAuth(lbAddr)
+	if ParentAuth != "" || *s.cfg.ParentSSKey != "" || s.IsBasicAuth() {
 		forwardBytes = utils.RemoveProxyHeaders(forwardBytes)
 	}
 
@@ -458,8 +469,8 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 		pb.WriteString("Connection: Keep-Alive\r\n")
 
 		u := ""
-		if *s.cfg.ParentAuth != "" {
-			a := strings.Split(*s.cfg.ParentAuth, ":")
+		if ParentAuth != "" {
+			a := strings.Split(ParentAuth, ":")
 			if len(a) != 2 {
 				err = fmt.Errorf("parent auth data format error")
 				return
@@ -510,7 +521,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 		s.log.Printf("connect %s", address)
 
 		//socks client
-		_, err = s.HandshakeSocksParent(&outConn, "tcp", address, auth, false)
+		_, err = s.HandshakeSocksParent(ParentAuth, &outConn, "tcp", address, auth, false)
 		if err != nil {
 			s.log.Printf("handshake fail, %s", err)
 			return
@@ -523,7 +534,7 @@ func (s *SPS) OutToTCP(inConn *net.Conn) (lbAddr string, err error) {
 			return
 		}
 
-		outConn, err = ss.DialWithRawAddr(&outConn, ra, "", s.parentCipher.Copy())
+		outConn, err = ss.DialWithRawAddr(&outConn, ra, "", s.getParentCipher(lbAddr))
 		if err != nil {
 			err = fmt.Errorf("dial ss parent fail, err : %s", err)
 			return
@@ -583,10 +594,41 @@ func (s *SPS) InitBasicAuth() (err error) {
 	}
 	return
 }
-func (s *SPS) InitLB() {
+func (s *SPS) InitLB() (err error) {
 	configs := lb.BackendsConfig{}
 	for _, addr := range *s.cfg.Parent {
-		_addrInfo := strings.Split(addr, "@")
+		var _addrInfo []string
+		if strings.Contains(addr, "#") {
+			_s := addr[:strings.Index(addr, "#")]
+			_auth, err := cryptool.CryptTools.Base64Decode(_s)
+			if err != nil {
+				s.log.Printf("decoding parent auth data [ %s ] fail , error : %s", _s, err)
+				return err
+			}
+			_addrInfo = strings.Split(addr[strings.Index(addr, "#")+1:], "@")
+			if *s.cfg.ParentServiceType == "ss" {
+				_s := strings.Split(_auth, ":")
+				m := _s[0]
+				k := _s[1]
+				if m == "" {
+					m = *s.cfg.ParentSSMethod
+				}
+				if k == "" {
+					k = *s.cfg.ParentSSKey
+				}
+				cipher, err := ss.NewCipher(m, k)
+				if err != nil {
+					s.log.Printf("error generating cipher, ssMethod: %s, ssKey: %s, error : %s", m, k, err)
+					return err
+				}
+				s.parentCipherData.Store(_addrInfo[0], cipher)
+			} else {
+				s.parentAuthData.Store(_addrInfo[0], _auth)
+			}
+
+		} else {
+			_addrInfo = strings.Split(addr, "@")
+		}
 		_addr := _addrInfo[0]
 		weight := 1
 		if len(_addrInfo) == 2 {
@@ -603,6 +645,19 @@ func (s *SPS) InitLB() {
 	}
 	LB := lb.NewGroup(utils.LBMethod(*s.cfg.LoadBalanceMethod), configs, &s.domainResolver, s.log, *s.cfg.Debug)
 	s.lb = &LB
+	return
+}
+func (s *SPS) getParentAuth(lbAddr string) string {
+	if v, ok := s.parentAuthData.Load(lbAddr); ok {
+		return v.(string)
+	}
+	return *s.cfg.ParentAuth
+}
+func (s *SPS) getParentCipher(lbAddr string) *ss.Cipher {
+	if v, ok := s.parentCipherData.Load(lbAddr); ok {
+		return v.(*ss.Cipher).Copy()
+	}
+	return s.parentCipher.Copy()
 }
 func (s *SPS) IsBasicAuth() bool {
 	return *s.cfg.AuthFile != "" || len(*s.cfg.Auth) > 0 || *s.cfg.AuthURL != ""
@@ -706,9 +761,9 @@ func (s *SPS) GetParentConn(address string) (conn net.Conn, err error) {
 	}
 	return
 }
-func (s *SPS) HandshakeSocksParent(outconn *net.Conn, network, dstAddr string, auth socks.Auth, fromSS bool) (client *socks.ClientConn, err error) {
-	if *s.cfg.ParentAuth != "" {
-		a := strings.Split(*s.cfg.ParentAuth, ":")
+func (s *SPS) HandshakeSocksParent(parentAuth string, outconn *net.Conn, network, dstAddr string, auth socks.Auth, fromSS bool) (client *socks.ClientConn, err error) {
+	if parentAuth != "" {
+		a := strings.Split(parentAuth, ":")
 		if len(a) != 2 {
 			err = fmt.Errorf("parent auth data format error")
 			return

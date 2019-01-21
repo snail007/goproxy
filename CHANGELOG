@@ -3,6 +3,14 @@ proxy更新日志
 v6.9
 1.修复了sps的start潜在的crash问题.
 2.sps代理增加了--parent-tls-single参数用来支持单向tls上级。
+3.sps代理增加了对单个上级认证信息的支持,如果没有单独设置,就使用全局-A设置.
+  现在上级格式: YTpi#2.2.2.2:33080@1
+  说明:
+  YTpi 是经过base64编码的认证信息,比如是http(s)/socks原始认证信息a:b,用户是a密码是b,base64编码之后是:YTpi
+     如果是ss,那么a就是加密方法,b是密码,比如:aes-192-cfb:your_pass,base64编码之后是:YWVzLTE5Mi1jZmI6eW91cl9wYXNz
+  # 是间隔符号,如果有认证信息,必须有#,没有认证信息可以省略#.
+  2.2.2.2:33080 是上级地址
+  @1 是设置权重,可以参考手册权重部分.
 
 v6.8
 1.HTTP(S)\SOCKS5代理,API认证功能,发送给认证接口的参数增加了本地IP,local_ip字段,
