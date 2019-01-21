@@ -243,12 +243,12 @@ func (s *ServerConn) Handshake() (err error) {
 	//协商开始
 	//method select request
 	var methodReq MethodsRequest
-	(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+	(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 
 	methodReq, e := NewMethodsRequest((*s.conn), s.header)
 	(*s.conn).SetReadDeadline(time.Time{})
 	if e != nil {
-		(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+		(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 		methodReq.Reply(socks5c.Method_NONE_ACCEPTABLE)
 		(*s.conn).SetReadDeadline(time.Time{})
 		err = fmt.Errorf("new methods request fail,ERR: %s", e)
@@ -265,7 +265,7 @@ func (s *ServerConn) Handshake() (err error) {
 		// }
 		s.method = socks5c.Method_NO_AUTH
 		//method select reply
-		(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+		(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 		err = methodReq.Reply(socks5c.Method_NO_AUTH)
 		(*s.conn).SetReadDeadline(time.Time{})
 		if err != nil {
@@ -276,7 +276,7 @@ func (s *ServerConn) Handshake() (err error) {
 	} else {
 		//auth
 		if !methodReq.Select(socks5c.Method_USER_PASS) {
-			(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+			(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 			methodReq.Reply(socks5c.Method_NONE_ACCEPTABLE)
 			(*s.conn).SetReadDeadline(time.Time{})
 			err = fmt.Errorf("none method found : Method_USER_PASS")
@@ -284,7 +284,7 @@ func (s *ServerConn) Handshake() (err error) {
 		}
 		s.method = socks5c.Method_USER_PASS
 		//method reply need auth
-		(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+		(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 		err = methodReq.Reply(socks5c.Method_USER_PASS)
 		(*s.conn).SetReadDeadline(time.Time{})
 		if err != nil {
@@ -294,7 +294,7 @@ func (s *ServerConn) Handshake() (err error) {
 		//read auth
 		buf := make([]byte, 500)
 		var n int
-		(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+		(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 		n, err = (*s.conn).Read(buf)
 		(*s.conn).SetReadDeadline(time.Time{})
 		if err != nil {
@@ -309,7 +309,7 @@ func (s *ServerConn) Handshake() (err error) {
 		_userAddr := strings.Split(remoteAddr.String(), ":")
 		_localAddr := strings.Split(localAddr.String(), ":")
 		if s.auth == nil || (*s.auth).CheckUserPass(s.user, s.password, _userAddr[0], _localAddr[0], "") {
-			(*s.conn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(s.timeout)))
+			(*s.conn).SetDeadline(time.Now().Add(s.timeout))
 			_, err = (*s.conn).Write([]byte{0x01, 0x00})
 			(*s.conn).SetDeadline(time.Time{})
 			if err != nil {
@@ -317,7 +317,7 @@ func (s *ServerConn) Handshake() (err error) {
 				return
 			}
 		} else {
-			(*s.conn).SetDeadline(time.Now().Add(time.Millisecond * time.Duration(s.timeout)))
+			(*s.conn).SetDeadline(time.Now().Add(s.timeout))
 			_, err = (*s.conn).Write([]byte{0x01, 0x01})
 			(*s.conn).SetDeadline(time.Time{})
 			if err != nil {
@@ -329,7 +329,7 @@ func (s *ServerConn) Handshake() (err error) {
 		}
 	}
 	//request detail
-	(*s.conn).SetReadDeadline(time.Now().Add(time.Second * s.timeout))
+	(*s.conn).SetReadDeadline(time.Now().Add(s.timeout))
 	request, e := NewRequest(*s.conn)
 	(*s.conn).SetReadDeadline(time.Time{})
 	if e != nil {
