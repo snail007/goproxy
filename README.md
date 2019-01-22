@@ -201,6 +201,8 @@ chmod +x install.sh
 
 #### Docker installation 
 
+[docker](https://hub.docker.com/r/snail007/goproxy)  
+
 Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
 
 The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 6.0:

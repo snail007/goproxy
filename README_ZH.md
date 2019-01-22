@@ -202,6 +202,9 @@ chmod +x install.sh
 ```  
 
 #### Docker安装 
+
+[docker](https://hub.docker.com/r/snail007/goproxy)  
+
 项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy的master分支最新版本,  
 全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile  
 或者使用参数GOPROXY_VERSION指定构建的goproxy版本.  
