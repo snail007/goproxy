@@ -416,7 +416,7 @@ func (s *HTTP) OutToTCP(useProxy bool, address string, inConn *net.Conn, req *ut
 	if *s.cfg.ParentCompress {
 		outConn = utils.NewCompConn(outConn)
 	}
-	if *s.cfg.ParentKey != "" {
+	if useProxy && *s.cfg.ParentKey != "" {
 		outConn = conncrypt.New(outConn, &conncrypt.Config{
 			Password: *s.cfg.ParentKey,
 		})
