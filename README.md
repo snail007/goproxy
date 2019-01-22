@@ -1,7 +1,8 @@
 <img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>
 Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss proxy server implemented by golang. It supports parent proxy,nat forward,TCP/UDP port forwarding, SSH transfer, TLS encrypted transmission, protocol conversion. you can expose a local server behind a NAT or firewall to the internet, secure DNS proxy.  
 
-  
+[Download](https://github.com/snail007/goproxy/releases) 
+
 ---  
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
@@ -1087,6 +1088,19 @@ target: if the client is the HTTP (s) proxy request, this represents the complet
 
 If there is no -a or -F or --auth-url parameters, local authentication is closed.  
 If there is no -A parameter, the connection to the father proxy does not use authentication.  
+
+**Setting up separate authentication information**
+
+f there are many different parent proxys and their passwords are the same or different, then authentication information can be set for each parent proxy.  
+At the same time, a global authentication information can be set with the - A parameter. If a parent proxy does not set the authentication information separately, the global authentication information can be used.  
+Authentication information is written together with parent proxy.  
+format: YTpi#2.2.2.2:33080@1  
+Explain:  
+YTpi is the Authentication information encoded by Base64, For example, http (s)/socks original authentication information, a:b,the user is a and the password is b, which is YTpi after Base64 encoding.   
+if it is ss, A is the encryption method and B is the password, for example, aes-192-cfb:your_pass, which is YWVzLTE5Mi1jZmI6eW91cl9wYXNz after Base64 encoding.  
+# is an interval symbol. If there is authentication information, there must be #. No authentication information can be omitted #  
+2.2.2.2:33080 is parent proxy's address  
+@1 is weights, Nothing can be omitted. Detailed instructions can be referred to in the manual.***weights***  
 
 #### **6.8 Custom encryption**  
 HTTP(s) proxy can encrypt TCP data by TLS standard encryption and KCP protocol encryption, in addition to supporting custom encryption after TLS and KCP, That is to say, custom encryption and tls|kcp can be combined to use. The internal AES256 encryption is used, and it only needs to define one password by yourself. Encryption is divided into two parts, the one is whether the local (-z) is encrypted and decrypted, the other is whether the parents (-Z) is encrypted and decrypted.
