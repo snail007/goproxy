@@ -1091,14 +1091,14 @@ If there is no -A parameter, the connection to the father proxy does not use aut
 
 **Setting up separate authentication information**
 
-f there are many different parent proxys and their passwords are the same or different, then authentication information can be set for each parent proxy.  
+If there are many different parent proxys and their passwords are the same or different, then authentication information can be set for each parent proxy.  
 At the same time, a global authentication information can be set with the - A parameter. If a parent proxy does not set the authentication information separately, the global authentication information can be used.  
 Authentication information is written together with parent proxy.  
 format: YTpi#2.2.2.2:33080@1  
 Explain:  
 YTpi is the Authentication information encoded by Base64, For example, http (s)/socks original authentication information, a:b,the user is a and the password is b, which is YTpi after Base64 encoding.   
 if it is ss, A is the encryption method and B is the password, for example, aes-192-cfb:your_pass, which is YWVzLTE5Mi1jZmI6eW91cl9wYXNz after Base64 encoding.  
-# is an interval symbol. If there is authentication information, there must be #. No authentication information can be omitted #  
+\# is an interval symbol. If there is authentication information, there must be #. No authentication information can be omitted #  
 2.2.2.2:33080 is parent proxy's address  
 @1 is weights, Nothing can be omitted. Detailed instructions can be referred to in the manual.***weights***  
 
