@@ -9,18 +9,16 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
   
 **[中文手册](/README_ZH.md)**  
 
-**[Full-platform graphical interface version](/gui/README.md)**  
+**[GUI version](/gui/README.md)**  
 
-**[Full platform SDK](https://github.com/snail007/goproxy-sdk/blob/master/README.md)**
+**[SDK](https://github.com/snail007/goproxy-sdk/blob/master/README.md)**
 
 **[GoProxy special authorization](/AUTHORIZATION.md)**
 
-### How to contribute to the code (Pull Request)?  
+### Source code declaration
 
-Pull Request is welcomed.   
-First, you need to clone the project to your account, and then modify the code on the dev branch.   
-Finally, Pull Request to dev branch of goproxy project, and contribute code for efficiency.   
-PR needs to explain what changes have been made and why you change them.  
+The author of this project found that a large number of developers based on the project for secondary development or use a large number of the core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source code. Delayed release strategy, to a certain extent to curb these behaviors that do not respect open source and do not respect the labor results of others, this project will continue to update iterations, continue to release the full platform binary words, to provide you with powerful and convenient agent tools. If you have For customization, please send an email to arraykeysegmail.com
+
 
 ### Features  
 - chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
@@ -1272,16 +1270,6 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 - HTTP, socks proxy which has multi parents proxy load balancing?
 - HTTP (s) proxy support PAC?
 - Welcome joining group feedback...
-
-### How to use the source code?
-
-Recommend go1.10.1.   
-`go get github.com/snail007/goproxy`   
-use command cd to enter your go SRC directory   
-then cd to enter `github.com/snail007/goproxy`.    
-Direct compilation:`go build -o proxy`        
-execution: `go run *.go`       
-`utils` is a toolkit, and `service` is a specific service class.
 
 ### License  
 Proxy is licensed under GPLv3 license.
