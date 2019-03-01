@@ -9,17 +9,14 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
   
 **[English Manual](/README.md)**  
 
-**[全平台图形界面版本](/gui/README_ZH.md)**  
+**[GUI界面版本](/gui/README_ZH.md)**  
 
-**[全平台SDK](https://github.com/snail007/goproxy-sdk/blob/master/README_ZH.md)**
+**[SDK](https://github.com/snail007/goproxy-sdk/blob/master/README_ZH.md)**
 
 **[GoProxy特殊授权](/AUTHORIZATION_ZH.md)**
 
-### 如何贡献代码(Pull Request)?  
-
-欢迎加入一起发展壮大proxy.首先需要clone本项目到自己的帐号下面,   
-然后在dev分支上面修改代码,最后发Pull Request到goproxy项目的dev分支即可,  
-为了高效贡献代码,pr的时候需要说明做了什么变更,原因是什么.  
+#源代码申明
+本项目作者发现大量的开发者基于本项目进行二次开发或使用大量本项目核心代码而不遵循GPLv3协议，这严重违背了本项目使用GPLv3开源协议的初衷，鉴于这种情况本项目采取源代码延迟发布策略，在一定程度上遏制这些不尊重开源，不尊重他人劳动成果的行为，本项目会持续更新迭代，持续发布全平台的二进制程字，给大家提供强大便捷的代理工具.如果你有定制，商业需求请发邮件至arraykeysegmail. com
 
 ### Features  
 - 链式代理,程序本身可以作为一级代理,如果设置了上级代理那么可以作为二级代理,乃至N级代理.  
