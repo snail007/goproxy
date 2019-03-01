@@ -13,8 +13,6 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 **[SDK](https://github.com/snail007/goproxy-sdk/blob/master/README.md)**
 
-**[GoProxy special authorization](/AUTHORIZATION.md)**
-
 ### Source code declaration
 
 The author of this project found that a large number of developers based on the project for secondary development or use a large number of the core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source code. Delayed release strategy, to a certain extent to curb these behaviors that do not respect open source and do not respect the labor results of others, this project will continue to update iterations, continue to release the full platform binary words, to provide you with powerful and convenient agent tools. If you have For customization, please send an email to arraykeysegmail.com
