@@ -15,7 +15,9 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 ### Source code declaration
 
-The author of this project found that a large number of developers based on the project for secondary development or use a large number of the core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source code. Delayed release strategy, to a certain extent to curb these behaviors that do not respect open source and do not respect the labor results of others, this project will continue to update iterations, continue to release the full platform binary words, to provide you with powerful and convenient agent tools. If you have For customization, please send an email to arraykeysegmail.com
+The author of this project found that a large number of developers based on the project for secondary development or using a large number of core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source. The code delays the release strategy, to a certain extent, to curb these behaviors that do not respect open source and do not respect the labor results of others.
+This project will continue to update the iterations, and continue to release the full platform binary program, providing you with powerful and convenient proxy tools.
+If you have customized, business needs, please send an email to `arraykeys@gmail.com`
 
 
 ### Features  
@@ -52,7 +54,7 @@ The author of this project found that a large number of developers based on the 
 - ...  
 
  
-This page is the v6.0 manual, and the other version of the manual can be checked by the following [link](docs/old-release.md).  
+The manual on this page applies to the latest version of goproxy. Other versions may not be applicable. Please use the `help command` according to your own instructions.  
 
 
 ### How to find the organization?  
