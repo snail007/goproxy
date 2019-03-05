@@ -63,7 +63,6 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 ### 安装 
 1. [快速安装](#自动安装)
 1. [手动安装](#手动安装)
-1. [Docker安装](#docker安装)
 
 ### 首次使用必看
 - [环境](#首次使用必看-1)
@@ -78,6 +77,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 ### 手册目录
 - [负载均衡和高可用](#负载均衡和高可用)
 - [代理跳板跳转](#代理跳板跳转)
+- [域名黑名单](#域名黑名单)
 - [1. HTTP代理](#1http代理)
     - [1.1 普通HTTP代理](#11普通一级http代理)
     - [1.2 普通二级HTTP代理](#12普通二级http代理)
@@ -200,39 +200,6 @@ chmod +x install.sh
 ./install.sh  
 ```  
 
-#### Docker安装 
-
-[docker](https://hub.docker.com/r/snail007/goproxy)  
-
-项目根目录的Dockerfile文件用来构建,使用golang 1.10.3,构建基于goproxy的master分支最新版本,  
-全部大小17.3MB,默认情况下使用master分支,不过可以通过修改配置文件Dockerfile  
-或者使用参数GOPROXY_VERSION指定构建的goproxy版本.  
-
-```
-ARG GOPROXY_VERSION=v5.3
-```
-
-步骤:  
-1. 克隆仓库,然后cd进入仓库文件夹,执行:
-```
-sudo docker build .
-```
-2. 镜像打标签:
-```
-sudo docker tag <上一步的结果ID> snail007/goproxy:latest
-```
-3. 运行 
-参数OPTS的值就是传递给proxy的所有参数
-比如下面的例子启动了一个http服务:
-
-```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
-```
-4. 查看日志:
-```
-sudo docker logs -f goproxy
-```
-
 ## **首次使用必看**  
   
 ### **环境**  
@@ -339,6 +306,28 @@ http(s)代理,SPS代理,内网穿透,tcp代理都支持通过中间第三方代�
 http,socks5代表的是普通的http和socks5代理.  
 https,socks5s代表的是通过tls保护的http和socks5代理,  
 也就是http代理 over TLS , socks over TLS.  
+
+### **域名黑名单**
+
+socks/http(s)/sps代理都支持域名黑名单,用--stop参数指定一个域名列表文件,那么当用户连接文件里面这些域名的时候连接就会被断开.  
+
+黑名单域名文件内容格式如下:
+
+```text
+**.baidu.com
+*.taobao.com
+a.com
+192.168.1.1
+192.168.*.*
+?.qq.com
+```
+
+说明:  
+1.一行一个域名,域名写法支持通配符`*`和`?`,`*`代表任意个字符,`?`代表一个任意字符,
+2.`**.baidu.com` 匹配无论是多少级所有后缀是`.baidu.com`的域名.  
+3.`*.taobao.com` 匹配后缀是`.taobao.com`的三级域名.  
+4.还可以直接是IP地址.
+5.`#`开头的为注释.  
 
 ### **1.HTTP代理**  
 #### **1.1.普通一级HTTP代理**  

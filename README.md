@@ -65,7 +65,6 @@ The manual on this page applies to the latest version of goproxy. Other versions
 ### Installation
 - [Quick installation](#quick-installation)
 - [Manual installation](#manual-installation)
-- [Docker installation](#docker-installation)
 
 ### First use must read
 - [Environmental Science](#environmental-science)
@@ -79,6 +78,8 @@ The manual on this page applies to the latest version of goproxy. Other versions
 
 ### Manual catalogues
 - [Load balance and high available](#load-balance-and-high-available)
+- [Jump through proxy server](#jump-through-proxy-server)
+- [Stop domains](#stop-domains)
 - [1.HTTP proxy](#1http-proxy)
     - [1.1 Common HTTP proxy](#11common-http-proxy)
     - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
@@ -197,38 +198,6 @@ wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh  
 ./install.sh  
 ```   
-
-#### Docker installation 
-
-[docker](https://hub.docker.com/r/snail007/goproxy)  
-
-Dockerfile root of project uses multistage build and alpine project to comply with best practices. Uses golang 1.10.3 for building as noted in the project README.md and will be pretty small image. total extracted size will be 17.3MB for goproxy latest version.
-
-The default build process builds the master branch (latest commits/ cutting edge), and it can be configured to build specific version, just edit Dockerfile before build, following builds release version 6.0:
-
-```
-ARG GOPROXY_VERSION=v6.0
-```
-
-To Run:
-1. Clone the repository and cd into it.
-```
-sudo docker build .
-```
-2. Tag the image:
-```
-sudo docker tag <id from previous step>  snail007/goproxy:latest
-```
-3. Run! 
-Just put your arguments to proxy binary in the OPTS environmental variable (this is just a sample http proxy):
-```
-sudo docker run -d --restart=always --name goproxy -e OPTS="http -p :33080" -p 33080:33080 snail007/goproxy:latest
-```
-4. View logs:
-```
-sudo docker logs -f goproxy
-```
-
   
 ## **First use must be read**  
   
@@ -299,6 +268,49 @@ The load balance check interval can be set by `--lb-retrytime`, unit millisecond
 Load balancing connection timeout can be set by `--lb-timeout`, unit milliseconds.
 If the load balance policy is weighted (weight), the -P format is: 2.2.2.2:3880@1,1 is the weight which is greater than 0.
 If the load balance strategy is hash, the default is to select the parent based on the client address, and the parent can be selected by switching `- lb-hashtarget', using the access destination address.
+
+### **Jump through proxy server**
+
+http(s),sps, intranet penetration, tcp functions support the connection of superiors through intermediate third-party proxy server.
+The parameters are: --jumper, all the formats are as follows:  
+
+```text
+ http://username:password@host:port  
+ http://host:port  
+ https://username:password@host:port  
+ https://host:port  
+ socks5://username:password@host:port  
+ socks5://host:port  
+ socks5s://username:password@host:port  
+ socks5s://host:port  
+ ss://method:password@host:port
+```
+
+http,socks5 represents the normal http and socks5 proxy.
+https,socks5s represents the http and socks5 proxy protected by tls.
+That is http proxy over TLS, socks over TLS.
+
+### **Stop domains**
+
+The socks/http(s)/sps proxy supports domain name blacklists. Use the --stop parameter to specify a domain name list file. When the user connects these domains in the file, the connection will be disconnected.
+
+The format of the blacklist domain name file is as follows:
+
+```text
+**.baidu.com
+*.taobao.com
+a.com
+192.168.1.1
+192.168.*.*
+?.qq.com
+```
+
+Description:  
+1.One domain name per line, domain name writing supports wildcards `*` and `?`, `*` represents any number of characters, `?` represents an arbitrary character.  
+2.`**.baidu.com` matches no matter how many levels all suffixes are `.baidu.com` domain name.  
+3.`*.taobao.com` The matching suffix is ​​the third-level domain name of `.taobao.com`.
+4. Can also be directly an IP address.
+5.`#` at the beginning of the comment.
 
 ### **1.HTTP proxy**  
 #### **1.1.common HTTP proxy**  

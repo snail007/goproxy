@@ -3,7 +3,7 @@ set -e
 
 # #install proxy
 tar zxvf proxy-linux-amd64.tar.gz
-cp proxy /usr/bin/
+cp -f proxy /usr/bin/
 chmod +x /usr/bin/proxy
 if [ ! -e /etc/proxy ]; then
     mkdir /etc/proxy
