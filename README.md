@@ -1290,7 +1290,7 @@ Then the local UDP port 53 provides a security and anti pollution DNS analysis.
 Proxy is licensed under GPLv3 license.
 
 ### Contact  
-proxy QQ group: 793015219 , 189618940 (full)
+proxy QQ group: 42805407
   
 ### Donation  
 if proxy help you a lot,you can support us by:
