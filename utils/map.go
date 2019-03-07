@@ -26,7 +26,7 @@ func NewConcurrentMap() ConcurrentMap {
 	return m
 }
 
-// Returns shard under given key
+// GetShard returns shard under given key
 func (m ConcurrentMap) GetShard(key string) *ConcurrentMapShared {
 	return m[uint(fnv32(key))%uint(SHARD_COUNT)]
 }
@@ -79,7 +79,7 @@ func (m ConcurrentMap) SetIfAbsent(key string, value interface{}) bool {
 	return !ok
 }
 
-// Retrieves an element from map under given key.
+// Get retrieves an element from map under given key.
 func (m ConcurrentMap) Get(key string) (interface{}, bool) {
 	// Get shard
 	shard := m.GetShard(key)
@@ -90,7 +90,7 @@ func (m ConcurrentMap) Get(key string) (interface{}, bool) {
 	return val, ok
 }
 
-// Returns the number of elements within the map.
+// Count returns the number of elements within the map.
 func (m ConcurrentMap) Count() int {
 	count := 0
 	for i := 0; i < SHARD_COUNT; i++ {
@@ -113,7 +113,7 @@ func (m ConcurrentMap) Has(key string) bool {
 	return ok
 }
 
-// Removes an element from the map.
+// Remove removes an element from the map.
 func (m ConcurrentMap) Remove(key string) {
 	// Try to get shard.
 	shard := m.GetShard(key)
@@ -122,7 +122,7 @@ func (m ConcurrentMap) Remove(key string) {
 	shard.Unlock()
 }
 
-// Removes an element from the map and returns it
+// Pop removes an element from the map and returns it
 func (m ConcurrentMap) Pop(key string) (v interface{}, exists bool) {
 	// Try to get shard.
 	shard := m.GetShard(key)
@@ -133,7 +133,7 @@ func (m ConcurrentMap) Pop(key string) (v interface{}, exists bool) {
 	return v, exists
 }
 
-// Checks if map is empty.
+// IsEmpty checks if map is empty.
 func (m ConcurrentMap) IsEmpty() bool {
 	return m.Count() == 0
 }
@@ -144,7 +144,7 @@ type Tuple struct {
 	Val interface{}
 }
 
-// Returns an iterator which could be used in a for range loop.
+// Iter returns an iterator which could be used in a for range loop.
 //
 // Deprecated: using IterBuffered() will get a better performence
 func (m ConcurrentMap) Iter() <-chan Tuple {
@@ -154,7 +154,7 @@ func (m ConcurrentMap) Iter() <-chan Tuple {
 	return ch
 }
 
-// Returns a buffered iterator which could be used in a for range loop.
+// IterBuffered returns a buffered iterator which could be used in a for range loop.
 func (m ConcurrentMap) IterBuffered() <-chan Tuple {
 	chans := snapshot(m)
 	total := 0
@@ -208,7 +208,7 @@ func fanIn(chans []chan Tuple, out chan Tuple) {
 	close(out)
 }
 
-// Returns all items as map[string]interface{}
+// Items returns all items as map[string]interface{}
 func (m ConcurrentMap) Items() map[string]interface{} {
 	tmp := make(map[string]interface{})
 
@@ -239,7 +239,7 @@ func (m ConcurrentMap) IterCb(fn IterCb) {
 	}
 }
 
-// Return all keys as []string
+// Keys returns all keys as []string
 func (m ConcurrentMap) Keys() []string {
 	count := m.Count()
 	ch := make(chan string, count)
