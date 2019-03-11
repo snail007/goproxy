@@ -11,8 +11,6 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 **[GUI version](/gui/README.md)**  
 
-**[SDK](https://github.com/snail007/goproxy-sdk/blob/master/README.md)**
-
 ### Source code declaration
 
 The author of this project found that a large number of developers based on the project for secondary development or using a large number of core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source. The code delays the release strategy, to a certain extent, to curb these behaviors that do not respect open source and do not respect the labor results of others.
@@ -165,7 +163,8 @@ The manual on this page applies to the latest version of goproxy. Other versions
     - [6.11 speed limit](#611-speed-limit)
     - [6.12 Designated exporting IP](#612-designated-exporting-ip)
     - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-base64-data)
-    - [6.14 View Help](#614view-help)
+    - [6.14 Independent service](#614-independent-service)
+    - [6.15 View Help](#615-view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
@@ -1180,7 +1179,12 @@ The `- bind-listen` parameter opens the client's ability to access the target si
 By default, the -C and -K parameters are the paths of CRT certificates and key files,   
 If it is the beginning of base64://, then it is considered that the data behind is Base64 encoded and will be used after decoding.    
 
-#### **6.14.view help** 
+#### **6.14 Independent service** 
+The sps function does not force a parent to be specified. When the parent is empty, the sps itself can complete the full proxy function. If the parent is specified, the superior connection target is used as before.  
+The following command is to open the http(s)\ss\socks service with one port.    
+`./proxy sps -p :33080`  
+
+#### **6.15. View Help** 
 `./proxy help sps` 
 
 ### **7.KCP Configuration**   

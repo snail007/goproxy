@@ -11,15 +11,13 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 
 **[GUI界面版本](/gui/README_ZH.md)**  
 
-**[SDK](https://github.com/snail007/goproxy-sdk/blob/master/README_ZH.md)**
-
 ### 技术指导
 
 为了更好的支撑goproxy项目的发展以及帮助到有更多需要的同学，作者在知识星球建了一个付费的社群，可以更方便进行管理以及进行问答的汇总，QQ群后面主要是面向一些简单问题的互相交流。
 之后会在付费社群上每天抽空解答大家的问题以及提供一些技术上的帮助，分享一些技术资料，后续也会考虑根据需求为付费的同学提供平台化的服务和一些进阶的高级功能。
 有兴趣愿意支持的同学可以通过微信扫描下面的二维码加入，有任何其他的建议也可以私聊我。
 
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/zsxq.png?raw=true" width="200"/> 
+<img src="https://github.com/snail007/goproxy/blob/master/docs/images/zsxq.png?raw=true" width="150"/> 
 
 ### 源代码申明
 
@@ -172,7 +170,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
     - [6.11 限速](#611-限速)
     - [6.12 指定出口IP](#612-指定出口ip)
     - [6.13 证书参数使用base64数据](#613-证书参数使用base64数据)
-    - [6.14 查看帮助](#614-查看帮助)
+    - [6.14 独立服务](#614-独立服务)
+    - [6.15 查看帮助](#615-查看帮助)
 - [7. KCP配置](#7kcp配置)
     - [7.1 配置介绍](#71-配置介绍)
     - [7.2 详细配置](#72-详细配置)
@@ -1301,7 +1300,12 @@ sps下级,限速100K
 
 如果是base64://开头,那么就认为后面的数据是base64编码的,会解码后使用.
 
-#### **6.14 查看帮助** 
+#### **6.14 独立服务** 
+sps功能不强制指定一个上级,当上级为空,sps本身即可完成完整的代理功能.如果指定了上级那么就和之前一样使用上级连接目标.  
+下面这个命令,就是一键开启http(s)\ss\socks服务.  
+`./proxy sps -p :33080`  
+
+#### **6.15 查看帮助** 
 `./proxy help sps`  
 
 ### **7.KCP配置**   
