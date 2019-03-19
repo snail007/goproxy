@@ -69,7 +69,9 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 
 ### 怎么找到组织?  
 [点击加入交流组织gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
-[点击加入交流组织TG](https://t.me/joinchat/GYHXghCDSBmkKZrvu4wIdQ)  
+
+[点击加入交流组织TG](https://t.me/snail007_goproxy)  
+
 ### 安装 
 1. [快速安装](#自动安装)
 1. [手动安装](#手动安装)
