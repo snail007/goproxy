@@ -1,0 +1,12 @@
+tenets:
+  - import: codelingo/code-review-comments/avoid-renaming-imports
+  - import: codelingo/code-review-comments/go-error-fmt
+  - import: codelingo/code-review-comments/context-first-arg
+  - import: codelingo/go/tested
+  - import: codelingo/go/empty-slice
+  - import: codelingo/go/global-var
+  - import: codelingo/go/bool-param
+  - import: codelingo/go/ticker-in-for-switch
+  - import: codelingo/go/goto
+  - import: codelingo/go/golint
+  - import: codelingo/lightning-network-daemon/exported-package-is-tested
