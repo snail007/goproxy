@@ -1084,6 +1084,8 @@ SOCKS5支持级联认证,-A可以设置上级认证信息.
 #### **6.1 功能介绍** 
 代理协议转换使用的是sps子命令，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理或者ss代理；sps可以把已经存在的http(s)代理或者socks5代理或ss代理转换为一个端口同时支持http(s)和socks5和ss的代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理，当上级是SOCKS5或者SS时仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
 
+`ss`功能支持的加密方法为:aes-128-cfb , aes-128-ctr , aes-128-gcm , aes-192-cfb , aes-192-ctr , aes-192-gcm , aes-256-cfb , aes-256-ctr , aes-256-gcm , bf-cfb , cast5-cfb , chacha20 , chacha20-ietf , chacha20-ietf-poly1305 , des-cfb , rc4-md5 , rc4-md5-6 , salsa20 , xchacha20
+
 #### **6.2 HTTP(S)转HTTP(S)+SOCKS5+SS** 
 假设已经存在一个普通的http(s)代理：127.0.0.1:8080,现在我们把它转为同时支持http(s)和socks5和ss的普通代理,转换后的本地端口为18080,ss加密方式:aes-192-cfb,ss密码:pass。  
 命令如下：  

@@ -1002,6 +1002,8 @@ The meaning of each value is as follows:
 #### **6.1.Functional introduction** 
 The proxy protocol conversion use the SPS subcommand, SPS itself does not provide the proxy function, just accept the proxy request and then converse protocol and forwarded to the existing HTTP (s) or Socks5 proxy. SPS can use existing HTTP (s) or Socks5 proxy converse to support HTTP (s) and Socks5 HTTP (s) proxy at the same time by one port, and proxy supports forward and reverse proxy (SNI), SOCKS5 proxy which is also does support UDP when parent is Socks5. in addition to the existing HTTP or Socks5 proxy, which supports TLS, TCP, KCP three modes and chain-style connection. That is more than one SPS node connection can build encryption channel.
 
+the following methods are supported by `ss` : aes-128-cfb , aes-128-ctr , aes-128-gcm , aes-192-cfb , aes-192-ctr , aes-192-gcm , aes-256-cfb , aes-256-ctr , aes-256-gcm , bf-cfb , cast5-cfb , chacha20 , chacha20-ietf , chacha20-ietf-poly1305 , des-cfb , rc4-md5 , rc4-md5-6 , salsa20 , xchacha20
+
 #### **6.2.HTTP(S) to HTTP(S) + SOCKS5** 
 Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080. ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
