@@ -210,14 +210,16 @@ If the system are windows, please use proxy.exe.
 ### **Use configuration file**  
 The following tutorial is to introduce the useage by the command line parameters, or by reading the configuration file to get the parameters.  
 The specific format is to specify a configuration file by the @ symbol, for example, ./proxy @configfile.txt.   
-configfile.txt's format: The first line is the subcommand name, and the second line begins a new line: the long format of the parameter = the parameter value, there is no space and double quotes before and after.  
-The long format of the parameter's beginning is --, the short format of the parameter's beginning is -. If you don't know which short form corresponds to the long format, please look at the help command.  
-For example, the contents of configfile.txt are as follows:
+configfile.txt's format: The first line is the subcommand name, and the second line begins a new line: `parameter  "the parameter value"`  
+For example, the contents of configfile.txt are as follows:  
+
 ```shell
 http
---local-type=tcp
---local=:33080
+-t tcp
+-p :33080
+--forever
 ```
+
 ### **Debug output**   
 By default, the log output information does not contain the number of file lines. In some cases, in order to eliminate and positione the program problem, You can use the --debug parameter to output the number of lines of code and the wrong time.   
 

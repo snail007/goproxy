@@ -136,7 +136,8 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
     - [4.6 高级用法一](#46高级用法二)
     - [4.7 server的-r参数](#47server的-r参数)
     - [4.8 server和client通过代理连接bridge](#48server和client通过代理连接bridge)
-    - [4.9 查看帮助](#49查看帮助)
+    - [4.9 内网穿透HTTP服务](#49内网穿透http服务)
+    - [5.0 查看帮助](#50查看帮助)
 - [5. SOCKS5代理](#5socks5代理)
     - [5.1 普通SOCKS5代理](#51普通socks5代理)
     - [5.2 普通二级SOCKS5代理](#52普通二级socks5代理)
@@ -222,14 +223,17 @@ chmod +x install.sh
 ### **使用配置文件**  
 接下来的教程都是通过命令行参数介绍使用方法,也可以通过读取配置文件获取参数.  
 具体格式是通过@符号指定配置文件,例如:./proxy @configfile.txt  
-configfile.txt里面的格式是,第一行是子命令名称,第二行开始一行一个:参数的长格式=参数值,前后不能有空格和双引号.  
-参数的长格式都是--开头的,短格式参数都是-开头,如果你不知道某个短格式参数对应长格式参数,查看帮助命令即可.  
+configfile.txt里面的格式是,第一行是子命令名称,第二行开始一行一个参数,  
+格式:`参数 参数值`,没有参数值的直接写参数,比如:--nolog  
 比如configfile.txt内容如下:
+
 ```shell
 http
---local-type=tcp
---local=:33080
+-t tcp
+-p :33080
+--forever
 ```
+
 ### **调试输出**   
 默认情况下,日志输出的信息不包含文件行数,某些情况下为了排除程序问题,快速定位问题,  
 可以使用--debug参数,输出代码行数和毫秒时间.  
@@ -862,7 +866,32 @@ socks5://host:port
 host:代理的IP或者域名
 port:代理的端口
 
-#### **4.9.查看帮助**  
+#### **4.9.内网穿透HTTP服务**  
+
+通常HTTP请求客户端会使用server的ip和端口去设置HOST字段,但是与期望的后端实际HOST不一样,这样就造成了tcp是通的,  
+但后端依赖HOST字段定位虚拟主机就不能工作.现在用--http-host参数强制设置http头部的HOST字段值为后端实际的  
+域名和端口即可轻松解决.  
+
+`server`的--http-host参数格式如下:
+
+`--http-host www.test.com:80@2200`,如果server监听多个端口,只需要重复`--http-host`参数设置每个端口的HOST即可.
+
+实例:
+
+比如client本地nginx,127.0.0.1:80提供了web服务,其中绑定了一个域名`local.com`.
+
+那么server的启动参数可以如下:
+
+`proxy server -P :30000 -r :2500@127.0.0.1:80 --http-host local.com@2500`  
+
+解释:
+
+`-r :2500@127.0.0.1:80` 和 `--http-host local.com:80@2500` 里面的2500端口是server本地监听的端口
+
+当使用http协议请求server的ip:2500端口的时候,http的头部HOST字段就会被设置为`local.com`.
+
+
+#### **5.0.查看帮助**  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  
