@@ -1,7 +1,7 @@
-baseURL = ""
 languageCode = "zh-cn"
 title = "GOPROXY IN ACTION"
 publishdir = "../docs"
 theme = "beg"
 buildDrafts = true
 disqusShortname = "XYW"
+ignoreFiles = [ "\\.none$"]
