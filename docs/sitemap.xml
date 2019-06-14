@@ -3,18 +3,12 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://snail007.github.io/goproxy/about/</loc>
-    <lastmod>2019-06-14T13:22:19+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://snail007.github.io/goproxy/</loc>
-    <lastmod>2019-06-14T13:22:19+08:00</lastmod>
+    <loc>https://snail007.github.io/goproxy/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/categories/</loc>
+    <loc>https://snail007.github.io/goproxy/</loc>
     <priority>0</priority>
   </url>
   
