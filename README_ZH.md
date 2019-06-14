@@ -1,4 +1,4 @@
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/logo.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200"/>  
 Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服务器,支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。
 
 [点击下载](https://github.com/snail007/goproxy/releases) 官方QQ交流群: 42805407  
@@ -17,7 +17,7 @@ Proxy是golang实现的高性能http,https,websocket,tcp,udp,socks5,ss代理服�
 之后会在付费社群上每天抽空解答大家的问题以及提供一些技术上的帮助，分享一些技术资料，后续也会考虑根据需求为付费的同学提供平台化的服务和一些进阶的高级功能。
 有兴趣愿意支持的同学可以通过微信扫描下面的二维码加入，有任何其他的建议也可以私聊我。
 
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/zsxq.png?raw=true" width="150"/> 
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/zsxq.png?raw=true" width="150"/> 
 
 ### 源代码申明
 
@@ -348,11 +348,11 @@ a.com
 
 ### **1.HTTP代理**  
 #### **1.1.普通一级HTTP代理**  
-![1.1](/docs/images/http-1.png)  
+![1.1](/doc/images/http-1.png)  
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
   
 #### **1.2.普通二级HTTP代理**  
-![1.2](/docs/images/http-2.png)  
+![1.2](/doc/images/http-2.png)  
 使用本地端口8090,假设上级HTTP代理是`22.22.22.22:8080`  
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名直接走上级代理,白名单的域名不走上级代理.  
@@ -361,7 +361,7 @@ a.com
 #### **1.3.HTTP二级代理(加密)**  
 > 注意: 后面二级代理使用的`proxy.crt`和`proxy.key`应与一级代理一致  
 
-![1.3](/docs/images/http-tls-2.png)  
+![1.3](/doc/images/http-tls-2.png)  
 一级HTTP代理(VPS,IP:22.22.22.22)  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -374,7 +374,7 @@ a.com
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **1.4.HTTP三级代理(加密)**  
-![1.3](/docs/images/http-tls-3.png)  
+![1.3](/doc/images/http-tls-3.png)  
 一级HTTP代理VPS_01,IP:22.22.22.22  
 `./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级HTTP代理VPS_02,IP:33.33.33.33  
@@ -411,7 +411,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 #### **1.7.HTTP(S)通过SSH中转**  
-![1.7](/docs/images/http-ssh-1.png)  
+![1.7](/doc/images/http-ssh-1.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo  
@@ -425,7 +425,7 @@ target:用户访问的URL,比如:http://demo.com:80/1.html或https://www.baidu.c
 `./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 #### **1.8.KCP协议传输**  
-![1.8](/docs/images/http-kcp.png)  
+![1.8](/doc/images/http-kcp.png)  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS,IP:22.22.22.22)  
@@ -436,7 +436,7 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 那么访问本地的8080端口就是访问VPS上面的代理端口38080,数据通过kcp协议传输,注意kcp走的是udp协议协议,所以防火墙需放开38080的udp协议.   
 
 #### **1.9 HTTP(S)反向代理**   
-![1.9](/docs/images/fxdl.png)  
+![1.9](/doc/images/fxdl.png)  
 proxy不仅支持在其他软件里面通过设置代理的方式,为其他软件提供代理服务,而且支持直接把请求的网站域名解析到proxy监听的ip上,然后proxy监听80和443端口,那么proxy就会自动为你代理访问需要访问的HTTP(S)网站.  
 
 使用方式:  
@@ -598,13 +598,13 @@ HTTP(S)代理支持上级负载均衡,多个上级重复-P参数即可.
 ### **2.TCP代理**  
   
 #### **2.1.普通一级TCP代理**  
-![2.1](/docs/images/tcp-1.png)  
+![2.1](/doc/images/tcp-1.png)  
 本地执行:  
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 那么访问本地33080端口就是访问192.168.22.33的22端口.  
   
 #### **2.2.普通二级TCP代理**  
-![2.2](/docs/images/tcp-2.png)  
+![2.2](/doc/images/tcp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 本地执行:  
@@ -612,7 +612,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是访问22.22.22.33的8080端口.  
   
 #### **2.3.普通三级TCP代理**  
-![2.3](/docs/images/tcp-3.png)  
+![2.3](/doc/images/tcp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -622,7 +622,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口.  
   
 #### **2.4.加密二级TCP代理**  
-![2.4](/docs/images/tcp-tls-2.png)  
+![2.4](/doc/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -630,7 +630,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口.  
   
 #### **2.5.加密三级TCP代理**  
-![2.5](/docs/images/tcp-tls-3.png)  
+![2.5](/doc/images/tcp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -665,13 +665,13 @@ port:代理的端口
 ### **3.UDP代理**  
   
 #### **3.1.普通一级UDP代理**  
-![3.1](/docs/images/udp-1.png)  
+![3.1](/doc/images/udp-1.png)  
 本地执行:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口.  
   
 #### **3.2.普通二级UDP代理**  
-![3.2](/docs/images/udp-2.png)  
+![3.2](/doc/images/udp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 本地执行:  
@@ -679,7 +679,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.3.普通三级UDP代理**  
-![3.3](/docs/images/udp-3.png)  
+![3.3](/doc/images/udp-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -689,7 +689,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地5353端口就是通过TCP隧道,通过VPS访问8.8.8.8的53端口.  
   
 #### **3.4.加密二级UDP代理**  
-![3.4](/docs/images/udp-tls-2.png)  
+![3.4](/doc/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `./proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -697,7 +697,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过加密TCP隧道,通过VPS访问8.8.8.8的UDP:53端口.  
   
 #### **3.5.加密三级UDP代理**  
-![3.5](/docs/images/udp-tls-3.png)  
+![3.5](/doc/images/udp-tls-3.png)  
 一级TCP代理VPS_01,IP:22.22.22.22  
 `./proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02,IP:33.33.33.33  
@@ -909,14 +909,14 @@ SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
   
 #### **5.2.普通二级SOCKS5代理**  
-![5.2](/docs/images/socks-2.png)  
+![5.2](/doc/images/socks-2.png)  
 使用本地端口8090,假设上级SOCKS5代理是`22.22.22.22:8080`  
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件,一行一个域名,匹配规则是最右匹配,比如:baidu.com,匹配的是*.*.baidu.com,黑名单的域名域名直接走上级代理,白名单的域名不走上级代理;如果域名即在黑名单又在白名单中,那么黑名单起作用.  
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
   
 #### **5.3.SOCKS二级代理(加密)**  
-![5.3](/docs/images/socks-tls-2.png)  
+![5.3](/doc/images/socks-tls-2.png)  
 一级SOCKS代理(VPS,IP:22.22.22.22)  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -929,7 +929,7 @@ SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.
 然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080,程序即可通过加密通道通过vps上网。  
   
 #### **5.4.SOCKS三级代理(加密)**  
-![5.4](/docs/images/socks-tls-3.png)  
+![5.4](/doc/images/socks-tls-3.png)  
 一级SOCKS代理VPS_01,IP:22.22.22.22  
 `./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级SOCKS代理VPS_02,IP:33.33.33.33  
@@ -943,7 +943,7 @@ SOCKS5代理,支持CONNECT,UDP协议,不支持BIND,支持用户名密码认证.
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 #### **5.6.SOCKS通过SSH中转**  
-![5.6](/docs/images/socks-ssh.png)  
+![5.6](/doc/images/socks-ssh.png)  
 说明:ssh中转的原理是利用了ssh的转发功能,就是你连接上ssh之后,可以通过ssh代理访问目标地址.  
 假设有:vps  
 - IP是2.2.2.2, ssh端口是22, ssh用户名是:user, ssh用户密码是:demo
@@ -1149,7 +1149,7 @@ SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理,当上级是SOCKS5时转换�
 `./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
 
 #### **6.5 链式连接**   
-![6.4](/docs/images/sps-tls.png)  
+![6.4](/doc/images/sps-tls.png)  
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
 vps01：2.2.2.2  
 vps02：3.3.3.3  
@@ -1244,6 +1244,10 @@ socks5  等价于 -S socks -T tcp
 socks5s 等价于 -S socks -T tls --parent-tls-single , 也就是socks over TLS  
 socks5s2 等价于 -S socks -T tls  
 ss     等价于 -S ss -T tcp  
+httpws    等价于  -S http -T ws
+httpwss   等价于  -S http -T wss
+socks5ws  等价于  -S socks -T ws
+socks5wss 等价于  -S socks -T wss
 ```
 
 #### **6.8 自定义加密**  
@@ -1460,5 +1464,5 @@ Proxy is licensed under GPLv3 license.
   
 ### Donation  
 如果proxy帮助你解决了很多问题,你可以通过下面的捐赠更好的支持proxy.  
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/alipay.jpg?raw=true" width="200"/>  
-<img src="https://github.com/snail007/goproxy/blob/master/docs/images/wxpay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/alipay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/wxpay.jpg?raw=true" width="200"/>  

@@ -6,4 +6,4 @@ draft: false
 
 {{% img src="img/1.jpg" %}}
 
-aaa
+It's YOU!
