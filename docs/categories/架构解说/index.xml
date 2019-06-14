@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>GOPROXY IN ACTION</title>
-    <link>https://snail007.github.io/goproxy/</link>
-    <description>Recent content on GOPROXY IN ACTION</description>
+    <title>架构解说 on GOPROXY IN ACTION</title>
+    <link>https://snail007.github.io/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/</link>
+    <description>Recent content in 架构解说 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Fri, 14 Jun 2019 15:29:47 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.github.io/goproxy/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.github.io/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -18,15 +18,6 @@
       
       <guid>https://snail007.github.io/goproxy/categories/</guid>
       <description>不用看这里，没什么内容，仅仅为了定义目录和tags。</description>
-    </item>
-    
-    <item>
-      <title>About</title>
-      <link>https://snail007.github.io/goproxy/about/</link>
-      <pubDate>Fri, 14 Jun 2019 13:22:19 +0800</pubDate>
-      
-      <guid>https://snail007.github.io/goproxy/about/</guid>
-      <description>It&amp;rsquo;s YOU!</description>
     </item>
     
   </channel>
