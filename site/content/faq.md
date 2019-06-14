@@ -49,4 +49,4 @@ http代理是使用最广泛的代理，大部分客户端都不支持https代�
 至于提供什么类型的代理，是参数`-t`决定的：  
 http代理 ：`-t tcp`    
 https代理：`-t tls --local-tls-single`，服务端需要设置tls证书。  
-https双向认证代理：`-t tls`，服务端和客户端都需要设置tls证书。    
+https双向认证代理：`-t tls`，服务端和客户端都需要设置一样的tls证书。    
