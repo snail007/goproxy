@@ -2,5 +2,5 @@ languageCode = "zh-cn"
 title = "GOPROXY IN ACTION"
 publishdir = "../docs"
 theme = "beg"
-disqusShortname = "XYW"
+disqusShortname = "goproxy"
 ignoreFiles = [ "\\.none$"]
