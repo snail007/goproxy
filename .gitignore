@@ -1,6 +1,7 @@
 proxy
 *.exe
 *.exe~
+!.none
 .*
 release-*
 proxy.crt

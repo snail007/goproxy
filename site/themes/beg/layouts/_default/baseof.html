@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{ partial "meta.html" . }}
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
+    <title>{{ block "title" . }}{{ end }}{{ .Site.Title }}</title>
+    {{ block "meta" . }}{{ end }}
+    <link href="{{ .Site.BaseURL }}css/styles.css" rel="stylesheet">
+    {{ range .Site.Params.custom_css }}
+        <link rel="stylesheet" href="{{ $.Site.BaseURL }}{{ . }}">
+    {{ end }}
+
+  </head>
+
+  <body>
+    {{ if ne (getenv "HUGO_ENV") "DEV" }}
+    {{ template "_internal/google_analytics.html" . }}
+    {{ end }}
+
+    <header class="l-header">
+      <nav class="navbar navbar-default">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{{ .Site.BaseURL }}">{{ .Site.Title }}</a>
+          </div>
+
+          {{ if ne (len .Site.Menus) 0 }}
+          <div id="navbar" class="collapse navbar-collapse">
+            {{ range .Site.Menus }}
+            <ul class="nav navbar-nav navbar-right">
+              {{ range . }}
+              {{ if .HasChildren }}
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ .Name }} <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  {{ range .Children }}
+                  <li><a href="{{ .URL }}">{{ .Name }}</a></li>
+                  {{ end }}
+                </ul>
+              </li>
+              {{ else }}
+              <li><a href="{{ .URL }}">{{ .Name }}</a></li>
+              {{ end }}
+              {{ end }}
+            </ul>
+            {{ end }}
+          </div>
+          {{ end }}
+
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="container">
+        {{ block "main" . }}{{ end }}
+      </div>
+    </main>
+
+    <footer class="l-footer">
+      <div class="container">
+        <p>{{ with .Site.Copyright }}{{ . | safeHTML }}{{ else }}<span class="h-logo">&copy; {{ .Site.Title }}</span>{{ end }}</p>
+        <aside>
+          <p>Powered by <a href="https://gohugo.io/">Hugo</a>.</p>
+          <p><a href="https://github.com/dim0627/hugo_theme_beg">Beg</a> designed by <a href="http://yet.unresolved.xyz/">Daisuke Tsuji</a>.</p>
+        </aside>
+      </div>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+

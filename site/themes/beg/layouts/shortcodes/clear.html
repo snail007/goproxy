@@ -1,0 +1,1 @@
+<div class="clearfix"></div>
