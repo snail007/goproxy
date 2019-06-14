@@ -2,12 +2,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on GOPROXY IN ACTION</title>
-    <link>/goproxy/tags/</link>
+    <link>https://snail007.github.io/goproxy/tags/</link>
     <description>Recent content in Tags on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     
-	<atom:link href="/goproxy/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.github.io/goproxy/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

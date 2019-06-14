@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>GOPROXY IN ACTION</title>
-    <link>/goproxy/</link>
+    <link>https://snail007.github.io/goproxy/</link>
     <description>Recent content on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Fri, 14 Jun 2019 13:22:19 +0800</lastBuildDate>
     
-	<atom:link href="/goproxy/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.github.io/goproxy/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>About</title>
-      <link>/goproxy/about/</link>
+      <link>https://snail007.github.io/goproxy/about/</link>
       <pubDate>Fri, 14 Jun 2019 13:22:19 +0800</pubDate>
       
-      <guid>/goproxy/about/</guid>
+      <guid>https://snail007.github.io/goproxy/about/</guid>
       <description>  </description>
     </item>
     
