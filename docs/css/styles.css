@@ -1,0 +1,295 @@
+html {
+  font-size: 18px;
+}
+
+@media (max-width:  768px)  {
+  html {
+    font-size: 15px;
+  }
+}
+
+body {
+  font-size: inherit;
+  font-weight: 300;
+}
+
+p {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+ul,ol {
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+h1 { font-size: 1.8rem; line-height: 2rem; margin: 1.5rem 0; }
+h2 { font-size: 1.4rem; line-height: 2rem; margin: 1.5rem 0; }
+h3 { font-size: 1.2rem; line-height: 1.5rem; margin: 1.5rem 0; }
+h4, h5, h6 { font-size: 1rem; line-height: 1.5rem; margin: 1.5rem 0; }
+
+main {
+  display: block;
+}
+
+/* Override */
+.navbar {
+  border-radius: 0;
+}
+
+.page-header {
+  margin: 0;
+  margin-bottom: 1rem;
+  padding: 0;
+  padding: 1rem 0;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+/* Layouts */
+.l-header {
+  font-size: .8rem;
+}
+
+.l-footer {
+  font-size: .8rem;
+  padding: 1.5rem 0;
+  color: #999;
+}
+
+/* Parts:facts */
+.p-facts {
+  list-style: none;
+  margin-bottom: .5rem;
+}
+
+.p-facts li {
+  display: inline;
+  font-size: .8rem;
+  margin-right: .5rem;
+}
+
+.p-facts li i {
+  margin-right: .5rem;
+  color: #999;
+}
+
+/* Parts:facts */
+.p-crumb {
+  font-size: .8rem;
+  margin-bottom: 1.5rem;
+}
+
+.p-crumb ol {
+  margin-bottom: 0;
+}
+
+/* Parts:terms */
+.p-terms {
+  list-style: none;
+}
+
+.p-terms li {
+  display: inline-block;
+}
+
+.p-terms li::after {
+  content: ',';
+}
+
+.p-terms li:last-child::after {
+  content: '';
+}
+
+/* Parts:section */
+section {
+  font-size: .8rem;
+}
+
+section>header {
+  margin-bottom: .5rem;
+  font-weight: 500;
+}
+
+section.bordered {
+  border-top: 1px solid #eee;
+  padding: 1rem 0;
+}
+
+/* Parts:article */
+.p-articles {
+  list-style: none;
+}
+
+.p-articles>li {
+  margin-bottom: 2.5rem;
+}
+
+.p-articles.bordered>li {
+  border-bottom: 1px solid #eee;
+  margin-bottom: .5rem;
+}
+
+.p-articles.bordered>li:last-child {
+  border-bottom: none;
+}
+
+article .title {
+  margin: 0;
+  margin-bottom: .5rem;
+}
+
+article .thumb {
+  display: block;
+  background-position: center;
+  background-size: cover;
+}
+
+article>header {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1.5rem;
+}
+
+article .summary {
+  margin-bottom: .5rem;
+}
+
+article.single .thumb {
+  height: 18rem;
+}
+
+@media (max-width:  768px)  {
+article.single .thumb {
+  height: 12rem;
+}
+}
+
+article.li .thumb {
+  float: right;
+  width: 12rem;
+  height: 7.5rem;
+  margin-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+article.li.sm>header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.article-body h2 {
+  padding: 1rem 0;
+  border-bottom: 2px solid #eceff1;
+}
+
+.article-body h2:first-child { margin-top: 0; }
+
+.article-body h3 {
+  color: #428bca;
+}
+
+.article-body h4 {
+  border-left: solid .25rem #428bca;
+  padding: 0 .5rem;
+}
+
+.article-body p {
+  margin: 1.5rem 0;
+  line-height: 1.5rem;
+}
+
+.article-body a {
+  text-decoration: underline;
+}
+
+.article-body ul,
+.article-body ol {
+  padding-left: 1.5rem;
+}
+
+.article-body code {
+  display: inline-block;
+  font-family: Menlo, consolas, monospace;
+  font-size: .8rem;
+  padding: 0 .5rem;
+  line-height: 1.5rem;
+}
+
+.article-body pre {
+  margin: 1.5rem 0;
+  padding: 0;
+  font-size: .8rem;
+  border: none;
+  border-radius: 0;
+}
+
+.article-body pre code {
+  display: block;
+  line-height: 1rem;
+  padding: 1rem;
+}
+
+.article-body blockquote {
+  margin: 1.5rem 0;
+  padding: .5rem 0;
+  font-size: .8rem;
+  border-top: 1px solid #eceff1;
+  border-bottom: 1px solid #eceff1;
+  color: #607d8b;
+}
+
+.article-body blockquote p {
+  margin: .5rem 0;
+  line-height: 1rem;
+}
+
+.article-body strong {
+  box-shadow: 0 -.5rem 0 0 #5bc0de inset;
+}
+
+.article-body em {
+  font-style: normal;
+  font-weight: 700;
+  color: #428bca;
+}
+
+.article-body figure { margin: 1.5rem 0; }
+.article-body figure.left,
+.article-body figure.right {
+  width: 15rem;
+  height: 12rem;
+  margin-top: 0;
+}
+.article-body figure.left { float: left; margin-right: 1rem; }
+.article-body figure.right { float: right; margin-left: 1rem; }
+
+@media (max-width: 768px) {
+  .article-body figure.left,
+  .article-body figure.right {
+    float: none;
+    margin: 0;
+    width: auto;
+    height: auto;
+  }
+}
+
+.article-body figcaption {
+  padding: .5rem 0;
+  font-size: .8rem;
+  text-align: center;
+}
+
+.article-body figcaption a {
+  color: #263238;
+}
+
+

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>GOPROXY IN ACTION</title>
+    <link>/</link>
+    <description>Recent content on GOPROXY IN ACTION</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 14 Jun 2019 13:22:19 +0800</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>About</title>
+      <link>/about/</link>
+      <pubDate>Fri, 14 Jun 2019 13:22:19 +0800</pubDate>
+      
+      <guid>/about/</guid>
+      <description>  </description>
+    </item>
+    
+  </channel>
+</rss>
