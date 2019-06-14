@@ -44,3 +44,9 @@ slug: "faq/goproxy常见问题解答"
 `https代理`：客户端和代理服务器之间是`tls`加密传输数据。  
 http代理是使用最广泛的代理，大部分客户端都不支持https代理。  
 
+### 问：goproxy的http代理是http代理还是https代理？
+答：goproxy支持http代理，https代理，https双向认证代理。  
+至于提供什么类型的代理，是参数`-t`决定的：  
+http代理 ：`-t tcp`    
+https代理：`-t tls --local-tls-single`，服务端需要设置tls证书。  
+https双向认证代理：`-t tls`，服务端和客户端都需要设置tls证书。    
