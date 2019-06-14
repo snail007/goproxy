@@ -3,23 +3,23 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/about/</loc>
+    <loc>/goproxy/about/</loc>
     <lastmod>2019-06-14T13:22:19+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/</loc>
+    <loc>/goproxy/</loc>
     <lastmod>2019-06-14T13:22:19+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/</loc>
+    <loc>/goproxy/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>/goproxy/tags/</loc>
     <priority>0</priority>
   </url>
   
