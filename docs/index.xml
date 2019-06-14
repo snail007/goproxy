@@ -5,11 +5,20 @@
     <link>https://snail007.github.io/goproxy/</link>
     <description>Recent content on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
-    <lastBuildDate>Fri, 14 Jun 2019 15:29:47 +0800</lastBuildDate>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 14 Jun 2019 16:29:13 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>常见问题解答</title>
+      <link>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</link>
+      <pubDate>Fri, 14 Jun 2019 16:29:13 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</guid>
+      <description>问：http代理支持https网站吗？ 答：goproxy的http代理同时支持http和https网站。 问：socks5代理支持UDP吗？ 答</description>
+    </item>
     
     <item>
       <title>Categories</title>

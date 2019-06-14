@@ -8,29 +8,29 @@
 
 
 
-<link rel="canonical" href="https://snail007.github.io/goproxy/categories/">
+<link rel="canonical" href="https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/">
 
 
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
-    <title>Categories - GOPROXY IN ACTION</title>
+    <title>常见问题解答 - GOPROXY IN ACTION</title>
     
-<meta name="description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta name="description" content="goproxy常见问答">
 
-<meta property="og:title" content="Categories - GOPROXY IN ACTION">
+<meta property="og:title" content="常见问题解答 - GOPROXY IN ACTION">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://snail007.github.io/goproxy/categories/">
+<meta property="og:url" content="https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/">
 <meta property="og:image" content="https://snail007.github.io/goproxy/images/default.png">
 <meta property="og:site_name" content="GOPROXY IN ACTION">
-<meta property="og:description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta property="og:description" content="goproxy常见问答">
 <meta property="og:locale" content="zh_CN">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="GOPROXY IN ACTION">
-<meta name="twitter:url" content="https://snail007.github.io/goproxy/categories/">
-<meta name="twitter:title" content="Categories - GOPROXY IN ACTION">
-<meta name="twitter:description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta name="twitter:url" content="https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/">
+<meta name="twitter:title" content="常见问题解答 - GOPROXY IN ACTION">
+<meta name="twitter:description" content="goproxy常见问答">
 <meta name="twitter:image" content="https://snail007.github.io/goproxy/images/default.png">
 
 
@@ -42,15 +42,15 @@
       "@type": "WebPage",
       "@id":"https:\/\/snail007.github.io\/goproxy\/"
     },
-    "headline": "Categories - GOPROXY IN ACTION",
+    "headline": "常见问题解答 - GOPROXY IN ACTION",
     "image": {
       "@type": "ImageObject",
       "url": "https:\/\/snail007.github.io\/goproxy\/images\/default.png",
       "height": 800,
       "width": 800
     },
-    "datePublished": "2019-06-14T15:29:47JST",
-    "dateModified": "2019-06-14T15:29:47JST",
+    "datePublished": "2019-06-14T16:29:13JST",
+    "dateModified": "2019-06-14T16:29:13JST",
     "author": {
       "@type": "Person",
       "name": "GOPROXY IN ACTION"
@@ -65,7 +65,7 @@
         "height": 60
       }
     },
-    "description": "不用看这里，没什么内容，仅仅为了定义目录和tags。"
+    "description": "goproxy常见问答"
   }
 </script>
 
@@ -121,24 +121,40 @@
       <ol class="breadcrumb">
         <li><a href="https://snail007.github.io/goproxy/"><i class="fa fa-home" aria-hidden="true"></i></a></li>
         
-        <li class="active">Categories</li>
+        <li class="active">常见问题解答</li>
       </ol>
     </nav>
 
     <article class="single">
   <header>
     <ul class="p-facts">
-      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-06-14T15:29:47JST">Jun 14, 2019</time></li>
+      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-06-14T16:29:13JST">Jun 14, 2019</time></li>
       
       
     </ul>
 
-    <h1 class="title">Categories</h1>
+    <h1 class="title">常见问题解答</h1>
   </header>
 
   
 
-  <div class="article-body"><p>不用看这里，没什么内容，仅仅为了定义目录和tags。</p>
+  <div class="article-body">
+
+<h3 id="问-http代理支持https网站吗">问：http代理支持https网站吗？</h3>
+
+<p>答：goproxy的http代理同时支持http和https网站。</p>
+
+<h3 id="问-socks5代理支持udp吗">问：socks5代理支持UDP吗？</h3>
+
+<p>答：goproxy的socks5代理是完全按着<a href="https://tools.ietf.org/html/rfc1928">rfc1982</a>草案实现的，支持UDP功能，草案规定UDP端口是在代理握手请求过程中服务端动态指定的，不需要提前指定。如果你使用的socks5客户端是标准客户端，是不需要你手动指定UDP端口的。</p>
+
+<h3 id="问-什么是http代理-https代理">问：什么是http代理？https代理？</h3>
+
+<p>答：无论是<code>http代理</code>还是<code>https代理</code>，都支持同时代理访问<code>http</code>和<code>https</code>网站。<br />
+<code>http代理</code>和<code>https代理</code>里的http和https和你访问的网站是否是http（https）是无关的。<br />
+<code>http代理</code>：客户端和代理服务器之间是<code>tcp</code>传输数据。<br />
+<code>https代理</code>：客户端和代理服务器之间是<code>tls</code>加密传输数据。<br />
+http代理是使用最广泛的代理，大部分客户端都不支持https代理。</p>
 </div>
 
   <footer class="article-footer">
@@ -152,28 +168,13 @@
       <div>
         <ul class="p-terms">
           
-          <li><a href="https://snail007.github.io/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/">架构解说</a></li>
-          
-          <li><a href="https://snail007.github.io/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/">细说层级</a></li>
+          <li><a href="https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/">默认分类</a></li>
           
         </ul>
       </div>
     </section>
     
     
-    
-    <section class="bordered">
-      <header>
-        <div class="panel-title">TAGS</div>
-      </header>
-      <div>
-        <ul class="p-terms">
-          
-          <li><a href="https://snail007.github.io/goproxy/tags/ws/">ws</a></li>
-          
-        </ul>
-      </div>
-    </section>
     
     
   </footer>

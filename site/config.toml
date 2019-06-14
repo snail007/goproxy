@@ -1,6 +1,27 @@
-languageCode = "zh-cn"
+languageCode = "zh-CN"
+defaultContentLanguage =      "zh-CN"
 title = "GOPROXY IN ACTION"
 publishdir = "../docs"
 theme = "beg"
 disqusShortname = "goproxy"
 ignoreFiles = [ "\\.none$"]
+hasCJKLanguage = true
+preserveTaxonomyNames = true
+paginate = 10
+paginatePath = "page"
+enableRobotsTXT = true
+[menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "关于"
+    pre = "<i class='fa fa-heart'></i>"
+    url = "/about/"
+    weight = -110
+
+  # [[menu.main]]
+  #   identifier = "tags"
+  #   name = "TAGS"
+  #   post = "<span class='alert'>New!</span>"
+  #   pre = "<i class='fa fa-road'></i>"
+  #   url = "/tags/"
+  #   weight = -100

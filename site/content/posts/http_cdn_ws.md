@@ -1,9 +1,9 @@
 ---
-title: "{{ replace .Name "-" " " | title }}"
-date: {{ .Date }}
+title: "http代理之CDN"
+date: 2019-06-14T16:25:06+08:00
 draft: true
-description: "文章的描述信息"
-tags: [ "默认标签" ]
+description: "http代理前置CDN，保护你的后端代理"
+tags: [ "cdn","ws" ]
 categories: [ "默认分类" ]
 isCJKLanguage: true
 weight: 0
@@ -32,3 +32,4 @@ weight: 0
 # layout: reviewarticle
 ---
 
+### 前言

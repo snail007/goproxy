@@ -1,2 +1,2 @@
 #!/bin/bash
-hugo server --buildDrafts -e DEV
+env HUGO_ENV="DEV" hugo server --watch --buildDrafts=true --buildFuture=true
