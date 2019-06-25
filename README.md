@@ -37,10 +37,10 @@ In order to provide excellent proxy functionality, please be sure to update your
 - Transparent proxy: with the iptables, goproxy can directly forward the 80 and 443 port's traffic to proxy in the gateway, and can realize the unaware intelligent router proxy.  
 - Protocol conversion: The existing HTTP (S) or SOCKS5 or ss proxy can be converted to a proxy which support HTTP (S), SOCKS5 and ss by one port, if the converted SOCKS5 and ss proxy's parent proxy is SOCKS5, which can support the UDP function.Also support powerful cascading authentication.  
 - Custom underlying encrypted transmission, HTTP(s)\sps\socks proxy can encrypt TCP data through TLS standard encryption and KCP protocol encryption. In addition, it also supports custom encryption after TLS and KCP. That is to say, custom encryption and tls|kcp can be used together. The internal uses AES256 encryption, and it only needs to define one password by yourself when is used.   
-- Low level compression and efficient transmission，The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
+- Low level compression and efficient transmission,The HTTP(s)\sps\socks proxy can encrypt TCP data through a custom encryption and TLS standard encryption and KCP protocol encryption, and can also compress the data after encryption. That is to say, the compression and custom encryption and tls|kcp can be used together.
 - The secure DNS proxy, Through the DNS proxy provided by the local proxy, you can encrypted communicate with the father proxy to realize the DNS query of security and pollution prevention.
 - Load balance,High availability,HTTP(S)\SOCKS5\SPS proxy support Superior load balance and high availability. Multiple superiors repeat -P parameters.
-- Designated exporting IP,HTTP(S)\SOCKS5\SPS proxy supports the client to connect with the entry IP,Using the entry IP as the  exporting IP to visit the target website。If the entry IP is the intranet IP，Exporting IP will not use entry IP
+- Designated exporting IP,HTTP(S)\SOCKS5\SPS proxy supports the client to connect with the entry IP,Using the entry IP as the  exporting IP to visit the target website.If the entry IP is the intranet IP,Exporting IP will not use entry IP
 - Support speed limit. HTTP (S) \SOCKS5\SPS proxy supports speed limit.
 - SOCKS5 proxy supports cascade authentication.
 - Certificate parameters use base64 data. By default, the - C, - K parameters are the path of the CRT certificate and key file. If “base64://” begins, the subsequent data is thought to be Base64 encoded which will be decoded and used.
@@ -164,7 +164,8 @@ The manual on this page applies to the latest version of goproxy. Other versions
     - [6.12 Designated exporting IP](#612-designated-exporting-ip)
     - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-base64-data)
     - [6.14 Independent service](#614-independent-service)
-    - [6.15 View Help](#615-view-help)
+    - [6.15 Rewrite target address](#615-rewrite-target-address)
+    - [6.16 View Help](#616-view-help)
 - [7.KCP Configuration](#7kcp-configuration)
     - [7.1 Configuration introduction](#71configuration-introduction)
     - [7.2 Configuration details](#72configuration-details)
@@ -174,7 +175,7 @@ The manual on this page applies to the latest version of goproxy. Other versions
 
 
 
-### Fast Start  
+#### Fast Start  
 tips:all operations require root permissions.   
 #### Quick installation
 #### **0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**  
@@ -201,7 +202,7 @@ chmod +x install.sh
 ./install.sh  
 ```   
   
-## **First use must be read**  
+### **First use must be read**  
   
 ### **Environmental Science**  
 The following tutorial defaults system is Linux, the program is proxy and all operations require root permissions.   
@@ -240,7 +241,7 @@ The certificate file goproxy.crt and key file goproxy.key will be generated unde
 
 3.By default, the domain name in the certificate is a random domain and can be specified using the `-n test.com` parameter.  
 
-4.More usage:`proxy keygen --help`。 
+4.More usage:`proxy keygen --help`. 
   
 ### **Daemon mode**
 After the default execution of proxy, if you want to keep proxy running, you can't close the command line. 
@@ -666,8 +667,8 @@ Then access to the local UDP:5353 port is access to the UDP:53 port of the 8.8.8
 ### **4.Nat forward**  
 #### **4.1、Principle explanation**  
 Nat forward, is divided into two versions, "multi-link version" and "multiplexed version", generally like web services Which is not a long time to connect the service recommende "multi-link version", if you want to keep long Time connection, "multiplexed version" is recommended.
-1. Multilink version, the corresponding subcommand is tserver，tclient，tbridge。  
-1. Multiplexed version, the corresponding subcommand is server，client，bridge。  
+1. Multilink version, the corresponding subcommand is tserver,tclient,tbridge.  
+1. Multiplexed version, the corresponding subcommand is server,client,bridge.  
 1. the parameters and use of Multilink version and multiplexed is exactly the same.  
 1. **Multiplexed version of the server, client can open the compressed transmission, the parameter is --c.**   
 1. **Server, client or both are open compression, either do not open, can not only open one.**    
@@ -1011,7 +1012,7 @@ Suppose there is a common HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a 
 command：  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`
 
-Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080, TLS needs certificate file，ss's Encryption method is aes-192-cfb and its password is pass.  
+Suppose that there is a TLS HTTP (s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports HTTP (s), Socks5 and ss at the same time. The local port after transformation is 18080, TLS needs certificate file,ss's Encryption method is aes-192-cfb and its password is pass.  
 command：  
 `./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`   
 
@@ -1048,16 +1049,16 @@ Now we want to use PC and vps01 and vps02 to build an encrypted channel. In this
 First, on vps01 (2.2.2.2), we run a HTTP (s) proxy that only can be accessed locally,excute：  
 `./proxy -t tcp -p 127.0.0.1:8080`  
 
-Then run a SPS node on vps01 (2.2.2.2)，excute：  
+Then run a SPS node on vps01 (2.2.2.2),excute：  
 `./proxy -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
 
-Then run a SPS node on vps02 (3.3.3.3)，excute：  
+Then run a SPS node on vps02 (3.3.3.3),excute：  
 `./proxy -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
 
-Then run a SPS node on the PC，excute：  
+Then run a SPS node on the PC,excute：  
 `./proxy -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
 
-finish。  
+finish.  
 
 #### **6.6.Listening on multiple ports**   
 In general, listening one port is enough, but if you need to monitor 80 and 443 ports at the same time as a reverse proxy, the -p parameter can support it.  
@@ -1065,10 +1066,10 @@ The format is：`-p 0.0.0.0:80,0.0.0.0:443`, Multiple bindings are separated by 
 
 #### **6.7.Authentication** 
 SPS supports HTTP(s)\socks5 proxy authentication, which can concatenate authentication, there are four important information:  
-1:Users send authentication information`user-auth`。   
-2:Local authentication information set up`local-auth`。  
-3:Set the authentication information accessing to the father proxy`parent-auth`。  
-4:The final authentication information sent to the father proxy`auth-info-to-parent`。  
+1:Users send authentication information`user-auth`.   
+2:Local authentication information set up`local-auth`.  
+3:Set the authentication information accessing to the father proxy`parent-auth`.  
+4:The final authentication information sent to the father proxy`auth-info-to-parent`.  
 The relationship between them is as follows:   
 
 | user-auth | local-auth | parent-auth | auth-info-to-paren 
@@ -1211,7 +1212,20 @@ The sps function does not force a parent to be specified. When the parent is emp
 The following command is to open the http(s)\ss\socks service with one port.    
 `./proxy sps -p :33080`  
 
-#### **6.15. View Help** 
+#### **6.15 Rewrite Target Address** 
+The HTTP(S)\SOCKS5\SS proxy function provided by the SPS function, the client connects to the specified "target" through the SPS proxy. This "target" is generally a website or an arbitrary TCP address.
+The website "target" is generally foo.com:80, foo.com:443, and sps supports the use of the --rewrite parameter to specify a ‘target’ redirection rule file to redirect the target, and the client is non-perceived.
+For example, if you redirect to "target": demo.com:80 to 192.168.0.12:80, then the client visits the website demo.com, in fact, the website service provided by 192.168.0.12.
+Example of a "target" redirection rule file:
+
+```text
+#example
+Www.a.com:80 10.0.0.2:8080
+** .b.com: 80 10.0.0.2:80
+192.168.0.11:80 10.0.0.2:8080
+```
+
+#### **6.16 View Help** 
 `./proxy help sps` 
 
 ### **7.KCP Configuration**   
@@ -1248,7 +1262,27 @@ If you want to get a more detailed configuration and explanation of the KCP para
 ### **8.DNS anti pollution server** 
 
 #### **8.1.Introduction** 
-It is well known that DNS is a service which use UDP protocol and 53 port，But with the development of network, some well-known DNS servers also support TCP protocol's DNS query，such as google's 8.8.8.8，Proxy's DNS anti pollution server theory is starting a local DNS proxy server，It uses TCP to conduct DNS queries through father proxy. If it encrypted communicate with father proxy，Then you can make a safe and pollution-free DNS analysis.    
+DNS is known as the service provided by UDP port 53, but with the development of the network, some well-known DNS servers also support TCP mode dns query, such as Google's 8.8.8.8, the DNS anti-pollution server principle of the proxy is to start a proxy DNS proxy locally. Server, which uses TCP to perform dns query through the superior agent. If it communicates with the superior agent, it can perform secure and pollution-free DNS resolution. It also supports independent services, concurrent parsing, and enhanced enhanced hosts file function to support flexible concurrent parsing and forwarding.
+
+Dns resolution order:
+1. Use the parameter --hosts to parse.
+2. If the domain name to be resolved is not found in 1, it is parsed using the parameter --forward rule.
+3. The domain name to be resolved is not found in 1 and 2, and the default --default parsing is used. The default default behavior parameter values ​​are three: proxy, direct, and system.
+    The three parameter values ​​are explained as follows:
+    Proxy: The domain name is resolved by the dns server specified by the -q parameter.
+    Direct: Connect to the dns server specified by the -q parameter to resolve the domain name through the local network.
+    System: resolves the domain name through the system dns.
+
+Tip:
+1.The host file format specified by the --hosts parameter is the same as the system hosts file, and the domain name supports wildcards. You can refer to the hosts file.
+2.The parsing forwarding rule file specified by the --forward parameter can be referenced to the resolve.rules file. The domain name supports wildcards. It supports multiple dns servers for each domain name to be parsed concurrently. The resolution of the fastest resolution is used.
+3.The -q parameter can specify multiple remote dns servers to perform concurrent parsing. Whoever resolves the fastest parsing success, the default is: 1.1.1.1, 8.8.8.8, 9.9.9.9, multiple comma-separated. For example, you can also bring ports: 1.1.1.1, 8.8.8.8#53, 9.9.9.9
+
+If you start a standalone service, you don't need a parent:
+Can execute:
+`proxy dns --default system -p :5353`
+Or
+`proxy dns --default direct -p :5353`
 
 #### **8.2.Use examples** 
 
