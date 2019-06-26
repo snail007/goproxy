@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>商业版 on GOPROXY IN ACTION</title>
+    <link>https://snail007.github.io/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/</link>
+    <description>Recent content in 商业版 on GOPROXY IN ACTION</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 26 Jun 2019 13:19:15 +0800</lastBuildDate>
+    
+	<atom:link href="https://snail007.github.io/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>GOPROXY免费版VS商业版</title>
+      <link>https://snail007.github.io/goproxy/free_vs_commercial/</link>
+      <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/free_vs_commercial/</guid>
+      <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 基础功能 √ √ HTTP(S)代理认证，认证API，负载均衡 × √ SOCKS</description>
+    </item>
+    
+  </channel>
+</rss>
