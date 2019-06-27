@@ -17,10 +17,6 @@ The author of this project found that a large number of developers based on the 
 This project will continue to update the iterations, and continue to release the full platform binary program, providing you with powerful and convenient proxy tools.
 If you have customized, business needs, please send an email to `arraykeys@gmail.com`
 
-### Attention of update
-
-In order to provide excellent proxy functionality, please be sure to update your proxy within one month of the release of the latest version of the proxy. The official does not guarantee that the availability of the old version will be discontinued at any time after the release of the latest version, and will be discontinued at any time. Older versions will also have prompts when they start. Your use of the Program means that you agree to the update policy.
-
 ### Features  
 - chain-style proxy: the program itself can be a primary proxy, and if a parent proxy is set, it can be used as a second level proxy or even a N level proxy.  
 - Encrypted communication: if the program is not a primary proxy, and the parent proxy is also the program, then it can communicate with the parent proxy by encryption. The TLS encryption is high-intensity encryption, and it is safe and featureless.  
