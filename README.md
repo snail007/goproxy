@@ -3,6 +3,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 [Download](https://github.com/snail007/goproxy/releases) 
 
+[Free version vs Commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
+
 ---  
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
@@ -10,6 +12,8 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 **[中文手册](/README_ZH.md)**  
 
 **[GUI version](/gui/README.md)**  
+
+**[SDK](https://github.com/snail007/goproxy-sdk)**  
 
 ### Source code declaration
 
