@@ -12,11 +12,17 @@ paginatePath = "page"
 enableRobotsTXT = true
 [menu]
   [[menu.main]]
+    identifier = "download"
+    name = "下载"
+    pre = "<i class='fa fa-heart'></i>"
+    url = "https://github.com/snail007/goproxy/releases/"
+    weight = 1
+  [[menu.main]]
     identifier = "about"
     name = "关于"
     pre = "<i class='fa fa-heart'></i>"
     url = "/about/"
-    weight = -110
+    weight = 2
 
   # [[menu.main]]
   #   identifier = "tags"
