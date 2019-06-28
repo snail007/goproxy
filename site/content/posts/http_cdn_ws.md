@@ -38,13 +38,62 @@ weight: 0
 1. 在VPS上下载对应平台的执行文件，这里以Linux为例。						
 2. 在电脑上下载对应平台的执行文件，这里以Windows为例。						
 
-功能配置简介 | VPS上的命令 | Cloudflare上的设置 | windows计算机上的命令 | 计算机上的代理设置 | 相关参数介绍 
-:--- | :--- | :--- | :--- | :--- | :--- | :---			
-proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http代理  | 	./proxy http -t ws -p "0.0.0.0:8080" | 	Crypto -> SSL ->设置为Off	 | proxy.exe http -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080"	 | "127.0.0.1:8090 http"	 |  
-proxy本地http代理 <--ws\wss--> CDN  <--ws\wss--> VPS的proxy提供的http代理  |	./proxy http -t wss -p "0.0.0.0:8443"	 | Crypto -> SSL ->设置为Full | 	proxy.exe http -t tcp -p "0.0.0.0:8090" -T wss -P "your.domain.com:8443"	  | "127.0.0.1:8090 http"	 |  
-proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http+Basic认证 代理 （成功） | 	./proxy http -t ws -p "0.0.0.0:8080" -a "user:pass" 	 | Crypto -> SSL ->设置为Off | 	proxy.exe http -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080"	 | "127.0.0.1:8090 http"	 |   
-proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http+加密方式+密码 代理 （成功） | 	./proxy http -t wss -p "0.0.0.0:8443" --parent-ws-method="chacha20-ietf-poly1305" --parent-ws-password="snail007/goproxy" | 	Crypto -> SSL ->设置为Full | 	proxy.exe http -t tcp -p "0.0.0.0:8090" -T wss -P "your.domain.com:8443" --local-ws-method="chacha20-ietf-poly1305" --local-ws-password="snail007/goproxy"	 | "127.0.0.1:8090 http"	 | "--local-ws-method:加密方式--parent-ws-password:设置密码"	
-proxy本地socks5代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的socks5代理 | 	./proxy socks -t ws -p "0.0.0.0:8080" | 	Crypto -> SSL ->设置为Off | 	proxy.exe socks --always -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080" | 	"127.0.0.1:8090 socks5 [Remote DNS]"
+#### 1. proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http代理  
+
+1.1. VPS上的命令 ./proxy http -t ws -p "0.0.0.0:8080" 
+
+1.2 Cloudflare上的设置 Crypto -> SSL ->设置为Off	 
+
+1.3 windows计算机上的命令 proxy.exe http -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080"	 
+
+1.4 计算机上的代理设置 "127.0.0.1:8090 http"	 
+  
+
+#### 2. proxy本地http代理 <--ws\wss--> CDN  <--ws\wss--> VPS的proxy提供的http代理  
+
+2.1 VPS上的命令 ./proxy http -t wss -p "0.0.0.0:8443"	 
+
+2.2 Cloudflare上的设置 Crypto -> SSL ->设置为Full 
+
+2.3 windows计算机上的命令 proxy.exe http -t tcp -p "0.0.0.0:8090" -T wss -P "your.domain.com:8443"	  
+
+2.4 计算机上的代理设置 "127.0.0.1:8090 http"	 
+  
+
+#### 3. proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http+Basic认证 代理 （成功） 
+
+3.1 VPS上的命令 ./proxy http -t ws -p "0.0.0.0:8080" -a "user:pass" 	 
+
+3.2 Cloudflare上的设置 Crypto -> SSL ->设置为Off 
+
+3.3 windows计算机上的命令 proxy.exe http -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080"	 
+
+3.4 计算机上的代理设置 "127.0.0.1:8090 http"	 
+   
+
+#### 4. proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http+加密方式+密码 代理 （成功） 
+
+4.1 VPS上的命令 ./proxy http -t wss -p "0.0.0.0:8443" --parent-ws-method="chacha20-ietf-poly1305" --parent-ws-password="snail007/goproxy" 
+
+4.2 Cloudflare上的设置 Crypto -> SSL ->设置为Full 
+
+4.3 windows计算机上的命令 proxy.exe http -t tcp -p "0.0.0.0:8090" -T wss -P "your.domain.com:8443" --local-ws-method="chacha20-ietf-poly1305" --local-ws-password="snail007/goproxy"	 
+
+4.4 计算机上的代理设置 "127.0.0.1:8090 http"	 
+
+4.5 相关参数介绍 "--local-ws-method:加密方式--parent-ws-password:设置密码"	
+
+#### 5. proxy本地socks5代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的socks5代理 
+
+5.1 VPS上的命令 ./proxy socks -t ws -p "0.0.0.0:8080" 
+
+5.2 Cloudflare上的设置 Crypto -> SSL ->设置为Off 
+
+5.3 windows计算机上的命令 proxy.exe socks --always -t tcp -p "0.0.0.0:8090" -T ws -P "your.domain.com:8080" 
+
+5.4 计算机上的代理设置 "127.0.0.1:8090 socks5 [Remote DNS]"
+ 
+
 
 #### 备注
 1、Cloudflare支持的回源端口  
