@@ -35,8 +35,8 @@ weight: 0
 ### goproxy代理之套用CDN
 
 #### 准备	
-1. 在VPS上下载对应平台的执行文件，这里以Linux为例。						
-2. 在电脑上下载对应平台的执行文件，这里以Windows为例。						
+1. 在VPS上[下载](https://github.com/snail007/goproxy/releases)对应平台的执行文件，这里以Linux为例。						
+2. 在电脑上[下载](https://github.com/snail007/goproxy/releases)对应平台的执行文件，这里以Windows为例。						
 
 #### 1. proxy本地http代理 <--ws\wss--> CDN  <--ws\wss-->  VPS的proxy提供的http代理  
 
