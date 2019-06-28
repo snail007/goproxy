@@ -13,31 +13,48 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/tags/cnd/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
+    <loc>https://snail007.github.io/goproxy/tags/cdn/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/categories/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
+    <loc>https://snail007.github.io/goproxy/posts/cloudflare/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://snail007.github.io/goproxy/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/posts/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/tags/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/cnd/</loc>
     <lastmod>2019-06-28T17:02:57+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -54,20 +71,8 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://snail007.github.io/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/</loc>
     <lastmod>2019-06-26T13:19:15+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://snail007.github.io/goproxy/tags/cdn/</loc>
-    <lastmod>2019-06-14T16:25:06+08:00</lastmod>
     <priority>0</priority>
   </url>
   

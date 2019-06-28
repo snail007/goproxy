@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>cdn on GOPROXY IN ACTION</title>
+    <title>CDN on GOPROXY IN ACTION</title>
     <link>https://snail007.github.io/goproxy/tags/cdn/</link>
-    <description>Recent content in cdn on GOPROXY IN ACTION</description>
+    <description>Recent content in CDN on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 14 Jun 2019 16:25:06 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 28 Jun 2019 17:37:30 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/tags/cdn/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Cloudflare使用简明教程</title>
+      <link>https://snail007.github.io/goproxy/posts/cloudflare/</link>
+      <pubDate>Fri, 28 Jun 2019 17:37:30 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/cloudflare/</guid>
+      <description>前言 GOPROXY底层传输协议支持ws，可以利用cdn加速，使用cdn需要域名解析知识以及cdn的一些知识，那么很多小伙伴对cdn不是很熟悉</description>
+    </item>
     
     <item>
       <title>代理之套用CDN</title>
