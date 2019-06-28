@@ -11,6 +11,8 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
   
 **[English Manual](/README.md)**  
 
+**[GORPOXY实战教程](https://snail007.github.io/goproxy)**
+
 **[桌面版](/gui/README_ZH.md)**  
 
 **[SDK](https://github.com/snail007/goproxy-sdk)**  
@@ -89,7 +91,7 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 ### 手册目录
 - [负载均衡和高可用](#负载均衡和高可用)
 - [代理跳板跳转](#代理跳板跳转)
-- [域名黑名单](#域名黑名单)
+- [域名黑白名单](#域名黑白名单)
 - [1. HTTP代理](#1http代理)
     - [1.1 普通HTTP代理](#11普通一级http代理)
     - [1.2 普通二级HTTP代理](#12普通二级http代理)
@@ -325,11 +327,14 @@ http，socks5代表的是普通的http和socks5代理。
 https，socks5s代表的是通过tls保护的http和socks5代理，  
 也就是http代理 over TLS ， socks over TLS。  
 
-### **域名黑名单**
+### **域名黑白名单**
 
-socks/http(s)/sps代理都支持域名黑名单，用--stop参数指定一个域名列表文件，那么当用户连接文件里面这些域名的时候连接就会被断开。  
+socks/http(s)/sps代理都支持域名黑白名单。  
+用--stop参数指定一个域名黑名单列表文件，那么当用户连接文件里面这些域名的时候连接就会被断开。    
+用--only参数指定一个域名白名单列表文件，那么当用户连接文件里面这些域名之外的域名的时候连接就会被断开。    
+如果同时设置了--stop和--only，那么只有--only会起作用。  
 
-黑名单域名文件内容格式如下:
+黑白域名名单文件内容格式如下:
 
 ```text
 **.baidu.com

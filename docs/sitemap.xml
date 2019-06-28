@@ -13,12 +13,6 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/tags/cdn/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://snail007.github.io/goproxy/categories/</loc>
     <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
@@ -43,6 +37,12 @@
   
   <url>
     <loc>https://snail007.github.io/goproxy/tags/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/cdn/</loc>
     <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
   </url>

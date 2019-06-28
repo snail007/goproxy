@@ -9,7 +9,11 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
   
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
   
+
+
 **[中文手册](/README_ZH.md)**  
+
+**[GORPOXY IN ACTION](https://snail007.github.io/goproxy)**
 
 **[GUI version](/gui/README.md)**  
 
@@ -80,7 +84,7 @@ The manual on this page applies to the latest version of goproxy. Other versions
 ### Manual catalogues
 - [Load balance and high available](#load-balance-and-high-available)
 - [Jump through proxy server](#jump-through-proxy-server)
-- [Stop domains](#stop-domains)
+- [Stop  and only domains](#stop-and-only-domains)
 - [1.HTTP proxy](#1http-proxy)
     - [1.1 Common HTTP proxy](#11common-http-proxy)
     - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
@@ -295,26 +299,29 @@ http,socks5 represents the normal http and socks5 proxy.
 https,socks5s represents the http and socks5 proxy protected by tls.
 That is http proxy over TLS, socks over TLS.
 
-### **Stop domains**
+### **Stop and only domains**
 
-The socks/http(s)/sps proxy supports domain name blacklists. Use the --stop parameter to specify a domain name list file. When the user connects these domains in the file, the connection will be disconnected.
+The socks/http(s)/sps proxy supports domain name black and white lists.
+Use the --stop parameter to specify a domain name blacklist file, then the connection will be disconnected when the user connects these domains in the file.
+Specify a domain name whitelist file with the --only parameter, then the connection will be disconnected when the user connects to a domain other than those domains in the file.
+If both --stop and --only are set, then only --only will work.
 
-The format of the blacklist domain name file is as follows:
+The format of the black and white domain name list file is as follows:
 
 ```text
 **.baidu.com
 *.taobao.com
-a.com
+A.com
 192.168.1.1
 192.168.*.*
 ?.qq.com
 ```
 
-Description:  
-1.One domain name per line, domain name writing supports wildcards `*` and `?`, `*` represents any number of characters, `?` represents an arbitrary character.  
-2.`**.baidu.com` matches no matter how many levels all suffixes are `.baidu.com` domain name.  
+Description:
+1. One domain name per line, domain name writing supports wildcards `*` and `?`, `*` represents any number of characters, `?` represents an arbitrary character,
+2.`**.baidu.com` Matches no matter how many levels all suffixes are ..baidu.com`.
 3.`*.taobao.com` The matching suffix is ​​the third-level domain name of `.taobao.com`.
-4. Can also be directly an IP address.
+4. It can also be an IP address directly.
 5.`#` at the beginning of the comment.
 
 ### **1.HTTP proxy**  
