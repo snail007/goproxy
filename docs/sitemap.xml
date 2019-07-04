@@ -3,34 +3,58 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://snail007.github.io/goproxy/posts/usage/first/</loc>
+    <loc>https://snail007.github.io/goproxy/usage/first/</loc>
     <lastmod>2019-07-04T11:00:50+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/free_vs_commercial/</loc>
+    <loc>https://snail007.github.io/goproxy/page/free_vs_commercial/</loc>
     <lastmod>2019-06-26T13:19:15+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</loc>
+    <loc>https://snail007.github.io/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</loc>
     <lastmod>2019-06-14T16:29:13+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/posts/usage/tcp/</loc>
-    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://snail007.github.io/goproxy/categories/</loc>
-    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/</loc>
-    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/posts/</loc>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/</loc>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/</loc>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/</loc>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</loc>
+    <lastmod>2019-07-04T17:54:31+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -41,13 +65,12 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/posts/</loc>
+    <loc>https://snail007.github.io/goproxy/usage/tcp/</loc>
     <lastmod>2019-07-04T11:00:50+08:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/tags/</loc>
+    <loc>https://snail007.github.io/goproxy/usage/</loc>
     <lastmod>2019-07-04T11:00:50+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -70,12 +93,6 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://snail007.github.io/goproxy/tags/cnd/</loc>
     <lastmod>2019-06-28T17:02:57+08:00</lastmod>
     <priority>0</priority>
@@ -90,6 +107,12 @@
   <url>
     <loc>https://snail007.github.io/goproxy/posts/http-nat-cdn/</loc>
     <lastmod>2019-06-28T17:02:57+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/page/</loc>
+    <lastmod>2019-06-26T13:19:15+08:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -110,7 +133,7 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/categories/</loc>
+    <loc>https://snail007.github.io/goproxy/page/categories/</loc>
     <lastmod>2019-06-14T15:29:47+08:00</lastmod>
   </url>
   
@@ -127,7 +150,7 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/about/</loc>
+    <loc>https://snail007.github.io/goproxy/page/about/</loc>
     <lastmod>2019-06-14T13:22:19+08:00</lastmod>
   </url>
   

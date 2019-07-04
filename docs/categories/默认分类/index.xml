@@ -6,27 +6,36 @@
     <description>Recent content in 默认分类 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 28 Jun 2019 17:37:30 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 17:54:31 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>GOPROXY免费版VS商业版</title>
-      <link>https://snail007.github.io/goproxy/free_vs_commercial/</link>
+      <link>https://snail007.github.io/goproxy/page/free_vs_commercial/</link>
       <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
       
-      <guid>https://snail007.github.io/goproxy/free_vs_commercial/</guid>
+      <guid>https://snail007.github.io/goproxy/page/free_vs_commercial/</guid>
       <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 TCP转发 √ √ UDP转发 √ √ HTTP(S)代理 √ √ Socks5代理 √ √</description>
     </item>
     
     <item>
       <title>常见问题解答</title>
-      <link>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</link>
+      <link>https://snail007.github.io/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</link>
       <pubDate>Fri, 14 Jun 2019 16:29:13 +0800</pubDate>
       
-      <guid>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</guid>
+      <guid>https://snail007.github.io/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</guid>
       <description>问：http代理支持https网站吗？ 答：goproxy的http代理同时支持http和https网站。 问：socks5代理支持UDP吗？ 答</description>
+    </item>
+    
+    <item>
+      <title>在windows下实现基于dns的自动全局代理</title>
+      <link>https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/</link>
+      <pubDate>Thu, 04 Jul 2019 17:54:31 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/</guid>
+      <description>在windows下实现基于dns的自动全局代理。 本方法需要监听本地80和443端口，所以如果你有程序占用了这两个端口，请关闭相应的程序。 本文</description>
     </item>
     
     <item>

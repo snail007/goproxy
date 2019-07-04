@@ -6,10 +6,19 @@
     <description>Recent content in Tags on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 04 Jul 2019 11:00:50 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 17:54:31 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>全局代理</title>
+      <link>https://snail007.github.io/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/</link>
+      <pubDate>Thu, 04 Jul 2019 17:54:31 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>tcp</title>
