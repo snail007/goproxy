@@ -155,6 +155,8 @@
 
 <li><p>goproxy的很多功能都使用了相同的核心技术，比如底层传输：tcps传输协议，ws协议，kcp参数，黑白名单，认证等，它们的用法是一样的。
 为了手册的简洁，相同的功能的说明，就放在这里统一说明，不在每个地方重复的说明。</p></li>
+
+<li><p>proxy功能很多，往往你想要用的只是其中一个功能，那么不要被手册其它功能内容吓到和干扰，你只需要看前言和你需要用到的功能的手册部分即可！</p></li>
 </ol>
 
 <h4 id="名词解释">名词解释</h4>
@@ -200,6 +202,58 @@
 
 <p>本级代理的-T和和上级代理的-t应该是一致的，不然是无法通讯的，这很好理解，对方说什么语言你用什么语言去聆听才能明白对方说些什么。</p></li>
 </ol>
+
+<h4 id="ip地址">IP地址</h4>
+
+<p>由于代理示例用到各种IP，示例中统一用IP_X，X是机器名词代号，比如A，B，这样的形式表示一个机器的IP；你在复制命令后实际使用前，记得一定要根据自己情况替换IP_X为你自己的实际IP地址。如果示例中提到了机器A，那么默认它的IP地址就是IP_A，不再重复声明。</p>
+
+<h4 id="高级使用">高级使用</h4>
+
+<p>proxy命令格式是：proxy <code>功能名称</code> 参数1 参数2 参数n&hellip;，proxy功能名称和功能介绍如下：</p>
+
+<p><code>http</code> http(s)代理</p>
+
+<p><code>socks</code> socks5代理</p>
+
+<p><code>sps</code> http(s)+socks5+ss综合代理，一个端口同时支持3种代理</p>
+
+<p><code>tcp</code> tcp代理，tcp端口转发</p>
+
+<p><code>udp</code> udp代理，udp端口转发</p>
+
+<p><code>dns</code> dns代理，dns服务器，dns转发</p>
+
+<p><code>bridge</code> 多路复用版内网穿透的bridge端</p>
+
+<p><code>client</code> 多路复用版内网穿透的client端</p>
+
+<p><code>server</code> 多路复用版内网穿透的bridge端</p>
+
+<p><code>tbridge</code> 多链接版内网穿透的bridge端</p>
+
+<p><code>tclient</code> 多链接版内网穿透的client端</p>
+
+<p><code>tserver</code> 多链接版内网穿透的server端</p>
+
+<p>由于每个功能参数众多，有的很少用，默认值就能很好工作，手册只是介绍了高频的参数的使用，未提及的参数可以通过 proxy help <code>功能名称</code> ，查看到功能相关所有的参数。</p>
+
+<p>如果你想深入了解和掌握proxy每个功能的用法，那么动起手来试试每个参数吧，去体会，去感受就能深刻理解并熟练掌握它。</p>
+
+<h4 id="kcp配置">KCP配置</h4>
+
+<p>很多功能的底层传输协议都支持kcp，kcp参数都是以<code>--kcp</code>开头，可以通过proxy help 功能名称 ，比如：proxy help http，去查看所有的参数，包括kcp参数。</p>
+
+<p>虽然参数很多，但是proxy针对大众情况，设置了一波默认值，如果发现默认参数不合你口味，那么你就需要自己搜索kcp每个参数的意思和用法，资料很多，本手册不再赘述。</p>
+
+<p>当然最简单的用法就是设置一个kcp密码即可，KCP协议需要&ndash;kcp-key参数设置一个密码用于加密解密数据。</p>
+
+<h4 id="tls证书">TLS证书</h4>
+
+<p>为了安全很多功能都可以使用底层tls传输协议加密传输数据，tls需要一个proxy.crt证书文件和一个私钥proxy.key文件。</p>
+
+<p>这两个文件可以通过命令：<code>proxy keygen proxy</code> 生成。</p>
+
+<p>另外，tls证书只需要在一个proxy端生成，其它端复制过去即可，要保证所有端证书一样。</p>
 </div>
 
   <footer class="article-footer">
@@ -265,7 +319,7 @@
       
       <a href="https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/" class="list-group-item">常见问题解答</a>
       
-      <a href="https://snail007.github.io/goproxy/posts/usage/tcp/" class="list-group-item">TCP代理-GOPROXY手册</a>
+      <a href="https://snail007.github.io/goproxy/posts/usage/tcp/" class="list-group-item">TCP代理</a>
       
       <a href="https://snail007.github.io/goproxy/posts/cloudflare/" class="list-group-item">Cloudflare使用简明教程</a>
       
