@@ -8,29 +8,29 @@
 
 
 
-<link rel="canonical" href="https://snail007.github.io/goproxy/categories/">
+<link rel="canonical" href="https://snail007.github.io/goproxy/posts/usage/first/">
 
 
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
-    <title>Categories - GOPROXY IN ACTION</title>
+    <title>手册前言（使用必读） - GOPROXY IN ACTION</title>
     
-<meta name="description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta name="description" content="GOPROXY手册使用">
 
-<meta property="og:title" content="Categories - GOPROXY IN ACTION">
+<meta property="og:title" content="手册前言（使用必读） - GOPROXY IN ACTION">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://snail007.github.io/goproxy/categories/">
+<meta property="og:url" content="https://snail007.github.io/goproxy/posts/usage/first/">
 <meta property="og:image" content="https://snail007.github.io/goproxy/images/default.png">
 <meta property="og:site_name" content="GOPROXY IN ACTION">
-<meta property="og:description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta property="og:description" content="GOPROXY手册使用">
 <meta property="og:locale" content="zh_CN">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="GOPROXY IN ACTION">
-<meta name="twitter:url" content="https://snail007.github.io/goproxy/categories/">
-<meta name="twitter:title" content="Categories - GOPROXY IN ACTION">
-<meta name="twitter:description" content="不用看这里，没什么内容，仅仅为了定义目录和tags。">
+<meta name="twitter:url" content="https://snail007.github.io/goproxy/posts/usage/first/">
+<meta name="twitter:title" content="手册前言（使用必读） - GOPROXY IN ACTION">
+<meta name="twitter:description" content="GOPROXY手册使用">
 <meta name="twitter:image" content="https://snail007.github.io/goproxy/images/default.png">
 
 
@@ -42,15 +42,15 @@
       "@type": "WebPage",
       "@id":"https:\/\/snail007.github.io\/goproxy\/"
     },
-    "headline": "Categories - GOPROXY IN ACTION",
+    "headline": "手册前言（使用必读） - GOPROXY IN ACTION",
     "image": {
       "@type": "ImageObject",
       "url": "https:\/\/snail007.github.io\/goproxy\/images\/default.png",
       "height": 800,
       "width": 800
     },
-    "datePublished": "2019-06-14T15:29:47JST",
-    "dateModified": "2019-06-14T15:29:47JST",
+    "datePublished": "2019-07-04T11:00:50JST",
+    "dateModified": "2019-07-04T11:00:50JST",
     "author": {
       "@type": "Person",
       "name": "GOPROXY IN ACTION"
@@ -65,7 +65,7 @@
         "height": 60
       }
     },
-    "description": "不用看这里，没什么内容，仅仅为了定义目录和tags。"
+    "description": "GOPROXY手册使用"
   }
 </script>
 
@@ -125,24 +125,81 @@
       <ol class="breadcrumb">
         <li><a href="https://snail007.github.io/goproxy/"><i class="fa fa-home" aria-hidden="true"></i></a></li>
         
-        <li class="active">Categories</li>
+        <li itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="https://snail007.github.io/goproxy/posts/" itemprop="url"><span itemprop="title">posts</span></a></li>
+        
+        <li class="active">手册前言（使用必读）</li>
       </ol>
     </nav>
 
     <article class="single">
   <header>
     <ul class="p-facts">
-      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-06-14T15:29:47JST">Jun 14, 2019</time></li>
-      
+      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-07-04T11:00:50JST">Jul 4, 2019</time></li>
+      <li><i class="fa fa-bookmark" aria-hidden="true"></i><a href="https://snail007.github.io/goproxy/posts/">posts</a></li>
       
     </ul>
 
-    <h1 class="title">Categories</h1>
+    <h1 class="title">手册前言（使用必读）</h1>
   </header>
 
   
 
-  <div class="article-body"><p>不用看这里，没什么内容，仅仅为了定义目录和tags。</p>
+  <div class="article-body">
+
+<h3 id="前言">前言</h3>
+
+<h4 id="goproxy使用必读">GOPROXY使用必读</h4>
+
+<ol>
+<li><p>手册和项目中使用了一部分的名词，它们本身的含义和在goproxy的专有含义是不一样的，所以前言中对这些名词做了解释，不然直接看具体手册章节必然会出现理解偏差，导致不能正确的使用goproxy。</p></li>
+
+<li><p>goproxy的很多功能都使用了相同的核心技术，比如底层传输：tcps传输协议，ws协议，kcp参数，黑白名单，认证等，它们的用法是一样的。
+为了手册的简洁，相同的功能的说明，就放在这里统一说明，不在每个地方重复的说明。</p></li>
+</ol>
+
+<h4 id="名词解释">名词解释</h4>
+
+<p>本站包括项目手册，如果没有特殊说明：</p>
+
+<ol>
+<li><p><code>goproxy</code>，<code>proxy</code>，均指本项目：<a href="https://github.com/snail007/goproxy。">https://github.com/snail007/goproxy。</a></p></li>
+
+<li><p><code>本地</code>，均指<code>需要使用代理的应用程序</code>直接连接的<code>代理</code>，一般是你日常使用的机器，也可能是一个服务器。</p></li>
+
+<li><p><code>代理链</code>，指多个相连的代理组成的一个代理链条，一个代理链中至少有两个上下相连的代理，链条中的每一个代理不一定都是proxy提供的，可以是第三方标准代理。</p>
+
+<p>为了区分，链条的 <strong><em>末端</em></strong> 是入口，称为<code>本地代理</code>是最后一级；链条的 <strong><em>顶端</em></strong> 是出口，称为<code>一级</code>代理。</p>
+
+<p>连接一级代理的是二级代理，连接二级代理的是三级级代理，以此类推。</p>
+
+<p>由此可见，本地和一级代理是链条的两端，链条中至少两个代理，链条中间的称为n级代理，越靠近本地n就越大。</p>
+
+<p>如果链条只有两个代理，那么二级代理和本地代理指的是同一个代理。</p></li>
+
+<li><p><code>本级</code>，均指链条中，任意一个代理。</p></li>
+
+<li><p><code>上级</code>，<code>父级</code>，<code>parent</code>，均指：本级代理连接的上一级代理，可以是proxy提供的代理也可以是第三方标准代理。</p></li>
+
+<li><p><code>上级</code>，均指链条中，当前代理的上一级代理。</p></li>
+</ol>
+
+<h4 id="分层架构">分层架构</h4>
+
+<ol>
+<li><p>goproxy数据流动架构，主要分为两层。</p></li>
+
+<li><p>上层是我们熟悉的各种标准服务：socks5代理，http(s)代理，sps代理（ss+http(s)+socks5），tcp代理，udp代理，dns代理，内网穿透。</p>
+
+<p>也就是命令中的第一参数，代表服务，也称为功能模块，功能。比如：http，socks，sps，tcp，udp，dns等。</p></li>
+
+<li><p>下层也就是底层，负责数据传输，传输的协议和有很多，比如：tcp，tcps，ws，tls，wss，tou，kcp，不同的协议使用的基础协议也是不一样的，</p>
+
+<p>其中除了tou和kcp使用UDP作为基础协议之外，其它传输协议均是基于TCP。也就是说tou和kcp监听的是UDP端口，其它监听的是TCP端口。</p>
+
+<p>传输协议在proxy的参数中体现为-T、-t，-T是连接上级使用的传输协议。-t是本地监听的端口使用的传输协议。</p>
+
+<p>本级代理的-T和和上级代理的-t应该是一致的，不然是无法通讯的，这很好理解，对方说什么语言你用什么语言去聆听才能明白对方说些什么。</p></li>
+</ol>
 </div>
 
   <footer class="article-footer">
@@ -156,28 +213,13 @@
       <div>
         <ul class="p-terms">
           
-          <li><a href="https://snail007.github.io/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/">架构解说</a></li>
-          
-          <li><a href="https://snail007.github.io/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/">细说层级</a></li>
+          <li><a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">GOPROXY手册</a></li>
           
         </ul>
       </div>
     </section>
     
     
-    
-    <section class="bordered">
-      <header>
-        <div class="panel-title">TAGS</div>
-      </header>
-      <div>
-        <ul class="p-terms">
-          
-          <li><a href="https://snail007.github.io/goproxy/tags/ws/">ws</a></li>
-          
-        </ul>
-      </div>
-    </section>
     
     
   </footer>

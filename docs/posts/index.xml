@@ -6,10 +6,28 @@
     <description>Recent content in Posts on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 28 Jun 2019 17:37:30 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 11:00:50 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>手册前言（使用必读）</title>
+      <link>https://snail007.github.io/goproxy/posts/usage/first/</link>
+      <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/usage/first/</guid>
+      <description>前言 GOPROXY使用必读 手册和项目中使用了一部分的名词，它们本身的含义和在goproxy的专有含义是不一样的，所以前言中对这些名词做了解释</description>
+    </item>
+    
+    <item>
+      <title>TCP代理-GOPROXY手册</title>
+      <link>https://snail007.github.io/goproxy/posts/usage/tcp/</link>
+      <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/usage/tcp/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Cloudflare使用简明教程</title>

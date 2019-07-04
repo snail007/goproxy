@@ -6,10 +6,19 @@
     <description>Recent content on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 28 Jun 2019 17:37:30 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 11:00:50 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>手册前言（使用必读）</title>
+      <link>https://snail007.github.io/goproxy/posts/usage/first/</link>
+      <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/usage/first/</guid>
+      <description>前言 GOPROXY使用必读 手册和项目中使用了一部分的名词，它们本身的含义和在goproxy的专有含义是不一样的，所以前言中对这些名词做了解释</description>
+    </item>
     
     <item>
       <title>GOPROXY免费版VS商业版</title>
@@ -17,7 +26,7 @@
       <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
       
       <guid>https://snail007.github.io/goproxy/free_vs_commercial/</guid>
-      <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 基础功能 √ √ HTTP(S)代理认证，认证API，负载均衡 × √ SOCKS</description>
+      <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 TCP转发 √ √ UDP转发 √ √ HTTP(S)代理 √ √ Socks5代理 √ √</description>
     </item>
     
     <item>
@@ -27,6 +36,15 @@
       
       <guid>https://snail007.github.io/goproxy/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</guid>
       <description>问：http代理支持https网站吗？ 答：goproxy的http代理同时支持http和https网站。 问：socks5代理支持UDP吗？ 答</description>
+    </item>
+    
+    <item>
+      <title>TCP代理-GOPROXY手册</title>
+      <link>https://snail007.github.io/goproxy/posts/usage/tcp/</link>
+      <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/usage/tcp/</guid>
+      <description></description>
     </item>
     
     <item>

@@ -17,7 +17,7 @@
       <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
       
       <guid>https://snail007.github.io/goproxy/free_vs_commercial/</guid>
-      <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 基础功能 √ √ HTTP(S)代理认证，认证API，负载均衡 × √ SOCKS</description>
+      <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 TCP转发 √ √ UDP转发 √ √ HTTP(S)代理 √ √ Socks5代理 √ √</description>
     </item>
     
     <item>

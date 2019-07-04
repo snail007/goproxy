@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://snail007.github.io/goproxy/posts/usage/first/</loc>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://snail007.github.io/goproxy/free_vs_commercial/</loc>
     <lastmod>2019-06-26T13:19:15+08:00</lastmod>
   </url>
@@ -13,31 +18,43 @@
   </url>
   
   <url>
+    <loc>https://snail007.github.io/goproxy/posts/usage/tcp/</loc>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://snail007.github.io/goproxy/categories/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/posts/cloudflare/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <loc>https://snail007.github.io/goproxy/</loc>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <loc>https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</loc>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/posts/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://snail007.github.io/goproxy/tags/</loc>
-    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/tcp/</loc>
+    <lastmod>2019-07-04T11:00:50+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -45,6 +62,11 @@
     <loc>https://snail007.github.io/goproxy/tags/cdn/</loc>
     <lastmod>2019-06-28T17:37:30+08:00</lastmod>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/posts/cloudflare/</loc>
+    <lastmod>2019-06-28T17:37:30+08:00</lastmod>
   </url>
   
   <url>

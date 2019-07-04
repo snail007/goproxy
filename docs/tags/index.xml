@@ -6,13 +6,22 @@
     <description>Recent content in Tags on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 28 Jun 2019 17:37:30 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 11:00:50 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>cdn</title>
+      <title>tcp</title>
+      <link>https://snail007.github.io/goproxy/tags/tcp/</link>
+      <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/tags/tcp/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>CDN</title>
       <link>https://snail007.github.io/goproxy/tags/cdn/</link>
       <pubDate>Fri, 28 Jun 2019 17:37:30 +0800</pubDate>
       
