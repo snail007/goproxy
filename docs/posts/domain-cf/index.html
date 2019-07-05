@@ -167,43 +167,43 @@
 <p>记录值：111.222.111.222</p>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/1.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/1.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/1.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/1.png">
   
 </figure>
 
 <h5 id="2-登陆https-su-geekzu-org平台">2、登陆<a href="https://su.geekzu.org平台">https://su.geekzu.org平台</a></h5>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/2.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/2.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/2.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/2.png">
   
 </figure>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/3.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/3.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/3.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/3.png">
   
 </figure>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/4.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/4.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/4.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/4.png">
   
 </figure>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/5.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/5.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/5.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/5.png">
   
 </figure>
 
 <h5 id="3-点击编辑-添加-填写二级域名test-和回源地址-vps-domain-com到相应的位置-提交">3、点击编辑-》添加-》填写二级域名test，和回源地址：vps.domain.com到相应的位置-》提交</h5>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/6.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/6.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/6.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/6.png">
   
 </figure>
 
 <h5 id="4-提交后会看到如下">4、提交后会看到如下：</h5>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/7.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/7.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/7.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/7.png">
   
 </figure>
 
@@ -222,7 +222,7 @@
 <p>填写完成后保存即可。</p>
 
 <figure>
-  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/8.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/8.png">
+  <img css="width:90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/8.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/8.png">
   
 </figure>
 
@@ -393,6 +393,13 @@
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+    $(function(){
+      $("img[css]").each(function(){
+        $(this).attr("style",$(this).attr("css"));
+      });
+    });
+    </script>
   </body>
 </html>
 
