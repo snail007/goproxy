@@ -3,7 +3,7 @@ Proxy is a high performance HTTP, HTTPS, HTTPS, websocket, TCP, UDP, Socks5, ss 
 
 [Download](https://github.com/snail007/goproxy/releases) 
 
-[Free version vs Commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
+[Free version vs Commercial version](https://snail007.github.io/goproxy/page/free_vs_commercial_en/)
 
 ---  
   
@@ -275,7 +275,7 @@ weight    According to the weight and connection number of each superior, choose
 Tips:
 The load balance check interval can be set by `--lb-retrytime`, unit milliseconds.
 Load balancing connection timeout can be set by `--lb-timeout`, unit milliseconds.
-If the load balance policy is weighted (weight), the -P format is: 2.2.2.2:3880@1,1 is the weight which is greater than 0.
+If the load balance policy is weighted (weight), the -P format is: 2.2.2.2:3880?w=1,1 is the weight which is greater than 0.
 If the load balance strategy is hash, the default is to select the parent based on the client address, and the parent can be selected by switching `- lb-hashtarget', using the access destination address.
 
 ### **Jump through proxy server**
@@ -530,7 +530,7 @@ HTTP (S) proxy supports superior load balance, and multiple -P parameters can be
 `proxy http --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`   
 
 #### **1.14.2 Set weight**  
-`proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -t tcp -p :33080`
+`proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080?w=2 -P 3.1.1.1:33080?w=1 -t tcp -p :33080`
 
 #### **1.14.3 Use target address to select superior**  
 `proxy http --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
@@ -972,7 +972,7 @@ SOCKS proxy supports the load balancing of superior authorities, and the -P para
 `proxy socks --lb-method=leastconn --lb-retrytime 300 --lb-timeout 300 -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
 #### **5.12.2 Set weight**  
-`proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080@1 -P 2.1.1.1:33080@2 -P 3.1.1.1:33080@1 -p :33080 -t tcp`
+`proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080?w=1 -P 2.1.1.1:33080?w=2 -P 3.1.1.1:33080?w=1 -p :33080 -t tcp`
 
 #### **5.12.3 Use target address to select parent proxy**  
 `proxy socks --lb-hashtarget --lb-method=leasttime -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
