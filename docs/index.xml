@@ -6,7 +6,7 @@
     <description>Recent content on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 04 Jul 2019 17:54:31 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 05 Jul 2019 08:20:48 +0800</lastBuildDate>
     
 	<atom:link href="https://snail007.github.io/goproxy/index.xml" rel="self" type="application/rss+xml" />
     
@@ -36,6 +36,15 @@
       
       <guid>https://snail007.github.io/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/</guid>
       <description>问：http代理支持https网站吗？ 答：goproxy的http代理同时支持http和https网站。 问：socks5代理支持UDP吗？ 答</description>
+    </item>
+    
+    <item>
+      <title>域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</title>
+      <link>https://snail007.github.io/goproxy/posts/domain-cf/</link>
+      <pubDate>Fri, 05 Jul 2019 08:20:48 +0800</pubDate>
+      
+      <guid>https://snail007.github.io/goproxy/posts/domain-cf/</guid>
+      <description>准备工作 本文综合的介绍了cloudflare注册使用，从域名解析到回源，完成了一个二级域使用cloudflare的CDN加速的配置过程。 首先</description>
     </item>
     
     <item>

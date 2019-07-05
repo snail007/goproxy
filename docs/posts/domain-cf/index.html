@@ -8,29 +8,29 @@
 
 
 
-<link rel="canonical" href="https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/">
+<link rel="canonical" href="https://snail007.github.io/goproxy/posts/domain-cf/">
 
 
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
-    <title>在windows下实现基于dns的自动全局代理 - GOPROXY IN ACTION</title>
+    <title>域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 - GOPROXY IN ACTION</title>
     
-<meta name="description" content="在windows下实现基于dns的自动全局代理">
+<meta name="description" content="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法">
 
-<meta property="og:title" content="在windows下实现基于dns的自动全局代理 - GOPROXY IN ACTION">
+<meta property="og:title" content="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 - GOPROXY IN ACTION">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/">
+<meta property="og:url" content="https://snail007.github.io/goproxy/posts/domain-cf/">
 <meta property="og:image" content="https://snail007.github.io/goproxy/images/default.png">
 <meta property="og:site_name" content="GOPROXY IN ACTION">
-<meta property="og:description" content="在windows下实现基于dns的自动全局代理">
+<meta property="og:description" content="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法">
 <meta property="og:locale" content="zh_CN">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="GOPROXY IN ACTION">
-<meta name="twitter:url" content="https://snail007.github.io/goproxy/posts/windows-global-proxy-using-dns/">
-<meta name="twitter:title" content="在windows下实现基于dns的自动全局代理 - GOPROXY IN ACTION">
-<meta name="twitter:description" content="在windows下实现基于dns的自动全局代理">
+<meta name="twitter:url" content="https://snail007.github.io/goproxy/posts/domain-cf/">
+<meta name="twitter:title" content="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 - GOPROXY IN ACTION">
+<meta name="twitter:description" content="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法">
 <meta name="twitter:image" content="https://snail007.github.io/goproxy/images/default.png">
 
 
@@ -42,15 +42,15 @@
       "@type": "WebPage",
       "@id":"https:\/\/snail007.github.io\/goproxy\/"
     },
-    "headline": "在windows下实现基于dns的自动全局代理 - GOPROXY IN ACTION",
+    "headline": "域名解析 域名控制台\x2b极客\x2bcloudflare 的配置方法 - GOPROXY IN ACTION",
     "image": {
       "@type": "ImageObject",
       "url": "https:\/\/snail007.github.io\/goproxy\/images\/default.png",
       "height": 800,
       "width": 800
     },
-    "datePublished": "2019-07-04T17:54:31JST",
-    "dateModified": "2019-07-04T17:54:31JST",
+    "datePublished": "2019-07-05T08:20:48JST",
+    "dateModified": "2019-07-05T08:20:48JST",
     "author": {
       "@type": "Person",
       "name": "GOPROXY IN ACTION"
@@ -65,7 +65,7 @@
         "height": 60
       }
     },
-    "description": "在windows下实现基于dns的自动全局代理"
+    "description": "域名解析 域名控制台\x2b极客\x2bcloudflare 的配置方法"
   }
 </script>
 
@@ -127,90 +127,106 @@
         
         <li itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="https://snail007.github.io/goproxy/posts/" itemprop="url"><span itemprop="title">posts</span></a></li>
         
-        <li class="active">在windows下实现基于dns的自动全局代理</li>
+        <li class="active">域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</li>
       </ol>
     </nav>
 
     <article class="single">
   <header>
     <ul class="p-facts">
-      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-07-04T17:54:31JST">Jul 4, 2019</time></li>
+      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-07-05T08:20:48JST">Jul 5, 2019</time></li>
       <li><i class="fa fa-bookmark" aria-hidden="true"></i><a href="https://snail007.github.io/goproxy/posts/">posts</a></li>
       
     </ul>
 
-    <h1 class="title">在windows下实现基于dns的自动全局代理</h1>
+    <h1 class="title">域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</h1>
   </header>
 
   
 
   <div class="article-body">
 
-<h3 id="在windows下实现基于dns的自动全局代理">在windows下实现基于dns的自动全局代理。</h3>
+<h4 id="准备工作">准备工作</h4>
 
-<p>本方法需要监听本地80和443端口，所以如果你有程序占用了这两个端口，请关闭相应的程序。</p>
+<p>本文综合的介绍了cloudflare注册使用，从域名解析到回源，完成了一个二级域使用cloudflare的CDN加速的配置过程。</p>
 
-<p>本文提供了两种方式：1.使用CDN作为中间传输层 2.不使用CDN；根据自己情况二选一即可。</p>
+<p>首先你要去 cloudflare 官网 <a href="https://dash.cloudflare.com/sign-up">https://dash.cloudflare.com/sign-up</a> 注册一个账号，然后登录，提示你添加域名的时候，不要添加，略过即可。</p>
 
-<h4 id="1-正常配置篇">1.正常配置篇</h4>
+<h4 id="操作步骤">操作步骤</h4>
 
-<p>服务端为机器A</p>
+<p>前提有一顶级域名domain.com，有一VPS，IP地址为111.222.111.222，要求二级域名test.domain.com指向上述IP地址。</p>
 
-<p>1、在上级服务端执行：</p>
+<h5 id="1-在域名domain-com服务器上进行解析">1、在域名domain.com服务器上进行解析</h5>
 
-<p><code>./proxy http -t ws -p 0.0.0.0:8443  —daemon</code></p>
+<p>例如：</p>
 
-<p>3、在电脑上：</p>
+<p>主记录：vps1</p>
 
-<p>1）修改proxy目录下面的hosts文件，该文件和proxy.exe程序一起。</p>
+<p>记录类型：A</p>
 
-<p>添加如下内容：</p>
+<p>记录值：111.222.111.222</p>
 
-<pre><code class="language-text">127.0.0.1  **.**  
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/1.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/1.png">
+  
+</figure>
 
-</code></pre>
+<h5 id="2-登陆https-su-geekzu-org平台">2、登陆<a href="https://su.geekzu.org平台">https://su.geekzu.org平台</a></h5>
 
-<p>2）修改本地网络连接的dns地址为127.0.0.1。</p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/2.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/2.png">
+  
+</figure>
 
-<p>3）本机启动一个二级sps监听80和443。</p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/3.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/3.png">
+  
+</figure>
 
-<p><code>proxy.exe sps -P httpws://IP_A:8443 -p :80,:443 -q 8.8.8.8:53</code></p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/4.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/4.png">
+  
+</figure>
 
-<p>4）本地启动一个dns监听53 <code>.\proxy.exe dns -P http://127.0.0.1:80 —hosts .\hosts</code> 。</p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/5.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/5.png">
+  
+</figure>
 
-<h4 id="2-配合cdn配置篇">2.配合CDN配置篇</h4>
+<h5 id="3-点击编辑-添加-填写二级域名test-和回源地址-vps-domain-com到相应的位置-提交">3、点击编辑-》添加-》填写二级域名test，和回源地址：vps.domain.com到相应的位置-》提交</h5>
 
-<p>1、配置好cloudflare，域名为：your.domain.com ping一下查看ip地址例如：111.222.111.222。</p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/6.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/6.png">
+  
+</figure>
 
-<p>2、在上级服务端执行：</p>
+<h5 id="4-提交后会看到如下">4、提交后会看到如下：</h5>
 
-<p>首先生成证书：</p>
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/7.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/7.png">
+  
+</figure>
 
-<p><code>proxy keygen -C proxy</code></p>
+<p>这时域名test.domain.com</p>
 
-<p>然后：</p>
+<p>回源地址：vps1.domain.com</p>
 
-<p><code>./proxy http -t wss -p 0.0.0.0:8443 —daemon</code></p>
+<p>CNAME地址：test.domain.com.cdn.cloudflare.net</p>
 
-<p>3、在电脑上：</p>
+<h5 id="5-回到域名解析服务器">5、回到域名解析服务器</h5>
 
-<p>1）修改proxy目录下面的hosts文件，该文件和proxy.exe程序一起。</p>
+<p>主机记录：test
+记录类型：CNAME
+记录值（也就是上面的CNAME地址）：test.domain.com.cdn.cloudflare.net</p>
 
-<p>添加如下内容：</p>
+<p>填写完成后保存即可。</p>
 
-<pre><code class="language-text">111.222.111.222 your.domain.com
+<figure>
+  <img width="90%" src="https://snail007.github.io/goproxy/img/domain-cloudflare/8.png" alt="域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法 img/domain-cloudflare/8.png">
+  
+</figure>
 
-127.0.0.1  **.**  
-
-</code></pre>
-
-<p>2）修改本地网络连接的dns地址为127.0.0.1。</p>
-
-<p>3）本机启动一个二级sps监听80和443。</p>
-
-<p><code>proxy.exe sps -P httpwss://your.domain.com:8443 -p :80,:443 -q 8.8.8.8:53</code></p>
-
-<p>4）本地启动一个dns监听53 <code>.\proxy.exe dns -P http://127.0.0.1:80 —hosts .\hosts</code> 。</p>
+<h5 id="6-如果需要开启ssl-需登陆到cloudflare-crypto-ssl-设置为full">6、如果需要开启ssl，需登陆到cloudflare，Crypto -&gt; SSL -&gt;设置为Full</h5>
 </div>
 
   <footer class="article-footer">
@@ -239,7 +255,13 @@
       <div>
         <ul class="p-terms">
           
-          <li><a href="https://snail007.github.io/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/">全局代理</a></li>
+          <li><a href="https://snail007.github.io/goproxy/tags/cdn/">cdn</a></li>
+          
+          <li><a href="https://snail007.github.io/goproxy/tags/domain/">domain</a></li>
+          
+          <li><a href="https://snail007.github.io/goproxy/tags/ws/">ws</a></li>
+          
+          <li><a href="https://snail007.github.io/goproxy/tags/cloudflare/">cloudflare</a></li>
           
         </ul>
       </div>
