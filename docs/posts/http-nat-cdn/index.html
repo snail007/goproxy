@@ -150,14 +150,21 @@
 
 <p><strong>好处就不用说了吧，两个字稳！</strong></p>
 
-<p>假如在windows上配置了可以访问的连接 <a href="http://127.0.0.1:801/abc/index.php">http://127.0.0.1:801/abc/index.php</a> , 如何能使用VPS+CDN做内网穿透呢？<br />
-配置如下：<br />
-1. 在VPS上执行（配置无误后，再加上&ndash;daemon）<br />
-./proxy bridge -t ws -p &ldquo;:8080&rdquo; -C proxy.crt -K proxy.key<br />
-./proxy server -T ws -r &ldquo;:8880@:801&rdquo; -P &ldquo;127.0.0.1:8080&rdquo; -C proxy.crt -K proxy.key<br />
-2. 在windows上执行<br />
-proxy.exe client -T ws -P &ldquo;your.domain.com:8080&rdquo; -C proxy.crt -K proxy.key<br />
-3. 这时在浏览器里访问：<a href="http://your.domain.com:8880/abc/index.php">http://your.domain.com:8880/abc/index.php</a> ，就会看到电脑中的页面了。</p>
+<p>假如在windows上配置了可以访问的连接 <a href="http://127.0.0.1:801/abc/index.php">http://127.0.0.1:801/abc/index.php</a> , 如何能使用VPS+CDN做内网穿透呢？</p>
+
+<p>配置如下：</p>
+
+<h5 id="1-在vps上执行-配置无误后-再加上-daemon">1. 在VPS上执行（配置无误后，再加上&ndash;daemon）</h5>
+
+<p><code>./proxy bridge -t ws -p &quot;:8080&quot; -C proxy.crt -K proxy.key</code></p>
+
+<p><code>./proxy server -T ws -r &quot;:8880@:801&quot; -P &quot;127.0.0.1:8080&quot; -C proxy.crt -K proxy.key</code></p>
+
+<h5 id="2-在windows上执行">2. 在windows上执行</h5>
+
+<p><code>proxy.exe client -T ws -P &quot;your.domain.com:8080&quot; -C proxy.crt -K proxy.key</code></p>
+
+<h5 id="3-这时在浏览器里访问-http-your-domain-com-8880-abc-index-php-就会看到电脑中的页面了">3. 这时在浏览器里访问：<a href="http://your.domain.com:8880/abc/index.php">http://your.domain.com:8880/abc/index.php</a> ，就会看到电脑中的页面了。</h5>
 </div>
 
   <footer class="article-footer">
@@ -188,7 +195,7 @@ proxy.exe client -T ws -P &ldquo;your.domain.com:8080&rdquo; -C proxy.crt -K pro
           
           <li><a href="https://snail007.github.io/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/">内网穿透</a></li>
           
-          <li><a href="https://snail007.github.io/goproxy/tags/cnd/">CND</a></li>
+          <li><a href="https://snail007.github.io/goproxy/tags/cdn/">cdn</a></li>
           
         </ul>
       </div>
@@ -283,7 +290,7 @@ proxy.exe client -T ws -P &ldquo;your.domain.com:8080&rdquo; -C proxy.crt -K pro
       
       <a href="https://snail007.github.io/goproxy/tags/ws" class="list-group-item">ws</a>
       
-      <a href="https://snail007.github.io/goproxy/tags/cnd" class="list-group-item">cnd</a>
+      <a href="https://snail007.github.io/goproxy/tags/cloudflare" class="list-group-item">cloudflare</a>
       
       <a href="https://snail007.github.io/goproxy/tags/tcp" class="list-group-item">tcp</a>
       

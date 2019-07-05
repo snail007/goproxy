@@ -93,12 +93,6 @@
   </url>
   
   <url>
-    <loc>https://snail007.github.io/goproxy/tags/cnd/</loc>
-    <lastmod>2019-06-28T17:02:57+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://snail007.github.io/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/</loc>
     <lastmod>2019-06-28T17:02:57+08:00</lastmod>
     <priority>0</priority>
@@ -118,6 +112,12 @@
   <url>
     <loc>https://snail007.github.io/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/</loc>
     <lastmod>2019-06-26T13:19:15+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.github.io/goproxy/tags/cloudflare/</loc>
+    <lastmod>2019-06-14T16:25:06+08:00</lastmod>
     <priority>0</priority>
   </url>
   

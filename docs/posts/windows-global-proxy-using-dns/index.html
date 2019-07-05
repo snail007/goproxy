@@ -158,7 +158,7 @@
 
 <p>1、在上级服务端执行：</p>
 
-<p><code>./proxy http -t ws -p 0.0.0.0:8443 —local-ws-method=aes-256-cfb —local-ws-password=foobar —daemon</code></p>
+<p><code>./proxy http -t ws -p 0.0.0.0:8443  —daemon</code></p>
 
 <p>3、在电脑上：</p>
 
@@ -174,7 +174,7 @@
 
 <p>3）本机启动一个二级sps监听80和443。</p>
 
-<p><code>proxy.exe sps -P httpws://IP_A:8443 —parent-ws-method=aes-256-cfb —parent-ws-password=foobar -p :80,:443 -q 8.8.8.8:53</code></p>
+<p><code>proxy.exe sps -P httpws://IP_A:8443 -p :80,:443 -q 8.8.8.8:53</code></p>
 
 <p>4）本地启动一个dns监听53 <code>.\proxy.exe dns -P http://127.0.0.1:80 —hosts .\hosts</code> 。</p>
 
@@ -190,7 +190,7 @@
 
 <p>然后：</p>
 
-<p><code>./proxy http -t wss -p 0.0.0.0:8443 —local-ws-method=aes-256-cfb —local-ws-password=foobar —daemon</code></p>
+<p><code>./proxy http -t wss -p 0.0.0.0:8443 —daemon</code></p>
 
 <p>3、在电脑上：</p>
 
@@ -208,7 +208,7 @@
 
 <p>3）本机启动一个二级sps监听80和443。</p>
 
-<p><code>proxy.exe sps -P httpwss://your.domain.com:8443 —parent-ws-method=aes-256-cfb —parent-ws-password=foobar -p :80,:443 -q 8.8.8.8:53</code></p>
+<p><code>proxy.exe sps -P httpwss://your.domain.com:8443 -p :80,:443 -q 8.8.8.8:53</code></p>
 
 <p>4）本地启动一个dns监听53 <code>.\proxy.exe dns -P http://127.0.0.1:80 —hosts .\hosts</code> 。</p>
 </div>
@@ -334,7 +334,7 @@
       
       <a href="https://snail007.github.io/goproxy/tags/ws" class="list-group-item">ws</a>
       
-      <a href="https://snail007.github.io/goproxy/tags/cnd" class="list-group-item">cnd</a>
+      <a href="https://snail007.github.io/goproxy/tags/cloudflare" class="list-group-item">cloudflare</a>
       
       <a href="https://snail007.github.io/goproxy/tags/tcp" class="list-group-item">tcp</a>
       
