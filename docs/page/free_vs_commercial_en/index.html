@@ -348,6 +348,37 @@ If the system finds that the user maliciously propagates its own &lsquo;authoriz
 <p>2.the commercial version of the user can put forward some commercial functional opinions, the official will evaluate the reasonableness of the opinions, etc. If the opinions are adopted, they will be added in the new version in the future.</p>
 
 <p>3.the commercial version of the user can be updated to  commercial version of the new version for free.</p>
+
+<h4 id="can-t-access-the-authorized-solution">Can&rsquo;t access the authorized solution</h4>
+
+<p>The commercial version must be online authorized. If you are using the proxy, the server can access the Internet, but the proxy can not access to the authorization information. Can be solved as follows.</p>
+
+<h5 id="1-if-your-proxy-machine-can-access-the-internet-you-can-specify-the-dns-startup-proxy-because-the-machine-dns-may-not-correctly-resolve-the-updated-domain-name">1. If your proxy machine can access the Internet, you can specify the DNS startup proxy because the machine DNS may not correctly resolve the updated domain name.</h5>
+
+<p>Linux startup command example:</p>
+
+<pre><code class="language-shell">LIC_DNS=8.8.4.4:53 ./proxy http -p :9090
+</code></pre>
+
+<p>Windows startup command example</p>
+
+<pre><code class="language-shell">Set LIC_DNS=8.8.4.4:53
+./proxy.exe http -p :9090
+</code></pre>
+
+<h5 id="2-if-the-proxy-is-not-able-to-access-the-internet-directly-in-the-internal-network-environment-you-can-start-an-http-proxy-on-the-machine-that-can-access-the-internet-and-then-use-it-for-the-proxy">2. If the proxy is not able to access the Internet directly in the internal network environment, you can start an http proxy on the machine that can access the Internet, and then use it for the proxy.</h5>
+
+<p>For example: The proxy is at <code>192.168.1.10</code> and cannot access the Internet directly.</p>
+
+<p>The machine can access the Internet at <code>192.168.1.200</code>, then it can be started on the <code>192.168.1.200</code> machine:</p>
+
+<p><code>./proxy http -p :8080 -q 8.8.4.4:53</code></p>
+
+<p>Start the command above <code>192.168.1.10</code>:</p>
+
+<p><code>LIC_PROXY=http://192.168.1.200:8080 ./proxy http -p :9090</code></p>
+
+<h5 id="3-if-the-intranet-has-a-ready-made-http-proxy-then-you-don-t-need-to-start-a-proxy-yourself-in-the-2-steps-lic-proxy-can-use-the-ready-made-http-proxy-directly">3. If the intranet has a ready-made http proxy, then you don&rsquo;t need to start a proxy yourself in the 2 steps. LIC_PROXY can use the ready-made http proxy directly.</h5>
 </div>
 
   <footer class="article-footer">
