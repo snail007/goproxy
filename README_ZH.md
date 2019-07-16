@@ -190,8 +190,16 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 #### 自动安装
 #### **0.如果你的VPS是linux64位的系统，那么只需要执行下面一句，就可以完成自动安装和配置.**  
 
+免费版执行这个：  
+
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
+```  
+
+商业版执行这个：  
+
+```shell  
+curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash  
 ```  
 
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
@@ -201,20 +209,40 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.s
 
 #### **1.下载proxy**  
 下载地址:https://github.com/snail007/goproxy/releases/latest   
-下面以v7.5为例，如果有最新版，请使用最新版链接，注意替换下面的下载连接里面的版本号为最新版版本号。  
+下面以v7.9为例，如果有最新版，请使用最新版链接，注意替换下面的下载连接里面的版本号为最新版版本号。  
+
+免费版执行这个：  
 
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v7.5/proxy-linux-amd64.tar.gz  
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz  
+```  
+
+商业版执行这个：  
+
+```shell  
+cd /root/proxy/  
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz  
 ```  
 
 #### **2.下载自动安装脚本**  
+
+免费版执行这个：  
 
 ```shell  
 cd /root/proxy/  
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
 chmod +x install.sh  
 ./install.sh  
+```  
+
+商业版执行这个：  
+
+```shell  
+cd /root/proxy/  
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh  
+chmod +x install_commercial.sh  
+./install_commercial.sh  
 ```  
 
 ### **首次使用必看**  
@@ -580,7 +608,7 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 
 ### **1.16 指定出口IP**  
 
-`--bind-listen`参数，就可以开启客户端用入口IP连接过来的，就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP。
+`--bind-listen`参数，就可以开启客户端用入口IP连接过来的，就用入口IP作为出口IP访问目标网站的功能。如果绑定了不正确的IP会导致代理不能工作，此时代理会尝试不绑定IP去访问目标，同时日志会提示。
 
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
 

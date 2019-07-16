@@ -1,5 +1,5 @@
 #!/bin/bash
-F="proxy-linux-amd64.tar.gz"
+F="proxy-linux-amd64_commercial.tar.gz"
 
 set -e
 
