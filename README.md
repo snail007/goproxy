@@ -82,100 +82,134 @@ The manual on this page applies to the latest version of goproxy. Other versions
 - [Safety advice](#safety-advice)
 
 ### Manual catalogues
-- [Load balance and high available](#load-balance-and-high-available)
-- [Jump through proxy server](#jump-through-proxy-server)
-- [Stop  and only domains](#stop-and-only-domains)
-- [1.HTTP proxy](#1http-proxy)
-    - [1.1 Common HTTP proxy](#11common-http-proxy)
-    - [1.2 Common HTTP second level proxy](#12common-http-second-level-proxy)
-    - [1.3 HTTP second level proxy(encrypted)](#13http-second-level-encrypted-proxy)
-    - [1.4 HTTP third level proxy(encrypted)](#14http-third-level-encrypted-proxy)
-    - [1.5 Basic Authentication](#15basic-authentication)
-    - [1.6 HTTP proxy traffic force to go to parent http proxy](#16http-proxy-traffic-force-to-go-to-parent-http-proxy)
-    - [1.7 Transfer through SSH](#17transfer-through-ssh)
-        - [1.7.1 The way of username and password](#171the-way-of-username-and-password)
-        - [1.7.2 The way of username and key](#172the-way-of-username-and-key)
-    - [1.8 KCP protocol transmission](#18kcp-protocol-transmission)
-    - [1.9 HTTP(S) reverse proxy](#19http-reverse-proxy)
-    - [1.10 HTTP(S) transparent proxy](#110http-transparent-proxy)
-    - [1.11 Custom DNS](#111custom-dns)
-    - [1.12 Custom encryption](#112-custom-encryption)
-    - [1.13 Compressed transmission](#113-compressed-transmission)
-    - [1.14 load balance](#114-load-balance)
-    - [1.15 speed limit](#115-speed-limit)
-    - [1.16 Designated exporting IP](#116-designated-export-ip)
-    - [1.17 Certificate parameters using Base64 data](#117-certificate-parameters-using-Base64-data)
-    - [1.18 Intelligent mode](#118-intelligent-mode)
-    - [1.19 View help](#119view-help)
-- [2.TCP proxy](#2tcp-proxy)
-    - [2.1 Common TCP first level proxy](#21common-tcp-first-level-proxy)
-    - [2.2 Common TCP second level proxy](#22common-tcp-second-level-proxy)
-    - [2.3 Common TCP third level proxy](#23common-tcp-third-level-proxy)
-    - [2.4 TCP second level encrypted proxy](#24tcp-second-level-encrypted-proxy)
-    - [2.5 TCP third level encrypted proxy](#25tcp-third-level-encrypted-proxy)
-    - [2.6 Connect parents proxy through other proxy](#26connect-parents-proxy-through-other-proxy)
-    - [2.7 View help](#27view-help)
-- [3.UDP proxy](#3udp-proxy)
-    - [3.1 Common UDP first level proxy](#31common-udp-first-level-proxy)
-    - [3.2 Common UDP second level proxy](#32common-udp-second-level-proxy)
-    - [3.3 Common UDP third level proxy](#33common-udp-third-level-proxy)
-    - [3.4 UDP second level encrypted proxy](#34udp-second-level-encrypted-proxy)
-    - [3.5 UDP third level encrypted proxy](#35udp-third-level-encrypted-proxy)
-    - [3.6 View help](#36view-help)
-- [4.Nat forward](#4nat-forward)
-    - [4.1 Principle explanation](#41principle-explanation)
-    - [4.2 TCP common usage](#42tcp-common-usage)
-    - [4.3 Local development of WeChat interface](#43local-development-of-wechat-interface)
-    - [4.4 UDP common usage](#44udp-common-usage)
-    - [4.5 Advanced usage 1](#45advanced-usage-1)
-    - [4.6 Advanced usage 2](#46advanced-usage-2)
-    - [4.7 -r parameters of server](#47-r-parameters-of-server)
-    - [4.8 Server and client connect bridge through proxy](#48server-and-client-connect-bridge-through-proxy)
-    - [4.9 View help](#49view-help)
-- [5.SOCKS5 proxy](#5socks5-proxy)
-    - [5.1 Common SOCKS5 proxy](#51common-socks5-proxy)
-    - [5.2 Common SOCKS5 second level proxy](#52common-socks5-second-level-proxy)
-    - [5.3 SOCKS5 second level proxy(encrypted)](#53socks-second-level-encrypted-proxy)
-    - [5.4 SOCKS third level proxy(encrypted)](#54socks-third-level-encrypted-proxy)
-    - [5.5 SOCKS proxy traffic force to go to parent socks proxy](#55socks-proxy-traffic-force-to-go-to-parent-socks-proxy)
-    - [5.6 Transfer through SSH](#56transfer-through-ssh)
-        - [5.6.1 The way of username and password](#561the-way-of-username-and-password)
-        - [5.6.2 The way of username and key](#562the-way-of-username-and-key)
-    - [5.7 Authentication](#57authentication)
-    - [5.8 KCP protocol transmission](#58kcp-protocol-transmission)
-    - [5.9 Custom DNS](#59custom-dns)
-    - [5.10 Custom encryption](#510custom-encryption)
-    - [5.11 Compressed transmission](#511compressed-transmission)
-    - [5.12 load balance](#512-load-balance)
-    - [5.13 speed limit](#513-speed-limit)
-    - [5.14 Designated exporting IP](#514-designated-exporting-ip)
-    - [5.15 Cascade authentication](#515-cascade-authentication)
-    - [5.16 Certificate parameters using Base64 data](#516-certificate-parameters-using-base64-data)
-    - [5.17 Intelligent mode](#517-intelligent-mode)
-    - [5.18 View help](#518view-help)
-- [6.Proxy protocol conversion](#6proxy-protocol-conversion)
-    - [6.1 Functional introduction](#61functional-introduction)
-    - [6.2 HTTP(S) to HTTP(S) + SOCKS5](#62http-to-http-socks5)
-    - [6.3 SOCKS5 to HTTP(S) + SOCKS5](#63socks5-to-http-socks5)
-    - [6.4 SS to HTTP(S)+SOCKS5+SS](#64-ss-to-httpssocks5ss)
-    - [6.5 Chain style connection](#65chain-style-connection)
-    - [6.6 Listening on multiple ports](#66listening-on-multiple-ports)
-    - [6.7 Authentication](#67authentication)
-    - [6.8 Custom encryption](#68-custom-encryption)
-    - [6.9 Compressed transmission](#69-compressed-transmission)
-    - [6.10 Disable-protocol](#610-disable-protocol)
-    - [6.11 speed limit](#611-speed-limit)
-    - [6.12 Designated exporting IP](#612-designated-exporting-ip)
-    - [6.13 Certificate parameters using Base64 data](#613-certificate-parameters-using-base64-data)
-    - [6.14 Independent service](#614-independent-service)
-    - [6.15 Rewrite target address](#615-rewrite-target-address)
-    - [6.16 View Help](#616-view-help)
-- [7.KCP Configuration](#7kcp-configuration)
-    - [7.1 Configuration introduction](#71configuration-introduction)
-    - [7.2 Configuration details](#72configuration-details)
-- [8.DNS anti pollution server](#8dns-anti-pollution-server)
-    - [8.1 Introduction](#81introduction)
-    - [8.2 Use examples](#82use-examples)
+- [Source code declaration](#Source-code-declaration)
+- [Features](#Features)
+- [Why need these?](#Why-need-these)
+- [How to find the organization?](#How-to-find-the-organization)
+- [Installation](#Installation)
+- [First use must read](#First-use-must-read)
+- [Manual catalogues](#Manual-catalogues)
+  - [Fast Start](#Fast-Start)
+  - [Quick installation](#Quick-installation)
+  - [**0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**](#0-If-your-VPS-is-linux64-you-can-complete-the-automatic-installation-and-configuration-by-the-following-sentence)
+  - [Manual installation](#Manual-installation)
+  - [**1.Download proxy**](#1Download-proxy)
+  - [**2.Download the automatic installation script**](#2Download-the-automatic-installation-script)
+- [**First use must be read**](#First-use-must-be-read)
+- [**Environmental Science**](#Environmental-Science)
+- [**Use configuration file**](#Use-configuration-file)
+- [**Debug output**](#Debug-output)
+- [**Using log files**](#Using-log-files)
+- [**Generating a communication certificate file**](#Generating-a-communication-certificate-file)
+- [**Daemon mode**](#Daemon-mode)
+- [**Monitor mode**](#Monitor-mode)
+- [**Safety advice**](#Safety-advice)
+- [**Load balance and high available**](#Load-balance-and-high-available)
+- [**Jump through proxy server**](#Jump-through-proxy-server)
+- [**Stop and only domains**](#Stop-and-only-domains)
+- [**1.HTTP proxy**](#1HTTP-proxy)
+  - [**1.1.common HTTP proxy**](#11common-HTTP-proxy)
+  - [**1.2.Common HTTP second level proxy**](#12Common-HTTP-second-level-proxy)
+  - [**1.3.HTTP second level encrypted proxy**](#13HTTP-second-level-encrypted-proxy)
+  - [**1.4.HTTP third level encrypted proxy**](#14HTTP-third-level-encrypted-proxy)
+  - [**1.5.Basic Authentication**](#15Basic-Authentication)
+  - [**1.6.HTTP proxy traffic force to go to parent http proxy**](#16HTTP-proxy-traffic-force-to-go-to-parent-http-proxy)
+  - [**1.7.Transfer through SSH**](#17Transfer-through-SSH)
+    - [***1.7.1.The way of username and password***](#171The-way-of-username-and-password)
+    - [***1.7.2.The way of username and key***](#172The-way-of-username-and-key)
+  - [**1.8.KCP protocol transmission**](#18KCP-protocol-transmission)
+  - [**1.9.HTTP reverse proxy**](#19HTTP-reverse-proxy)
+  - [**1.10.HTTP transparent proxy**](#110HTTP-transparent-proxy)
+  - [**1.11.Custom DNS**](#111Custom-DNS)
+  - [**1.12 Custom encryption**](#112-Custom-encryption)
+  - [**1.13 Compressed transmission**](#113-Compressed-transmission)
+- [**1.14 Load balance**](#114-Load-balance)
+  - [**1.14.1 Set retry interval and timeout time**](#1141-Set-retry-interval-and-timeout-time)
+  - [**1.14.2 Set weight**](#1142-Set-weight)
+  - [**1.14.3 Use target address to select superior**](#1143-Use-target-address-to-select-superior)
+- [**1.15 Speed limit**](#115-Speed-limit)
+- [**1.16 Designated exporting IP**](#116-Designated-exporting-IP)
+- [**1.17 Certificate parameters using Base64 data**](#117-Certificate-parameters-using-Base64-data)
+  - [**1.18 Intelligent mode**](#118-Intelligent-mode)
+  - [**1.19.view help**](#119view-help)
+- [**2.TCP proxy**](#2TCP-proxy)
+  - [**2.1.Common TCP first level proxy**](#21Common-TCP-first-level-proxy)
+  - [**2.2.Common TCP second level proxy**](#22Common-TCP-second-level-proxy)
+  - [**2.3.Common TCP third level proxy**](#23Common-TCP-third-level-proxy)
+  - [**2.4.TCP second level encrypted proxy**](#24TCP-second-level-encrypted-proxy)
+  - [**2.5.TCP third level encrypted proxy**](#25TCP-third-level-encrypted-proxy)
+  - [**2.6.Connect parents proxy through other proxy**](#26Connect-parents-proxy-through-other-proxy)
+  - [**2.7.view help**](#27view-help)
+- [**3.UDP proxy**](#3UDP-proxy)
+  - [**3.1.Common UDP first level proxy**](#31Common-UDP-first-level-proxy)
+  - [**3.2.Common UDP second level proxy**](#32Common-UDP-second-level-proxy)
+  - [**3.3.Common UDP third level proxy**](#33Common-UDP-third-level-proxy)
+  - [**3.4.UDP second level encrypted proxy**](#34UDP-second-level-encrypted-proxy)
+  - [**3.5.UDP third level encrypted proxy**](#35UDP-third-level-encrypted-proxy)
+  - [**3.6.view help**](#36view-help)
+- [**4.Nat forward**](#4Nat-forward)
+  - [**4.1、Principle explanation**](#41Principle-explanation)
+  - [**4.2.TCP common usage**](#42TCP-common-usage)
+  - [**4.3.Local development of WeChat interface**](#43Local-development-of-WeChat-interface)
+  - [**4.4.UDP common usage**](#44UDP-common-usage)
+  - [**4.5.Advanced usage 1**](#45Advanced-usage-1)
+  - [**4.6.Advanced usage 2**](#46Advanced-usage-2)
+  - [**4.7.-r parameters of server**](#47-r-parameters-of-server)
+  - [**4.8.server and client connect bridge through proxy**](#48server-and-client-connect-bridge-through-proxy)
+  - [**4.9.view help**](#49view-help)
+- [**5.SOCKS5 proxy**](#5SOCKS5-proxy)
+  - [**5.1.Common SOCKS5 proxy**](#51Common-SOCKS5-proxy)
+  - [**5.2.Common SOCKS5 second level proxy**](#52Common-SOCKS5-second-level-proxy)
+  - [**5.3.SOCKS second level encrypted proxy**](#53SOCKS-second-level-encrypted-proxy)
+  - [**5.4.SOCKS third level encrypted proxy**](#54SOCKS-third-level-encrypted-proxy)
+  - [**5.5.SOCKS proxy traffic force to go to parent socks proxy**](#55SOCKS-proxy-traffic-force-to-go-to-parent-socks-proxy)
+  - [**5.6.Transfer through SSH**](#56Transfer-through-SSH)
+    - [***5.6.1.The way of username and password***](#561The-way-of-username-and-password)
+    - [***5.6.2.The way of username and key***](#562The-way-of-username-and-key)
+  - [**5.7.Authentication**](#57Authentication)
+  - [**5.8.KCP protocol transmission**](#58KCP-protocol-transmission)
+  - [**5.9.Custom DNS**](#59Custom-DNS)
+  - [**5.10.Custom encryption**](#510Custom-encryption)
+  - [**5.11.Compressed transmission**](#511Compressed-transmission)
+  - [**5.12 Load balance**](#512-Load-balance)
+  - [**5.12.1 Set retry interval and timeout time**](#5121-Set-retry-interval-and-timeout-time)
+  - [**5.12.2 Set weight**](#5122-Set-weight)
+  - [**5.12.3 Use target address to select parent proxy**](#5123-Use-target-address-to-select-parent-proxy)
+  - [**5.13 Speed limit**](#513-Speed-limit)
+  - [**5.14 Designated exporting IP**](#514-Designated-exporting-IP)
+  - [**5.15 Cascade authentication**](#515-Cascade-authentication)
+  - [**5.16 Certificate parameters using Base64 data**](#516-Certificate-parameters-using-Base64-data)
+  - [**5.17 Intelligent mode**](#517-Intelligent-mode)
+  - [**5.18.view help**](#518view-help)
+- [**6.Proxy protocol conversion**](#6Proxy-protocol-conversion)
+  - [**6.1.Functional introduction**](#61Functional-introduction)
+  - [**6.2.HTTP(S) to HTTP(S) + SOCKS5**](#62HTTPS-to-HTTPS--SOCKS5)
+  - [**6.3.SOCKS5 to HTTP(S) + SOCKS5**](#63SOCKS5-to-HTTPS--SOCKS5)
+  - [**6.4 SS to HTTP(S)+SOCKS5+SS**](#64-SS-to-HTTPSSOCKS5SS)
+  - [**6.5.Chain style connection**](#65Chain-style-connection)
+  - [**6.6.Listening on multiple ports**](#66Listening-on-multiple-ports)
+  - [**6.7.Authentication**](#67Authentication)
+  - [**6.8 Custom encryption**](#68-Custom-encryption)
+  - [**6.9 Compressed transmission**](#69-Compressed-transmission)
+  - [**6.10 Disable protocol**](#610-Disable-protocol)
+  - [**6.11 Speed limit**](#611-Speed-limit)
+  - [**6.12 Designated exporting IP**](#612-Designated-exporting-IP)
+  - [**6.13 Certificate parameters using Base64 data**](#613-Certificate-parameters-using-Base64-data)
+  - [**6.14 Independent service**](#614-Independent-service)
+  - [**6.15 Rewrite Target Address**](#615-Rewrite-Target-Address)
+  - [**6.16 View Help**](#616-View-Help)
+- [**7.KCP Configuration**](#7KCP-Configuration)
+  - [**7.1.Configuration introduction**](#71Configuration-introduction)
+  - [**7.2.Configuration details**](#72Configuration-details)
+- [**8.DNS anti pollution server**](#8DNS-anti-pollution-server)
+  - [**8.1.Introduction**](#81Introduction)
+  - [**8.2.Use examples**](#82Use-examples)
+- [TODO](#TODO)
+- [License](#License)
+- [Contact](#Contact)
+- [Donation](#Donation)
+- [AliPay](#AliPay)
+- [Wechat Pay](#Wechat-Pay)
 
 
 
@@ -183,9 +217,20 @@ The manual on this page applies to the latest version of goproxy. Other versions
 tips:all operations require root permissions.   
 #### Quick installation
 #### **0. If your VPS is linux64, you can complete the automatic installation and configuration by the following sentence.**  
+
+For free version  
+
 ```shell  
 curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
 ```  
+
+For commercial version  
+
+```shell  
+curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash  
+```  
+
+
 The installation is completed, the configuration directory is /etc/proxy, For more detailed usage, please refer to the manual above to further understand the functions you want to use.  
 If the installation fails or your VPS is not a linux64 system, please follow the semi-automatic step below:  
   
@@ -193,18 +238,41 @@ If the installation fails or your VPS is not a linux64 system, please follow the
 
 #### **1.Download proxy**  
 Download address: https://github.com/snail007/goproxy/releases  
+
+For free verson  
+
 ```shell  
 cd /root/proxy/  
 wget https://github.com/snail007/goproxy/releases/download/v6.0/proxy-linux-amd64.tar.gz  
 
 ```  
+
+For commercial version
+
+```shell  
+cd /root/proxy/  
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz  
+```  
+
 #### **2.Download the automatic installation script**  
+
+For free verson  
+
 ```shell  
 cd /root/proxy/  
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
 chmod +x install.sh  
 ./install.sh  
-```   
+```
+
+For commerical verson  
+
+```shell  
+cd /root/proxy/  
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh  
+chmod +x install_commercial.sh  
+./install_commercial.sh  
+```  
   
 ### **First use must be read**  
   
@@ -540,7 +608,7 @@ The speed limit is 100K, which can be specified through the `-l` parameter, for 
 `proxy http -t tcp -p 2.2.2.2:33080 -l 100K`
 
 ### **1.16 Designated exporting IP**  
-The `--bind-listen` parameter open the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP. If the entry IP is the intranet IP, the exporting IP will not use the entry IP..    
+The `--bind-listen` parameter open the client's ability to access the target site with an entry IP connection, using the entry IP as the exporting IP.    
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`
 
 ### **1.17 Certificate parameters using Base64 data**  
