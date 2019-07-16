@@ -4,6 +4,7 @@
 ## Windows
 
 - 官方java版本,项目主页:[goproxy-jui](https://github.com/snail007/goproxy-jui)
+- 官方c#版本,项目主页:[gptool-csharp](https://github.com/snail007/gptool-csharp)
 
 ## Linux
 
