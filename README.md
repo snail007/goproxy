@@ -2,7 +2,7 @@
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200"/>
 Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy server implemented by golang, supporting forward proxy, reverse proxy, transparent proxy, intranet penetration, TCP/UDP port mapping, SSH relay, TLS Encrypted transmission, protocol conversion, anti-pollution DNS proxy.
 
-[Click to download](https://github.com/snail007/goproxy/releases) Official QQ exchange group: 42805407
+[Click to download](https://github.com/snail007/goproxy/releases)
 
 [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
