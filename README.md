@@ -2,18 +2,18 @@
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200"/>
 Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy server implemented by golang, supporting forward proxy, reverse proxy, transparent proxy, intranet penetration, TCP/UDP port mapping, SSH relay, TLS Encrypted transmission, protocol conversion, anti-pollution DNS proxy.
 
-[Click to download] (https://github.com/snail007/goproxy/releases) Official QQ exchange group: 42805407
+[Click to download](https://github.com/snail007/goproxy/releases) Official QQ exchange group: 42805407
 
-[Free version VS commercial version] (https://snail007.github.io/goproxy/free_vs_commercial/)
+[Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ---
 
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https:/ /img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total. Svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style= Plastic)](https://github.com/snail007/goproxy/releases)
   
 - [English Manual](/README.md)
-- [GORPOXY Help Manual] (https://snail007.github.io/goproxy/manual/)
-- [GORPOXY Practical Tutorial] (https://snail007.github.io/goproxy)
-- [Desktop Edition] (/gui/README_ZH.md)
+- [GORPOXY Help Manual](https://snail007.github.io/goproxy/manual/)
+- [GORPOXY Practical Tutorial](https://snail007.github.io/goproxy)
+- [Desktop Edition](/gui/README_ZH.md)
 - [SDK](https://github.com/snail007/goproxy-sdk)
 
 ### What can it do?
@@ -26,7 +26,7 @@ Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - TCP/UDP port forwarding.
 - Support intranet penetration, protocol supports TCP and UDP.
 - SSH relay, HTTP (S), SOCKS5 proxy supports SSH relay, the upper Linux server does not need any server, a local proxy can be happy online.
-- [KCP] (https://github.com/xtaci/kcp-go) protocol support, HTTP(S), SOCKS5 proxy supports KCP protocol to transmit data, reduce latency and improve browsing experience.
+- [KCP](https://github.com/xtaci/kcp-go) protocol support, HTTP(S), SOCKS5 proxy supports KCP protocol to transmit data, reduce latency and improve browsing experience.
 - Integrated external API, HTTP(S), SOCKS5 proxy authentication function can be integrated with external HTTP API, which can easily control proxy users through external systems.
 - Reverse proxy, which supports direct parsing of the domain name to the IP of the proxy listener, and then the proxy will help you access the HTTP(S) website that needs to be accessed.
 - Transparent HTTP (S) proxy, in conjunction with iptables, forwards the outgoing 80, 443 traffic directly to the proxy at the gateway, enabling non-aware intelligent router proxy.
@@ -56,9 +56,9 @@ The manual on this page applies to the latest version of goproxy. Other versions
  
 
 ### Joining the organization
-[Click to join the gitter] (https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+[Click to join the gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
-[Click to join the TG] (https://t.me/snail007_goproxy)
+[Click to join the TG](https://t.me/snail007_goproxy)
 
 ## Download and install 
 
