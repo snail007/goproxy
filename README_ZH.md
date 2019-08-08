@@ -4,16 +4,12 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 
 ---
 
-[点击下载](https://github.com/snail007/goproxy/releases)
-
-[免费版VS商业版](https://snail007.github.io/goproxy/free_vs_commercial/)
-
----  
-
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
 
 ---
 
+- [点击下载](https://github.com/snail007/goproxy/releases)
+- [免费版VS商业版](https://snail007.github.io/goproxy/free_vs_commercial/)
 - [GORPOXY帮助手册](https://snail007.github.io/goproxy/manual/zh/) 
 - [GORPOXY实战教程](https://snail007.github.io/goproxy)  
 - [桌面版](/gui/README_ZH.md) 
