@@ -1237,42 +1237,6 @@ Fast :`--nodelay=0 --interval=30 --resend=2 --nc=1`
 Fast2:`--nodelay=1 --interval=20 --resend=2 --nc=1`
 Fast3:`--nodelay=1 --interval=10 --resend=2 --nc=1`
 
-### 7.1 配置介绍 
-proxy的很多功能都支持kcp协议，凡是使用了kcp协议的功能都支持这里介绍的配置参数。  
-所以这里统一对KCP配置参数进行介绍。  
-
-### 7.2 详细配置 
-所有的KCP配置参数共有17个，你可以都不用设置，他们都有默认值，如果为了或者最好的效果，  
-就需要自己根据自己根据网络情况对参数进行配置。由于kcp配置很复杂需要一定的网络基础知识，  
-如果想获得kcp参数更详细的���置和解说，请自行搜索。每个参数的命令行名称以及默认值和简单的功能说明如下：  
-```
---kcp-key="secrect"        pre-shared secret between client and server
---kcp-method="aes"         encrypt/decrypt method， can be: aes， aes-128， aes-192， salsa20， blowfish， 
-                           twofish， cast5， 3des， tea， xtea， xor， sm4， none
---kcp-mode="fast"       profiles: fast3， fast2， fast， normal， manual
---kcp-mtu=1350             set maximum transmission unit for UDP packets
---kcp-sndwnd=1024          set send window size(num of packets)
---kcp-rcvwnd=1024          set receive window size(num of packets)
---kcp-ds=10                set reed-solomon erasure coding - datashard
---kcp-ps=3                 set reed-solomon erasure coding - parityshard
---kcp-dscp=0               set DSCP(6bit)
---kcp-nocomp               disable compression
---kcp-acknodelay           be carefull! flush ack immediately when a packet is received
---kcp-nodelay=0            be carefull!
---kcp-interval=50          be carefull!
---kcp-resend=0             be carefull!
---kcp-nc=0                 be carefull! no congestion
---kcp-sockbuf=4194304      be carefull!
---kcp-keepalive=10         be carefull!
-```
-提示：  
-参数：--kcp-mode中的四种fast3， fast2， fast， normal模式，  
-相当于设置了下面四个参数：  
-normal：`--nodelay=0 --interval=40 --resend=2 --nc=1`  
-fast ：`--nodelay=0 --interval=30 --resend=2 --nc=1`  
-fast2：`--nodelay=1 --interval=20 --resend=2 --nc=1`  
-fast3：`--nodelay=1 --interval=10 --resend=2 --nc=1`  
-
 ## 8. Security DNS
 
 ### 8.1 Introduction
