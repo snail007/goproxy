@@ -2,15 +2,23 @@
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200"/>
 Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy server implemented by golang, supporting forward proxy, reverse proxy, transparent proxy, intranet penetration, TCP/UDP port mapping, SSH relay, TLS Encrypted transmission, protocol conversion, anti-pollution DNS proxy.   
 
+---
+
+[中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)  [中文手册](https://snail007.github.io/goproxy/manual/zh/)
+
 [Click to download](https://github.com/snail007/goproxy/releases)
 
 [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ---
 
-[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https:/ /img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total. Svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style= Plastic)](https://github.com/snail007/goproxy/releases)
-  
-- [English Manual](/README.md)
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) 
+[![license](https:/ /img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() 
+[![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total. Svg?style=plastic)](https://github.com/snail007/goproxy/releases) 
+[![download](https://img.shields.io/github/release/snail007/goproxy.svg?style= Plastic)](https://github.com/snail007/goproxy/releases)
+
+---
+
 - [GORPOXY Help Manual](https://snail007.github.io/goproxy/manual/)
 - [GORPOXY Practical Tutorial](https://snail007.github.io/goproxy)
 - [Desktop Edition](/gui/README_ZH.md)

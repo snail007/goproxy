@@ -1,6 +1,8 @@
 ## GOPROXY简介
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200"/>  
-Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，ss代理服务器，支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。官方QQ交流群: 42805407  
+Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，ss代理服务器，支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理。官方QQ交流群: 42805407。
+
+---
 
 [点击下载](https://github.com/snail007/goproxy/releases)
 
@@ -9,8 +11,9 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 ---  
 
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)  
-  
-- [English Manual](/README.md)
+
+---
+
 - [GORPOXY帮助手册](https://snail007.github.io/goproxy/manual/zh/) 
 - [GORPOXY实战教程](https://snail007.github.io/goproxy)  
 - [桌面版](/gui/README_ZH.md) 
