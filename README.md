@@ -139,8 +139,14 @@ Official QQ exchange group: 42805407
 
 ## Donation
 If the proxy helps you solve a lot of problems, you can better support the proxy through the donation below.
-<img src="https://github.com/snail007/goproxy/blob/master/doc/images/alipay.jpg?raw=true" width="200"/>
-<img src="https://github.com/snail007/goproxy/blob/master/doc/images/wxpay.jpg?raw=true" width="200"/>
+
+BTC  ADDRESS: `1BJcBhGhREiz1q3VTYoiVPuAZy5PGxRG9z`
+
+{{% img src="img/btc.png" css="width:150px;" %}}
+
+ETH  ADDRESS: `0x0fA4c567768d2E59E6221152EA52F4842866AFC8`
+
+{{% img src="img/eth.png" css="width:150px;" %}}
 
 ### Source code declaration
 

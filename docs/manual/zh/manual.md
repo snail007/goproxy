@@ -556,12 +556,6 @@ VPS(IP:22.22.22.33)执行:
 
 下面的教程以“多路复用版本”为例子，说明使用方法。    
 内网穿透由三部分组成:client端，server端，bridge端；client和server主动连接bridge端进行桥接。  
-当用户访问server端，流程是:   
-1. 首先server端主动和bridge端建立连接；  
-1. 然后bridge端通知client端连接bridge端和目标端口;  
-1. 然后client端绑定“client端到bridge端”和“client端到目标端口”的连接；  
-1. 然后bridge端把“client过来的连接”与“server端过来的连接”绑定；  
-1. 整个通道建立完成；  
   
 ### 4.2、TCP普通用法
 背景:  
@@ -670,7 +664,7 @@ server连接到bridge的时候，如果同时有多个client连接到同一个br
 ### 4.7.server的-r参数
   -r完整格式是:`PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
   
-  4.7.1.协议PROTOCOL:tcp或者udp。  
+  4.7.1.协议PROTOCOL:tcp、udp、ptcp、pudp。  
   比如: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
   如果指定了--udp参数，PROTOCOL默认为udp，那么:`-r ":8080@:80"`默认为udp;  
   如果没有指定--udp参数，PROTOCOL默认为tcp，那么:`-r ":8080@:80"`默认为tcp;  
@@ -726,8 +720,34 @@ port:代理的端口
 
 当使用http协议请求server的ip:2500端口的时候，http的头部HOST字段就会被设置为`local.com`。  
 
+### 4.10 关于流量统计
+如果单独启动一个server对接上级是proxy-admin控制面板，需要在上级控制面板里面新建一个映射，获得个映射规则的ID，
 
-### 5.0.查看帮助
+然后启动server的时候加上参数 --server-id=映射规则的ID 才能统计到流量。
+
+### 4.11 关于p2p
+内网穿透支持在server和client网络情况满足的情况下，server和client之间通过p2p直接连接，开启方法是：
+
+在启动bridge，server，client到时候都加上`--p2p`参数即可。server的-r参数可以针对端口是否启用p2p（ptcp和pudp）。
+
+如果server和client之间p2p打洞失败，那么会自动切换使用bridge中转传输数据。
+
+### 4.12 客户端key白名单
+内网穿透bridge可以设置客户端key白名单，参数是--client-keys，格式可以是：
+
+a.文件名,文件内容一行一个客户端key只能包含数字字母下划线，也就是客户端启动参数--k的值，只有客户端key在此白名单的客户端才能连接。# 开头的行，为注释。
+
+b.“base64://”开头的base64编码的上面a说明的文件内容，比如：base64://ajfpoajsdfa=
+
+c.”str://“开头的英文逗号分割的多个key，比如：str://default,company,school
+
+默认是空，允许所有key。
+
+### 4.13 网络NAT类型判断
+
+nat类型判断,方便查看网络是否支持p2p，可以执行：`proxy tools -a nattype`
+
+### 4.14 查看帮助
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  

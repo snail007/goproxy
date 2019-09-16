@@ -554,13 +554,7 @@ Intranet penetration, divided into two versions, "multi-link version" and "multi
 
 The following tutorial uses the "multiplexed version" as an example to illustrate how to use it.
 The intranet penetration consists of three parts: client, server, and bridge; client and server actively connect to the bridge for bridging.
-When the user accesses the server, the process is:
-1. First, the server side actively establishes a connection with the bridge side;
-1. Then the bridge side notifies the client to connect the bridge end and the target port;
-1. Then the client binds the connection from "client to bridge" and "client to target port";
-1. Then the bridge side binds the "client connection" to the "server connection".
-1. The entire channel is established;
-  
+
 ### 4.2 TCP common usage
 Background:
 - Company Machine A provides web service port 80
@@ -724,8 +718,34 @@ Explanation:
 
 When the http protocol is used to request the ip:2500 port of the server, the header HOST field of http will be set to `local.com`.
 
+### 4.10 About traffic statistics
+If you start a server docking peer separately, it is the proxy-admin control panel. You need to create a new mapping in the upper-level control panel to obtain the ID of the mapping rule.
 
-### 5.0.View help
+Then start the server and add the parameter --server-id=the ID of the mapping rule to count the traffic.
+
+### 4.11 About p2p
+Intranet penetration support When the server and client network conditions are met, the server and client are directly connected through p2p. The opening method is:
+
+When starting the bridge, server, client, add the `--p2p` parameter. The server's -r parameter can be used to enable p2p (ptcp and pudp) for the port.
+
+If the p2p hole fails between the server and the client, the bridge transfer data is automatically switched.
+
+### 4.12 Client key whitelist
+The intranet penetrating bridge can set the client key whitelist. The parameter is --client-keys. The format can be:
+
+a. File name, file content One client key can only contain the alphanumeric underscore, which is the value of the client startup parameter --k. Only the client key can connect to the whitelist client. The line starting with # is a comment.
+
+b. The base64 encoding at the beginning of "base64://" is the content of the file described in a above, for example: base64://ajfpoajsdfa=
+
+c. "str://" multiple keywords separated by a comma at the beginning, such as: str://default,company,school
+
+The default is empty, allowing all keys.
+
+### 4.13 Network NAT Type Judgment
+
+Senat type judgment, easy to check whether the network supports p2p, you can execute: `proxy tools -a nattype`
+
+### 4.14 View help
 `./proxy help bridge`
 `./proxy help server`
 `./proxy help client`
