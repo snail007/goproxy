@@ -8,6 +8,8 @@ Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 
 ---
 
+[ProxyAdminFree](https://github.com/snail007/proxy_admin_free)
+
 - [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [中文手册](https://snail007.github.io/goproxy/manual/zh/)
 - [Click to download](https://github.com/snail007/goproxy/releases)
