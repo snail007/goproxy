@@ -8,16 +8,15 @@ Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 
 ---
 
-[ProxyAdminFree](https://github.com/snail007/proxy_admin_free)
-
 - [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [中文手册](https://snail007.github.io/goproxy/manual/zh/)
-- [Click to download](https://github.com/snail007/goproxy/releases)
-- [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
+- [Download](https://github.com/snail007/goproxy/releases)
+- [Desktop Edition, Web Console](https://github.com/snail007/proxy_admin_free)
+- [Android Edition](/gui/README_ZH.md)
+- [SDK](https://github.com/snail007/goproxy-sdk)
 - [GORPOXY Help Manual](https://snail007.github.io/goproxy/manual/)
 - [GORPOXY Practical Tutorial](https://snail007.github.io/goproxy)
-- [Desktop Edition](/gui/README_ZH.md)
-- [SDK](https://github.com/snail007/goproxy-sdk)
+- [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ### What can it do?
 - Chained agent, the program itself can be used as an agent, and if it is set up, it can be used as a secondary agent or even an N-level agent.

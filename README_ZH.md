@@ -8,14 +8,13 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 
 ---
 
-[ProxyAdminFree](https://github.com/snail007/proxy_admin_free)
-
 - [点击下载](https://github.com/snail007/goproxy/releases)
-- [免费版VS商业版](https://snail007.github.io/goproxy/free_vs_commercial/)
+- [安卓版](https://github.com/snail007/goproxy-ss-plugin-android) 
+- [桌面版，控制面板ProxyAdmin](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
+- [SDK](https://github.com/snail007/goproxy-sdk)
 - [GORPOXY帮助手册](https://snail007.github.io/goproxy/manual/zh/) 
 - [GORPOXY实战教程](https://snail007.github.io/goproxy)  
-- [桌面版](/gui/README_ZH.md) 
-- [SDK](https://github.com/snail007/goproxy-sdk)
+- [免费版VS商业版](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ### 它能干什么？
 - 链式代理，程序本身可以作为一级代理，如果设置了上级代理那么可以作为二级代理，乃至N级代理。  
