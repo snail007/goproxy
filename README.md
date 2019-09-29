@@ -143,11 +143,11 @@ If the proxy helps you solve a lot of problems, you can better support the proxy
 
 BTC  ADDRESS: `1BJcBhGhREiz1q3VTYoiVPuAZy5PGxRG9z`
 
-{{% img src="img/btc.png" css="width:150px;" %}}
+<img src="https://raw.githubusercontent.com/snail007/goproxy/master/docs/img/btc.png" width="150" height="auto"/>  
 
 ETH  ADDRESS: `0x0fA4c567768d2E59E6221152EA52F4842866AFC8`
 
-{{% img src="img/eth.png" css="width:150px;" %}}
+<img src="https://raw.githubusercontent.com/snail007/goproxy/master/docs/img/eth.png" width="150" height="auto"/>  
 
 ### Source code declaration
 

@@ -138,8 +138,8 @@ Proxy is licensed under GPLv3 license。
 
 ## Donation  
 如果proxy帮助你解决了很多问题，你可以通过下面的捐赠更好的支持proxy。  
-<img src="https://github.com/snail007/goproxy/blob/master/doc/images/alipay.jpg?raw=true" width="200"/>  
-<img src="https://github.com/snail007/goproxy/blob/master/doc/images/wxpay.jpg?raw=true" width="200"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/alipay.jpg?raw=true" width="200"  height="auto"/>  
+<img src="https://github.com/snail007/goproxy/blob/master/doc/images/wxpay.jpg?raw=true" width="200"  height="auto"/>  
 
 ### 源代码申明
 
