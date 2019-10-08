@@ -239,7 +239,13 @@
 </tr>
 
 <tr>
-<td align="left"><code>STOP&amp;ONLY black and white list</code></td>
+<td align="left"><code>STOP&amp;ONLY blacklist and whitelist</code></td>
+<td align="center">×</td>
+<td align="center">√</td>
+</tr>
+
+<tr>
+<td align="left"><code>Client IP blacklist and whitelist</code></td>
 <td align="center">×</td>
 <td align="center">√</td>
 </tr>
@@ -319,7 +325,7 @@
 <ol>
 <li><p>Go to the authorization platform <a href="https://gpm.host900.com/">https://gpm.host900.com/</a> to register a user.</p></li>
 
-<li><p>If you use the <code>machine code</code> authorization method, the first time you start, the id.txt file will be generated in the current directory, which is the machine code of the current machine. If it is sdk, the MacCode method can be used to get the machine code of the current machine. Purchase the machine code quota, and finally add the machine code to the authorized platform my machine code to complete the authorization.</p></li>
+<li><p>If you use the <code>machine code</code> authorization method, the first execution: <code>proxy http</code> will generate an id.txt file in the current directory, which is the machine code of the current machine. If it is sdk, the MacCode method can be called to get the current machine. Machine code; then purchase <code>card secret code</code>, go to the authorization platform background click menu to add machine code, input <code>card secret code</code> to complete the activation of the machine code, then click on the <code>machine list</code> in the menu, click on the list operation column <code>modify</code>, Fill in the machine code in id.txt into the machine code input box, and then save to complete the authorization.</p></li>
 
 <li><p>If it is authorized by the <code>Authorization Code</code> method, first purchase the authorization code, and then you will see your authorization code in the authorization platform. Add the authorization code parameter <code>--authcode your_authorization_code</code> to start the program. You can also set the environment variable <code>LIC_AUTHCODE</code> as the authorization code. If the parameter <code>--authcode</code> is not used, the program tries to obtain the authorization from the environment variable <code>LIC_AUTHCODE</code>. code. If it is sdk, the start method has an authorization code parameter, and the purchased authorization code can be used.</p></li>
 </ol>

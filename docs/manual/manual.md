@@ -167,6 +167,42 @@ Description:
 
 5.`#` at the beginning of the comment.
 
+### 12. Client IP Blacklist and Whitelist
+
+socks/http(s)/sps/tcp/udp/dns/ intranet penetration bridge/intranet penetration tbridge, support client IP black and white list.
+
+Use the --ip-deny parameter to specify a client IP blacklist list file, then the connection will be disconnected when the user's IP is in this file.
+  
+Use the --ip-allow parameter to specify a client IP whitelist file, then the connection will be disconnected when the user's IP is not in the file.
+
+If both --ip-deny and --ip-allow are set, then only --ip-allow will work.
+
+The format of the client IP blacklist and whitelist file is as follows:
+
+```text
+192.168.1.1
+192.168.*.*
+192.168.1?.*
+```
+
+Description:
+
+1. One domain name per domain, domain name writing supports wildcards `*` and `?`, `*` represents any number of characters, `?` represents an arbitrary character.
+
+2.`#` at the beginning of the comment.
+
+### 13. Protocol loading file
+
+There are many places in the proxy's various proxy functions to set a file. For example: --blocked Specifies a domain name list file that goes directly to the upper level. The parameter value is the path of the file.
+
+If the parameter supports the protocol loading file, the file path can be not only the file path, but also:
+
+a. The base64 encoding at the beginning of "base64://" indicates the contents of the above file, for example: base64://ajfpoajsdfa=
+
+b. "str://" at the beginning of the English comma separated multiple, such as: str://xxx, yyy
+
+The proxy's blocked, direct, stop, only, hosts, resolve.rules, rewriter.rules, ip.allow, ip.deny files support protocol loading.
+
 ## 1.HTTP Proxies
 
 ### 1.1. Ordinary level HTTP proxy

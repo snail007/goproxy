@@ -1,6 +1,6 @@
 ## GOPROXY Introduction
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200" height="auto"/>
-Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy server implemented by golang, supporting forward proxy, reverse proxy, transparent proxy, intranet penetration, TCP/UDP port mapping, SSH relay, TLS Encrypted transmission, protocol conversion, anti-pollution DNS proxy.   
+proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy server implemented by golang, supporting forward proxy, reverse proxy, transparent proxy, intranet penetration, TCP/UDP port mapping, SSH relay, TLS Encrypted transmission, protocol conversion, anti-pollution DNS proxy.   
 
 ---
 
@@ -41,7 +41,7 @@ Proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - Support speed limit, HTTP(S)\SOCKS5\SPS proxy supports speed limit.
 - SOCKS5 agent supports cascading certification.
 - The certificate parameter uses base64 data. By default, the -C, -K parameter is the path of the crt certificate and the key file. If it is the beginning of base64://, then the latter data is considered to be base64 encoded and will be used after decoding.
-
+- Support client IP black and white list, more secure control of client access to proxy service, if black and white list is set at the same time, then only whitelist is effective. Socks / HTTP(S) / SPS / TCP / UDP / DNS / intranet NAT The bridge/intranet NAT the tbridge and supports the client IP black and white list.
 
 ### Why do you need it?
 
@@ -73,13 +73,13 @@ Tip: All operations require root privileges.
 The free version performs this:
 
 ```shell
-Curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash
+curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash
 ```
 
 The commercial version performs this:
 
 ```shell
-Curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash
+curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash
 ```
 
 The installation is complete, the configuration directory is /etc/proxy. For more detailed usage, please refer to the manual directory above to learn more about the features you want to use.

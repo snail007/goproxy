@@ -39,7 +39,7 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 - 支持限速，HTTP(S)\SOCKS5\SPS代理支持限速。  
 - SOCKS5代理支持级联认证。  
 - 证书参数使用base64数据，默认情况下-C，-K参数是crt证书和key文件的路径，如果是base64://开头，那么就认为后面的数据是base64编码的，会解码后使用。  
-
+- 支持客户端IP黑白名单，更加安全的控制客户端对代理服务的访问，如果黑白名单同时设置，那么只有白名单生效。socks/http(s)/sps/tcp/udp/dns/内网穿透bridge/内网穿透tbridge，都支持客户端IP黑白名单。 
 
 ### 为什么需要它？
 
