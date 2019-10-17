@@ -1475,7 +1475,7 @@ proxy的http(s)/socks5/sps代理功能可以通过
 ##### `--rate-limit`
 限制服务的每一个tcp连接的速度，比如:100K 2000K 1M . 0意味着无限制，默认0。  
 
-## IP黑白名单
+## 11.IP黑白名单
 
 proxy的socks/http(s)/sps/tcp/udp/dns/内网穿透bridge/内网穿透tbridge增加了客户端IP黑白名单。   
 用--ip-deny参数指定一个客户端IP黑名单列表文件，那么当用户的IP在这个文件里面的时候连接就会被断开。   
