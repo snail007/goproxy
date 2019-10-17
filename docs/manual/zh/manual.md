@@ -1357,7 +1357,7 @@ proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对
 
 #### 具体使用
 proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`和`--auth-cache`三个参数控制。
-`--auth-url`:HTTP API接口地址，客户端连接的时候，proxy会GET方式请求这url，带上下面参数，如果返回HTTP状态码204，代表认证成功  
+参数`--auth-url`是HTTP API接口地址，客户端连接的时候，proxy会GET方式请求这url，带上下面参数，如果返回HTTP状态码204，代表认证成功  
 其它情况认为认证失败。 
 
 一个完整的请求API的示例：
