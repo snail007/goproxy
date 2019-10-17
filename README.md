@@ -28,8 +28,8 @@ proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - TCP/UDP port forwarding.
 - Support intranet penetration, protocol supports TCP and UDP.
 - SSH relay, HTTP (S), SOCKS5 proxy supports SSH relay, the upper Linux server does not need any server, a local proxy can be happy online.
-- [KCP](https://github.com/xtaci/kcp-go) protocol support, HTTP(S), SOCKS5 proxy supports KCP protocol to transmit data, reduce latency and improve browsing experience.
-- Dynamic selection of upstream proxies, through the external API, HTTP (S), SOCKS5 proxies can achieve user-based or IP-based speed limit, connection limit, dynamic access to upstream.
+- [KCP](https://github.com/xtaci/kcp-go) protocol support, HTTP(S), SOCKS5, SPS proxy supports KCP protocol to transmit data, reduce latency and improve browsing experience.
+- Dynamic selection of upstream proxies, through the external API, HTTP (S), SOCKS5, SPS proxies can achieve user-based or IP-based speed limit, connection limit, dynamic access to upstream.
 - Flexible upstream allocation, HTTP(S), SOCKS5 proxy can implement user- or IP-based speed limit, connection limit, and upper-level through configuration files.
 - Transparent HTTP (S) proxy, in conjunction with iptables, forwards the outgoing 80, 443 traffic directly to the proxy at the gateway, enabling non-aware intelligent router proxy.
 - Protocol conversion, which can convert existing HTTP(S) or SOCKS5 or SS proxy into one port and support HTTP(S) and SOCKS5 and SS proxy at the same time. Converted SOCKS5 and SS proxy. If the upstream is SOCKS5 proxy, then UDP is supported. Features while supporting powerful cascading authentication.
