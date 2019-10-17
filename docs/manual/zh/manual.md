@@ -1345,15 +1345,17 @@ or
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
 那么本地的UDP端口53就提供了安全防污染DNS解析功能。
 
-## API认证
+## 9.API认证
 
 proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对访问。
 
-### 通过API你可以干什么？
+### 通过API可以干什么？
 
 - 用户维度，控制单个连接速率，控制最大连接数。
 - IP维度，控制单个连接速率，控制最大连接数。
 - 动态上级，可以根据用户或者客户端IP，动态的从API获取其上级，支持http(s)/socks5/ss上级。
+- 认证每一个连接，无论是否要求客户端认证。
+- 缓存认证结果，时间可以设置，减轻API压力。
 
 #### 具体使用
 proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`和`--auth-cache`三个参数控制。
