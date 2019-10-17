@@ -19,9 +19,9 @@ proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ### What can it do?
-- Chained agent, the program itself can be used as an agent, and if it is set up, it can be used as a secondary agent or even an N-level agent.
-- Communication encryption, if the program is not a level one agent, and the upper level agent is also the program, then the communication between the upper level agent and the upper level agent can be encrypted, and the underlying tls high-intensity encryption is used, and the security is featureless.
-- Smart HTTP, SOCKS5 proxy, will automatically determine whether the visited website is blocked. If it is blocked, it will use the superior agent (provided that the superior agent is configured) to access the website; if the visited website is not blocked, in order to speed up the access, the agent will Direct access to the website without using a superior agent.
+- Chained proxies, the program itself can be used as an proxies, and if it is set up, it can be used as a secondary proxies or even an N-level proxies.
+- Communication encryption, if the program is not a level one proxies, and the upper level proxies is also the program, then the communication between the upper level proxies and the upper level proxies can be encrypted, and the underlying tls high-intensity encryption is used, and the security is featureless.
+- Smart HTTP, SOCKS5 proxy, will automatically determine whether the visited website is blocked. If it is blocked, it will use the upstream proxies (provided that the upstream proxies is configured) to access the website; if the visited website is not blocked, in order to speed up the access, the proxies will Direct access to the website without using a upstream proxies.
 - Domain name black and white list, more free to control the way the website is accessed.
 - Cross-platform, whether you are widows, linux, mac, or even raspberry pie, you can run the proxy very well.
 - Multi-protocol support, support for HTTP(S), TCP, UDP, Websocket, SOCKS5 proxy.
@@ -29,17 +29,17 @@ proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - Support intranet penetration, protocol supports TCP and UDP.
 - SSH relay, HTTP (S), SOCKS5 proxy supports SSH relay, the upper Linux server does not need any server, a local proxy can be happy online.
 - [KCP](https://github.com/xtaci/kcp-go) protocol support, HTTP(S), SOCKS5 proxy supports KCP protocol to transmit data, reduce latency and improve browsing experience.
-- Integrated external API, HTTP(S), SOCKS5 proxy authentication function can be integrated with external HTTP API, which can easily control proxy users through external systems.
-- Reverse proxy, which supports direct parsing of the domain name to the IP of the proxy listener, and then the proxy will help you access the HTTP(S) website that needs to be accessed.
+- Dynamic selection of upstream proxies, through the external API, HTTP (S), SOCKS5 proxies can achieve user-based or IP-based speed limit, connection limit, dynamic access to upstream.
+- Flexible upstream allocation, HTTP(S), SOCKS5 proxy can implement user- or IP-based speed limit, connection limit, and upper-level through configuration files.
 - Transparent HTTP (S) proxy, in conjunction with iptables, forwards the outgoing 80, 443 traffic directly to the proxy at the gateway, enabling non-aware intelligent router proxy.
-- Protocol conversion, which can convert existing HTTP(S) or SOCKS5 or SS proxy into one port and support HTTP(S) and SOCKS5 and SS proxy at the same time. Converted SOCKS5 and SS proxy. If the superior is SOCKS5 proxy, then UDP is supported. Features while supporting powerful cascading authentication.
+- Protocol conversion, which can convert existing HTTP(S) or SOCKS5 or SS proxy into one port and support HTTP(S) and SOCKS5 and SS proxy at the same time. Converted SOCKS5 and SS proxy. If the upstream is SOCKS5 proxy, then UDP is supported. Features while supporting powerful cascading authentication.
 - Custom underlying encrypted transmission, http(s)\sps\socks proxy can encrypt tcp data via tls standard encryption and kcp protocol on top of tcp, in addition to support custom encryption after tls and kcp, that is Said custom encryption and tls|kcp can be used in combination, the internal AES256 encryption, you only need to define a password when you use it.
 - Underlying compression efficient transmission, http(s)\sps\socks proxy can encrypt tcp data through custom encryption and tls standard encryption and kcp protocol on tcp, and can also compress data after encryption, that is, compression function And custom encryption and tls|kcp can be used in combination.
-- Secure DNS proxy, which can secure and prevent pollution DNS queries through encrypted proxy communication between the DNS proxy server provided by the local proxy and the superior proxy.
-- Load balancing, high availability, HTTP(S)\SOCKS5\SPS agent supports superior load balancing and high availability, and multiple superior repeat-P parameters can be used.
+- Secure DNS proxy, which can secure and prevent pollution DNS queries through encrypted proxy communication between the DNS proxy server provided by the local proxy and the upstream proxy.
+- Load balancing, high availability, HTTP(S)\SOCKS5\SPS proxies supports upstream load balancing and high availability, and multiple upstream repeat-P parameters can be used.
 - Specify the egress IP. The HTTP(S)\SOCKS5\SPS proxy supports the client to connect with the ingress IP, and uses the ingress IP as the egress IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.
 - Support speed limit, HTTP(S)\SOCKS5\SPS proxy supports speed limit.
-- SOCKS5 agent supports cascading certification.
+- SOCKS5 proxies supports cascading certification.
 - The certificate parameter uses base64 data. By default, the -C, -K parameter is the path of the crt certificate and the key file. If it is the beginning of base64://, then the latter data is considered to be base64 encoded and will be used after decoding.
 - Support client IP black and white list, more secure control of client access to proxy service, if black and white list is set at the same time, then only whitelist is effective. Socks / HTTP(S) / SPS / TCP / UDP / DNS / intranet NAT The bridge/intranet NAT the tbridge and supports the client IP black and white list.
 
@@ -128,7 +128,7 @@ Chmod +x install_commercial.sh
 ```
 
 ## TODO
-- http,socks proxy multiple superior load balancing?
+- http,socks proxy multiple upstream load balancing?
 - http(s) proxy to increase pac support?
 - Welcome to add group feedback..
 
@@ -152,5 +152,5 @@ ETH  ADDRESS: `0x0fA4c567768d2E59E6221152EA52F4842866AFC8`
 ### Source code declaration
 
 The author of this project found that a large number of developers based on the project for secondary development or using a large number of core code of the project without complying with the GPLv3 agreement, which seriously violates the original intention of using the GPLv3 open source agreement in this project. In view of this situation, the project adopts the source. The code delays the release strategy, to a certain extent, to curb these behaviors that do not respect open source and do not respect the labor results of others.
-This project will continue to update the iterations and continue to release the full platform binary program, providing you with powerful and convenient agent tools.
+This project will continue to update the iterations and continue to release the full platform binary program, providing you with powerful and convenient proxies tools.
 If you have customized, business needs, please send an email to `arraykeys@gmail.com`

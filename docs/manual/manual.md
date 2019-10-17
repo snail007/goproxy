@@ -40,7 +40,7 @@ For example: --log proxy.log, the log will be output to the proxy.log to facilit
 
 ### 5. Generate the certificate file required for encrypted communication
 
-The http, tcp, udp proxy process communicates with the superior. For security, we use encrypted communication. Of course, we can choose not to encrypt the communication. All the communication and the superior communication in this tutorial are encrypted, and the certificate file is required.
+The http, tcp, udp proxy process communicates with the upstream. For security, we use encrypted communication. Of course, we can choose not to encrypt the communication. All the communication and the upstream communication in this tutorial are encrypted, and the certificate file is required.
 
 1. Generate a self-signed certificate and key file with the following command.
 `./proxy keygen -C proxy`
@@ -85,7 +85,7 @@ Suppose your vps external network ip is 23.23.23.23. The following command sets 
 
 ### 9. Load balancing and high availability
 
-The HTTP(S)\SOCKS5\SPS proxy supports upper-level load balancing and high availability, and multiple superior repeat-P parameters can be used.
+The HTTP(S)\SOCKS5\SPS proxy supports upper-level load balancing and high availability, and multiple upstream repeat-P parameters can be used.
 
 The load balancing policy supports five types, which can be specified by the `--lb-method` parameter:
 
@@ -95,9 +95,9 @@ Leastconn uses the minimum number of connections
 
 Leasttime uses the least connection time
 
-Hash uses a fixed superior based on the client address
+Hash uses a fixed upstream based on the client address
 
-Weight Select a superior according to the weight and number of connections of each superior
+Weight Select a upstream according to the weight and number of connections of each upstream
 
 prompt:
 
@@ -107,12 +107,12 @@ The load balancing connection timeout can be set by `--lb-timeout` in millisecon
 
 If the load balancing policy is weight, the -P format is: 2.2.2.2: 3880?w=1, where 1 is the weight and an integer greater than 0.
 
-If the load balancing policy is hash, the default is to select the superior based on the client address. You can select the superior by using the destination address of the access `--lb-hashtarget`.
+If the load balancing policy is hash, the default is to select the upstream based on the client address. You can select the upstream by using the destination address of the access `--lb-hashtarget`.
 
 
 ### 10. Agent springboard jump
 
-Http (s) agent, SPS agent, intranet penetration, tcp agent support the connection of superiors through intermediate third-party agents,
+Http (s) agent, SPS agent, intranet penetration, tcp agent support the connection of upstreams through intermediate third-party agents,
 
 The parameters are: --jumper, all the formats are as follows:
 
@@ -215,11 +215,11 @@ The proxy's blocked, direct, stop, only, hosts, resolve.rules, rewriter.rules, i
 
 ![1.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-2.png)
 
-Use local port 8090, assuming the superior HTTP proxy is `22.22.22.22:8080`
+Use local port 8090, assuming the upstream HTTP proxy is `22.22.22.22:8080`
 
 `./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `
 
-We can also specify the black and white list file of the website domain name, one domain name per line, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name goes directly to the superior agent, whitelist The domain name does not go to the superior agent.
+We can also specify the black and white list file of the website domain name, one domain name per line, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name goes directly to the upstream agent, whitelist The domain name does not go to the upstream agent.
 
 `./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -b blocked.txt -d direct.txt`
   
@@ -311,7 +311,7 @@ On the "last level proxy proxy" machine, because the proxy is to be disguised as
 
 This command starts a proxy agent on the machine, and listens to ports 80 and 443 at the same time. It can be used as a normal proxy, or directly resolve the domain name that needs to be proxyed to the IP of this machine.
 
-If there is a superior agent, then refer to the above tutorial to set the superior, the use is exactly the same.
+If there is a upstream agent, then refer to the above tutorial to set the upstream, the use is exactly the same.
 `./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`
 
 Note:
@@ -371,7 +371,7 @@ For example:
 ### 1.12 Custom encryption
 The proxy's http(s) proxy can encrypt tcp data via tls standard encryption and kcp protocol on top of tcp, in addition to support customization after tls and kcp.
 Encryption, that is to say, custom encryption and tls|kcp can be used in combination. The internal use of AES256 encryption, you only need to define a password when you use it.
-Encryption is divided into two parts, one is whether the local (-z) encryption and decryption, and the other is whether the transmission with the superior (-Z) is encrypted or decrypted.
+Encryption is divided into two parts, one is whether the local (-z) encryption and decryption, and the other is whether the transmission with the upstream (-Z) is encrypted or decrypted.
 Custom encryption requires both ends to be proxy. The following two levels and three levels are used as examples:
 
 Secondary instance
@@ -380,7 +380,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy http -t tcp -z demo_password -p :7777`
 Local secondary execution:
 `proxy http -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 
 Three-level instance
@@ -391,12 +391,12 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy http -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888`
 Local three-level execution:
 `proxy http -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 ### 1.13 Compressed transmission
 The proxy http(s) proxy can encrypt tcp data through tls standard encryption and kcp protocol on top of tcp, and can also compress data before custom encryption.
 That is to say, compression and custom encryption and tls|kcp can be used in combination. Compression is divided into two parts, one part is local (-m) compression transmission.
-Part of it is compressed with the superior (-M) transmission.
+Part of it is compressed with the upstream (-M) transmission.
 Compression requires both sides to be proxy. Compression also protects (encrypted) data to a certain extent. The following uses Level 2 and Level 3 as examples:
 
 Secondary instance
@@ -405,7 +405,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy http -t tcp -m -p :7777`
 Local secondary execution:
 `proxy http -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 
 Three-level instance
@@ -416,11 +416,11 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy http -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888`
 Local three-level execution:
 `proxy http -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 ### 1.14 Load Balancing
 
-The HTTP(S) proxy supports upper-level load balancing, and multiple superior repeat-P parameters can be used.
+The HTTP(S) proxy supports upper-level load balancing, and multiple upstream repeat-P parameters can be used.
 
 `proxy http --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080`
 
@@ -432,7 +432,7 @@ The HTTP(S) proxy supports upper-level load balancing, and multiple superior rep
 
 `proxy http --lb-method=weight -T tcp -P 1.1.1.1:33080?w=1 -P 2.1.1.1:33080?w=2 -P 3.1.1.1:33080?w=1 -t tcp - p :33080`
 
-### 1.14.3 Use the target address to select the superior
+### 1.14.3 Use the target address to select the upstream
 
 `proxy http --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`
 
@@ -460,7 +460,7 @@ The default is: intelligent.
 The meaning of each value is as follows:
 `--intelligent=direct`, the targets in the blocked are not directly connected.
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.
-`--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the superior access target.
+`--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the upstream access target.
 
 ### 1.19 View help
 `./proxy help http`
@@ -509,7 +509,7 @@ Level 3 TCP proxy (local)
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`
 Then access the local port 8080 is to access the port 8080 of 66.66.66.66 through the encrypted TCP tunnel.
   
-### 2.6. Connecting to a superior through a proxy
+### 2.6. Connecting to a upstream through a proxy
 Sometimes the network where the proxy is located cannot directly access the external network. You need to use an https or socks5 proxy to access the Internet. Then this time
 The -J parameter can help you to connect the proxy to the peer-P through the https or socks5 proxy when mapping the proxy tcp port, mapping the external port to the local.
 The -J parameter format is as follows:
@@ -800,9 +800,9 @@ SOCKS5 proxy, support CONNECT, UDP protocol, does not support BIND, supports use
   
 ### 5.2. Ordinary secondary SOCKS5 agent
 ![5.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-2.png)
-Use local port 8090, assuming the superior SOCKS5 proxy is `22.22.22.22:8080`
+Use local port 8090, assuming the upstream SOCKS5 proxy is `22.22.22.22:8080`
 `./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `
-We can also specify the black and white list file of the website domain name, one domain name and one domain name, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name domain name goes directly to the superior agent, white The domain name of the list does not go to the superior agent; if the domain name is in the blacklist and in the whitelist, the blacklist works.
+We can also specify the black and white list file of the website domain name, one domain name and one domain name, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name domain name goes directly to the upstream agent, white The domain name of the list does not go to the upstream agent; if the domain name is in the blacklist and in the whitelist, the blacklist works.
 `./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -b blocked.txt -d direct.txt`
   
 ### 5.3. SOCKS Level 2 Agent (Encryption)
@@ -829,7 +829,7 @@ Level 3 SOCKS proxy (local)
 Then accessing the local port 8080 is to access the proxy port 38080 on the first-level SOCKS proxy.
   
 ### 5.5. SOCKS proxy traffic is forced to go to the upper level SOCKS proxy
-By default, the proxy will intelligently determine whether a website domain name is inaccessible. If it is not accessible, it will go to the superior SOCKS proxy. With --always, all SOCKS proxy traffic can be forced to go to the upper SOCKS proxy.
+By default, the proxy will intelligently determine whether a website domain name is inaccessible. If it is not accessible, it will go to the upstream SOCKS proxy. With --always, all SOCKS proxy traffic can be forced to go to the upper SOCKS proxy.
 `./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`
   
 ### 5.6. SOCKS via SSH relay
@@ -888,7 +888,7 @@ For example:
 
 ### 5.10 Custom Encryption
 The proxy's socks proxy can encrypt tcp data through tls standard encryption and kcp protocol on top of tcp. In addition, it supports custom encryption after tls and kcp, which means that custom encryption and tls|kcp can be used together. The internal use of AES256 encryption, you only need to define a password when you use it.
-Encryption is divided into two parts, one is whether the local (-z) encryption and decryption, and the other is whether the transmission with the superior (-Z) is encrypted or decrypted.
+Encryption is divided into two parts, one is whether the local (-z) encryption and decryption, and the other is whether the transmission with the upstream (-Z) is encrypted or decrypted.
 
 Custom encryption requires both sides to be proxy.
 
@@ -899,7 +899,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy socks -t tcp -z demo_password -p :7777`
 Local secondary execution:
 `proxy socks -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 
 Three-level instance
@@ -909,12 +909,12 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy socks -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888`
 Local three-level execution:
 `proxy socks -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 ### 5.11 Compressed transmission
 The proxy's socks proxy can encrypt tcp data through custom encryption and tls standard encryption and kcp protocol on top of tcp. It can also be used before custom encryption.
 Compress the data, that is, the compression function and the custom encryption and tls|kcp can be used in combination, and the compression is divided into two parts.
-Part of it is local (-m) compression transmission, and part is whether the transmission with the superior (-M) is compressed.
+Part of it is local (-m) compression transmission, and part is whether the transmission with the upstream (-M) is compressed.
 
 Compression requires both sides to be proxy, and compression also protects (encrypts) data to some extent.
 
@@ -926,7 +926,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy socks -t tcp -m -p :7777`
 Local secondary execution:
 `proxy socks -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 
 Three-level instance
@@ -937,12 +937,12 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy socks -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888`
 Local three-level execution:
 `proxy socks -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 
 ### 5.12 Load Balancing
 
-The SOCKS proxy supports the upper-level load balancing, and multiple superior repeat-P parameters can be used.
+The SOCKS proxy supports the upper-level load balancing, and multiple upstream repeat-P parameters can be used.
 
 `proxy socks --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
@@ -954,7 +954,7 @@ The SOCKS proxy supports the upper-level load balancing, and multiple superior r
 
 `proxy socks --lb-method=weight -T tcp -P 1.1.1.1:33080?w=1 -P 2.1.1.1:33080?w=2 -P 3.1.1.1:33080?w=1 -p :33080 -t tcp`
 
-### 5.12.3 Use the target address to select the superior
+### 5.12.3 Use the target address to select the upstream
 
 `proxy socks --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`
 
@@ -972,9 +972,9 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 ### 5.15 Cascade Certification
 
-SOCKS5 supports cascading authentication, and -A can set superior authentication information.
+SOCKS5 supports cascading authentication, and -A can set upstream authentication information.
 
-Superior:
+upstream:
 
 `proxy socks -t tcp -p 2.2.2.2:33080 -a user:pass`
 
@@ -995,7 +995,7 @@ The default is: intelligent.
 The meaning of each value is as follows:
 `--intelligent=direct`, the targets in the blocked are not directly connected.
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.
-`--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the superior access target.
+`--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the upstream access target.
 
 ### 5.18. View help
 `./proxy help socks`
@@ -1034,8 +1034,8 @@ The command is as follows:
 `./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`
 
 ### 6.4 SS to HTTP(S)+SOCKS5+SS
-SPS superior and local support ss protocol, the superior can be SPS or standard ss service.
-SPS locally provides HTTP(S)\SOCKS5\SPS three defaults. When the superior is SOCKS5, the converted SOCKS5 and SS support UDP.
+SPS upstream and local support ss protocol, the upstream can be SPS or standard ss service.
+SPS locally provides HTTP(S)\SOCKS5\SPS three defaults. When the upstream is SOCKS5, the converted SOCKS5 and SS support UDP.
 Suppose there is already a normal SS or SPS proxy (ss is enabled, encryption: aes-256-cfb, password: demo): 127.0.0.1:8080, now we turn it to support both http(s) and socks5 and The ordinary proxy of ss, the converted local port is 18080, the converted ss encryption mode: aes-192-cfb, ss password: pass.
 The command is as follows:
 `./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.
@@ -1068,8 +1068,8 @@ The format is: `-p 0.0.0.0:80, 0.0.0.0:443`, multiple bindings can be separated 
 Sps supports http(s)\socks5 proxy authentication, which can be cascaded and has four important pieces of information:
 1: The user sends the authentication information `user-auth`.
 2: Set the local authentication information `local-auth`.
-3: Set the connection authentication information 'parent-auth` used by the superior.
-4: The authentication information `auth-info-to-parent` that is finally sent to the superior.
+3: Set the connection authentication information 'parent-auth` used by the upstream.
+4: The authentication information `auth-info-to-parent` that is finally sent to the upstream.
 Their situation is as follows:
 
 User-auth | local-auth | parent-auth | auth-info-to-paren
@@ -1083,18 +1083,18 @@ User-auth | local-auth | parent-auth | auth-info-to-paren
 For the sps proxy we can perform username and password authentication. The authenticated username and password can be specified on the command line.
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0: "`
 For multiple users, repeat the -a parameter.
-Can also be placed in a file, the format is one line a `username: password: number of connections: rate: superior`, and then specified with -F.
+Can also be placed in a file, the format is one line a `username: password: number of connections: rate: upstream`, and then specified with -F.
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`
 
-If the superior has authentication, the lower level can set the authentication information with the -A parameter, for example:
-Superior: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0: 0:"`
+If the upstream has authentication, the lower level can set the authentication information with the -A parameter, for example:
+upstream: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0: 0:"`
 Subordinate: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `
 
 For more details on certification, please refer to `9.API Certification` and `10.Local Certification`
 
 ### 6.8 Multiple Upstream
 
-If there are multiple superiors, they can be specified by multiple -Ps.
+If there are multiple upstreams, they can be specified by multiple -Ps.
 
 such as:
 
@@ -1124,7 +1124,7 @@ Socks5wss is equivalent to -S socks -T wss
 
 `a:b` is the username and password of the proxy authentication. If it is ss, `a` is the encryption method, `b` is the password, and no username password can be left blank, for example: `http://2.2.2.2:33080` If the username and password are protected, special symbols can be encoded using urlencode.
 
-`2.2.2.2:33080` is the superior address, the format is: `IP (or domain name): port `, if the underlying is ws/wss protocol can also bring the path, such as: `2.2.2.2: 33080/ws`;
+`2.2.2.2:33080` is the upstream address, the format is: `IP (or domain name): port `, if the underlying is ws/wss protocol can also bring the path, such as: `2.2.2.2: 33080/ws`;
 You can also set the `encryption method` and `password` of `ws\wss` by appending the query parameters `m` and `k`, for example: `2.2.2.2:33080/ws?m=aes-192-cfb&k=password`
 
 `#1` When multiple upper-level load balancing is a weighting strategy, the weights are rarely used.
@@ -1132,7 +1132,7 @@ You can also set the `encryption method` and `password` of `ws\wss` by appending
 ### 6.9 Custom Encryption
 The proxy sps proxy can encrypt tcp data through tls standard encryption and kcp protocol on top of tcp, in addition to support after tls and kcp
 Custom encryption, that is, custom encryption and tls|kcp can be used in combination, internally using AES256 encryption, only need to define it when using
-A password can be used, the encryption is divided into two parts, one part is whether the local (-z) encryption and decryption, and the part is the encryption and decryption with the superior (-Z) transmission.
+A password can be used, the encryption is divided into two parts, one part is whether the local (-z) encryption and decryption, and the part is the encryption and decryption with the upstream (-Z) transmission.
 
 Custom encryption requires both sides to be proxy.
 
@@ -1146,7 +1146,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy sps -S http -T tcp -P 6.6.6.6:6666 -t tcp -z demo_password -p :7777`
 Local secondary execution:
 `proxy sps -T tcp -P 2.2.2.2:777 -Z demo_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 
 Three-level instance
@@ -1157,12 +1157,12 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy sps -T tcp -P 2.2.2.2:7777 -Z demo_password -t tcp -z other_password -p :8888`
 Local three-level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the upstream.
 
 ### 6.10 Compressed transmission
 The proxy sps proxy can encrypt tcp data through custom encryption and tls standard encryption and kcp protocol on top of tcp. It can also be used before custom encryption.
 Compress the data, that is, the compression function and the custom encryption and tls|kcp can be used in combination, and the compression is divided into two parts.
-Part of it is local (-m) compression transmission, and part is whether the transmission with the superior (-M) is compressed.
+Part of it is local (-m) compression transmission, and part is whether the transmission with the upstream (-M) is compressed.
 
 Compression requires both sides to be proxy, and compression also protects (encrypts) data to some extent.
 
@@ -1174,7 +1174,7 @@ Execute on level 1 vps (ip: 2.2.2.2):
 `proxy sps -t tcp -m -p :7777`
 Local secondary execution:
 `proxy sps -T tcp -P 2.2.2.2:777 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 
 Three-level instance
@@ -1185,7 +1185,7 @@ Execute on the secondary vps (ip: 3.3.3.3):
 `proxy sps -T tcp -P 2.2.2.2:7777 -M -t tcp -m -p :8888`
 Local three-level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`
-In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
+In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the upstream.
 
 ### 6.11 Disabling the protocol
 By default, SPS supports http(s) and socks5 two proxy protocols. We can disable a protocol by parameter.
@@ -1198,7 +1198,7 @@ For example:
 
 ### 6.12 Speed ​​limit
 
-Suppose there is a SOCKS5 superior:
+Suppose there is a SOCKS5 upstream:
 
 `proxy socks -p 2.2.2.2:33080 -z password -t tcp`
 
@@ -1221,7 +1221,7 @@ By default, the -C, -K parameter is the path to the crt certificate and the key 
 If it is the beginning of base64://, then the latter data is considered to be base64 encoded and will be used after decoding.
 
 ### 6.15 Independent Service
-The sps function does not force a superior to be specified. When the superior is empty, the sps itself can complete the full proxy function. If the superior is specified, the superior connection target is used as before.
+The sps function does not force a upstream to be specified. When the upstream is empty, the sps itself can complete the full proxy function. If the upstream is specified, the upstream connection target is used as before.
 The following command is to open the http(s)\ss\socks service with one click.
 `./proxy sps -p :33080`
 
@@ -1283,7 +1283,7 @@ Fast3:`--nodelay=1 --interval=10 --resend=2 --nc=1`
 ## 8. Security DNS
 
 ### 8.1 Introduction
-DNS is known as the service provided by UDP port 53, but with the development of the network, some well-known DNS servers also support TCP mode dns query, such as Google's 8.8.8.8, the DNS anti-pollution server principle of the proxy is to start a proxy DNS proxy locally. Server, which uses TCP to perform dns query through the superior agent. If it communicates with the superior agent, it can perform secure and pollution-free DNS resolution. It also supports independent services, concurrent parsing, and enhanced enhanced hosts file function to support flexible concurrent parsing and forwarding.
+DNS is known as the service provided by UDP port 53, but with the development of the network, some well-known DNS servers also support TCP mode dns query, such as Google's 8.8.8.8, the DNS anti-pollution server principle of the proxy is to start a proxy DNS proxy locally. Server, which uses TCP to perform dns query through the upstream agent. If it communicates with the upstream agent, it can perform secure and pollution-free DNS resolution. It also supports independent services, concurrent parsing, and enhanced enhanced hosts file function to support flexible concurrent parsing and forwarding.
 
 Dns resolution order:
 1. Use the parameter --hosts to parse.
@@ -1300,7 +1300,7 @@ The parsing forwarding rule file specified by the --forward parameter can be ref
 The -q parameter can specify multiple remote dns servers to perform concurrent parsing. Whoever resolves the fastest parsing success, the default is: 1.1.1.1, 8.8.8.8, 9.9.9.9, multiple comma-separated,
            For example, you can also bring ports: 1.1.1.1, 8.8.8.8#53, 9.9.9.9
 
-If you are a standalone service, you don't need a superior:
+If you are a standalone service, you don't need a upstream:
 Can perform:
 `proxy dns --default system -p :5353`
 Or
@@ -1308,69 +1308,69 @@ Or
 
 ### 8.2 Example of use
 
-#### 8.2.1 Normal HTTP(S) superior agent
+#### 8.2.1 Normal HTTP(S) upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
+Suppose there is a upstream agent: 2.2.2.2:33080
 Local execution:
 `proxy dns -S http -T tcp -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides DNS resolution.
 
-#### 8.2.2 Ordinary SOCKS5 superior agent
+#### 8.2.2 Ordinary SOCKS5 upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
+Suppose there is a upstream agent: 2.2.2.2:33080
 Local execution:
 `proxy dns -S socks -T tcp -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides DNS resolution.
 
-#### 8.2.3 TLS encrypted HTTP(S) superior agent
+#### 8.2.3 TLS encrypted HTTP(S) upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy http -t tls -C proxy.crt -K proxy.key -p :33080`
 Local execution:
 `proxy dns -S http -T tls -P 2.2.2.2:33080 -C proxy.crt -K proxy.key -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
 
-#### 8.2.4 TLS-encrypted SOCKS5 superior agent
+#### 8.2.4 TLS-encrypted SOCKS5 upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy socks -t tls -C proxy.crt -K proxy.key -p :33080`
 Local execution:
 `proxy dns -S socks -T tls -P 2.2.2.2:33080 -C proxy.crt -K proxy.key -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
 
-#### 8.2.5 KCP encrypted HTTP(S) superior agent
+#### 8.2.5 KCP encrypted HTTP(S) upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy http -t kcp -p :33080`
 Local execution:
 `proxy dns -S http -T kcp -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
 
-#### 8.2.6 KCP encrypted SOCKS5 superior agent
+#### 8.2.6 KCP encrypted SOCKS5 upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy socks -t kcp -p :33080`
 Local execution:
 `proxy dns -S socks -T kcp -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
 
-#### 8.2.7 Custom encrypted HTTP(S) superior agent
+#### 8.2.7 Custom encrypted HTTP(S) upstream agent
 
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy http -t tcp -p :33080 -z password`
 Local execution:
 `proxy dns -S http -T tcp -Z password -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
 
-#### 8.2.8 Custom encrypted SOCKS5 superior agent
+#### 8.2.8 Custom encrypted SOCKS5 upstream agent
  
-Suppose there is a superior agent: 2.2.2.2:33080
-The commands executed by the superior agent are:
+Suppose there is a upstream agent: 2.2.2.2:33080
+The commands executed by the upstream agent are:
 `proxy socks -t kcp -p :33080 -z password`
 Local execution:
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`
@@ -1384,7 +1384,7 @@ The proxy's http(s)/socks5/sps proxy function supports user-to-agent access via 
 
 - User dimension, which controls the single connection rate and controls the maximum number of connections.
 - IP dimension, which controls the single connection rate and controls the maximum number of connections.
-- Dynamic superior, can dynamically obtain its superior from the API according to the user or client IP, and support http(s)/socks5/ss superior.
+- Dynamic upstream, can dynamically obtain its upstream from the API according to the user or client IP, and support http(s)/socks5/ss upstream.
 - Authenticate every connection, regardless of whether client authentication is required.
 - Cache authentication results, time can be set to reduce API pressure.
 
@@ -1433,13 +1433,13 @@ Userconns: The maximum number of connections for the user, not limited to 0 or n
 Ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.
 Userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.
 Iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.
-Upstream: The superior used, not empty, or not set this header.
+Upstream: The upstream used, not empty, or not set this header.
 
 #### Tips
 1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty.
 2. Connection limit priority: User authentication file rate limit - "File ip.limit rate limit -" API user rate limit - "API IP rate limit -" command line global connection limit.
 3. Rate Limit Priority: User Authentication File Rate Limit - "File ip.limit Rate Limit -" API User Rate Limit - "API IP Rate Limit - "Command Line Global Rate Limit.
-3. The superior obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the superior.
+3. The upstream obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the upstream.
 4.`--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 60, set 0 to close the cache.
 
 #### upstream detailed description
@@ -1450,10 +1450,10 @@ When the service is http, upstream only supports http(s) proxy, and does not sup
 When the service is a socks, the upstream only supports the socks5 proxy. The format is:
   `socks://127.0.0.1:3100?argk=argv`
 
-Explanation: `http://`,`socks://` is fixed, `127.0.0.1:3100` is the address of the superior
+Explanation: `http://`,`socks://` is fixed, `127.0.0.1:3100` is the address of the upstream
 
 2. When `sps` is 1.
-Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple superiors** , the description of the `-P` parameter.
+Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple upstreams** , the description of the `-P` parameter.
 3. Parameters, `?` followed by `argk=argv` are parameters: parameter name = parameter value, multiple parameters are connected with `&`.
   All the supported parameters are as follows, and the meaning of the command line with the same name is the same.
   1. parent-type : upper-level transport type, support tcp, tls, ws, wss
@@ -1476,7 +1476,7 @@ The proxy's http(s)/socks5/sps proxy function can pass
 #### Detailed explanation of parameters
 
 ##### `--auth-file`
-The authenticated user name and password file. This parameter specifies a file, one line per rule, in the format: "username: password: number of connections: rate: superior".
+The authenticated user name and password file. This parameter specifies a file, one line per rule, in the format: "username: password: number of connections: rate: upstream".
 `Connection number` is the maximum number of connections for the user. The 'rate' is the maximum speed of each tcp connection of the user. The unit is: byte/second. The upper level is the upper level used by the user.
 Not only can the authenticated user be set by `--auth-file`, but also the `-a` parameter can be set directly. Multiple users can repeat multiple `-a` parameters.
 For example: `proxy http -a a:b:0:0: -a c:d:0:0:`
@@ -1487,7 +1487,7 @@ For example: `user:pass:100:10240:http://192.168.1.1:3100`
 `pass` is the authentication user password (cannot contain a colon:)
 `100` is the maximum number of connections for this user, not limited to write 0
 `10240` is the rate limit of this user's single tcp connection, the unit is: byte / sec, no limit write 0
-`http://192.168.1.1:3100` is the superior used by this user, no space is left blank
+`http://192.168.1.1:3100` is the upstream used by this user, no space is left blank
 
 ##### `--max-conns`
 Limit the maximum number of global connections for the proxy service, a number, 0 is unrestricted, default is 0.
@@ -1500,7 +1500,7 @@ Rule interpretation:
 `127.0.0.1` is the IP to be restricted
 `100` is the maximum number of connections for this IP, not limited to write 0
 `10240` is the rate limit of IP single tcp connection, the unit is: byte / s, no limit write 0
-`http://192.168.1.1:3100` is the superior used by this IP, and it is not left blank.
+`http://192.168.1.1:3100` is the upstream used by this IP, and it is not left blank.
 
 ##### `--rate-limit`
 Limit the speed of each tcp connection of the service, for example: 100K 2000K 1M . 0 means unlimited, default 0.
