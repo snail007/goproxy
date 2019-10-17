@@ -1064,7 +1064,7 @@ carry out.
 In general, listening to a port is fine, but if you need to listen to both ports 80 and 443 as a reverse proxy, the -p parameter is supported.
 The format is: `-p 0.0.0.0:80, 0.0.0.0:443`, multiple bindings can be separated by commas.
 
-### 6.7 Authentication function
+### 6.7 Authentication
 Sps supports http(s)\socks5 proxy authentication, which can be cascaded and has four important pieces of information:
 1: The user sends the authentication information `user-auth`.
 2: Set the local authentication information `local-auth`.
@@ -1081,52 +1081,32 @@ User-auth | local-auth | parent-auth | auth-info-to-paren
 | Yes | No | No | From user-auth
 
 For the sps proxy we can perform username and password authentication. The authenticated username and password can be specified on the command line.
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0: "`
 For multiple users, repeat the -a parameter.
-It can also be placed in a file in the format of a "username:password" and then specified with -F.
+Can also be placed in a file, the format is one line a `username: password: number of connections: rate: superior`, and then specified with -F.
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`
 
 If the superior has authentication, the lower level can set the authentication information with the -A parameter, for example:
-Superior: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`
+Superior: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0: 0:"`
 Subordinate: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `
 
-In addition, the sps proxy, local authentication integrates external HTTP API authentication, we can specify an http url interface address with the --auth-url parameter.
-Then when there is a user connection, the proxy will request the url in GET mode, and bring the following four parameters. If the HTTP status code 204 is returned, the authentication is successful.
-In other cases, the authentication failed.
-For example:
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`
-When the user connects, the proxy will request the url ("http://test.com/auth.php") in GET mode.
-Bring four parameters: user, pass, ip, target:
-Http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}
-User: username
-Pass: password
-Ip: User's IP, for example: 192.168.1.200
-Target: If the client is a http(s) proxy request, this represents the full url of the request, otherwise the condition is empty.
+For more details on certification, please refer to `9.API Certification` and `10.Local Certification`
 
-If there is no -a or -F or --auth-url parameter, the local authentication is turned off.
-If there is no -A parameter, the connection superior does not use authentication.
+### 6.8 Multiple superiors
 
-**Set individual authentication information**
+If there are multiple superiors, they can be specified by multiple -Ps.
 
-If there are multiple different superiors, and their passwords are different, then you can set authentication information for each superior.
-At the same time, you can also set a global authentication information with the -A parameter. If a higher level does not set the authentication information separately, the globally set authentication information is used.
-The authentication information is written together with the superior.
-The format is: a:b@2.2.2.2:33080#1
-Description:
-    User is a password is b, if the user name and password protection special symbols can be encoded using urlencode
-    If it is ss, then a is the encryption method, b is the password, for example: aes-192-cfb:your_pass
-`@` is the interval symbol. If there is authentication information, there must be @, no authentication information can be omitted @
-2.2.2.2: 33080 is the superior address
-`#`1 is the setting weight, it can be omitted. For details, please refer to the manual *** weight section*
+such as:
 
-**Set protocol type for separate authentication information**
+`proxy sps -P http://127.0.0.1:3100 -P socks5://127.0.0.1:3200`
 
-If there are multiple different superiors, and their passwords and transmission protocols are the same, then the protocol type of the authentication information can be set for each superior.
-At the same time, a global authentication information protocol type can be set with the -S and -T parameters. If a superior does not separately set the authentication information protocol type, the globally set authentication information protocol type is used.
-The type of authentication information protocol is written together with the superior.
-The format is: `http://a:b@2.2.2.2:33080#1`
-Description:
-`http://` is the protocol type, possible types and contains the following:
+The complete format of `-P` is as follows:
+
+ `protocol://a:b@2.2.2.2:33080#1`
+
+Each section is explained below:
+
+`protocol://` is the protocol type, possible types and contains the following:
 
 ```text
 Http is equivalent to -S http -T tcp
@@ -1142,7 +1122,14 @@ Socks5ws is equivalent to -S socks -T ws
 Socks5wss is equivalent to -S socks -T wss
 ```
 
-### 6.8 Custom Encryption
+`a:b` is the username and password of the proxy authentication. If it is ss, `a` is the encryption method, `b` is the password, and no username password can be left blank, for example: `http://2.2.2.2:33080` If the username and password are protected, special symbols can be encoded using urlencode.
+
+`2.2.2.2:33080` is the superior address, the format is: `IP (or domain name): port `, if the underlying is ws/wss protocol can also bring the path, such as: `2.2.2.2: 33080/ws`;
+You can also set the `encryption method` and `password` of `ws\wss` by appending the query parameters `m` and `k`, for example: `2.2.2.2:33080/ws?m=aes-192-cfb&k=password`
+
+`#1` When multiple upper-level load balancing is a weighting strategy, the weights are rarely used.
+
+### 6.9 Custom Encryption
 The proxy sps proxy can encrypt tcp data through tls standard encryption and kcp protocol on top of tcp, in addition to support after tls and kcp
 Custom encryption, that is, custom encryption and tls|kcp can be used in combination, internally using AES256 encryption, only need to define it when using
 A password can be used, the encryption is divided into two parts, one part is whether the local (-z) encryption and decryption, and the part is the encryption and decryption with the superior (-Z) transmission.
@@ -1172,7 +1159,7 @@ Local three-level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -Z other_password -t tcp -p :8080`
 In this way, when the website is accessed through the local agent 8080, the target website is accessed through encrypted transmission with the superior.
 
-### 6.9 Compressed transmission
+### 6.10 Compressed transmission
 The proxy sps proxy can encrypt tcp data through custom encryption and tls standard encryption and kcp protocol on top of tcp. It can also be used before custom encryption.
 Compress the data, that is, the compression function and the custom encryption and tls|kcp can be used in combination, and the compression is divided into two parts.
 Part of it is local (-m) compression transmission, and part is whether the transmission with the superior (-M) is compressed.
@@ -1200,7 +1187,7 @@ Local three-level execution:
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080`
 In this way, when the website is accessed through the local agent 8080, the target website is accessed through compression with the superior.
 
-### 6.10 Disabling the protocol
+### 6.11 Disabling the protocol
 By default, SPS supports http(s) and socks5 two proxy protocols. We can disable a protocol by parameter.
 For example:
 1. Disable the HTTP(S) proxy function to retain only the SOCKS5 proxy function, parameter: `--disable-http`.
@@ -1209,7 +1196,7 @@ For example:
 1. Disable the SOCKS5 proxy function to retain only the HTTP(S) proxy function, parameter: `--disable-socks`.
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`
 
-### 6.11 Speed ​​limit
+### 6.12 Speed ​​limit
 
 Suppose there is a SOCKS5 superior:
 
@@ -1221,24 +1208,24 @@ SPS lower level, speed limit 100K
 
 It can be specified by the `-l` parameter, for example: 100K 2000K 1M . 0 means no limit.
 
-### 6.12 Specifying the exit IP
+### 6.13 Specifying the exit IP
 
 The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the export IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.
 
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`
 
-### 6.13 Certificate parameters use base64 data
+### 6.14 Certificate parameters use base64 data
 
 By default, the -C, -K parameter is the path to the crt certificate and the key file.
 
 If it is the beginning of base64://, then the latter data is considered to be base64 encoded and will be used after decoding.
 
-### 6.14 Independent Service
+### 6.15 Independent Service
 The sps function does not force a superior to be specified. When the superior is empty, the sps itself can complete the full proxy function. If the superior is specified, the superior connection target is used as before.
 The following command is to open the http(s)\ss\socks service with one click.
 `./proxy sps -p :33080`
 
-### 6.15 Target Redirection
+### 6.16 Target Redirection
 The https(s)\socks5\ss proxy function provided by the sps function, the client connects to the specified "target" through the sps proxy. This "target" is generally a website or an arbitrary tcp address.
 The website "target" is generally foo.com: 80, foo.com: 443, sps supports the use of the --rewrite parameter to specify a "target" redirection rule file, redirect the target, the client is non-perceived,
 For example, if you redirect to "target": demo.com:80 to 192.168.0.12:80, then the client visits the website demo.com, in fact, the website service provided by 192.168.0.12.
@@ -1251,7 +1238,7 @@ Www.a.com:80 10.0.0.2:8080
 192.168.0.11:80 10.0.0.2:8080
 ```
 
-### 6.16 View help
+### 6.17 View help
 
 `./proxy help sps`
 
@@ -1388,3 +1375,132 @@ The commands executed by the superior agent are:
 Local execution:
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.
+
+## 9.API Authentication
+
+The proxy's http(s)/socks5/sps proxy function supports user-to-agent access via the API.
+
+### What can I do through the API?
+
+- User dimension, which controls the single connection rate and controls the maximum number of connections.
+- IP dimension, which controls the single connection rate and controls the maximum number of connections.
+- Dynamic superior, can dynamically obtain its superior from the API according to the user or client IP, and support http(s)/socks5/ss superior.
+- Authenticate every connection, regardless of whether client authentication is required.
+- Cache authentication results, time can be set to reduce API pressure.
+
+#### Specific use
+The proxy's http(s)/socks5/sps proxy API function is controlled by three parameters: `--auth-url` and `--auth-nouser` and `--auth-cache`.
+The parameter `--auth-url` is the HTTP API interface address. When the client connects, the proxy will request the url in GET mode, with the following parameters. If the HTTP status code 204 is returned, the authentication is successful. In other cases, the authentication fails.
+
+An example of a complete request API:
+`http://test.com/auth.php?user=a&pass=b&client_addr=127.0.0.1:49892&local_addr=127.0.0.1:8100&target=http%3A%2F%2Fwww.baidu.com&service=http&sps=0`
+
+#### Parameter Description
+`user and pass` When the proxy turns on authentication, here is the username and password provided by the client.
+`client_addr` The address used by the client to access the proxy, format IP: port.
+`local_addr` The proxy address accessed by the client, format IP: port.
+`service` Proxy type, divided into: http, socks.
+Whether the `sps` proxy is provided by sps, 1: yes, 0: no.
+`target` The target to be accessed by the client. If it is an http(s) proxy, the target is the specific url accessed; if it is a socks5 proxy, the target is empty.
+
+#### Example
+Suppose --auth-url http://127.0.0.1:333/auth.php points to a php interface address.
+The contents of auth.php are as follows:
+
+```php
+<?php
+$proxy_ip=$_GET['local_addr'];
+$user_ip=$_GET['client_addr'];
+$service=$_GET['service'];
+$is_sps=$_GET['sps']=='1';
+$user=$_GET['user'];
+$pass=$_GET['pass'];
+$target=$_GET['target'];
+/ / Business logic judgment
+//....
+
+/ / Set the authentication result
+Header("userconns:1000");
+Header("ipconns:2000");
+Header("userrate:3000");
+Header("iprate:8000");
+Header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");
+Header("HTTP/1.1 204 No Content");
+```
+
+#### Explanation
+Userconns: The maximum number of connections for the user, not limited to 0 or not set this header.
+Ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.
+Userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.
+Iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.
+Upstream: The superior used, not empty, or not set this header.
+
+#### Tips
+1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty.
+2. Connection limit priority: User authentication file rate limit - "File ip.limit rate limit -" API user rate limit - "API IP rate limit -" command line global connection limit.
+3. Rate Limit Priority: User Authentication File Rate Limit - "File ip.limit Rate Limit -" API User Rate Limit - "API IP Rate Limit - "Command Line Global Rate Limit.
+3. The superior obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the superior.
+4.`--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 60, set 0 to close the cache.
+
+#### upstream detailed description
+
+1. When the parameter `sps` is 0.
+When the service is http, upstream only supports http(s) proxy, and does not support authentication. If authentication is required, it can be replaced by sps. Format:
+  `http://127.0.0.1:3100?argk=argv`
+When the service is a socks, the upstream only supports the socks5 proxy. The format is:
+  `socks://127.0.0.1:3100?argk=argv`
+
+Explanation: `http://`,`socks://` is fixed, `127.0.0.1:3100` is the address of the superior
+
+2. When `sps` is 1.
+Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple superiors** , the description of the `-P` parameter.
+3. Parameters, `?` followed by `argk=argv` are parameters: parameter name = parameter value, multiple parameters are connected with `&`.
+  All the supported parameters are as follows, and the meaning of the command line with the same name is the same.
+  1. parent-type : upper-level transport type, support tcp, tls, ws, wss
+  2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.
+  3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password
+  4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false
+  5. timeout : timeout for establishing tcp connection, number, in milliseconds
+  6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.
+  7. cert : The base64 encoded string of the higher level tls transport type certificate file.
+  8. key : The base64 encoded string of the higher-level tls transport type certificate key file.
+
+## 10. Authentication
+
+The proxy http(s)/socks5/sps proxy function supports the user to access the proxy pair through the configuration file, and supports the http(s) proxy ``Proxy Basic proxy authentication` and the socks5 proxy authentication.
+
+### start using
+The proxy's http(s)/socks5/sps proxy function can pass
+`--auth-file`, `--max-conns`, `--ip-limit`, `--rate-limit`, `-a` These five parameters control.
+
+#### Detailed explanation of parameters
+
+##### `--auth-file`
+The authenticated user name and password file. This parameter specifies a file, one line per rule, in the format: "username: password: number of connections: rate: superior".
+`Connection number` is the maximum number of connections for the user. The 'rate' is the maximum speed of each tcp connection of the user. The unit is: byte/second. The upper level is the upper level used by the user.
+Not only can the authenticated user be set by `--auth-file`, but also the `-a` parameter can be set directly. Multiple users can repeat multiple `-a` parameters.
+For example: `proxy http -a a:b:0:0: -a c:d:0:0:`
+
+Example explanation:
+For example: `user:pass:100:10240:http://192.168.1.1:3100`
+`user` is the authentication username
+`pass` is the authentication user password (cannot contain a colon:)
+`100` is the maximum number of connections for this user, not limited to write 0
+`10240` is the rate limit of this user's single tcp connection, the unit is: byte / sec, no limit write 0
+`http://192.168.1.1:3100` is the superior used by this user, no space is left blank
+
+##### `--max-conns`
+Limit the maximum number of global connections for the proxy service, a number, 0 is unrestricted, default is 0.
+
+##### `--ip-limit`
+Controls the number of connections and connection rate of the client IP. This parameter specifies a file, one rule per line, and the beginning of # is gaze.
+The sample file ip.limit, the rule format is as follows:
+`127.0.0.1:100:10240:http://192.168.1.1:3100`
+Rule interpretation:
+`127.0.0.1` is the IP to be restricted
+`100` is the maximum number of connections for this IP, not limited to write 0
+`10240` is the rate limit of IP single tcp connection, the unit is: byte / s, no limit write 0
+`http://192.168.1.1:3100` is the superior used by this IP, and it is not left blank.
+
+##### `--rate-limit`
+Limit the speed of each tcp connection of the service, for example: 100K 2000K 1M . 0 means unlimited, default 0.
