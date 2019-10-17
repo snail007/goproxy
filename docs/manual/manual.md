@@ -1092,7 +1092,7 @@ Subordinate: `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t t
 
 For more details on certification, please refer to `9.API Certification` and `10.Local Certification`
 
-### 6.8 Multiple superiors
+### 6.8 Multiple Upstream
 
 If there are multiple superiors, they can be specified by multiple -Ps.
 
