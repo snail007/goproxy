@@ -1351,9 +1351,9 @@ proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对
 
 ### 通过API你可以干什么？
 
-- 用户纬度，控制连接速率，控制连接数。
-- IP纬度，控制连接速率，控制连接数。
-- 动态上级，可以根据用户或者客户端IP，动态的从API获取其上级。
+- 用户维度，控制单个连接速率，控制最大连接数。
+- IP维度，控制单个连接速率，控制最大连接数。
+- 动态上级，可以根据用户或者客户端IP，动态的从API获取其上级，支持http(s)/socks5/ss上级。
 
 #### 具体使用
 proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`和`--auth-cache`三个参数控制。
@@ -1416,7 +1416,7 @@ service是http时，upstream只支持http(s)代理，不支持认证，如需要
   `http://127.0.0.1:3100?argk=argv`
 service是socks时，upstream只支持socks5代理，格式：
   `socks://127.0.0.1:3100?argk=argv`
-  
+
 解释：`http://`，`socks://` 是固定的，`127.0.0.1:3100`是上级的地址
 
 2.当`sps`是1的时候。
