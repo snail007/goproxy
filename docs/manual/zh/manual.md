@@ -256,23 +256,7 @@ proxy的blocked，direct，stop，only，hosts，resolve.rules，rewriter.rules�
 `./proxy http -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 多个用户，重复-a参数即可。  
 也可以放在文件中，格式是一行一个"用户名:密码"，然后用-F指定。  
-`./proxy http -t tcp -p ":33080" -F auth-file.txt`   
-  
-另外，http(s)代理还集成了外部HTTP API认证，我们可以通过--auth-url参数指定一个http url接口地址，  
-然后有用户连接的时候，proxy会GET方式请求这url，带上下面四个参数，如果返回HTTP状态码204，代表认证成功  
-其它情况认为认证失败。  
-比如:  
-`./proxy http -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
-用户连接的时候，proxy会GET方式请求这url("http://test.com/auth.php")，  
-带上user，pass，ip，local_ip，target五个参数:  
-http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&local_ip={LOCAL_IP}&target={TARGET}  
-user:用户名  
-pass:密码  
-ip:用户的IP，比如:192.168.1.200  
-local_ip:用户访问的服务器的IP，比如:3.3.3.3  
-target:用户访问的URL，比如:http://demo.com:80/1.html或https://www.baidu.com:80  
-
-如果没有-a或-F或--auth-url参数，就是关闭Basic认证。  
+`./proxy http -t tcp -p ":33080" -F auth-file.txt`    
 
 ### 1.6.HTTP代理流量强制走上级HTTP代理
 默认情况下，proxy会智能判断一个网站域名是否无法访问，如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理。  
@@ -857,21 +841,6 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 也可以放在文件中，格式是一行一个"用户名:密码"，然后用-F指定。  
 `./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
-另外，socks5代理还集成了外部HTTP API认证，我们可以通过--auth-url参数指定一个http url接口地址，  
-然后有用户连接的时候，proxy会GET方式请求这url，带上下面三个参数，如果返回HTTP状态码204，代表认证成功  
-其它情况认为认证失败。  
-比如:  
-`./proxy socks -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
-用户连接的时候，proxy会GET方式请求这url("http://test.com/auth.php")，  
-带上user，pass，ip，local_ip四个参数:  
-http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&local_ip={LOCAL_IP}  
-user:用户名  
-pass:密码  
-ip:用户的IP，比如:192.168.1.200  
-local_ip:用户访问的服务器的IP，比如:3.3.3.3   
-
-如果没有-a或-F或--auth-url参数，就是关闭认证。  
-
 ### 5.8.KCP协议传输
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
@@ -1083,52 +1052,30 @@ sps支持http(s)\socks5代理认证，可以级联认证，有四个重要的信
 | 有    | 没有    |   没有    |   来自user-auth  
 
 对于sps代理我们可以进行用户名密码认证，认证的用户名和密码可以在命令行指定    
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
 多个用户，重复-a参数即可。  
-也可以放在文件中，格式是一行一个"用户名:密码"，然后用-F指定。  
+也可以放在文件中，格式是一行一个`用户名:密码:连接数:速率:上级`，然后用-F指定。  
 `./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
 
 如果上级有认证，下级可以通过-A参数设置认证信息，比如:  
-上级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
-下级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
+上级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
+下级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `    
 
-另外，sps代理，本地认证集成了外部HTTP API认证，我们可以通过--auth-url参数指定一个http url接口地址，    
-然后有用户连接的时候，proxy会GET方式请求这url，带上下面四个参数，如果返回HTTP状态码204，代表认证成功  
-其它情况认为认证失败。  
-比如:  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" --auth-url "http://test.com/auth.php"`  
-用户连接的时候，proxy会GET方式请求这url("http://test.com/auth.php")，  
-带上user，pass，ip，target四个参数:  
-http://test.com/auth.php?user={USER}&pass={PASS}&ip={IP}&target={TARGET}  
-user:用户名   
-pass:密码   
-ip:用户的IP，比如:192.168.1.200   
-target:如果客户端是http(s)代理请求，这里代表的是请求的完整url，其它情况为空。  
+### 6.8 多个上级
 
-如果没有-a或-F或--auth-url参数，就是关闭本地认证。  
-如果没有-A参数，连接上级不使用认证。  
+如果存在多个上级，可以通过多个-P指定。
 
-**设置单独认证信息**
+比如：
 
-如果存在多个不同上级，而且他们的密码有的一样有的不一样，那么可以针对每个上级设置认证信息，  
-同时还可以用-A参数设置一个全局认证信息，如果某个上级没有单独设置认证信息就使用全局设置的认证信息。  
-认证信息和上级写在一起。  
-格式是: a:b@2.2.2.2:33080#1  
-说明:  
-    用户是a密码是b，如果用户名和密码保护特殊符号可以使用urlencode进行编码  
-    如果是ss，那么a就是加密方法，b是密码，比如:aes-192-cfb:your_pass  
-`@`是间隔符号，如果有认证信息，必须有@，没有认证信息可以省略@  
-2.2.2.2:33080 是上级地址  
-`#`1 是设置权重，没有可以省略，详细说明可以参考手册***权重部分*
+`proxy sps -P http://127.0.0.1:3100  -P socks5://127.0.0.1:3200`
 
-**设置单独认证信息的协议类型**
+`-P`完整格式如下：
 
-如果存在多个不同上级，而且他们的密码和传输协议有的一样有的不一样，那么可以针对每个上级设置认证信息的协议类型，  
-同时还可以用-S和-T参数设置一个全局认证信息协议类型，如果某个上级没有单独设置认证信息协议类型就使用全局设置的认证信息协议类型。  
-认证信息协议类型和上级写在一起。  
-格式是: `http://a:b@2.2.2.2:33080#1`  
-说明: 
-`http://` 是协议类型，可能的类型以及含有如下:
+ `protocol://a:b@2.2.2.2:33080#1`  
+
+下面对每部分进行解释：
+
+`protocol://` 是协议类型，可能的类型以及含有如下:
 
 ```text
 http  等价于 -S http -T tcp  
@@ -1143,6 +1090,13 @@ httpwss   等价于  -S http -T wss
 socks5ws  等价于  -S socks -T ws
 socks5wss 等价于  -S socks -T wss
 ```
+
+`a:b`是代理认证的用户名密码，如果是ss，`a`是加密方法，`b`是密码，没有用户名密码可以留空比如：`http://2.2.2.2:33080`，如果用户名和密码保护特殊符号可以使用urlencode进行编码。
+
+`2.2.2.2:33080`是上级地址，格式是：`IP（或域名）:端口`，如果底层是ws/wss协议还可以这是路径，比如：`2.2.2.2:33080/ws`;
+还能通过url参数`m`和`k`设置`ws\wss`的加密方法和密码，比如：`2.2.2.2:33080/ws?m=aes-192-cfb&k=password`
+
+`#1`多个上级的负载均衡是权重策略时候，设置的权重，很少用到。
 
 ### 6.8 自定义加密
 proxy的sps代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据，除此之外还支持在tls和kcp之后进行  
@@ -1390,3 +1344,90 @@ or
 本地执行：  
 `proxy dns -S socks -T tcp -Z password -P 2.2.2.2:33080 -p :53`  
 那么本地的UDP端口53就提供了安全防污染DNS解析功能。
+
+## API认证
+
+proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对访问。
+
+### 通过API你可以干什么？
+
+- 用户纬度，控制连接速率，控制连接数。
+- IP纬度，控制连接速率，控制连接数。
+- 动态上级，可以根据用户或者客户端IP，动态的从API获取其上级。
+
+#### 具体使用
+proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`和`--auth-cache`三个参数控制。
+`--auth-url`:HTTP API接口地址，客户端连接的时候，proxy会GET方式请求这url，带上下面参数，如果返回HTTP状态码204，代表认证成功  
+其它情况认为认证失败。 
+
+一个完整的请求API的示例：
+`http://test.com/auth.php?user=a&pass=b&client_addr=127.0.0.1:49892&local_addr=127.0.0.1:8100&target=http%3A%2F%2Fwww.baidu.com&service=http&sps=0`
+
+#### 参数说明
+`user和pass` 当代理开启了认证功能，这里就是客户端提供的用户名和密码。
+`client_addr` 客户端访问代理时的用的地址，格式IP:端口。
+`local_addr` 客户端访问的代理地址，格式IP:端口。
+`service` 代理类型，分为：http、socks。
+`sps` 代理是否是sps提供的，1:是，0:否。
+`target`  客户端要访问的目标，如果是http(s)代理，target是访问的具体url；如果是socks5代理，target是空。
+
+#### 示例
+假设--auth-url http://127.0.0.1:333/auth.php 指向了一个php接口地址.
+auth.php内容如下：
+
+```php
+<?php
+$proxy_ip=$_GET['local_addr'];
+$user_ip=$_GET['client_addr'];
+$service=$_GET['service'];
+$is_sps=$_GET['sps']=='1';
+$user=$_GET['user'];
+$pass=$_GET['pass'];
+$target=$_GET['target'];
+//业务逻辑判断
+//....
+
+//设置认证结果
+header("userconns:1000");
+header("ipconns:2000");
+header("userrate:3000");
+header("iprate:8000");
+header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");
+header("HTTP/1.1 204 No Content");
+```
+
+#### 解释
+userconns：用户的最大连接数，不限制为0或者不设置这个头部。
+ipconns：用户IP的最大连接数，不限制为0或者不设置这个头部。
+userrate：用户的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
+iprate：用户IP的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
+upstream：使用的上级，没有为空，或者不设置这个头部。
+
+#### 提示
+1.默认情况下，设置了--auth-url是需要客户端提供用户名和密码的；如果不需要客户端提供用户名密码，并认证，可以加上--auth-nouser，每次访问仍然会访问认证地址--auth-url进行认证。只是php接口里面接收的$user认证用户名和$pass认证密码都为空。
+2.连接数限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局连接数限制。
+3.速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。
+3.上级获取优先级：用户认证文件的upstream-》文件ip.limit的upstream-》API的upstream-》命令行指定的上级。
+
+#### upstream详细说明
+
+1.当参数`sps`是0的时候。
+service是http时，upstream只支持http(s)代理，不支持认证，如需要认证可以用sps代替，格式：
+  `http://127.0.0.1:3100?argk=argv`
+service是socks时，upstream只支持socks5代理，格式：
+  `socks://127.0.0.1:3100?argk=argv`
+  
+解释：`http://`，`socks://` 是固定的，`127.0.0.1:3100`是上级的地址
+
+2.当`sps`是1的时候。
+upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2.2.2.2:33080?argk=argv`，具体介绍请参考SPS章节的，**多个上级**，`-P`参数的说明。
+3.参数，`?`后面`argk=argv`是参数：参数名称=参数值，多个参数用`&`连接。
+  支持的所有参数如下,和命令行同名参数意义一致。
+  1. parent-type : 上级底层传输类型，支持 tcp,tls,ws,wss
+  2. parent-ws-method : 上级底层ws传输类型的加密方法，支持的值和命令行支持的值范围一样
+  3. parent-ws-password : 上级底层ws传输类型的加密密码，数字字母组成的密码
+  4. parent-tls-single : 上级底层tls传输类型是否是单向tls，可以是：true | false
+  5. timeout : 建立tcp连接的超时时间，数字，单位毫秒
+  6. ca : 上级底层tls传输类型的ca证书文件经过base64编码后的字符串。
+  7. cert : 上级底层tls传输类型的证书文件经过base64编码后的字符串。
+  8. key : 上级底层tls传输类型的证书密钥文件经过base64编码后的字符串。
