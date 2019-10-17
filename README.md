@@ -14,8 +14,8 @@ proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 - [Desktop Edition, Web Console : ProxyAdmin](https://github.com/snail007/proxy_admin_free)
 - [Android Edition](/gui/README_ZH.md)
 - [SDK](https://github.com/snail007/goproxy-sdk)
-- [GORPOXY Help Manual](https://snail007.github.io/goproxy/manual/)
-- [GORPOXY Practical Tutorial](https://snail007.github.io/goproxy)
+- [GORPOXY Manual](https://snail007.github.io/goproxy/manual/)
+- [GORPOXY Tutorial](https://snail007.github.io/goproxy)
 - [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
 
 ### What can it do?
