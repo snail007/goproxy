@@ -1359,19 +1359,18 @@ proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对
 
 #### 具体使用
 proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`和`--auth-cache`三个参数控制。
-参数`--auth-url`是HTTP API接口地址，客户端连接的时候，proxy会GET方式请求这url，带上下面参数，如果返回HTTP状态码204，代表认证成功  
-其它情况认为认证失败。 
+参数`--auth-url`是HTTP API接口地址，客户端连接的时候，proxy会GET方式请求这url，带上下面参数，如果返回HTTP状态码204，代表认证成功，其它情况认为认证失败。 
 
 一个完整的请求API的示例：
 `http://test.com/auth.php?user=a&pass=b&client_addr=127.0.0.1:49892&local_addr=127.0.0.1:8100&target=http%3A%2F%2Fwww.baidu.com&service=http&sps=0`
 
 #### 参数说明
-`user和pass` 当代理开启了认证功能，这里就是客户端提供的用户名和密码。
-`client_addr` 客户端访问代理时的用的地址，格式IP:端口。
-`local_addr` 客户端访问的代理地址，格式IP:端口。
-`service` 代理类型，分为：http、socks。
-`sps` 代理是否是sps提供的，1:是，0:否。
-`target`  客户端要访问的目标，如果是http(s)代理，target是访问的具体url；如果是socks5代理，target是空。
+`user和pass` 当代理开启了认证功能，这里就是客户端提供的用户名和密码。  
+`client_addr` 客户端访问代理时的用的地址，格式IP:端口。  
+`local_addr` 客户端访问的代理地址，格式IP:端口。  
+`service` 代理类型，分为：http、socks。  
+`sps` 代理是否是sps提供的，1:是，0:否。  
+`target`  客户端要访问的目标，如果是http(s)代理，target是访问的具体url；如果是socks5代理，target是空。  
 
 #### 示例
 假设--auth-url http://127.0.0.1:333/auth.php 指向了一个php接口地址.
@@ -1399,37 +1398,37 @@ header("HTTP/1.1 204 No Content");
 ```
 
 #### 解释
-userconns：用户的最大连接数，不限制为0或者不设置这个头部。
-ipconns：用户IP的最大连接数，不限制为0或者不设置这个头部。
-userrate：用户的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
-iprate：用户IP的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
-upstream：使用的上级，没有为空，或者不设置这个头部。
+userconns：用户的最大连接数，不限制为0或者不设置这个头部。  
+ipconns：用户IP的最大连接数，不限制为0或者不设置这个头部。  
+userrate：用户的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。  
+iprate：用户IP的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。  
+upstream：使用的上级，没有为空，或者不设置这个头部。  
 
 #### 提示
-1.默认情况下，设置了--auth-url是需要客户端提供用户名和密码的；如果不需要客户端提供用户名密码，并认证，可以加上--auth-nouser，每次访问仍然会访问认证地址--auth-url进行认证。只是php接口里面接收的$user认证用户名和$pass认证密码都为空。
-2.连接数限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局连接数限制。
-3.速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。
-3.上级获取优先级：用户认证文件的upstream-》文件ip.limit的upstream-》API的upstream-》命令行指定的上级。
+1.默认情况下，设置了--auth-url是需要客户端提供用户名和密码的；如果不需要客户端提供用户名密码，并认证，可以加上--auth-nouser，每次访问仍然会访问认证地址--auth-url进行认证。只是php接口里面接收的$user认证用户名和$pass认证密码都为空。  
+2.连接数限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局连接数限制。  
+3.速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。  
+3.上级获取优先级：用户认证文件的upstream-》文件ip.limit的upstream-》API的upstream-》命令行指定的上级。  
 
 #### upstream详细说明
 
-1.当参数`sps`是0的时候。
-service是http时，upstream只支持http(s)代理，不支持认证，如需要认证可以用sps代替，格式：
-  `http://127.0.0.1:3100?argk=argv`
-service是socks时，upstream只支持socks5代理，格式：
-  `socks://127.0.0.1:3100?argk=argv`
+1.当参数`sps`是0的时候。  
+service是http时，upstream只支持http(s)代理，不支持认证，如需要认证可以用sps代替，格式：  
+  `http://127.0.0.1:3100?argk=argv`  
+service是socks时，upstream只支持socks5代理，格式：  
+  `socks://127.0.0.1:3100?argk=argv`  
 
-解释：`http://`，`socks://` 是固定的，`127.0.0.1:3100`是上级的地址
+解释：`http://`，`socks://` 是固定的，`127.0.0.1:3100`是上级的地址  
 
-2.当`sps`是1的时候。
-upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2.2.2.2:33080?argk=argv`，具体介绍请参考SPS章节的，**多个上级**，`-P`参数的说明。
-3.参数，`?`后面`argk=argv`是参数：参数名称=参数值，多个参数用`&`连接。
-  支持的所有参数如下,和命令行同名参数意义一致。
-  1. parent-type : 上级底层传输类型，支持 tcp,tls,ws,wss
-  2. parent-ws-method : 上级底层ws传输类型的加密方法，支持的值和命令行支持的值范围一样
-  3. parent-ws-password : 上级底层ws传输类型的加密密码，数字字母组成的密码
-  4. parent-tls-single : 上级底层tls传输类型是否是单向tls，可以是：true | false
-  5. timeout : 建立tcp连接的超时时间，数字，单位毫秒
-  6. ca : 上级底层tls传输类型的ca证书文件经过base64编码后的字符串。
-  7. cert : 上级底层tls传输类型的证书文件经过base64编码后的字符串。
-  8. key : 上级底层tls传输类型的证书密钥文件经过base64编码后的字符串。
+2.当`sps`是1的时候。  
+upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2.2.2.2:33080?argk=argv`，具体介绍请参考SPS章节的，**多个上级**，`-P`参数的说明。  
+3.参数，`?`后面`argk=argv`是参数：参数名称=参数值，多个参数用`&`连接。  
+  支持的所有参数如下,和命令行同名参数意义一致。  
+  1. parent-type : 上级底层传输类型，支持 tcp,tls,ws,wss  
+  2. parent-ws-method : 上级底层ws传输类型的加密方法，支持的值和命令行支持的值范围一样  
+  3. parent-ws-password : 上级底层ws传输类型的加密密码，数字字母组成的密码  
+  4. parent-tls-single : 上级底层tls传输类型是否是单向tls，可以是：true | false  
+  5. timeout : 建立tcp连接的超时时间，数字，单位毫秒  
+  6. ca : 上级底层tls传输类型的ca证书文件经过base64编码后的字符串。  
+  7. cert : 上级底层tls传输类型的证书文件经过base64编码后的字符串。  
+  8. key : 上级底层tls传输类型的证书密钥文件经过base64编码后的字符串。  
