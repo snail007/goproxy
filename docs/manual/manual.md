@@ -442,9 +442,9 @@ The speed limit is 100K, which can be specified by the `-l` parameter, for examp
 
 `proxy http -t tcp -p 2.2.2.2:33080 -l 100K`  
 
-### 1.16 Specifying the exit IP  
+### 1.16 Specifying Outgoing IP  
 
-The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the export IP to access the target website. If the incorrect IP is bound, the proxy will not work. At this point, the proxy will try to bind the target without binding the IP, and the log will prompt.  
+The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the outgoing IP to access the target website. If the incorrect IP is bound, the proxy will not work. At this point, the proxy will try to bind the target without binding the IP, and the log will prompt.  
 
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
@@ -509,7 +509,7 @@ Level 3 TCP proxy (local)
 `./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then access the local port 8080 is to access the port 8080 of 66.66.66.66 through the encrypted TCP tunnel.  
     
-### 2.6. Connecting to a upstream through a proxy  
+### 2.6 Connecting to a upstream through a proxy  
 Sometimes the network where the proxy is located cannot directly access the external network. You need to use an https or socks5 proxy to access the Internet. Then this time  
 The -J parameter can help you to connect the proxy to the peer-P through the https or socks5 proxy when mapping the proxy tcp port, mapping the external port to the local.  
 The -J parameter format is as follows:  
@@ -529,7 +529,12 @@ Socks5://host:port
 Host: the IP or domain name of the proxy  
 Port: the port of the proxy  
 
-### 2.7.View help  
+### 2.7 Specify Outgoing IP
+When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified exit IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
+
+`./proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22"`
+
+### 2.8View Help
 `./proxy help tcp`  
 
 ## 3.UDP Proxies  
@@ -964,9 +969,9 @@ The speed limit is 100K, which can be specified by the `-l` parameter, for examp
 
 `proxy socks -t tcp -p 2.2.2.2:33080 -l 100K`  
 
-### 5.14 Specifying the exit IP  
+### 5.14 Specifying Outgoing IP  
 
-The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the export IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.  
+The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the outgoing IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.  
 
 `proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
@@ -1208,9 +1213,9 @@ SPS lower level, speed limit 100K
 
 It can be specified by the `-l` parameter, for example: 100K 2000K 1M . 0 means no limit.  
 
-### 6.13 Specifying the exit IP  
+### 6.13 Specifying Outgoing IP  
 
-The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the export IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.  
+The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the outgoing IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.  
 
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`  
 
