@@ -532,7 +532,7 @@ Port: the port of the proxy
 ### 2.7 Specify Outgoing IP
 When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified exit IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
 
-`./proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22"`
+`./proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
 
 ### 2.8View Help
 `./proxy help tcp`  
