@@ -7,7 +7,7 @@ proxy is a high-performance http, https, websocket, tcp, udp, socks5, ss proxy s
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases) 
 
 ---
-### [视频教程](https://space.bilibili.com/472844633)
+### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [中文手册](https://snail007.github.io/goproxy/manual/zh/)
 - [Download](https://github.com/snail007/goproxy/releases)
