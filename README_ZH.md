@@ -20,7 +20,7 @@
 ## ProxyAdmin介绍预览
 goproxy提供的web控制面板 `ProxyAdmin` 是强大的代理服务工具 snail007/goproxy 的控制面板，运行了它，一秒让你的服务器变为强大的代理服务器，友好的交互界面，小白也能轻松上手，让你用起来得心应手，心情舒畅。
 
-![](/res/images/socks5_cn.gif)
+![](https://github.com/snail007/proxy_admin_free/raw/master/res/images/socks5_cn.gif)
 
 ### goproxy能干什么？
 - 链式代理，程序本身可以作为一级代理，如果设置了上级代理那么可以作为二级代理，乃至N级代理。  
