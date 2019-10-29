@@ -1,6 +1,6 @@
 ## GOPROXY简介
 <img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200" height="auto"/>  
-Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，ss代理服务器，支持正向代理、反向代理、透明代理、内网穿透、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理，API认证，限速，限连接数。官方QQ交流群: 42805407。
+一款轻量级、功能强大、高性能的http代理、https代理、socks5代理、内网穿透代理服务器、ss代理、游戏盾、游戏代理，支持API代理认证。websocke代理、tcp代理、udp代理、socket代理、高仿服务器。支持API代理认证，正向代理、反向代理、透明代理、TCP内网穿透、UDP内网穿透、HTTP内网穿透、HTTPS内网穿透、https代理负载均衡、http代理负载均衡、socks5代理负载均衡、socket代理负载均衡、ss代理负载均衡、TCP/UDP端口映射、SSH中转、TLS加密传输、协议转换、防污染DNS代理，限速，限连接数。官方QQ交流群: 42805407。
 
 ---
 
@@ -20,12 +20,13 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 ### 它能干什么？
 - 链式代理，程序本身可以作为一级代理，如果设置了上级代理那么可以作为二级代理，乃至N级代理。  
 - 通讯加密，如果程序不是一级代理，而且上级代理也是本程序，那么可以加密和上级代理之间的通讯，采用底层tls高强度加密，安全无特征。  
-- 智能HTTP，SOCKS5代理，会自动判断访问的网站是否屏蔽，如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽，为了加速访问，代理会直接访问网站，不使用上级代理。  
+- 智能HTTP代理，HTTPS代理，SOCKS5代理，会自动判断访问的网站是否屏蔽，如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽，为了加速访问，代理会直接访问网站，不使用上级代理。  
 - 域名黑白名单，更加自由的控制网站的访问方式。  
 - 跨平台性，无论你是widows，linux，还是mac，甚至是树莓派，都可以很好的运行proxy。  
 - 多协议支持，支持HTTP(S)，TCP，UDP，Websocket，SOCKS5代理。  
-- TCP/UDP端口转发。  
-- 支持内网穿透，P2P传输，协议支持TCP和UDP，针对HTTP的优化穿透。  
+- TCP/UDP端口转发。 
+- 游戏盾，游戏代理，高仿服务器。 
+- 内网穿透，P2P传输，协议支持TCP和UDP，针对HTTP的优化穿透。  
 - SSH中转，HTTP(S)，SOCKS5代理支持SSH中转，上级Linux服务器不需要任何服务端，本地一个proxy即可开心上网。  
 - [KCP](https://github.com/xtaci/kcp-go)协议支持，HTTP(S)，SOCKS5代理支持KCP协议传输数据，降低延迟，提升浏览体验。  
 - 动态选择上级代理，通过外部API，HTTP(S)，SOCKS5，SPS代理可以实现基于用户或者IP的限速，连接数限制，动态获取上级。
