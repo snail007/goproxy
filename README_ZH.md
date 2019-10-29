@@ -17,7 +17,12 @@
 - [GORPOXY实战教程](https://snail007.github.io/goproxy)  
 - [免费版VS商业版](https://snail007.github.io/goproxy/free_vs_commercial/)
 
-### 它能干什么？
+## ProxyAdmin介绍预览
+goproxy提供的web控制面板 `ProxyAdmin` 是强大的代理服务工具 snail007/goproxy 的控制面板，运行了它，一秒让你的服务器变为强大的代理服务器，友好的交互界面，小白也能轻松上手，让你用起来得心应手，心情舒畅。
+
+![](/res/images/socks5_cn.gif)
+
+### goproxy能干什么？
 - 链式代理，程序本身可以作为一级代理，如果设置了上级代理那么可以作为二级代理，乃至N级代理。  
 - 通讯加密，如果程序不是一级代理，而且上级代理也是本程序，那么可以加密和上级代理之间的通讯，采用底层tls高强度加密，安全无特征。  
 - 智能HTTP代理，HTTPS代理，SOCKS5代理，会自动判断访问的网站是否屏蔽，如果被屏蔽那么就会使用上级代理(前提是配置了上级代理)访问网站;如果访问的网站没有被屏蔽，为了加速访问，代理会直接访问网站，不使用上级代理。  
@@ -63,9 +68,9 @@
 
 [点击加入交流组织TG](https://t.me/snail007_goproxy)  
 
-## 下载安装 
+## 下载安装 goproxy
 
-### 快速安装
+### 快速安装 goproxy
 
 0.如果你的VPS是linux64位的系统，那么只需要执行下面一句，就可以完成自动安装和配置.
 
@@ -86,9 +91,9 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_c
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
 如果安装失败或者你的vps不是linux64位系统，请按照下面的半自动步骤安装:  
   
-### 手动安装  
+### 手动安装 goproxy
 
-1.下载proxy
+1.下载goproxy
 
 下载地址:https://github.com/snail007/goproxy/releases/latest   
 
