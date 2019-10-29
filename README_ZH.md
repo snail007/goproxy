@@ -9,6 +9,7 @@ Proxy是golang实现的高性能http，https，websocket，tcp，udp，socks5，
 ---
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [点击下载](https://github.com/snail007/goproxy/releases)
+- 如果上面不能正常下载，点击这里[镜像下载](https://www.host900.com/snail007/goproxy/)
 - [桌面版，控制面板ProxyAdmin](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
 - [安卓版](https://github.com/snail007/goproxy-ss-plugin-android) 
 - [SDK](https://github.com/snail007/goproxy-sdk)
