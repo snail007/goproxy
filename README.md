@@ -103,15 +103,15 @@ Let's take v7.9 as an example. If you have the latest version, please use the la
 The free version performs this:
 
 ```shell
-Cd /root/proxy/
-Wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
+cd /root/proxy/
+w ge t https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
 ```
 
 The commercial version performs this:
 
 ```shell
-Cd /root/proxy/
-Wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
+cd /root/proxy/
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
 ```
 
 2. Download the automatic installation script
@@ -119,8 +119,8 @@ Wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd6
 The free version performs this:
 
 ```shell
-Cd /root/proxy/
-Wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
+c d /root/proxy/
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 Chmod +x install.sh
 ./install.sh
 ```
@@ -128,8 +128,8 @@ Chmod +x install.sh
 The commercial version performs this:
 
 ```shell
-Cd /root/proxy/
-Wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
+cd /root/proxy/
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
 Chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
