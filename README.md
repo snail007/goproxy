@@ -48,6 +48,7 @@ And ProxyAdmin is a powerful web console of snail007/goproxy .
 - SOCKS5 proxies supports cascading certification.
 - The certificate parameter uses base64 data. By default, the -C, -K parameter is the path of the crt certificate and the key file. If it is the beginning of base64://, then the latter data is considered to be base64 encoded and will be used after decoding.
 - Support client IP black and white list, more secure control of client access to proxy service, if black and white list is set at the same time, then only whitelist is effective. Socks / HTTP(S) / SPS / TCP / UDP / DNS / intranet NAT The bridge/intranet NAT the tbridge and supports the client IP black and white list.
+- Range ports listen on, HTTP(S)\SOCKS5\SPS proxy supports port range listening, avoiding starting too many processes and improving performance.
 
 ### Why do you need it?
 
