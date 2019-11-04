@@ -213,6 +213,14 @@ proxy的blocked，direct，stop，only，hosts，resolve.rules，rewriter.rules�
 
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
 
+-p参数支持的写法：
+
+```text
+  -p ":8081"  监听8081
+  -p ":8081,:8082"  监听8081和8082
+  -p ":8081,:8082,:9000-9999" 监听8081和8082以及9000,9001至9999，共1002个端口
+```
+
 ### 1.2.普通二级HTTP代理  
 
 ![1.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-2.png)  
@@ -290,12 +298,12 @@ proxy不仅支持在其他软件里面通过设置代理的方式，为其他软
 
 使用方式:  
 在"最后一级proxy代理"的机器上，因为proxy要伪装成所有网站，网站默认的端口HTTP是80，HTTPS是443，让proxy监听80和443端口即可.参数-p多个地址用逗号分割。  
-`./proxy http -t tcp -p :80，:443`  
+`./proxy http -t tcp -p :80,:443`  
 
 这个命令就在机器上启动了一个proxy代理，同时监听80和443端口，既可以当作普通的代理使用，也可以直接把需要代理的域名解析到这个机器的IP上。  
 
 如果有上级代理那么参照上面教程设置上级即可，使用方式完全一样。  
-`./proxy http -t tcp -p :80，:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`  
+`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`  
 
 注意:  
 proxy所在的服务器的DNS解析结果不能受到自定义的解析影响，不然就死循环了，proxy代理最好指定`--dns 8.8.8.8`参数。  
@@ -787,6 +795,14 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 ### 5.1.普通SOCKS5代理  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
 
+-p参数支持的写法：
+
+```text
+  -p ":8081"  监听8081
+  -p ":8081,:8082"  监听8081和8082
+  -p ":8081,:8082,:9000-9999" 监听8081和8082以及9000,9001至9999，共1002个端口
+```
+
 ### 5.2.普通二级SOCKS5代理  
 ![5.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-2.png)  
 使用本地端口8090，假设上级SOCKS5代理是`22.22.22.22:8080`  
@@ -982,6 +998,14 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 代理协议转换使用的是sps子命令，sps本身不提供代理功能，只是接受代理请求"转换并转发"给已经存在的http(s)代理或者socks5代理或者ss代理；sps可以把已经存在的http(s)代理或者socks5代理或ss代理转换为一个端口同时支持http(s)和socks5和ss的代理，而且http(s)代理支持正向代理和反向代理(SNI)，转换后的SOCKS5代理，当上级是SOCKS5或者SS时仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。  
 
 `ss`功能支持的加密方法为:aes-128-cfb ， aes-128-ctr ， aes-128-gcm ， aes-192-cfb ， aes-192-ctr ， aes-192-gcm ， aes-256-cfb ， aes-256-ctr ， aes-256-gcm ， bf-cfb ， cast5-cfb ， chacha20 ， chacha20-ietf ， chacha20-ietf-poly1305 ， des-cfb ， rc4-md5 ， rc4-md5-6 ， salsa20 ， xchacha20  
+
+本地监听端口-p参数支持的写法：
+
+```text
+  -p ":8081"  监听8081
+  -p ":8081,:8082"  监听8081和8082
+  -p ":8081,:8082,:9000-9999" 监听8081和8082以及9000,9001至9999，共1002个端口
+```
 
 ### 6.2 HTTP(S)转HTTP(S)+SOCKS5+SS  
 假设已经存在一个普通的http(s)代理：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，ss加密方式:aes-192-cfb，ss密码:pass。  

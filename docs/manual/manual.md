@@ -211,6 +211,14 @@ The proxy's blocked, direct, stop, only, hosts, resolve.rules, rewriter.rules, i
 
 `./proxy http -t tcp -p "0.0.0.0:38080"`  
     
+Listen port argument `-p` can be:
+
+```text
+  -p ":8081"  listen on 8081
+  -p ":8081,:8082"  listen on 8081 and 8082
+  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000 and 9001 to 9999, 1002 total ports  
+```
+
 ### 1.2. Ordinary secondary HTTP proxy  
 
 ![1.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-2.png)  
@@ -803,6 +811,14 @@ SOCKS5 proxy, support CONNECT, UDP protocol, does not support BIND, supports use
 ### 5.1. Ordinary SOCKS5 Agent  
 `./proxy socks -t tcp -p "0.0.0.0:38080"`  
     
+Listen port argument `-p` can be:
+
+```text
+  -p ":8081"  listen on 8081
+  -p ":8081,:8082"  listen on 8081 and 8082
+  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000 and 9001 to 9999, 1002 total ports  
+```
+
 ### 5.2. Ordinary secondary SOCKS5 agent  
 ![5.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-2.png)  
 Use local port 8090, assuming the upstream SOCKS5 proxy is `22.22.22.22:8080`  
@@ -1011,6 +1027,14 @@ The meaning of each value is as follows:
 The proxy protocol conversion uses the sps subcommand. The sps itself does not provide the proxy function. It only accepts the proxy request to "convert and forward" to the existing http(s) proxy or the socks5 proxy or ss proxy; the sps can put the existing http (s s) The proxy or socks5 proxy or ss proxy is converted to a port that supports both http(s) and socks5 and ss proxies, and the http(s) proxy supports forward proxy and reverse proxy (SNI), converted SOCKS5 proxy, UDP function is still supported when the upper level is SOCKS5 or SS; in addition, for the existing http(s) proxy or socks5 proxy, three modes of tls, tcp, and kcp are supported, and chain connection is supported, that is, multiple sps node levels can be supported. The connection builds an encrypted channel.  
 
 The encryption methods supported by the `ss` function are: aes-128-cfb, aes-128-ctr, aes-128-gcm, aes-192-cfb, aes-192-ctr, aes-192-gcm, aes-256- Cfb , aes-256-ctr , aes-256-gcm , bf-cfb , cast5-cfb , chacha20 , chacha20-ietf , chacha20-ietf-poly1305 , des-cfb , rc4-md5 , rc4-md5-6 , salsa20 , Xchacha20  
+
+Listen port argument `-p` can be:
+
+```text
+  -p ":8081"  listen on 8081
+  -p ":8081,:8082"  listen on 8081 and 8082
+  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000 and 9001 to 9999, 1002 total ports  
+```
 
 ### 6.2 HTTP(S) to HTTP(S)+SOCKS5+SS  
 Suppose there is already a normal http(s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports both http(s) and socks5 and ss. The converted local port is 18080, ss encryption: Aes-192-cfb, ss password: pass.  
