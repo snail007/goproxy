@@ -648,6 +648,28 @@ Local execution:
 `./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 Then access the local port 33080 is to access port 22 of 192.168.22.33.  
     
+The `-p` parameter supports :
+
+```text
+  -p ":8081" listen on 8081
+  -p ":8081,:8082" listen on 8081 and 8082
+  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
+```
+
+If the number of local listening ports is greater than 1, the corresponding upper port corresponding to the local port will be connected, and the port in `-P` will be ignored.
+
+If you need a connection from all ports, connect to the upper specified port, you can add the parameter `--lock-port`.
+
+such as:
+
+`./proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:0"`
+
+Then the connection of the `33080` port will connect to the `33080` port of 192.168.22.33, and the other ports are similar. The local and upper ports are the same. At this time, the port in the parameter `-P` uses `0`.
+
+If you want to connect the ports of `33080`, `33081`, etc. to the `22` port of 192.168.22.33, you can add the parameter `--lock-port`.
+
+`./proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:22" --lock-port`
+
 ### 2.2. Ordinary secondary TCP proxy  
 ![2.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
@@ -719,7 +741,29 @@ When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the sp
 Local execution:  
 `./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 Then access the local UDP: 5353 port is to access 8.8.8.8 UDP: 53 port.  
-    
+  
+The `-p` parameter supports :
+
+```text
+  -p ":8081" listen on 8081
+  -p ":8081,:8082" listen on 8081 and 8082
+  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
+```
+
+If the number of local listening ports is greater than 1, the corresponding upper port corresponding to the local port will be connected, and the port in `-P` will be ignored.
+
+If you need a connection from all ports, connect to the upper specified port, you can add the parameter `--lock-port`.
+
+such as:
+
+`./proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:0"`
+
+Then the connection of the `33080` port will connect to the `33080` port of 192.168.22.33, and the other ports are similar. The local and upper ports are the same. At this time, the port in the parameter `-P` uses `0`.
+
+If you want to connect the ports of `33080`, `33081`, etc. to the `2222` port of 192.168.22.33, you can add the parameter `--lock-port`.
+
+`./proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`
+
 ### 3.2. Ordinary secondary UDP proxy  
 ![3.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
