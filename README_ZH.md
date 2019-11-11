@@ -44,11 +44,12 @@ goproxy提供的web控制面板 `ProxyAdmin` 是强大的代理服务工具 snai
 - 安全的DNS代理，可以通过本地的proxy提供的DNS代理服务器与上级代理加密通讯实现安全防污染的DNS查询。
 - 负载均衡，高可用，HTTP(S)\SOCKS5\SPS代理支持上级负载均衡和高可用，多个上级重复-P参数即可。  
 - 指定出口IP，HTTP(S)\SOCKS5\SPS代理支持客户端用入口IP连接过来的，就用入口IP作为出口IP访问目标网站的功能。如果入口IP是内网IP，出口IP不会使用入口IP
-- 支持限速，HTTP(S)\SOCKS5\SPS代理支持限速。  
+- 支持限速，HTTP(S)\SOCKS5\SPS\TCP代理支持限速。  
+- 支持限连接数，HTTP(S)\SOCKS5\SPS\TCP代理支持限连接数。  
 - SOCKS5代理支持级联认证。  
 - 证书参数使用base64数据，默认情况下-C，-K参数是crt证书和key文件的路径，如果是base64://开头，那么就认为后面的数据是base64编码的，会解码后使用。  
 - 支持客户端IP黑白名单，更加安全的控制客户端对代理服务的访问，如果黑白名单同时设置，那么只有白名单生效。socks/http(s)/sps/tcp/udp/dns/内网穿透bridge/内网穿透tbridge，都支持客户端IP黑白名单。 
-- 端口范围批量监听，HTTP(S)\SOCKS5\SPS代理支持指定端口范围监听，避免启动过多进程，提高性能。
+- 端口范围批量监听，HTTP(S)\SOCKS5\SPS\TCP代理支持指定端口范围监听，避免启动过多进程，提高性能。
 
 ### 为什么需要它？
 
