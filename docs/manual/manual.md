@@ -564,7 +564,16 @@ When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the sp
 
 `./proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
 
-### 2.8View Help
+### 2.8 Speed ​​limit, connections limit
+
+The parameter `--max-conns` can limit the maximum number of connections per port.  
+For example, limit the maximum number of connections per port:  
+`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --max-conns 1000`  
+The parameter `--rate-limit` can limit the rate of each tcp connection.  
+For example, limit the connection rate of each tcp to 100k/s:  
+`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`  
+
+### 2.9 View Help
 `./proxy help tcp`  
 
 ## 3.UDP Proxies  
