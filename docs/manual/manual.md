@@ -470,7 +470,7 @@ The meaning of each value is as follows:
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
 `--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the upstream access target.  
 
-### 1.19 View help  
+### 1.19 Help  
 `./proxy help http`  
 
 ## 2.TCP Proxies  
@@ -641,8 +641,13 @@ Secondary TCP proxy VPS_02, IP: 33.33.33.33
 Level 3 TCP proxy (local)  
 `./proxy udp -p ":5353" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then access the local 5353 port is to access the 8.8.8.8 port 53 through VPS_01 through the encrypted TCP tunnel.  
-    
-### 3.6. View help  
+
+### 3.6 Specify Outgoing IP
+When the UDP upstream proxies (parameter: -T) is udp, it supports the specified outgoing IP. Using the `--bind-listen` parameter, you can open the client to connect with the server IP, and use the server IP as the outgoing IP to access the target. If an incorrect IP is bound, the proxy will not work.
+ 
+`./proxy udp -p ":33080" -T udp -P "192.168.22.33:2222" -B`  
+
+### 3.7 Help  
 `./proxy help udp`  
 
 ## 4. Internet NAT  
@@ -847,7 +852,7 @@ The default is empty, allowing all keys.
 
 Senat type judgment, easy to check whether the network supports p2p, you can execute: `proxy tools -a nattype`  
 
-### 4.14 View help  
+### 4.14 Help  
 `./proxy help bridge`  
 `./proxy help server`  
 `./proxy help client`  
@@ -1071,7 +1076,15 @@ The meaning of each value is as follows:
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
 `--intelligent=intelligent`, blocked and direct have no targets, intelligently determine whether to use the upstream access target.  
 
-### 5.18. View help  
+### 5.18 Fixed UDP PORT
+
+By default, the port number of the UDP function of socks5, the proxy is installed in the `rfc1982 draft` request, which is randomly specified during the protocol handshake process and does not need to be specified in advance.
+
+However, in some cases, you need to fix the UDP function port. You can use the parameter `--udp-port port number` to fix the port number of the UDP function. For example:
+
+`./proxy socks -t tcp -p "0.0.0.0:38080" --udp-port 38080`
+
+### 5.19 Help  
 `./proxy help socks`  
 
 ## 6.SPS Protocol Convert  
@@ -1320,7 +1333,19 @@ Www.a.com:80 10.0.0.2:8080
 192.168.0.11:80 10.0.0.2:8080  
 ```  
 
-### 6.17 View help  
+### 6.17 Fixed UDP PORT
+
+By default, the port number of the UDP function of ss's socks5 is specified by the `rfc1982 draft`. It is randomly specified during the protocol handshake process and does not need to be specified in advance.
+
+However, in some cases, you need to fix the UDP function port. You can fix the port number of the UDP function by the parameter `--udp-port port number`, for example:
+
+`./proxy sps -t tcp -p" 0.0.0.0:38080" --udp port 38081`
+
+It should be noted that the ss function of sps also has UDP function, and the UDP port of ss is the same as the tcp port, so avoid the conflict between the UDP port of socks5 and the UDP port of ss.
+
+To specify a port that is different from the tcp port.
+
+### 6.18 Help  
 
 `./proxy help sps`  
 
