@@ -105,7 +105,7 @@ The free version performs this:
 
 ```shell
 cd /root/proxy/
-w ge t https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v8.7/proxy-linux-amd64.tar.gz
 ```
 
 The commercial version performs this:
