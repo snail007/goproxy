@@ -1513,7 +1513,56 @@ It should be noted that the ss function of sps also has UDP function, and the UD
 
 To specify a port that is different from the tcp port.
 
-### 6.18 Help  
+### 6.18 iptables 透明代理  
+The sps mode supports the iptables transparent forwarding support of the Linux system, which is commonly referred to as the iptables transparent proxy. If a iptables transparent proxy is performed on the gateway device, the device that is connected through the gateway can realize a non-aware proxy.
+
+Example start command:
+
+`./proxy sps --redir -p: 8888 -P httpws: //1.1.1.1: 33080`
+
+Here it is assumed that there is an http superior proxy 1.1.1.1:33080, which uses ws to transmit data.
+
+Then add iptables rules, here are the reference rules:
+
+`` `shell
+#upstream proxy server IP address:
+proxy_server_ip = 1.1.1.1
+
+#Router running proxy listening port:
+proxy_local_port = 33080
+
+#There is no need to modify the following
+#create a new chain named PROXY
+iptables -t nat -N PROXY
+
+#Ignore your PROXY server's addresses  
+#It's very IMPORTANT， just be careful。  
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN  
+
+#Ignore LANs IP address  
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN  
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN  
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN  
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN  
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN  
+
+#Anything to port 80 443 should be redirected to PROXY's local port  
+iptables -t nat -A PROXY -p tcp  -j REDIRECT --to-ports $proxy_local_port
+#Apply the rules to nat client  
+iptables -t nat -A PREROUTING -p tcp -j PROXY  
+#Apply the rules to localhost  
+iptables -t nat -A OUTPUT -p tcp -j PROXY  
+```  
+
+- Clear the entire chain iptables -F chain name such as iptables -t nat -F PROXY  
+- Delete the specified user-defined chain iptables -X chain name e.g. iptables -t nat -X PROXY  
+- Delete rule from selected chain iptables -D chain name rule details e.g. iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN  
+
+### 6.19 Help  
 
 `./proxy help sps`  
 

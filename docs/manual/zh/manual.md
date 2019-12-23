@@ -1317,9 +1317,56 @@ www.a.com:80     10.0.0.2:8080
 
 要指定和tcp端口不一样的端口。
 
-### 6.18 查看帮助  
+### 6.18 iptables 透明代理  
+sps模式支持Linux系统的iptables转发支持，也就是通常所说的iptables透明代理，如果在网关设备上进行iptables透明代理，那么对通过网关联网的设备就能实现无感知的代理。
 
-`./proxy help sps`  
+启动命令实例：
+
+`./proxy sps --redir -p :8888 -P httpws://1.1.1.1:33080`  
+
+这里假设存在一个http的上级代理1.1.1.1:33080，使用ws传输数据。
+
+然后添加iptables规则，下面是参考规则:  
+```shell  
+#上级proxy服务端服务器IP地址:  
+proxy_server_ip=1.1.1.1
+
+#路由器运行proxy监听的端口:  
+proxy_local_port=33080  
+
+#下面的就不用修改了  
+#create a new chain named PROXY  
+iptables -t nat -N PROXY  
+
+# Ignore your PROXY server's addresses  
+# It's very IMPORTANT， just be careful。  
+
+iptables -t nat -A PROXY -d $proxy_server_ip -j RETURN  
+
+# Ignore LANs IP address  
+iptables -t nat -A PROXY -d 0.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 10.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 127.0.0.0/8 -j RETURN  
+iptables -t nat -A PROXY -d 169.254.0.0/16 -j RETURN  
+iptables -t nat -A PROXY -d 172.16.0.0/12 -j RETURN  
+iptables -t nat -A PROXY -d 192.168.0.0/16 -j RETURN  
+iptables -t nat -A PROXY -d 224.0.0.0/4 -j RETURN  
+iptables -t nat -A PROXY -d 240.0.0.0/4 -j RETURN  
+
+# Anything to port 80 443 should be redirected to PROXY's local port  
+iptables -t nat -A PROXY -p tcp  -j REDIRECT --to-ports $proxy_local_port
+# Apply the rules to nat client  
+iptables -t nat -A PREROUTING -p tcp -j PROXY  
+# Apply the rules to localhost  
+iptables -t nat -A OUTPUT -p tcp -j PROXY  
+```  
+- 清空整个链 iptables -F 链名比如iptables -t nat -F PROXY  
+- 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY  
+- 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN  
+
+### 6.19 查看帮助  
+
+`./proxy help sps` 
 
 ## 7.KCP配置  
 
