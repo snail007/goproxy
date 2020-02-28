@@ -1356,7 +1356,7 @@ Here it is assumed that there is an http superior proxy 1.1.1.1:33080, which use
 
 Then add iptables rules, here are the reference rules:
 
-`` `shell
+```shell
 #upstream proxy server IP address:
 proxy_server_ip = 1.1.1.1
 
