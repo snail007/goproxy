@@ -205,6 +205,10 @@ b.”str://“开头的英文逗号分割的多个，比如：str://xxx,yyy
 
 proxy的blocked，direct，stop，only，hosts，resolve.rules，rewriter.rules，ip.allow，ip.deny 文件支持协议加载。  
 
+### 14. 客户端并发连接数
+
+socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`,控制每秒客户端的最大连接数,默认20, 0为不限制.
+
 ## 1.HTTP代理  
 
 ### 1.1.普通一级HTTP代理  

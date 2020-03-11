@@ -203,6 +203,11 @@ b. "str://" at the beginning of the English comma separated multiple, such as: s
 
 The proxy's blocked, direct, stop, only, hosts, resolve.rules, rewriter.rules, ip.allow, ip.deny files support protocol loading.  
 
+
+### 14.Concurrent client connections
+
+socks5\sps\http proxies, the parameter that controls the number of concurrent client connections is: `--max-conns-rate`, which controls the maximum number of client connections per second, default: 20, 0 is unlimited
+
 ## 1.HTTP Proxies  
 
 ### 1.1. Ordinary level HTTP proxy  
