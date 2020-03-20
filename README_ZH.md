@@ -160,7 +160,7 @@ Proxy is licensed under GPLv3 license。
 ## goproxy使用手册
 
 
-## 首次使用必看！  
+## 如何安装
 
 ### Linux安装  
 
@@ -173,6 +173,8 @@ Proxy is licensed under GPLv3 license。
 ### Windows安装  
 
 [点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+
+## 首次使用必看！ 
 
 ### 1. 环境  
 
