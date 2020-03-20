@@ -6,18 +6,25 @@ if [ -e /tmp/proxy ]; then
 fi
 mkdir /tmp/proxy
 cd /tmp/proxy
-echo -e "downloading ... $F-$V\n"
-CN=$(wget -O - myip.ipip.net | grep "中国" |grep -v grep)
+echo -e "\n>>> downloading ... $F\n"
+set +e
+CN=$(wget --quiet -t 1 --dns-timeout 1 --connect-timeout 2 --read-timeout 2 myip.ipip.net | grep "中国" |grep -v grep)
+set -e
+manual=""
 if [ -z "$CN" ];then
+manual="https://snail007.github.io/goproxy/manual/"
 LAST_VERSION=$(curl --silent "https://api.github.com/repos/snail007/goproxy/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
-wget "https://github.com/snail007/goproxy/releases/download/${LAST_VERSION}/$F"
+wget  --quiet  -t 1 "https://github.com/snail007/goproxy/releases/download/${LAST_VERSION}/$F"
 else
-wget "http://mirrors.host900.com/snail007/goproxy/$F"
+manual="https://snail007.github.io/goproxy/manual/zh/"
+wget  --quiet  -t 1 "http://mirrors.host900.com/snail007/goproxy/$F"
 fi
-echo -e "installing ... \n"
+echo -e ">>> installing ... \n"
 # #install proxy
-tar zxvf $F
-killall -9 proxy
+tar zxvf $F >/dev/null
+set +e
+killall -9 proxy >/dev/null 2>&1
+set -e
 cp -f proxy /usr/bin/
 chmod +x /usr/bin/proxy
 if [ ! -e /etc/proxy ]; then
@@ -30,11 +37,9 @@ if [ ! -e /etc/proxy/proxy.crt ]; then
     proxy keygen -C proxy >/dev/null 2>&1 
 fi
 rm -rf /tmp/proxy
-echo -e "\n#######################\n"
-proxy --version
-echo  -e ">>> install done, thanks for using snail007/goproxy\n"
+version=`proxy --version 2>&1`
+echo  -e ">>> install done, thanks for using snail007/goproxy $version\n"
 echo  -e ">>> install path /usr/bin/proxy\n"
-echo  -e ">>> configuration path /etc/proxy\n\n"
-echo  -e ">>> uninstall just exec : rm /usr/bin/proxy && rm /etc/proxy\n\n"
-echo  -e ">>> How to using? Please visit : https://snail007.github.io/goproxy/manual/zh/\n"
-echo  -e "#######################\n"
+echo  -e ">>> configuration path /etc/proxy\n"
+echo  -e ">>> uninstall just exec : rm /usr/bin/proxy && rm /etc/proxy\n"
+echo  -e ">>> How to using? Please visit : $manual\n"
