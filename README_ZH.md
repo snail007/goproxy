@@ -83,13 +83,13 @@
 免费版执行这个：  
 
 ```shell  
-curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash  
+curl -L http://mirrors.host900.com/snail007/goproxy/install_auto.sh | bash  
 ```  
 
 商业版执行这个：  
 
 ```shell  
-curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash  
+curl -L http://mirrors.host900.com/snail007/goproxy/install_auto_commercial.sh | bash  
 ```  
 
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
@@ -99,22 +99,20 @@ curl -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_c
 
 1.下载goproxy
 
-下载地址:https://github.com/snail007/goproxy/releases/latest   
-
-下面以v7.9为例，如果有最新版，请使用最新版链接，注意替换下面的下载连接里面的版本号为最新版版本号。  
+最新版下载地址: http://mirrors.host900.com/snail007/goproxy   
 
 免费版执行这个：  
 
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz  
+wget http://mirrors.host900.com/snail007/goproxy/proxy-linux-amd64.tar.gz  
 ```  
 
 商业版执行这个：  
 
 ```shell  
 cd /root/proxy/  
-wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz  
+wget http://mirrors.host900.com/snail007/goproxy/proxy-linux-amd64_commercial.tar.gz  
 ```  
 
 2.下载自动安装脚本
