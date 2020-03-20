@@ -10,7 +10,7 @@
 
 接下来的教程都是通过命令行参数介绍使用方法，也可以通过读取配置文件获取参数。  
 
-具体格式是通过@符号指定配置文件，例如:./proxy @configfile.txt  
+具体格式是通过@符号指定配置文件，例如:proxy @configfile.txt  
 
 configfile.txt里面的格式是，第一行是子命令名称，第二行开始一行一个参数，  
 
@@ -45,11 +45,11 @@ http(s)代理、tcp代理、udp代理、socks5代理、内网穿透等功能和�
 ***所有端必须使用相同的proxy.crt和proxy.key***  
 
 1.通过下面的命令生成自签名的证书和key文件。  
-`./proxy keygen -C proxy`  
+`proxy keygen -C proxy`  
 会在当前程序目录下面生成证书文件proxy.crt和key文件proxy.key。  
 
 2.通过下面的命令生，使用自签名证书proxy.crt和key文件proxy.key签发新证书:goproxy.crt和goproxy.key。  
-`./proxy keygen -s -C proxy -c goproxy`  
+`proxy keygen -s -C proxy -c goproxy`  
 会在当前程序目录下面生成证书文件goproxy.crt和key文件goproxy.key。  
 
 3.默认情况下证书的里面的域名是随机的，可以使用`-n test.com`参数指定。  
@@ -64,7 +64,7 @@ http(s)代理、tcp代理、udp代理、socks5代理、内网穿透等功能和�
 
 比如:  
 
-`./proxy http -t tcp -p "0.0.0.0:38080" --daemon`  
+`proxy http -t tcp -p "0.0.0.0:38080" --daemon`  
 
 ### 7. 守护运行  
 守护运行参数--forever，比如: `proxy http --forever` ，  
@@ -83,7 +83,7 @@ proxy会fork子进程，然后监控子进程，如果子进程异常退出，5�
 
 假设你的vps外网ip是23.23.23.23，下面命令通过-g参数设置23.23.23.23  
 
-`./proxy http -g "23.23.23.23"`  
+`proxy http -g "23.23.23.23"`  
 
 ### 9. 负载均衡和高可用  
 
@@ -215,7 +215,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 ![1.1](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-1.png)  
 
-`./proxy http -t tcp -p "0.0.0.0:38080"`  
+`proxy http -t tcp -p "0.0.0.0:38080"`  
 
 -p参数支持的写法：
 
@@ -231,11 +231,11 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 使用本地端口8090，假设上级HTTP代理是`22.22.22.22:8080`  
 
-`./proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
+`proxy http -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 
 我们还可以指定网站域名的黑白名单文件，一行一个域名，匹配规则是最右匹配，比如:baidu.com，匹配的是*.*.baidu.com，黑名单的域名直接走上级代理，白名单的域名不走上级代理。  
 
-`./proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
+`proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
 
 ### 1.3.HTTP二级代理(加密)  
 
@@ -243,24 +243,24 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 ![1.3](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-tls-2.png)  
 一级HTTP代理(VPS，IP:22.22.22.22)  
-`./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+`proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 
 二级HTTP代理(本地Linux)  
-`./proxy http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080。  
 
 二级HTTP代理(本地windows)  
-`./proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080，程序即可通过加密通道通过vps上网。  
 
 ### 1.4.HTTP三级代理(加密)  
 ![1.3](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-tls-3.png)  
 一级HTTP代理VPS_01，IP:22.22.22.22  
-`./proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+`proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级HTTP代理VPS_02，IP:33.33.33.33  
-`./proxy http -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy http -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级HTTP代理(本地)  
-`./proxy http -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
+`proxy http -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地的8080端口就是访问一级HTTP代理上面的代理端口38080。  
 
 ### 1.5.Basic认证，API认证  
@@ -269,7 +269,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 ### 1.6.HTTP代理流量强制走上级HTTP代理  
 默认情况下，proxy会智能判断一个网站域名是否无法访问，如果无法访问才走上级HTTP代理.通过--always可以使全部HTTP代理流量强制走上级HTTP代理。  
-`./proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 ### 1.7.HTTP(S)通过SSH中转  
 ![1.7](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-ssh-1.png)  
@@ -280,20 +280,20 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 #### *1.7.1 ssh用户名和密码的方式*  
 本地HTTP(S)代理28080端口，执行:  
-`./proxy http -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
+`proxy http -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
 #### *1.7.2 ssh用户名和密钥的方式*  
 本地HTTP(S)代理28080端口，执行:  
-`./proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
+`proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 ### 1.8.KCP协议传输  
 ![1.8](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-kcp.png)  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS，IP:22.22.22.22)  
-`./proxy http -t kcp -p ":38080" --kcp-key mypassword`  
+`proxy http -t kcp -p ":38080" --kcp-key mypassword`  
 
 二级HTTP代理(本地Linux)  
-`./proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
+`proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080，数据通过kcp协议传输，注意kcp走的是udp协议协议，所以防火墙需放开38080的udp协议。  
 
 ### 1.9 HTTP(S)反向代理  
@@ -302,12 +302,12 @@ proxy不仅支持在其他软件里面通过设置代理的方式，为其他软
 
 使用方式:  
 在"最后一级proxy代理"的机器上，因为proxy要伪装成所有网站，网站默认的端口HTTP是80，HTTPS是443，让proxy监听80和443端口即可.参数-p多个地址用逗号分割。  
-`./proxy http -t tcp -p :80,:443`  
+`proxy http -t tcp -p :80,:443`  
 
 这个命令就在机器上启动了一个proxy代理，同时监听80和443端口，既可以当作普通的代理使用，也可以直接把需要代理的域名解析到这个机器的IP上。  
 
 如果有上级代理那么参照上面教程设置上级即可，使用方式完全一样。  
-`./proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`  
+`proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`  
 
 注意:  
 proxy所在的服务器的DNS解析结果不能受到自定义的解析影响，不然就死循环了，proxy代理最好指定`--dns 8.8.8.8`参数。  
@@ -315,7 +315,7 @@ proxy所在的服务器的DNS解析结果不能受到自定义的解析影响，
 ### 1.10 HTTP(S)透明代理  
 该模式需要具有一定的网络基础，相关概念不懂的请自行搜索解决。  
 假设proxy现在在路由器上运行，启动命令如下:  
-`./proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`  
+`proxy http -t tcp -p :33080 -T tls -P "2.2.2.2:33090" -C proxy.crt -K proxy.key`  
 
 然后添加iptables规则，下面是参考规则:  
 ```shell  
@@ -361,7 +361,7 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 --dns-address和--dns-ttl参数，用于自己指定proxy访问域名的时候使用的dns（--dns-address）  
 以及解析结果缓存时间（--dns-ttl）秒数，避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度。  
 比如：  
-`./proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+`proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
 ### 1.12 自定义加密  
 proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据，除此之外还支持在tls和kcp之后进行自定义  
@@ -458,14 +458,14 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 `--intelligent=intelligent`，blocked和direct里面都没有的目标，智能判断是否使用上级访问目标。  
 
 ### 1.19 查看帮助  
-`./proxy help http`  
+`proxy help http`  
 
 ## 2.TCP代理  
 
 ### 2.1 普通一级TCP代理  
 ![2.1](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-1.png)  
 本地执行:  
-`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
+`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 那么访问本地33080端口就是访问192.168.22.33的22端口。  
 
 `-p`参数支持的写法：
@@ -482,49 +482,49 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 
 比如：
 
-`./proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:0"`  
+`proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:0"`  
 
 那么`33080`端口进来的连接，将会连接192.168.22.33的`33080`端口，其它端口以此类推，本地和上级端口一致，此时参数`-P`里面的端口用`0`。
 
 如果想无论是`33080`，`33081`等端口进来的连接都连接到192.168.22.33的`22`端口，可以加上参数`--lock-port`
 
-`./proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:22" --lock-port`  
+`proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:22" --lock-port`  
 
 
 ### 2.2 普通二级TCP代理  
 ![2.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-2.png)  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
+`proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 本地执行:  
-`./proxy tcp -p ":23080" -T tcp -P "22.22.22.33:33080"`  
+`proxy tcp -p ":23080" -T tcp -P "22.22.22.33:33080"`  
 那么访问本地23080端口就是访问22.22.22.33的8080端口。  
 
 ### 2.3 普通三级TCP代理  
 ![2.3](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
-`./proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
+`proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 二级TCP代理VPS_02，IP:33.33.33.33  
-`./proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
+`proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
 三级TCP代理(本地)  
-`./proxy tcp -p ":8080" -T tcp -P "33.33.33.33:28080"`  
+`proxy tcp -p ":8080" -T tcp -P "33.33.33.33:28080"`  
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口。  
 
 ### 2.4 加密二级TCP代理  
 ![2.4](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
-`./proxy tcp -p ":23080" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
+`proxy tcp -p ":23080" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口。  
 
 ### 2.5 加密三级TCP代理  
 ![2.5](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-tls-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
-`./proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02，IP:33.33.33.33  
-`./proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级TCP代理(本地)  
-`./proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
+`proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口。  
 
 ### 2.6 通过代理连接上级  
@@ -550,26 +550,26 @@ port:代理的端口
 ### 2.7 指定`出口IP`  
 当TCP代理当上级类型（参数：-T）是tcp当时候，支持指定`出口IP`。使用`--bind-listen`参数，就可以开启客户端用`入口IP`连接过来的，就用`入口IP`作为`出口IP`访问目标网站的功能。如果绑定了不正确的IP会导致代理不能工作，此时代理会尝试不绑定IP去访问目标，同时日志会提示。  
 
-`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -B`  
+`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" -B`  
 
 ### 2.8 限速，限制连接数
 
 参数`--max-conns`可以限制每个端口的最大连接数。   
 比如限制每个端口最多1000个连接数：   
-`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --max-conns 1000`    
+`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --max-conns 1000`    
 参数`--rate-limit`可以限制每个tcp连接的速率。   
 比如限制每个tcp连接速率为100k/s：  
-`./proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`   
+`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`   
 
 ### 2.9 查看帮助  
-`./proxy help tcp`  
+`proxy help tcp`  
 
 ## 3.UDP代理  
 
 ### 3.1.普通一级UDP代理  
 ![3.1](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-1.png)  
 本地执行:  
-`./proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
+`proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口。  
 
 `-p`参数支持的写法：
@@ -586,57 +586,57 @@ port:代理的端口
 
 比如：
 
-`./proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:0"`  
+`proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:0"`  
 
 那么`33080`端口进来的连接，将会连接192.168.22.33的`33080`端口，其它端口以此类推，本地和上级端口一致，此时参数`-P`里面的端口用`0`。
 
 如果想无论是`33080`，`33081`等端口进来的连接都连接到192.168.22.33的`2222`端口，可以加上参数`--lock-port`
 
-`./proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`  
+`proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`  
 
 ### 3.2.普通二级UDP代理  
 ![3.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-2.png)  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
+`proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 本地执行:  
-`./proxy udp -p ":5353" -T tcp -P "22.22.22.33:33080"`  
+`proxy udp -p ":5353" -T tcp -P "22.22.22.33:33080"`  
 那么访问本地UDP:5353端口就是通过TCP隧道，通过VPS访问8.8.8.8的UDP:53端口。  
 
 ### 3.3.普通三级UDP代理  
 ![3.3](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
-`./proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
+`proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 二级TCP代理VPS_02，IP:33.33.33.33  
-`./proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
+`proxy tcp -p ":28080" -T tcp -P "22.22.22.22:38080"`  
 三级TCP代理(本地)  
-`./proxy udp -p ":5353" -T tcp -P "33.33.33.33:28080"`  
+`proxy udp -p ":5353" -T tcp -P "33.33.33.33:28080"`  
 那么访问本地5353端口就是通过TCP隧道，通过VPS访问8.8.8.8的53端口。  
 
 ### 3.4.加密二级UDP代理  
 ![3.4](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
-`./proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
-`./proxy udp -p ":5353" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
+`proxy udp -p ":5353" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 那么访问本地UDP:5353端口就是通过加密TCP隧道，通过VPS访问8.8.8.8的UDP:53端口。  
 
 ### 3.5.加密三级UDP代理  
 ![3.5](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-tls-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
-`./proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02，IP:33.33.33.33  
-`./proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy tcp -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级TCP代理(本地)  
-`./proxy udp -p ":5353" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
+`proxy udp -p ":5353" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地5353端口就是通过加密TCP隧道，通过VPS_01访问8.8.8.8的53端口。  
 
 ### 3.6 指定`出口IP`  
 当UDP代理当上级类型（参数：-T）是udp当时候，支持指定`出口IP`。使用`--bind-listen`参数，就可以开启客户端用`入口IP`连接过来的，就用`入口IP`作为`出口IP`访问目标的功能。如果绑定了不正确的IP会导致代理不能工作。  
 
-`./proxy udp -p ":33080" -T udp -P "192.168.22.33:2222" -B`  
+`proxy udp -p ":33080" -T udp -P "192.168.22.33:2222" -B`  
 
 ### 3.7 查看帮助  
-`./proxy help udp`  
+`proxy help udp`  
 
 ## 4.内网穿透  
 ### 4.1、原理说明  
@@ -660,11 +660,11 @@ VPS(IP:22.22.22.33)执行:
 
 步骤:  
 1. 在vps上执行  
-`./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-`./proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-`./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
 
@@ -682,11 +682,11 @@ VPS(IP:22.22.22.33)执行:
 
 步骤:  
 1. 在vps上执行，确保vps的80端口没被其它程序占用。  
-`./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-`./proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 在自己笔记本上面执行  
-`./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
 
@@ -700,11 +700,11 @@ VPS(IP:22.22.22.33)执行:
 
 步骤:  
 1. 在vps上执行  
-`./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-`./proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-`./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
 
@@ -719,13 +719,13 @@ VPS(IP:22.22.22.33)执行:
 
 步骤:  
 1. 在vps上执行  
-`./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-`./proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 在家里电脑上执行  
-`./proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
 
@@ -746,11 +746,11 @@ server连接到bridge的时候，如果同时有多个client连接到同一个br
 
 步骤:  
 1. 在vps上执行  
-`./proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-`./proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. 在公司机器A上面执行  
-`./proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. 完成  
 
@@ -842,9 +842,9 @@ c.”str://“开头的英文逗号分割的多个key，比如：str://default,c
 nat类型判断,方便查看网络是否支持p2p，可以执行：`proxy tools -a nattype`  
 
 ### 4.14 查看帮助  
-`./proxy help bridge`  
-`./proxy help server`  
-`./proxy help client`  
+`proxy help bridge`  
+`proxy help server`  
+`proxy help client`  
 
 ## 5.SOCKS5代理  
 提示:  
@@ -856,7 +856,7 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 ***那么需要加上`-g VPS公网IP`参数，SOCKS5代理的UDP功能才能正常工作。***  
 
 ### 5.1 普通SOCKS5代理  
-`./proxy socks -t tcp -p "0.0.0.0:38080"`  
+`proxy socks -t tcp -p "0.0.0.0:38080"`  
 
 -p参数支持的写法：
 
@@ -869,36 +869,36 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 ### 5.2.普通二级SOCKS5代理  
 ![5.2](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-2.png)  
 使用本地端口8090，假设上级SOCKS5代理是`22.22.22.22:8080`  
-`./proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
+`proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 我们还可以指定网站域名的黑白名单文件，一行一个域名，匹配规则是最右匹配，比如:baidu.com，匹配的是*.*.baidu.com，黑名单的域名域名直接走上级代理，白名单的域名不走上级代理;如果域名即在黑名单又在白名单中，那么黑名单起作用。  
-`./proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
+`proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt`  
 
 ### 5.3.SOCKS二级代理(加密)  
 ![5.3](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-tls-2.png)  
 一级SOCKS代理(VPS，IP:22.22.22.22)  
-`./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+`proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 
 二级SOCKS代理(本地Linux)  
-`./proxy socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080。  
 
 二级SOCKS代理(本地windows)  
-`./proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080，程序即可通过加密通道通过vps上网。  
 
 ### 5.4.SOCKS三级代理(加密)  
 ![5.4](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-tls-3.png)  
 一级SOCKS代理VPS_01，IP:22.22.22.22  
-`./proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
+`proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级SOCKS代理VPS_02，IP:33.33.33.33  
-`./proxy socks -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy socks -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 三级SOCKS代理(本地)  
-`./proxy socks -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
+`proxy socks -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 那么访问本地的8080端口就是访问一级SOCKS代理上面的代理端口38080。  
 
 ### 5.5.SOCKS代理流量强制走上级SOCKS代理  
 默认情况下，proxy会智能判断一个网站域名是否无法访问，如果无法访问才走上级SOCKS代理.通过--always可以使全部SOCKS代理流量强制走上级SOCKS代理。  
-`./proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
+`proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 ### 5.6.SOCKS通过SSH中转  
 ![5.6](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-ssh.png)  
@@ -909,35 +909,35 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 
 #### *5.6.1 ssh用户名和密码的方式*  
 本地SOCKS5代理28080端口，执行:  
-`./proxy socks -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
+`proxy socks -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
 #### *5.6.2 ssh用户名和密钥的方式*  
 本地SOCKS5代理28080端口，执行:  
-`./proxy socks -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
+`proxy socks -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 那么访问本地的28080端口就是通过VPS访问目标地址。  
 
 ### 5.7.认证  
 对于socks5代理协议我们可以进行用户名密码认证，认证的用户名和密码可以在命令行指定  
-`./proxy socks -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
+`proxy socks -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 多个用户，重复-a参数即可。  
 也可以放在文件中，格式是一行一个"用户名:密码"，然后用-F指定。  
-`./proxy socks -t tcp -p ":33080" -F auth-file.txt`  
+`proxy socks -t tcp -p ":33080" -F auth-file.txt`  
 
 ### 5.8.KCP协议传输  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS，IP:22.22.22.22)  
-`./proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
+`proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
 
 二级HTTP代理(本地Linux)  
-`./proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
+`proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080，数据通过kcp协议传输。  
 
 ### 5.9.自定义DNS  
 --dns-address和--dns-ttl参数，用于自己指定proxy访问域名的时候使用的dns（--dns-address）  
 以及解析结果缓存时间（--dns-ttl）秒数，避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度。  
 比如：  
-`./proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
+`proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`  
 
 ### 5.10 自定义加密  
 proxy的socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据，除此之外还支持在tls和kcp之后进行自定义加密，也就是说自定义加密和tls|kcp是可以联合使用的，内部采用AES256加密，使用的时候只需要自己定义一个密码即可，  
@@ -1058,10 +1058,10 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 
 但是某些情况下，需要固定UDP功能端口，可以通过参数`--udp-port 端口号`用来固定UDP功能的端口号，比如：
 
-`./proxy socks -t tcp -p "0.0.0.0:38080" --udp-port 38080` 
+`proxy socks -t tcp -p "0.0.0.0:38080" --udp-port 38080` 
 
 ### 5.19 查看帮助  
-`./proxy help socks`  
+`proxy help socks`  
 
 ## 6.SPS协议转换  
 
@@ -1081,35 +1081,35 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 ### 6.2 HTTP(S)转HTTP(S)+SOCKS5+SS  
 假设已经存在一个普通的http(s)代理：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`  
+`proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`  
 
 假设已经存在一个tls的http(s)代理：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，tls需要证书文件，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`  
+`proxy sps -S http -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`  
 
 假设已经存在一个kcp的http(s)代理（密码是：demo123）：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
+`proxy sps -S http -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
 ### 6.3 SOCKS5转HTTP(S)+SOCKS5+SS  
 假设已经存在一个普通的socks5代理：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`  
+`proxy sps -S socks -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`  
 
 假设已经存在一个tls的socks5代理：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，tls需要证书文件，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`  
+`proxy sps -S socks -T tls -P 127.0.0.1:8080 -t tcp -p :18080 -C proxy.crt -K proxy.key -h aes-192-cfb -j pass`  
 
 假设已经存在一个kcp的socks5代理（密码是：demo123）：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
+`proxy sps -S socks -T kcp -P 127.0.0.1:8080 -t tcp -p :18080 --kcp-key demo123 -h aes-192-cfb -j pass`  
 
 ### 6.4 SS转HTTP(S)+SOCKS5+SS  
 SPS上级和本地支持ss协议，上级可以是SPS或者标准的ss服务。  
 SPS本地默认提供HTTP(S)\SOCKS5\SPS三种代理，当上级是SOCKS5时转换后的SOCKS5和SS支持UDP功能。  
 假设已经存在一个普通的SS或者SPS代理(开启了ss，加密方式:aes-256-cfb，密码:demo)：127.0.0.1:8080，现在我们把它转为同时支持http(s)和socks5和ss的普通代理，转换后的本地端口为18080，转换后的ss加密方式:aes-192-cfb，ss密码:pass。  
 命令如下：  
-`./proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`。  
+`proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`。  
 
 ### 6.5 链式连接  
 ![6.4](https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/sps-tls.png)  
@@ -1118,16 +1118,16 @@ vps01：2.2.2.2
 vps02：3.3.3.3  
 现在我们想利用pc和vps01和vps02构建一个加密通道，本例子用tls加密也可以用kcp，在pc上访问本地18080端口就是访问vps01的本地8080端口。  
 首先在vps01(2.2.2.2)上我们运行一个只有本地可以访问的http(s)代理，执行：  
-`./proxy http -t tcp -p 127.0.0.1:8080`  
+`proxy http -t tcp -p 127.0.0.1:8080`  
 
 然后在vps01(2.2.2.2)上运行一个sps结点，执行：  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
+`proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tls -p :8081 -C proxy.crt -K proxy.key`  
 
 然后在vps02(3.3.3.3)上运行一个sps结点，执行：  
-`./proxy sps -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
+`proxy sps -S http -T tls -P 2.2.2.2:8081 -t tls -p :8082 -C proxy.crt -K proxy.key`  
 
 然后在pc上运行一个sps结点，执行：  
-`./proxy sps -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
+`proxy sps -S http -T tls -P 3.3.3.3:8082 -t tcp -p :18080 -C proxy.crt -K proxy.key`  
 
 完成。  
 
@@ -1152,14 +1152,14 @@ sps支持http(s)\socks5代理认证，可以级联认证，有四个重要的信
 | 有    | 没有    |   没有    |   来自user-auth  
 
 对于sps代理我们可以进行用户名密码认证，认证的用户名和密码可以在命令行指定  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
+`proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
 多个用户，重复-a参数即可。  
 也可以放在文件中，格式是一行一个`用户名:密码:连接数:速率:上级`，然后用-F指定。  
-`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
+`proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -F auth-file.txt`  
 
 如果上级有认证，下级可以通过-A参数设置认证信息，比如:  
-上级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
-下级:`./proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
+上级:`proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
+下级:`proxy sps -S http -T tcp -P 127.0.0.1:8080 -A "user1:pass1" -t tcp -p ":33080" `  
 
 请更多认证细节，请参考`9.API认证` 和 `10.本地认证`  
 
@@ -1294,7 +1294,7 @@ sps下级，限速100K
 ### 6.15 独立服务  
 sps功能不强制指定一个上级，当上级为空，sps本身即可完成完整的代理功能.如果指定了上级那么就和之前一样使用上级连接目标。  
 下面这个命令，就是一键开启http(s)\ss\socks服务。  
-`./proxy sps -p :33080`  
+`proxy sps -p :33080`  
 
 ### 6.16 目标重定向  
 sps功能提供的http(s)\socks5\ss代理功能，客户端通过sps代理去连接指定的“目标”，这个“目标”一般是网站也可能是任意的tcp地址，  
@@ -1315,7 +1315,7 @@ www.a.com:80     10.0.0.2:8080
 
 但是某些情况下，需要固定UDP功能端口，可以通过参数`--udp-port 端口号`用来固定UDP功能的端口号，比如：
 
-`./proxy sps -t tcp -p "0.0.0.0:38080" --udp-port 38081` 
+`proxy sps -t tcp -p "0.0.0.0:38080" --udp-port 38081` 
 
 需要注意的是，sps的ss功能也有UDP功能，而且ss的UDP端口和tcp端口是一样的，所以要避免socks5的UDP端口和ss的UDP端口冲突，
 
@@ -1326,7 +1326,7 @@ sps模式支持Linux系统的iptables转发支持，也就是通常所说的ipta
 
 启动命令实例：
 
-`./proxy sps --redir -p :8888 -P httpws://1.1.1.1:33080`  
+`proxy sps --redir -p :8888 -P httpws://1.1.1.1:33080`  
 
 这里假设存在一个http的上级代理1.1.1.1:33080，使用ws传输数据。
 
@@ -1370,7 +1370,7 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 
 ### 6.19 查看帮助  
 
-`./proxy help sps` 
+`proxy help sps` 
 
 ## 7.KCP配置  
 
