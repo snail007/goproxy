@@ -162,15 +162,15 @@ Proxy is licensed under GPLv3 license。
 
 ## 如何安装
 
-### Linux安装  
+### 1. Linux安装  
 
 [点击查看Linux安装教程](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85-goproxy)
 
-### 苹果Mac系统安装  
+### 2. 苹果Mac系统安装  
 
 [点击查看苹果Mac系统安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
 
-### Windows安装  
+### 3. Windows安装  
 
 [点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
 
