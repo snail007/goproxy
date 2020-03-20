@@ -76,7 +76,7 @@
 
 ### 快速安装 goproxy
 
-0.如果你的VPS是linux64位的系统，那么只需要执行下面一句，就可以完成自动安装和配置.
+如果你的VPS是linux64位的系统，那么只需要执行下面一句，就可以完成自动安装和配置.
 
 提示:所有操作需要root权限。 
 
@@ -99,7 +99,9 @@ curl -L http://mirrors.host900.com/snail007/goproxy/install_auto_commercial.sh |
 
 1.下载goproxy
 
-最新版下载地址: http://mirrors.host900.com/snail007/goproxy   
+根据你的平台和CPU类型选择,下载地址: http://mirrors.host900.com/snail007/goproxy ,  
+
+这里以`proxy-linux-amd64.tar.gz`为例,具体使用的时候,请根据你的平台和CPU类型选择具体文件名称.   
 
 免费版执行这个：  
 
@@ -173,6 +175,11 @@ Proxy is licensed under GPLv3 license。
 ### 3. Windows安装  
 
 [点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+
+### 4. 其它平台安装  
+
+[点击查看其它安装教程](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
+
 
 ## 首次使用必看！ 
 

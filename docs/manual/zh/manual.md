@@ -12,6 +12,11 @@
 
 [点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
 
+### 4. 其它平台安装  
+
+[点击查看其它安装教程](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
+
+
 ## 首次使用必看！ 
 
 ### 1. 环境  

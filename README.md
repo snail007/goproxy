@@ -180,6 +180,10 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 [click me get Windows installation](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
 
+### 4. Others Install  
+
+[click me get Windows installation](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
+
 ## First Start  
 
 ### 1. Environment  
