@@ -168,6 +168,19 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 ## First Start  
     
+### Linux Install  
+
+[click me get Linux installation](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85-goproxy)
+
+### MacOS Install  
+
+[click me get MacOS installation](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+
+### Windows Install  
+
+[click me get Windows installation](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+
+
 ### 1. Environment  
 
 The manual tutorial, the default system is linux, the program is proxy; all operations require root privileges;  
