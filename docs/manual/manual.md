@@ -1312,7 +1312,7 @@ For example:
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`  
 
 1. Disable the SOCKS5 proxy function to retain only the HTTP(S) proxy function, parameter: `--disable-socks`.  
-`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`  
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-socks`  
 
 ### 6.12 Speed ​​limit  
 

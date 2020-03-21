@@ -1284,7 +1284,7 @@ SPS默认情况下一个端口支持http(s)和socks5两种代理协议，我们�
 `proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`  
 
 1.禁用SOCKS5代理功能只保留HTTP(S)代理功能，参数:`--disable-socks`。  
-`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-http`  
+`proxy sps -T tcp -P 3.3.3.3:8888 -M -t tcp -p :8080 --disable-socks`  
 
 ### 6.12 限速  
 
