@@ -119,14 +119,19 @@ Weight Select a upstream according to the weight and number of connections of ea
 
 prompt:  
 
-The load balancing check interval can be set by `--lb-retrytime` in milliseconds.  
+1. The load balancing check interval can be set by `--lb-retrytime` in milliseconds.  
 
-The load balancing connection timeout can be set by `--lb-timeout` in milliseconds.  
+2. The load balancing connection timeout can be set by `--lb-timeout` in milliseconds.  
 
-If the load balancing policy is weight, the -P format is: 2.2.2.2: 3880?w=1, where 1 is the weight and an integer greater than 0.  
+3. If the load balancing policy is weight, the -P format is: 2.2.2.2: 3880?w=1, where 1 is the weight and an integer greater than 0.  
 
-If the load balancing policy is hash, the default is to select the upstream based on the client address. You can select the upstream by using the destination address of the access `--lb-hashtarget`.  
+4. If the load balancing policy is hash, the default is to select the upstream based on the client address. You can select the upstream by using the destination address of the access `--lb-hashtarget`.  
 
+5. The TCP proxies has no parameter `--lb-hashtarget`.
+
+6. Default is load balancing + high availability mode. If the parameter `--lb-onlyha` is used, only the high availability mode is used, then a node is selected according to the load balancing strategy, and this node will be used until it is not alive, then another node will be selected for using, thus cycling.
+
+7. If the all nodes are not alive, a random node will be selected for using.
 
 ### 10. Agent springboard jump  
 
@@ -1627,9 +1632,9 @@ Upstream: The upstream used, not empty, or not set this header.
 When the service is http, upstream only supports http(s) proxy, and does not support authentication. If authentication is required, it can be replaced by sps. Format:  
   `http://127.0.0.1:3100?argk=argv`  
 When the service is a socks, the upstream only supports the socks5 proxy. The format is:  
-  `socks://127.0.0.1:3100?argk=argv`  
+  `socks5://127.0.0.1:3100?argk=argv`  
 
-Explanation: `http://`,`socks://` is fixed, `127.0.0.1:3100` is the address of the upstream  
+Explanation: `http://`,`socks5://` is fixed, `127.0.0.1:3100` is the address of the upstream  
 
 2. When `sps` is 1.  
 Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple upstreams** , the description of the `-P` parameter.  
