@@ -1761,6 +1761,13 @@ The contents of auth.php are as follows:
 
 ```php  
 <?php  
+#all users and password  
+$alluser=[
+    "user1"=>"pass1",
+    "user2"=>"pass2",
+    "user3"=>"pass3",
+    "user4"=>"pass4",
+];
 $proxy_ip=$_GET['local_addr'];  
 $user_ip=$_GET['client_addr'];  
 $service=$_GET['service'];  
@@ -1768,16 +1775,26 @@ $is_sps=$_GET['sps']=='1';
 $user=$_GET['user'];  
 $pass=$_GET['pass'];  
 $target=$_GET['target'];  
-/ / Business logic judgment  
-//....  
 
-/ / Set the authentication result  
-Header("userconns:1000");  
-Header("ipconns:2000");  
-Header("userrate:3000");  
-Header("iprate:8000");  
-Header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
-Header("HTTP/1.1 204 No Content");  
+//business checking
+//....  
+$ok=false;
+foreach ($alluser as $dbuser => $dbpass) {
+    if ($user==$dbuser&&$pass==$dbpass){
+        $ok=true;
+        break;
+    }
+}
+
+//set the authentication result  
+if($ok){
+    header("userconns:1000");  
+    header("ipconns:2000");  
+    header("userrate:3000");  
+    header("iprate:8000");  
+    header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
+    header("HTTP/1.1 204 No Content");  
+}
 ```  
 
 #### Explanation  

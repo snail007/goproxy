@@ -1563,23 +1563,38 @@ auth.php内容如下：
 
 ```php  
 <?php  
-$proxy_ip=$_GET['local_addr'];  
+#设置所有的用户名密码,前面是用户名,后面是对应密码  
+$alluser=[  
+    "user1"=>"pass1",  
+    "user2"=>"pass2",  
+    "user3"=>"pass3",  
+    "user4"=>"pass4",  
+];  
+$proxy_ip=$_GET['local_addr'];   
 $user_ip=$_GET['client_addr'];  
-$service=$_GET['service'];  
+$service=$_GET['service'];   
 $is_sps=$_GET['sps']=='1';  
 $user=$_GET['user'];  
 $pass=$_GET['pass'];  
 $target=$_GET['target'];  
 //业务逻辑判断  
 //....  
-
+$ok=false;  
+foreach ($alluser as $dbuser => $dbpass) {  
+    if ($user==$dbuser&&$pass==$dbpass){  
+        $ok=true;  
+        break;  
+    }  
+}  
 //设置认证结果  
-header("userconns:1000");  
-header("ipconns:2000");  
-header("userrate:3000");  
-header("iprate:8000");  
-header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
-header("HTTP/1.1 204 No Content");  
+if($ok){  
+    header("userconns:1000");  
+    header("ipconns:2000");  
+    header("userrate:3000");  
+    header("iprate:8000");  
+    header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
+    header("HTTP/1.1 204 No Content");  
+}
 ```  
 
 #### 解释  
