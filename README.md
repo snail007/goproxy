@@ -1834,6 +1834,25 @@ Upstream supports socks5, http(s) proxy, support authentication, format: `protoc
   7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
   8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
 
+### Traffic report
+
+The proxy http / socks5 / sps / tcp / udp proxy function supports traffic reporting. You can set an http interface address through the parameter --traffic-url
+Then when the connection is released, the proxy will report the traffic used by the connection to this address. The specific situation is that the proxy sends an HTTP to GET request to the HTTP URL address set by --traffic-url.
+
+The traffic reporting function combined with the above API authentication function can control the user's traffic usage in real time. The traffic is reported to the interface. The interface writes the traffic data to the database, and then the authentication API queries the database to determine the traffic usage and determine whether the user can be successfully authenticated.
+
+The following is a complete URL request example:
+
+`http://127.0.0.1:33088/user/traffic?bytes=337&client_addr=127.0.0.1%3A51035&id=http&server_addr =127.0.0.1%3A33088&target_addr=myip.ipip.net%3A80&username=a`
+
+Request parameter description:
+id: service id flag.
+server_addr: proxies's address requested by the client, format: IP: port.
+client_addr: client address, format: IP: port.
+target_addr: target address, format: "IP: port", when tcp / udp proxy, this is empty.
+User name: proxy authentication user name, this is empty when tcp / udp proxy.
+bytes: the number of traffic bytes used by the user.
+
 ## 10. Authentication  
 
 The proxy http(s)/socks5/sps proxy function supports the user to access the proxy pair through the configuration file, and supports the http(s) proxy ``Proxy Basic proxy authentication` and the socks5 proxy authentication.  
