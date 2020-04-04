@@ -1666,7 +1666,7 @@ Upstream supports socks5, http(s) proxy, support authentication, format: `protoc
   7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
   8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
 
-### Traffic report
+### Traffic report / Traffic limit / Traffic statistics
 
 The proxy http / socks5 / sps / tcp / udp proxy function supports traffic reporting. You can set an http interface address through the parameter --traffic-url
 Then when the connection is released, the proxy will report the traffic used by the connection to this address. The specific situation is that the proxy sends an HTTP to GET request to the HTTP URL address set by --traffic-url.
