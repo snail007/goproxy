@@ -985,9 +985,7 @@ port:代理的端口
 
 ### 4.9.内网穿透HTTP服务  
 
-通常HTTP请求客户端会使用server的ip和端口去设置HOST字段，但是与期望的后端实际HOST不一样，这样就造成了tcp是通的，  
-但后端依赖HOST字段定位虚拟主机就不能工作.现在用--http-host参数强制设置http头部的HOST字段值为后端实际的  
-域名和端口即可轻松解决。  
+通常HTTP请求客户端会使用server的ip和端口去设置HOST字段，但是与期望的后端实际HOST不一样，这样就造成了tcp是通的， 但后端依赖HOST字段定位虚拟主机就不能工作.现在用`--http-host`参数强制设置http头部的HOST字段值为后端实际的域名和端口即可轻松解决,另外使用了`--http-host`参数之后,会在每个HTTP请求的头部增加两个头部 `X-Forwarded-For` 和 `X-Real-IP` 值是客户端IP, 这样后端http服务就能方便的获取用户端真实IP地址。  
 
 `server`的--http-host参数格式如下:  
 
@@ -1006,6 +1004,9 @@ port:代理的端口
 `-r :2500@127.0.0.1:80` 和 `--http-host local.com:80@2500` 里面的2500端口是server本地监听的端口  
 
 当使用http协议请求server的ip:2500端口的时候，http的头部HOST字段就会被设置为`local.com`。  
+
+另外只有设置了`--http-host`参数
+
 
 ### 4.10 关于流量统计  
 

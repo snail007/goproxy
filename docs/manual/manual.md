@@ -685,7 +685,8 @@ When the UDP upstream proxies (parameter: -T) is udp, it supports the specified 
 ### 3.7 Help  
 `proxy help udp`  
 
-## 4. Internet NAT  
+## 4. Expose Intranet  
+
 ### 4.1 principle description  
 Intranet penetration, divided into two versions, "multi-link version" and "multiplexed version", generally like a web service, this service is not a long-term connection, it is recommended to use "multi-link version", if it is to keep long The time connection suggests using a "multiplexed version."  
 1. Multi-link version, the corresponding sub-command is tserver, tclient, tbridge.  
@@ -836,11 +837,9 @@ Socks5://host:port
 Host: the IP or domain name of the proxy  
 Port: the port of the proxy  
 
-### 4.9. Intranet penetration HTTP service  
+### 4.9. Expose HTTP service  
 
-Usually the HTTP request client will use the server's ip and port to set the HOST field, but it is not the same as the expected backend actual HOST, which causes tcp to be passed.  
-However, the backend relies on the HOST field to locate the virtual host and it will not work. Now use the --http-host parameter to force the HOST field value of the http header to be the actual value of the backend.  
-Domain names and ports can be easily solved.  
+Usually the HTTP request client will use the server's ip and port to set the HOST field, but it is not the same as the expected backend actual HOST, which causes tcp to be passed.However, the backend relies on the HOST field to locate the virtual host and it will not work. Now use the `--http-host` parameter to force the HOST field value of the http header to be the actual value of the backend.Domain names and ports can be easily solved. After using the `--http-host` parameter, two headers will be added to the header of each HTTP request. The `X-Forwarded-For` and `X-Real-IP` values ​​are the client IP, so the backend http service can easily obtain the real IP address of the client.
 
 The format of the `server`-http-host parameter is as follows:  
 
