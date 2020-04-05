@@ -180,8 +180,14 @@ Proxy is licensed under GPLv3 license。
 
 [点击查看其它安装教程](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
 
+## 购买商业版
 
-## 首次使用必看！ 
+本手册描述功能,商业版全部包含;认证等高级功能参数免费版不包含;  
+如果您用免费版执行某些命令等时候遇到,类似如下xxx参数不存在的提示,说明这个参数是商业版的功能,您需要下载并购买商业版授权才能使用.  
+` err : unknown long flag '--a'`  
+免费版和商业版功能对比、如何购买和使用商业版详细操作[请点击这里查看](https://snail007.github.io/goproxy/page/free_vs_commercial/).   
+
+## 首次使用必看,谢谢!!！ 
 
 ### 1. 环境  
 

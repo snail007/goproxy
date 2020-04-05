@@ -16,6 +16,13 @@
 
 [click me get Windows installation](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
 
+## Purchase Commercial Edition  
+
+This manual describes the functions, all of which are included in the commercial version; the free version of advanced functional parameters such as authentication is not included;  
+If you encounter some commands when you use the free version to execute some commands, a prompt similar to the following xxx parameter does not exist, indicating that this parameter is a function of the commercial version.   
+`err: unknown long flag '-a'`   
+Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view]   
+
 ## First Start  
 
 ### 1. Environment  
