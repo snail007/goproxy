@@ -187,7 +187,7 @@ Proxy is licensed under GPLv3 license。
 1. proxy-admin面板和命令行gorpoxy是两个东西,没有依赖关系,分别独立使用.
 2. proxy-admin有`free免费版`和`vip版`.
 3. goproxy有`free免费版`和`商业版`.
-4. proxy-admin免费版,proxy-adminvip版本,goproxy免费版,三者功能一样,都是免费版功能.
+4. proxy-admin免费版,proxy-adminvip版本,goproxy免费版,三者功能一样,都是免费版功能.  
 关于免费版功能和商业版功能对比请看这里,[免费版对比商业版](https://snail007.github.io/goproxy/page/free_vs_commercial/).
 5. proxy-admin vip版和proxy-admin free免费版区别是vip版本服务数量无限制.
 6. proxy-admin内置goproxy免费版SDK,独立运行不需要安装命令行goproxy程序.
