@@ -28,7 +28,7 @@
 5. proxy-admin vip版和proxy-admin free免费版区别是vip版本服务数量无限制.
 6. proxy-admin内置goproxy免费版SDK,独立运行不需要安装命令行goproxy程序.
 7. proxy-admin面板没有命令行goproxy商业版功能。
-
+ 
 ## 购买商业版
 
 本手册描述功能,商业版全部包含;认证等高级功能参数免费版不包含;  
