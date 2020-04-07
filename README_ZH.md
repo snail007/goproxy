@@ -174,11 +174,23 @@ Proxy is licensed under GPLv3 license。
 
 ### 3. Windows安装  
 
-[点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+为了方便操作,推荐Windows用户使用proxy-admin面板,[点击查看Windows安装教程](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md#%E8%A7%86%E9%A2%91%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)
+
+当然你也可以使用命令行goproxy[点击查看手动安装](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
 
 ### 4. 其它平台安装  
 
 [点击查看其它安装教程](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-goproxy)
+
+### 5. 关于proxy-admin控制面板和命令行gorpoxy
+
+1. proxy-admin面板和命令行gorpoxy是两个东西,没有依赖关系,分别独立使用.
+2. proxy-admin有`free免费版`和`vip版`.
+3. goproxy有`free免费版`和`商业版`.
+4. proxy-admin免费版,proxy-adminvip版本,goproxy免费版,三者功能一致.
+5. proxy-admin vip版和proxy-admin free免费版区别是vip版本服务数量无限制.
+6. proxy-admin内置goproxy免费版SDK,独立运行不需要安装命令行goproxys程序.
+7. proxy-admin面板没有命令行goproxy商业版功能。
 
 ## 购买商业版
 
