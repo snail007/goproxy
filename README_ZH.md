@@ -9,7 +9,7 @@
 ---
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [点击下载](https://github.com/snail007/goproxy/releases)
-- 如果上面不能正常下载，点击这里[镜像下载](http://mirrors.host900.com/snail007/goproxy/)
+- 如果上面不能正常下载，点击这里[镜像下载](http://mirrors.host900.com:9090/snail007/goproxy/)
 - [桌面版，控制面板ProxyAdmin](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
 - [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android) 
 - [安卓全能代理版](https://github.com/snail007/goproxy-android) 
@@ -83,13 +83,13 @@
 免费版执行这个：  
 
 ```shell  
-curl -L http://mirrors.host900.com/snail007/goproxy/install_auto.sh | bash  
+curl -L http://mirrors.host900.com:9090/snail007/goproxy/install_auto.sh | bash  
 ```  
 
 商业版执行这个：  
 
 ```shell  
-curl -L http://mirrors.host900.com/snail007/goproxy/install_auto_commercial.sh | bash  
+curl -L http://mirrors.host900.com:9090/snail007/goproxy/install_auto_commercial.sh | bash  
 ```  
 
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
@@ -99,7 +99,7 @@ curl -L http://mirrors.host900.com/snail007/goproxy/install_auto_commercial.sh |
 
 1.下载goproxy
 
-根据你的平台和CPU类型选择,下载地址: http://mirrors.host900.com/snail007/goproxy ,  
+根据你的平台和CPU类型选择,下载地址: http://mirrors.host900.com:9090/snail007/goproxy ,  
 
 这里以`proxy-linux-amd64.tar.gz`为例,具体使用的时候,请根据你的平台和CPU类型选择具体文件名称.   
 
@@ -107,14 +107,14 @@ curl -L http://mirrors.host900.com/snail007/goproxy/install_auto_commercial.sh |
 
 ```shell  
 cd /root/proxy/  
-wget http://mirrors.host900.com/snail007/goproxy/proxy-linux-amd64.tar.gz  
+wget http://mirrors.host900.com:9090/snail007/goproxy/proxy-linux-amd64.tar.gz  
 ```  
 
 商业版执行这个：  
 
 ```shell  
 cd /root/proxy/  
-wget http://mirrors.host900.com/snail007/goproxy/proxy-linux-amd64_commercial.tar.gz  
+wget http://mirrors.host900.com:9090/snail007/goproxy/proxy-linux-amd64_commercial.tar.gz  
 ```  
 
 2.下载自动安装脚本
