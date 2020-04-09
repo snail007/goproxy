@@ -197,7 +197,7 @@ Proxy is licensed under GPLv3 license。
 
 本手册描述功能,商业版全部包含;认证等高级功能参数免费版不包含;  
 如果您用免费版执行某些命令等时候遇到,类似如下xxx参数不存在的提示,说明这个参数是商业版的功能,您需要下载并购买商业版授权才能使用.  
-` err : unknown long flag '--a'`  
+` err : unknown short flag '-a'`  
 免费版和商业版功能对比、如何购买和使用商业版详细操作[请点击这里查看](https://snail007.github.io/goproxy/page/free_vs_commercial/).   
 
 ## 首次使用必看,谢谢!!！ 
