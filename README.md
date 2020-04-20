@@ -120,9 +120,9 @@ wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd6
 The free version performs this:
 
 ```shell
-c d /root/proxy/
+cd /root/proxy/
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
-Chmod +x install.sh
+chmod +x install.sh
 ./install.sh
 ```
 
@@ -131,7 +131,7 @@ The commercial version performs this:
 ```shell
 cd /root/proxy/
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
-Chmod +x install_commercial.sh
+chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
 
