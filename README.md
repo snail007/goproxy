@@ -120,7 +120,7 @@ wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd6
 The free version performs this:
 
 ```shell
-cd /root/proxy/
+c d /root/proxy/
 wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 Chmod +x install.sh
 ./install.sh
@@ -1161,6 +1161,10 @@ Secondary HTTP proxy (local Linux)
 `proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS, the data is transmitted through the kcp protocol.  
 
+notice:
+
+When using the kcp protocol locally, you need to specify the vps public network IP with -g, and the UDP function of socks5 is fully used. At this time, -g is the IP address in the UDP address returned to the client.
+
 ### 5.9. Custom DNS  
 --dns-address and --dns-ttl parameters, used to specify the dns (--dns-address) used by the proxy to access the domain name.  
 And the analysis result cache time (--dns-ttl) seconds, to avoid system dns interference to the proxy, in addition to the cache function can also reduce the dns resolution time to improve access speed.  
@@ -1303,6 +1307,10 @@ Listen port argument `-p` can be:
   -p ":8081,:8082"  listen on 8081 and 8082
   -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000 and 9001 to 9999, 1002 total ports  
 ```
+
+notice:
+
+When using the kcp protocol locally, you need to specify the vps public network IP with -g, and the UDP function of socks5 is fully used. At this time, -g is the IP address in the UDP address returned to the client.
 
 ### 6.2 HTTP(S) to HTTP(S)+SOCKS5+SS  
 Suppose there is already a normal http(s) proxy: 127.0.0.1:8080. Now we turn it into a common proxy that supports both http(s) and socks5 and ss. The converted local port is 18080, ss encryption: Aes-192-cfb, ss password: pass.  
@@ -1811,11 +1819,11 @@ Iprate: The single TCP connection rate limit of the user IP, in bytes/second, no
 Upstream: The upstream used, not empty, or not set this header.  
 
 #### Tips  
-1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty.  
+1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty when client didn't send username and password.  
 2. Connection limit priority: User authentication file rate limit - "File ip.limit rate limit -" API user rate limit - "API IP rate limit -" command line global connection limit.  
 3. Rate Limit Priority: User Authentication File Rate Limit - "File ip.limit Rate Limit -" API User Rate Limit - "API IP Rate Limit - "Command Line Global Rate Limit.  
 3. The upstream obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the upstream.  
-4.`--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 60, set 0 to close the cache.  
+4.`--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 0, set 0 to close the cache.  
 
 #### upstream detailed description  
 
