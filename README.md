@@ -18,7 +18,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 - [SDK](https://github.com/snail007/goproxy-sdk)
 - [GORPOXY Manual](https://snail007.github.io/goproxy/manual/)
 - [GORPOXY Tutorial](https://snail007.github.io/goproxy)
-- [Free version VS commercial version](https://snail007.github.io/goproxy/free_vs_commercial/)
+- [Free version VS commercial version](https://snail007.github.io/goproxy/page/free_vs_commercial/)
 
 ### ProxyAdmin Demo
 And ProxyAdmin is a powerful web console of snail007/goproxy .

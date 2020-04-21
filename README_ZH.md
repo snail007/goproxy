@@ -17,7 +17,7 @@
 - [SDK](https://github.com/snail007/goproxy-sdk)
 - [GORPOXY帮助手册](https://snail007.github.io/goproxy/manual/zh/) 
 - [GORPOXY实战教程](https://snail007.github.io/goproxy)  
-- [免费版VS商业版(安装、激活)](https://snail007.github.io/goproxy/free_vs_commercial/)
+- [免费版VS商业版(安装、激活)](https://snail007.github.io/goproxy/page/free_vs_commercial/)
 
 ## ProxyAdmin介绍预览（这不是goproxy，是控制面板友情链接；安装使用goproxy请往下看，谢谢！）
 `ProxyAdmin` 是强大的代理服务工具 snail007/goproxy 的控制面板，运行了它，一秒让你的服务器变为强大的代理服务器，友好的交互界面，小白也能轻松上手，让你用起来得心应手，心情舒畅。
