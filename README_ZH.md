@@ -768,7 +768,18 @@ port:代理的端口
 比如限制每个tcp连接速率为100k/s：  
 `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`   
 
-### 2.9 查看帮助  
+### 2.9 压缩传输
+
+`--c`控制本地和客户端之间是否压缩传输，默认false；`--C`控制本地和上级之间是否压缩传输，默认false。  
+
+示例：
+
+VPS(IP:22.22.22.33)执行:  
+`proxy tcp -t tcp --c -p ":33080" -T tcp -P "127.0.0.1:8080"`  
+本地执行:  
+`proxy tcp -t tcp -p ":23080" -T tcp -P "22.22.22.33:33080" --C`  
+
+### 2.10 查看帮助  
 `proxy help tcp`  
 
 ## 3.UDP代理  
@@ -1828,12 +1839,20 @@ upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2
 
 ### 流量上报/流量统计/流量限制
 
-proxy的http(s)/socks5/sps/tcp/udp代理功能支持流量上报,可以通过参数--traffic-url设置一个http接口地址,
-那么当连接释放时,proxy会把此次连接使用的流量上报到这个地址,具体情况是,proxy发送一个HTTP到GET请求到--traffic-url设置的HTTP URL地址.  
+proxy的http(s)/socks5/sps/tcp/udp代理功能支持流量上报,可以通过参数`--traffic-url`设置一个http接口地址。  
+proxy会把此次连接使用的流量上报到这个地址,具体情况是,proxy发送一个HTTP到GET请求到`--traffic-url`设置的HTTP URL地址.  
+上报模式有两种，可以通过`--traffic-mode`参数指定，可以是`normal`普通模式上报，也可以是`fast`快速模式上报。  
 
-流量上报功能结合上面的API认证功能可以实现实时控制用户的流量使用,流量统计,流量限制;流量上报到接口,接口把流量数据写入数据库,然后认证API查询数据库判断用户或者IP流量使用情况,用来确定用户是否可以认证成功.
+1. `normal`普通模式上报  
+当连接释放时,proxy会把此次连接使用的流量上报到这个`--traffic-url`地址.  
 
-下面是一个完整的URL请求实例:  
+2. `fast`快速模式上报  
+对已经建立的每个连接，proxy会`定时`把这个连接产生的流量上报到这个这个`--traffic-url`地址.    
+`定时`默认是5秒，可以通过参数`--traffic-interval`修改`定时`为合适的秒数。   
+
+流量上报功能结合上面的API认证功能可以实现实时控制用户的流量使用,流量统计,流量限制;流量上报到接口,接口把流量数据写入数据库,然后认证API查询数据库判断用户或者IP流量使用情况,用来确定用户是否可以认证成功.  
+
+下面是一个完整的URL请求实例:   
 
 `http://127.0.0.1:33088/user/traffic?bytes=337&client_addr=127.0.0.1%3A51035&id=http&server_addr=127.0.0.1%3A33088&target_addr=myip.ipip.net%3A80&username=a`  
 
@@ -1844,6 +1863,58 @@ client_addr: 客户端地址,格式: `IP:端口`.
 target_addr: 目标地址,格式: `IP:端口`,tcp/udp代理时,这个是空.  
 username: 代理认证用户名,tcp/udp代理时,这个是空.  
 bytes: 此次使用的流量字节数.  
+
+### 主动断开用户连接
+
+proxy的http(s)/socks5/sps代理功能支持控制接口,可以通过参数--control-url指定的http接口地址,
+那么proxy就会`定期`的把当前连接到proxy的全部用户名或客户端IP发送到此URL，具体情况是,proxy发送一个HTTP到POST请求到--control-url设置的HTTP URL地址.  
+
+`定期`默认是30秒，可以通过--control-sleep参数修改此值。
+
+当用户过期，或者用户流量已经用完，通过认证API只能控制用户不能新建连接，但是已经和proxy建立当连接没法立刻断开，
+那么通过控制接口可以解决这个问题，控制接口会在最慢`定期`时间内通过控制接口返回当内容，结束已经无效当用户建立当连接。
+
+#### 控制接口请求说明
+
+proxy会向控制接口URL发送一个HTTP POST请求，表单数据中有两个字段：user和ip。
+
+user：当前连接到proxy的用户名，多个使用英文逗号分割，比如：user1,user2
+
+ip：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，比如：1.1.1.1,2.2.2.2
+
+#### 控制接口返回数据说明
+
+控制接口返回的数据是无效的用户和IP，格式是一个json对象数据，有两个字段user和ip。
+
+比如：{"user":"a,b","ip":""}
+
+user：当前连接到proxy的用户名，多个使用英文逗号分割，没有留空，比如：user1,user2
+
+ip：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，没有留空，比如：1.1.1.1,2.2.2.2
+
+返回的用户和ip已经建立的连接会被proxy断开。
+
+#### 示例  
+假设--control-url `http://127.0.0.1:33088/user/control.php`  指向了一个php接口地址.  
+control.php内容如下：  
+
+```php  
+<?php  
+#接收proxy post过来的数据
+$userArr=explode(",",$_POST['user']);   
+$ipArr=$_GET['ip'];  
+
+//无效用户列表
+$badUsers=[]; 
+
+foreach ($userArr as $user) {  
+    //逻辑判断用户$user是否无效,如果无效就放入$badUsers
+    $badUsers[]=$user;
+}  
+$data=["user"=>implode(","$badUsers),"ip"=>""];
+
+echo json_encode($data);
+```  
 
 ## 10.本地认证，限速，控制连接数  
 
