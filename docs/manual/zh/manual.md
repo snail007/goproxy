@@ -1676,7 +1676,7 @@ upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2
 ### 流量上报/流量统计/流量限制
 
 proxy的http(s)/socks5/sps/tcp/udp代理功能支持流量上报,可以通过参数`--traffic-url`设置一个http接口地址。  
-proxy会把此次连接使用的流量上报到这个地址,具体情况是,proxy发送一个HTTP到GET请求到`--traffic-url`设置的HTTP URL地址.  
+proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发送一个HTTP到GET请求到`--traffic-url`设置的HTTP URL地址.  
 上报模式有两种，可以通过`--traffic-mode`参数指定，可以是`normal`普通模式上报，也可以是`fast`快速模式上报。  
 
 1. `normal`普通模式上报  
