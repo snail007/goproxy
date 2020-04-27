@@ -1866,11 +1866,9 @@ bytes: 此次使用的流量字节数.
 
 ### 主动断开用户连接
 
-proxy的http(s)/socks5/sps代理功能支持控制接口,可以通过参数--control-url指定的http接口地址,
-那么proxy就会`定期`的把当前连接到proxy的全部用户名或客户端IP发送到此URL，具体情况是,proxy发送一个HTTP到POST请求到--control-url设置的HTTP URL地址.  
-
-`定期`默认是30秒，可以通过--control-sleep参数修改此值。
-
+proxy的http(s)/socks5/sps代理功能支持`控制接口`,可以通过参数`--control-url`指定的http接口地址,
+那么proxy就会`定期`的把当前连接到proxy的全部用户名或客户端IP发送到此URL，具体情况是,proxy发送一个HTTP到POST请求到`--control-url`设置的HTTP URL地址.  
+`定期`默认是30秒，可以通过`--control-sleep`参数修改此值。
 当用户过期，或者用户流量已经用完，通过认证API只能控制用户不能新建连接，但是已经和proxy建立当连接没法立刻断开，
 那么通过控制接口可以解决这个问题，控制接口会在最慢`定期`时间内通过控制接口返回当内容，结束已经无效当用户建立当连接。
 
