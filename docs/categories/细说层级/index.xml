@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>细说层级 on GOPROXY IN ACTION</title>
+    <link>https://snail.gitee.io/proxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/</link>
+    <description>Recent content in 细说层级 on GOPROXY IN ACTION</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 14 Jun 2019 15:29:47 +0800</lastBuildDate>
+    
+	<atom:link href="https://snail.gitee.io/proxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Categories</title>
+      <link>https://snail.gitee.io/proxy/page/categories/</link>
+      <pubDate>Fri, 14 Jun 2019 15:29:47 +0800</pubDate>
+      
+      <guid>https://snail.gitee.io/proxy/page/categories/</guid>
+      <description>不用看这里，没什么内容，仅仅为了定义目录和tags。</description>
+    </item>
+    
+  </channel>
+</rss>

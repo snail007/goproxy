@@ -1,0 +1,19 @@
+# domain support wildcard and comment line stared with #
+# **.google.com match all domain subfix with .google.com
+# *.youtube.com only math level 3 sub domain of .youtube.com
+
+#example
+
+**.google.com proxy
+*.youtube.com
+*.baidu.com 114.114.114.114,system,direct
+b.com
+c.com
+d.com 8.8.8.8:53
+e.com
+
+#explain
+
+#using `proxy >>> -q` to resolve **.google.com and *.youtube.com
+#using 114.114.114.114:53 and system and `direct >>> -q` to resolve *.baidu.com and b.com and c.com
+#using 8.8.8.8:53 to resolve **.google.com and *.youtube.com

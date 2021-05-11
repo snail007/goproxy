@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>commercial on GOPROXY IN ACTION</title>
+    <link>https://snail.gitee.io/proxy/tags/commercial/</link>
+    <description>Recent content in commercial on GOPROXY IN ACTION</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 26 Jun 2019 13:19:15 +0800</lastBuildDate>
+    
+	<atom:link href="https://snail.gitee.io/proxy/tags/commercial/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>GOPROXY Free Version VS Commercial Version</title>
+      <link>https://snail.gitee.io/proxy/page/free_vs_commercial_en/</link>
+      <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
+      
+      <guid>https://snail.gitee.io/proxy/page/free_vs_commercial_en/</guid>
+      <description>Currently, GOPROXY and SDK are available in both free and commercial versions. Function Free |Commercial TCP forwarding √ √ UDP forwarding √ √ HTTP(S)Agent √ √ Socks5 Agent √ √ Socks5 proxy UDP support √ √ SPS Integrated Agent √ √ SPS superior certification √ √ Intranet penetration √ √ DNS proxy, anti-pollution, independent DNS service √ √ HTTP(S) proxy authentication, authentication API, load balancing × √ SOCKS5 proxy authentication,</description>
+    </item>
+    
+  </channel>
+</rss>

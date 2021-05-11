@@ -1,0 +1,7 @@
+# domain support wildcard and comment line stared with #
+# **.google.com match all domain subfix with .google.com
+# *.youtube.com only math level 3 sub domain of .youtube.com
+
+# example
+10.0.2.2  **.a.com
+10.0.2.2  *.c.com

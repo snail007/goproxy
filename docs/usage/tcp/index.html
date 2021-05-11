@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="pinterest" content="nopin">
+<meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+<meta name="generator" content="Hugo 0.56.3" />
+
+
+
+<link rel="canonical" href="https://snail.gitee.io/proxy/usage/tcp/">
+
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
+    <title>TCP代理 - GOPROXY IN ACTION</title>
+    
+<meta name="description" content="GOPROXY手册之TCP代理的使用">
+
+<meta property="og:title" content="TCP代理 - GOPROXY IN ACTION">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://snail.gitee.io/proxy/usage/tcp/">
+<meta property="og:image" content="https://snail.gitee.io/proxy/images/default.png">
+<meta property="og:site_name" content="GOPROXY IN ACTION">
+<meta property="og:description" content="GOPROXY手册之TCP代理的使用">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="GOPROXY IN ACTION">
+<meta name="twitter:url" content="https://snail.gitee.io/proxy/usage/tcp/">
+<meta name="twitter:title" content="TCP代理 - GOPROXY IN ACTION">
+<meta name="twitter:description" content="GOPROXY手册之TCP代理的使用">
+<meta name="twitter:image" content="https://snail.gitee.io/proxy/images/default.png">
+
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "NewsArticle",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id":"https:\/\/snail.gitee.io\/proxy\/"
+    },
+    "headline": "TCP代理 - GOPROXY IN ACTION",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https:\/\/snail.gitee.io\/proxy\/images\/default.png",
+      "height": 800,
+      "width": 800
+    },
+    "datePublished": "2019-07-04T11:00:50JST",
+    "dateModified": "2019-07-04T11:00:50JST",
+    "author": {
+      "@type": "Person",
+      "name": "GOPROXY IN ACTION"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "GOPROXY IN ACTION",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https:\/\/snail.gitee.io\/proxy\/images/logo.png",
+        "width": 600,
+        "height": 60
+      }
+    },
+    "description": "GOPROXY手册之TCP代理的使用"
+  }
+</script>
+
+
+    <link href="https://snail.gitee.io/proxy/css/styles.css" rel="stylesheet">
+    
+
+  </head>
+
+  <body>
+    
+    
+    
+
+    <header class="l-header">
+      <nav class="navbar navbar-default">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://snail.gitee.io/proxy/">GOPROXY IN ACTION</a>
+          </div>
+
+          
+          <div id="navbar" class="collapse navbar-collapse">
+            
+            <ul class="nav navbar-nav navbar-right">
+              
+              
+              <li><a href="https://github.com/snail007/goproxy/releases/">下载</a></li>
+              
+              
+              
+              <li><a href="https://snail007.github.io/goproxy/manual/zh/#/">完全手册</a></li>
+              
+              
+              
+              <li><a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">新版手册</a></li>
+              
+              
+              
+              <li><a href="/proxy/about/">关于</a></li>
+              
+              
+            </ul>
+            
+          </div>
+          
+
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="container">
+        
+<div class="row">
+  <div class="col-md-8">
+
+    <nav class="p-crumb">
+      <ol class="breadcrumb">
+        <li><a href="https://snail.gitee.io/proxy/"><i class="fa fa-home" aria-hidden="true"></i></a></li>
+        
+        <li itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="https://snail.gitee.io/proxy/usage/" itemprop="url"><span itemprop="title">usage</span></a></li>
+        
+        <li class="active">TCP代理</li>
+      </ol>
+    </nav>
+
+    <article class="single">
+  <header>
+    <ul class="p-facts">
+      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-07-04T11:00:50JST">Jul 4, 2019</time></li>
+      <li><i class="fa fa-bookmark" aria-hidden="true"></i><a href="https://snail.gitee.io/proxy/usage/">usage</a></li>
+      
+    </ul>
+
+    <h1 class="title">TCP代理</h1>
+  </header>
+
+  
+
+  <div class="article-body">
+
+<h3 id="工作原理">工作原理</h3>
+
+<p>tcp代理，也称为tcp端口转发，工作原理就是，把proxy监听端口进来的tcp连接的数据原样转发到上级监听的一个端口。</p>
+
+<p>上级可以是proxy的tcp代理也可以是具体的第三方服务，如果上级是tcp代理，那么就组成了转发链。至于转发链可以做什么看自己业务需求。</p>
+
+<h3 id="使用示例">使用示例</h3>
+
+<h4 id="转发ssh的22端口">转发ssh的22端口</h4>
+
+<p>典型场景，一个机器A拥有公网IP，B机器和A机器在一个局域网，机器B处于内网中，外网不能直接访问。想通过ssh连接A机器的2022端口实现ssh登录B机器的ssh的22端口。</p>
+
+<p>A机器执行：</p>
+
+<p><code>proxy tcp -t tcp -p :2022 -T tcp -P IP_B:22</code></p>
+
+<p>任何机器上 执行 <code>ssh root@IP_A:2022</code> 即可登录B机器。</p>
+
+<h4 id="转发链">转发链</h4>
+
+<p>典型场景，公网机器A由于公司或者其它网络限制导致你不能直接访问，B机器和A机器在一个局域网，机器B处于内网中，外网不能直接访问。想通过ssh连接A机器的2022端口实现ssh登录B机器的ssh的22端口，但是公网机器C你可以访问，C也可以访问A，那么你就可以这样组成转发链：你本地ssh -&gt;&gt;&gt; C -&gt;&gt;&gt; A -&gt;&gt;&gt; B，最终达到你安全访问B机器的目的。</p>
+
+<p>A机器执行：</p>
+
+<p><code>proxy tcp -t ws -p :2022 -T tcp -P IP_B:22</code></p>
+
+<p>机器C执行：</p>
+
+<p><code>proxy tcp -t tcp -p :2022 -T ws -P IP_A:2022</code></p>
+
+<p>任何机器上，当然包括你的机器，执行 <code>ssh root@IP_C:2022</code> 即可登录B机器。</p>
+</div>
+
+  <footer class="article-footer">
+    
+    
+    
+    <section class="bordered">
+      <header>
+        <div class="panel-title">CATEGORIES</div>
+      </header>
+      <div>
+        <ul class="p-terms">
+          
+          <li><a href="https://snail.gitee.io/proxy/categories/goproxy%E6%89%8B%E5%86%8C/">GOPROXY手册</a></li>
+          
+        </ul>
+      </div>
+    </section>
+    
+    
+    
+    <section class="bordered">
+      <header>
+        <div class="panel-title">TAGS</div>
+      </header>
+      <div>
+        <ul class="p-terms">
+          
+          <li><a href="https://snail.gitee.io/proxy/tags/tcp/">tcp</a></li>
+          
+        </ul>
+      </div>
+    </section>
+    
+    
+  </footer>
+
+</article>
+
+
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "goproxy" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+  </div>
+
+  <div class="col-md-4">
+    
+<aside class="l-sidebar">
+
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">LATESTS</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/usage/first/" class="list-group-item">手册前言（使用必读）</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/free_vs_commercial/" class="list-group-item">GOPROXY免费版VS商业版</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/" class="list-group-item">常见问题解答</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/domain-cf/" class="list-group-item">域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/windows-global-proxy-using-dns/" class="list-group-item">在windows下实现基于dns的自动全局代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/usage/tcp/" class="list-group-item">TCP代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/cloudflare/" class="list-group-item">Cloudflare使用简明教程</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/http-nat-cdn/" class="list-group-item">内网穿透也能用CDN？？？！</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/free_vs_commercial_en/" class="list-group-item">GOPROXY Free Version VS Commercial Version</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/http_cdn_ws/" class="list-group-item">代理之套用CDN</a>
+      
+    </div>
+  </section>
+
+  
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">CATEGORY</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB" class="list-group-item">默认分类</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/goproxy%E6%89%8B%E5%86%8C" class="list-group-item">goproxy手册</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4" class="list-group-item">架构解说</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7" class="list-group-item">细说层级</a>
+      
+    </div>
+  </section>
+  
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">TAG</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/tags/cdn" class="list-group-item">cdn</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/ws" class="list-group-item">ws</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/cloudflare" class="list-group-item">cloudflare</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%95%86%E4%B8%9A%E7%89%88" class="list-group-item">商业版</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/commercial" class="list-group-item">commercial</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/domain" class="list-group-item">domain</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/tcp" class="list-group-item">tcp</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86" class="list-group-item">全局代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F" class="list-group-item">内网穿透</a>
+      
+    </div>
+  </section>
+  
+
+</aside>
+
+
+  </div>
+</div>
+
+      </div>
+    </main>
+
+    <footer class="l-footer">
+      <div class="container">
+        <p><span class="h-logo">&copy; GOPROXY IN ACTION</span></p>
+      </div>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+    $(function(){
+      $("img[css]").each(function(){
+        $(this).attr("style",$(this).attr("css"));
+      });
+    });
+    </script>
+  </body>
+</html>
+

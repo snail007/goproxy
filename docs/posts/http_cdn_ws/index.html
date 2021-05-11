@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="pinterest" content="nopin">
+<meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+<meta name="generator" content="Hugo 0.56.3" />
+
+
+
+<link rel="canonical" href="https://snail.gitee.io/proxy/posts/http_cdn_ws/">
+
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css">
+    <title>代理之套用CDN - GOPROXY IN ACTION</title>
+    
+<meta name="description" content="http代理前置CDN，保护你的后端代理">
+
+<meta property="og:title" content="代理之套用CDN - GOPROXY IN ACTION">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://snail.gitee.io/proxy/posts/http_cdn_ws/">
+<meta property="og:image" content="https://snail.gitee.io/proxy/images/default.png">
+<meta property="og:site_name" content="GOPROXY IN ACTION">
+<meta property="og:description" content="http代理前置CDN，保护你的后端代理">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="GOPROXY IN ACTION">
+<meta name="twitter:url" content="https://snail.gitee.io/proxy/posts/http_cdn_ws/">
+<meta name="twitter:title" content="代理之套用CDN - GOPROXY IN ACTION">
+<meta name="twitter:description" content="http代理前置CDN，保护你的后端代理">
+<meta name="twitter:image" content="https://snail.gitee.io/proxy/images/default.png">
+
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "NewsArticle",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id":"https:\/\/snail.gitee.io\/proxy\/"
+    },
+    "headline": "代理之套用CDN - GOPROXY IN ACTION",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https:\/\/snail.gitee.io\/proxy\/images\/default.png",
+      "height": 800,
+      "width": 800
+    },
+    "datePublished": "2019-06-14T16:25:06JST",
+    "dateModified": "2019-06-14T16:25:06JST",
+    "author": {
+      "@type": "Person",
+      "name": "GOPROXY IN ACTION"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "GOPROXY IN ACTION",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https:\/\/snail.gitee.io\/proxy\/images/logo.png",
+        "width": 600,
+        "height": 60
+      }
+    },
+    "description": "http代理前置CDN，保护你的后端代理"
+  }
+</script>
+
+
+    <link href="https://snail.gitee.io/proxy/css/styles.css" rel="stylesheet">
+    
+
+  </head>
+
+  <body>
+    
+    
+    
+
+    <header class="l-header">
+      <nav class="navbar navbar-default">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://snail.gitee.io/proxy/">GOPROXY IN ACTION</a>
+          </div>
+
+          
+          <div id="navbar" class="collapse navbar-collapse">
+            
+            <ul class="nav navbar-nav navbar-right">
+              
+              
+              <li><a href="https://github.com/snail007/goproxy/releases/">下载</a></li>
+              
+              
+              
+              <li><a href="https://snail007.github.io/goproxy/manual/zh/#/">完全手册</a></li>
+              
+              
+              
+              <li><a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">新版手册</a></li>
+              
+              
+              
+              <li><a href="/proxy/about/">关于</a></li>
+              
+              
+            </ul>
+            
+          </div>
+          
+
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="container">
+        
+<div class="row">
+  <div class="col-md-8">
+
+    <nav class="p-crumb">
+      <ol class="breadcrumb">
+        <li><a href="https://snail.gitee.io/proxy/"><i class="fa fa-home" aria-hidden="true"></i></a></li>
+        
+        <li itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="https://snail.gitee.io/proxy/posts/" itemprop="url"><span itemprop="title">posts</span></a></li>
+        
+        <li class="active">代理之套用CDN</li>
+      </ol>
+    </nav>
+
+    <article class="single">
+  <header>
+    <ul class="p-facts">
+      <li><i class="fa fa-calendar" aria-hidden="true"></i><time datetime="2019-06-14T16:25:06JST">Jun 14, 2019</time></li>
+      <li><i class="fa fa-bookmark" aria-hidden="true"></i><a href="https://snail.gitee.io/proxy/posts/">posts</a></li>
+      
+    </ul>
+
+    <h1 class="title">代理之套用CDN</h1>
+  </header>
+
+  
+
+  <div class="article-body">
+
+<h3 id="goproxy代理之套用cdn">goproxy代理之套用CDN</h3>
+
+<h4 id="准备">准备</h4>
+
+<ol>
+<li>在VPS上<a href="https://github.com/snail007/goproxy/releases">下载</a>对应平台的执行文件，这里以Linux为例。<br /></li>
+<li>在电脑上<a href="https://github.com/snail007/goproxy/releases">下载</a>对应平台的执行文件，这里以Windows为例。<br /></li>
+</ol>
+
+<h4 id="1-proxy本地http代理-ws-wss-cdn-ws-wss-vps的proxy提供的http代理">1. proxy本地http代理 &lt;&ndash;ws\wss&ndash;&gt; CDN  &lt;&ndash;ws\wss&ndash;&gt;  VPS的proxy提供的http代理</h4>
+
+<p>1.1. VPS上的命令 ./proxy http -t ws -p &ldquo;0.0.0.0:8080&rdquo;</p>
+
+<p>1.2 Cloudflare上的设置 Crypto -&gt; SSL -&gt;设置为Off</p>
+
+<p>1.3 windows计算机上的命令 proxy.exe http -t tcp -p &ldquo;0.0.0.0:8090&rdquo; -T ws -P &ldquo;your.domain.com:8080&rdquo;</p>
+
+<p>1.4 计算机上的代理设置 &ldquo;127.0.0.1:8090 http&rdquo;</p>
+
+<h4 id="2-proxy本地http代理-ws-wss-cdn-ws-wss-vps的proxy提供的http代理">2. proxy本地http代理 &lt;&ndash;ws\wss&ndash;&gt; CDN  &lt;&ndash;ws\wss&ndash;&gt; VPS的proxy提供的http代理</h4>
+
+<p>2.1 VPS上的命令 ./proxy http -t wss -p &ldquo;0.0.0.0:8443&rdquo;</p>
+
+<p>2.2 Cloudflare上的设置 Crypto -&gt; SSL -&gt;设置为Full</p>
+
+<p>2.3 windows计算机上的命令 proxy.exe http -t tcp -p &ldquo;0.0.0.0:8090&rdquo; -T wss -P &ldquo;your.domain.com:8443&rdquo;</p>
+
+<p>2.4 计算机上的代理设置 &ldquo;127.0.0.1:8090 http&rdquo;</p>
+
+<h4 id="3-proxy本地http代理-ws-wss-cdn-ws-wss-vps的proxy提供的http-basic认证-代理-成功">3. proxy本地http代理 &lt;&ndash;ws\wss&ndash;&gt; CDN  &lt;&ndash;ws\wss&ndash;&gt;  VPS的proxy提供的http+Basic认证 代理 （成功）</h4>
+
+<p>3.1 VPS上的命令 ./proxy http -t ws -p &ldquo;0.0.0.0:8080&rdquo; -a &ldquo;user:pass&rdquo;</p>
+
+<p>3.2 Cloudflare上的设置 Crypto -&gt; SSL -&gt;设置为Off</p>
+
+<p>3.3 windows计算机上的命令 proxy.exe http -t tcp -p &ldquo;0.0.0.0:8090&rdquo; -T ws -P &ldquo;your.domain.com:8080&rdquo;</p>
+
+<p>3.4 计算机上的代理设置 &ldquo;127.0.0.1:8090 http&rdquo;</p>
+
+<h4 id="4-proxy本地http代理-ws-wss-cdn-ws-wss-vps的proxy提供的http-加密方式-密码-代理-成功">4. proxy本地http代理 &lt;&ndash;ws\wss&ndash;&gt; CDN  &lt;&ndash;ws\wss&ndash;&gt;  VPS的proxy提供的http+加密方式+密码 代理 （成功）</h4>
+
+<p>4.1 VPS上的命令 ./proxy http -t wss -p &ldquo;0.0.0.0:8443&rdquo; &ndash;parent-ws-method=&ldquo;chacha20-ietf-poly1305&rdquo; &ndash;parent-ws-password=&ldquo;snail007/goproxy&rdquo;</p>
+
+<p>4.2 Cloudflare上的设置 Crypto -&gt; SSL -&gt;设置为Full</p>
+
+<p>4.3 windows计算机上的命令 proxy.exe http -t tcp -p &ldquo;0.0.0.0:8090&rdquo; -T wss -P &ldquo;your.domain.com:8443&rdquo; &ndash;local-ws-method=&ldquo;chacha20-ietf-poly1305&rdquo; &ndash;local-ws-password=&ldquo;snail007/goproxy&rdquo;</p>
+
+<p>4.4 计算机上的代理设置 &ldquo;127.0.0.1:8090 http&rdquo;</p>
+
+<p>4.5 相关参数介绍 &ldquo;&ndash;local-ws-method:加密方式&ndash;parent-ws-password:设置密码&rdquo;</p>
+
+<h4 id="5-proxy本地socks5代理-ws-wss-cdn-ws-wss-vps的proxy提供的socks5代理">5. proxy本地socks5代理 &lt;&ndash;ws\wss&ndash;&gt; CDN  &lt;&ndash;ws\wss&ndash;&gt;  VPS的proxy提供的socks5代理</h4>
+
+<p>5.1 VPS上的命令 ./proxy socks -t ws -p &ldquo;0.0.0.0:8080&rdquo;</p>
+
+<p>5.2 Cloudflare上的设置 Crypto -&gt; SSL -&gt;设置为Off</p>
+
+<p>5.3 windows计算机上的命令 proxy.exe socks &ndash;always -t tcp -p &ldquo;0.0.0.0:8090&rdquo; -T ws -P &ldquo;your.domain.com:8080&rdquo;</p>
+
+<p>5.4 计算机上的代理设置 &ldquo;127.0.0.1:8090 socks5 [Remote DNS]&rdquo;</p>
+
+<h4 id="备注">备注</h4>
+
+<p>1、Cloudflare支持的回源端口</p>
+
+<pre><code class="language-text">HTTP 端口为：
+            80	 
+            8080	 
+            8880	 
+            2052	 
+            2082	 
+            2086	 
+            2095	
+HTTPs 端口为：
+            443
+            2053
+            2083
+            2087
+            2096
+            8443	
+</code></pre>
+</div>
+
+  <footer class="article-footer">
+    
+    
+    
+    <section class="bordered">
+      <header>
+        <div class="panel-title">CATEGORIES</div>
+      </header>
+      <div>
+        <ul class="p-terms">
+          
+          <li><a href="https://snail.gitee.io/proxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/">默认分类</a></li>
+          
+        </ul>
+      </div>
+    </section>
+    
+    
+    
+    <section class="bordered">
+      <header>
+        <div class="panel-title">TAGS</div>
+      </header>
+      <div>
+        <ul class="p-terms">
+          
+          <li><a href="https://snail.gitee.io/proxy/tags/cdn/">cdn</a></li>
+          
+          <li><a href="https://snail.gitee.io/proxy/tags/ws/">ws</a></li>
+          
+          <li><a href="https://snail.gitee.io/proxy/tags/cloudflare/">cloudflare</a></li>
+          
+        </ul>
+      </div>
+    </section>
+    
+    
+  </footer>
+
+</article>
+
+
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "goproxy" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+  </div>
+
+  <div class="col-md-4">
+    
+<aside class="l-sidebar">
+
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">LATESTS</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/usage/first/" class="list-group-item">手册前言（使用必读）</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/free_vs_commercial/" class="list-group-item">GOPROXY免费版VS商业版</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/" class="list-group-item">常见问题解答</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/domain-cf/" class="list-group-item">域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/windows-global-proxy-using-dns/" class="list-group-item">在windows下实现基于dns的自动全局代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/usage/tcp/" class="list-group-item">TCP代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/cloudflare/" class="list-group-item">Cloudflare使用简明教程</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/http-nat-cdn/" class="list-group-item">内网穿透也能用CDN？？？！</a>
+      
+      <a href="https://snail.gitee.io/proxy/page/free_vs_commercial_en/" class="list-group-item">GOPROXY Free Version VS Commercial Version</a>
+      
+      <a href="https://snail.gitee.io/proxy/posts/http_cdn_ws/" class="list-group-item">代理之套用CDN</a>
+      
+    </div>
+  </section>
+
+  
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">CATEGORY</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB" class="list-group-item">默认分类</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/goproxy%E6%89%8B%E5%86%8C" class="list-group-item">goproxy手册</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4" class="list-group-item">架构解说</a>
+      
+      <a href="https://snail.gitee.io/proxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7" class="list-group-item">细说层级</a>
+      
+    </div>
+  </section>
+  
+  <section class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">TAG</div>
+    </div>
+    <div class="list-group">
+      
+      <a href="https://snail.gitee.io/proxy/tags/cdn" class="list-group-item">cdn</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/ws" class="list-group-item">ws</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/cloudflare" class="list-group-item">cloudflare</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%95%86%E4%B8%9A%E7%89%88" class="list-group-item">商业版</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/commercial" class="list-group-item">commercial</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/domain" class="list-group-item">domain</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/tcp" class="list-group-item">tcp</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86" class="list-group-item">全局代理</a>
+      
+      <a href="https://snail.gitee.io/proxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F" class="list-group-item">内网穿透</a>
+      
+    </div>
+  </section>
+  
+
+</aside>
+
+
+  </div>
+</div>
+
+      </div>
+    </main>
+
+    <footer class="l-footer">
+      <div class="container">
+        <p><span class="h-logo">&copy; GOPROXY IN ACTION</span></p>
+      </div>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+    $(function(){
+      $("img[css]").each(function(){
+        $(this).attr("style",$(this).attr("css"));
+      });
+    });
+    </script>
+  </body>
+</html>
+
