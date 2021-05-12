@@ -67,14 +67,13 @@ And ProxyAdmin is a powerful web console of snail007/goproxy .
 - Replace the sword inside Netnet, show IP internal Netcom, peanut shell and other tools.
 - ..
 
- 
+
 The manual on this page applies to the latest version of goproxy. Other versions may not be applicable. Please use the command according to your own instructions.
- 
+
 
 ### Joining the organization
-[Click to join the gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
-[Click to join the TG](https://t.me/snail007_goproxy)
+[Click to join the Telegram](https://t.me/snail007_goproxy)
 
 ## Download and install 
 
@@ -98,7 +97,7 @@ curl -L https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/g
 
 The installation is complete, the configuration directory is /etc/proxy. For more detailed usage, please refer to the manual directory above to learn more about the features you want to use.
 If the installation fails or your vps is not a linux64-bit system, follow the semi-automatic steps below to install:
-  
+
 ### Manual installation
 
 1. Download the proxy
