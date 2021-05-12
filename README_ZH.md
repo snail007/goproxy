@@ -15,14 +15,14 @@
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [官方手册（国外）](https://snail007.github.io/goproxy/manual/zh/)
-- [官方手册（国内）](https://snail.gitee.io/proxy/manual/zh/)
+- [官方手册（国内）](https://snail007.host900.com/goproxy/manual/zh/)
 - [桌面版，控制面板ProxyAdmin](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
 - [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android) 
 - [安卓全能代理版](https://github.com/snail007/goproxy-android) 
 - [安卓内网穿透客户端](https://github.com/snail007/lanass) 
 - [SDK](https://github.com/snail007/goproxy-sdk)
-- [GORPOXY实战教程](https://snail.gitee.io/proxy/)
-- [免费版VS商业版(安装、激活)](https://snail.gitee.io/proxy/page/free_vs_commercial/)
+- [GORPOXY实战教程](https://snail007.host900.com/goproxy/)
+- [免费版VS商业版(安装、激活)](https://snail007.host900.com/goproxy/page/free_vs_commercial/)
 
 ## 国内下载
 
@@ -224,9 +224,9 @@ proxyadmin 集群版|   √ |   √ |   √|Web界面操作，支持Linux，Wind
 goproxy 免费版 |   √ |   x |   x|命令行操作，全平台支持，免费使用，稳定且灵活，适合一切熟悉命令行的大佬或集体或公司白嫖，自用或者大规模部署对外服务 | [下载安装](https://github.com/snail007/goproxy)
 goproxy 商业版|   √ |   √ |   √|命令行操作，全平台支持，稳定且灵活，适合集体或公司大规模部署对外提供服务 | [下载安装](https://github.com/snail007/goproxy)
 
-关于免费版功能和商业版功能对比请看这里,[`免费版`和`商业版`功能对比](https://snail.gitee.io/proxy/page/free_vs_commercial/).  
+关于免费版功能和商业版功能对比请看这里,[`免费版`和`商业版`功能对比](https://snail007.host900.com/goproxy/page/free_vs_commercial/).  
 
-[商业版激活绑定教程](https://snail.gitee.io/proxy/page/free_vs_commercial/)
+[商业版激活绑定教程](https://snail007.host900.com/goproxy/page/free_vs_commercial/)
 
 提示：
 
@@ -234,7 +234,7 @@ goproxy 商业版|   √ |   √ |   √|命令行操作，全平台支持，稳
 
 ## FAQ
 
-[别点我](https://snail.gitee.io/proxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/)
+[别点我](https://snail007.host900.com/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/)
 
 ## 首次使用必看,谢谢!!！ 
 

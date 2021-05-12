@@ -17,7 +17,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 - [中文介绍（必看）](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [官方手册（国外）](https://snail007.github.io/goproxy/manual/zh/)
-- [官方手册（国内）](https://snail.gitee.io/proxy/manual/zh/)
+- [官方手册（国内）](https://snail007.host900.com/goproxy/manual/zh/)
 - [Download](https://github.com/snail007/goproxy/releases)
 - [Desktop Edition, Web Console : ProxyAdmin](https://github.com/snail007/proxy_admin_free)
 - [Android Global Proxy Edition](https://github.com/snail007/goproxy-ss-plugin-android) 
@@ -196,7 +196,7 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 This manual describes the functions, all of which are included in the commercial version; the free version of advanced functional parameters such as authentication is not included;  
 If you encounter some commands when you use the free version to execute some commands, a prompt similar to the following xxx parameter does not exist, indicating that this parameter is a function of the commercial version.   
 `err: unknown long flag '-a'`   
-Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view](https://snail.gitee.io/proxy/page/free_vs_commercial_en/)   
+Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view](https://snail007.host900.com/goproxy/page/free_vs_commercial_en/)   
 
 ## First Start  
 
