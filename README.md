@@ -4,7 +4,7 @@
 </a>
 
 ## GOPROXY Introduction
-<img src="https://github.com/snail007/goproxy/blob/master/doc/images/logo.jpg?raw=true" width="200" height="auto"/>
+<img src="https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/logo.jpg" width="200" height="auto"/>
 The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss proxy, websocket proxies, tcp proxies, udp proxies,  game shield, game proxies. Support forward proxies, reverse proxy, transparent proxy, internet nat proxies, https proxy load balancing, http proxy load balancing , socks5 proxies load balancing, socket proxy load balancing, ss proxy load balancing, TCP / UDP port mapping, SSH transit, TLS encrypted transmission, protocol conversion, anti-pollution DNS proxy, API authentication, speed limit, limit connection. Reverse proxies to help you expose a local server behind a NAT or firewall to the internet so that you or your visitors can access it directly and easily. 
 
 ---
@@ -174,7 +174,7 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 
 ## How to Install
-    
+  
 ### 1. Linux Install  
 
 [click me get Linux installation](https://github.com/snail007/goproxy/blob/master/README_ZH.md#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85-goproxy)
@@ -205,7 +205,7 @@ Comparison between the features of the free version and the commercial version, 
 The manual tutorial, the default system is linux, the program is proxy; all operations require root privileges;  
 
 If you are windows, please use the windows version of proxy.exe.  
-    
+  
 ### 2. Using configuration files  
 
 The next tutorial will introduce the usage method through the command line parameters, or you can get the parameters by reading the configuration file.  
@@ -366,7 +366,7 @@ Description:
 
 2.`**.baidu.com` Matches no matter how many levels all suffixes are ..baidu.com`.  
 
-3.`*.taobao.com` The matching suffix is ​​the third-level domain name of `.taobao.com`.  
+3.`*.taobao.com` The matching suffix is the third-level domain name of `.taobao.com`.  
 
 4. It can also be an IP address directly.  
 
@@ -377,7 +377,7 @@ Description:
 socks/http(s)/sps/tcp/udp/dns/ intranet penetration bridge/intranet penetration tbridge, support client IP black and white list.  
 
 Use the --ip-deny parameter to specify a client IP blacklist list file, then the connection will be disconnected when the user's IP is in this file.  
-    
+  
 Use the --ip-allow parameter to specify a client IP whitelist file, then the connection will be disconnected when the user's IP is not in the file.  
 
 If both --ip-deny and --ip-allow are set, then only --ip-allow will work.  
@@ -423,10 +423,10 @@ The format is: `-p 0.0.0.0:80,0.0.0.0:443,.0.0.0.0:8000-9000,:5000-6000`, more T
 
 ### 1.1. Ordinary level HTTP proxy  
 
-![1.1](/doc/images/http-1.png)  
+![1.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-1.png)  
 
 `proxy http -t tcp -p "0.0.0.0:38080"`  
-    
+  
 Listen port argument `-p` can be:
 
 ```text
@@ -437,7 +437,7 @@ Listen port argument `-p` can be:
 
 ### 1.2. Ordinary secondary HTTP proxy  
 
-![1.2](/doc/images/http-2.png)  
+![1.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-2.png)  
 
 Use local port 8090, assuming the upstream HTTP proxy is `22.22.22.22:8080`  
 
@@ -446,25 +446,25 @@ Use local port 8090, assuming the upstream HTTP proxy is `22.22.22.22:8080`
 We can also specify the black and white list file of the website domain name, one domain name per line, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name goes directly to the upstream agent, whitelist The domain name does not go to the upstream agent.  
 
 `proxy http -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -b blocked.txt -d direct.txt`  
-    
+  
 ### 1.3.HTTP secondary agent (encryption)  
 
 > Note: The `proxy.crt` and `proxy.key` used by the secondary proxy should be consistent with the primary proxy.  
 
-![1.3](/doc/images/http-tls-2.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-2.png)  
 Level 1 HTTP proxy (VPS, IP: 22.22.22.22)  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
-    
+  
 Secondary HTTP proxy (local Linux)  
 `proxy http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS.  
-    
+  
 Secondary HTTP proxy (local windows)  
 `proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 Then set your windos system, the proxy that needs to go through the proxy Internet program is http mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.  
-    
+  
 ### 1.4.HTTP Level 3 Agent (Encryption)  
-![1.3](/doc/images/http-tls-3.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-3.png)  
 Level 1 HTTP proxy VPS_01, IP: 22.22.22.22  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 Secondary HTTP proxy VPS_02, IP: 33.33.33.33  
@@ -472,14 +472,14 @@ Secondary HTTP proxy VPS_02, IP: 33.33.33.33
 Level 3 HTTP proxy (local)  
 `proxy http -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then accessing the local port 8080 is to access the proxy port 38080 on the primary HTTP proxy.  
-    
+  
 ### 1.5.Basic certification  
 For the proxy HTTP protocol, we can perform Basic authentication. The authenticated username and password can be specified on the command line.  
 `proxy http -t tcp -p ":33080" -a "user1:pass1" -a "user2:pass2"`  
 For multiple users, repeat the -a parameter.  
 It can also be placed in a file in the format of a "username:password" and then specified with -F.  
 `proxy http -t tcp -p ":33080" -F auth-file.txt`  
-    
+  
 In addition, the http(s) proxy also integrates external HTTP API authentication. We can specify an http url interface address with the --auth-url parameter.  
 Then when there is a user connection, the proxy will request the url in GET mode, and bring the following four parameters. If the HTTP status code 204 is returned, the authentication is successful.  
 In other cases, the authentication failed.  
@@ -501,7 +501,7 @@ By default, the proxy will intelligently determine whether a website domain name
 `proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 ### 1.7.HTTP(S) via SSH relay  
-![1.7](/doc/images/http-ssh-1.png)  
+![1.7](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-ssh-1.png)  
 Description: The principle of ssh transfer is to use the forwarding function of ssh, that is, after you connect to ssh, you can access the target address through ssh proxy.  
 Suppose there is: vps  
 - IP is 2.2.2.2, ssh port is 22, ssh username is: user, ssh user password is: demo  
@@ -515,18 +515,18 @@ Local HTTP(S) proxy port 28080, executing:
 `proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 ### 1.8.KCP protocol transmission  
-![1.8](/doc/images/http-kcp.png)  
+![1.8](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-kcp.png)  
 The KCP protocol requires the --kcp-key parameter to set a password for encrypting and decrypting data.  
 
 Level 1 HTTP proxy (VPS, IP: 22.22.22.22)  
 `proxy http -t kcp -p ":38080" --kcp-key mypassword`  
-    
+  
 Secondary HTTP proxy (local Linux)  
 `proxy http -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS, the data is transmitted through the kcp protocol, note that the kcp is the udp protocol, so the firewall needs to release the 380p udp protocol.  
 
 ### 1.9 HTTP(S) Reverse Proxy  
-![1.9](/doc/images/fxdl.png)  
+![1.9](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/fxdl.png)  
 The proxy not only supports the proxy setting in other software, but also provides proxy services for other software. It also supports directly parsing the requested website domain name to the proxy listening ip, and then the proxy listens to the 80 and 443 ports, then the proxy will automatically You proxy access to the HTTP(S) website you need to access.  
 
 How to use:  
@@ -660,7 +660,7 @@ The HTTP(S) proxy supports upper-level load balancing, and multiple upstream rep
 
 `proxy http --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -t tcp -p :33080`  
 
-### 1.15 Speed ​​limit  
+### 1.15 Speed limit  
 
 The speed limit is 100K, which can be specified by the `-l` parameter, for example: 100K 2000K 1M . 0 means no limit.  
 
@@ -690,19 +690,19 @@ The meaning of each value is as follows:
 `proxy help http`  
 
 ## 2.TCP Proxies  
-    
+  
 ### 2.1. Ordinary level TCP proxy  
-![2.1](/doc/images/tcp-1.png)  
+![2.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-1.png)  
 Local execution:  
 `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 Then access the local port 33080 is to access port 22 of 192.168.22.33.  
-    
+  
 The `-p` parameter supports :
 
 ```text
-  -p ":8081" listen on 8081
-  -p ":8081,:8082" listen on 8081 and 8082
-  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
+-p ":8081" listen on 8081
+-p ":8081,:8082" listen on 8081 and 8082
+-p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
 ```
 
 If the number of local listening ports is greater than 1, the corresponding upper port corresponding to the local port will be connected, and the port in `-P` will be ignored.
@@ -720,15 +720,15 @@ If you want to connect the ports of `33080`, `33081`, etc. to the `22` port of 1
 `proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:22" --lock-port`
 
 ### 2.2. Ordinary secondary TCP proxy  
-![2.2](/doc/images/tcp-2.png)  
+![2.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 Local execution:  
 `proxy tcp -p ":23080" -T tcp -P "22.22.22.33:33080"`  
 Then access the local port 23080 is to access port 8020 of 22.22.22.33.  
-    
+  
 ### 2.3. Ordinary three-level TCP proxy  
-![2.3](/doc/images/tcp-3.png)  
+![2.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -736,17 +736,17 @@ Secondary TCP proxy VPS_02, IP: 33.33.33.33
 Level 3 TCP proxy (local)  
 `proxy tcp -p ":8080" -T tcp -P "33.33.33.33:28080"`  
 Then access the local port 8080 is to access the port 8080 of 66.66.66.66 through the encrypted TCP tunnel.  
-    
+  
 ### 2.4. Encrypting secondary TCP proxy  
-![2.4](/doc/images/tcp-tls-2.png)  
+![2.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 Local execution:  
 `proxy tcp -p ":23080" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 Then access the local port 23080 is to access the port 8080 of 22.22.22.33 through the encrypted TCP tunnel.  
-    
+  
 ### 2.5.Encrypting Level 3 TCP Agent  
-![2.5](/doc/images/tcp-tls-3.png)  
+![2.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -754,7 +754,7 @@ Secondary TCP proxy VPS_02, IP: 33.33.33.33
 Level 3 TCP proxy (local)  
 `proxy tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then access the local port 8080 is to access the port 8080 of 66.66.66.66 through the encrypted TCP tunnel.  
-    
+  
 ### 2.6 Connecting to a upstream through a proxy  
 Sometimes the network where the proxy is located cannot directly access the external network. You need to use an https or socks5 proxy to access the Internet. Then this time  
 The -J parameter can help you to connect the proxy to the peer-P through the https or socks5 proxy when mapping the proxy tcp port, mapping the external port to the local.  
@@ -780,7 +780,7 @@ When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the sp
 
 `proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
 
-### 2.8 Speed ​​limit, connections limit
+### 2.8 Speed limit, connections limit
 
 The parameter `--max-conns` can limit the maximum number of connections per port.  
 For example, limit the maximum number of connections per port:  
@@ -804,19 +804,19 @@ Local execution:
 `proxy help tcp`  
 
 ## 3.UDP Proxies  
-    
+  
 ### 3.1. Ordinary UDP proxy  
-![3.1](/doc/images/udp-1.png)  
+![3.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-1.png)  
 Local execution:  
 `proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 Then access the local UDP: 5353 port is to access 8.8.8.8 UDP: 53 port.  
-  
+
 The `-p` parameter supports :
 
 ```text
-  -p ":8081" listen on 8081
-  -p ":8081,:8082" listen on 8081 and 8082
-  -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
+-p ":8081" listen on 8081
+-p ":8081,:8082" listen on 8081 and 8082
+-p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000, 9001 to 9999 for a total of 1002 ports
 ```
 
 If the number of local listening ports is greater than 1, the corresponding upper port corresponding to the local port will be connected, and the port in `-P` will be ignored.
@@ -834,15 +834,15 @@ If you want to connect the ports of `33080`, `33081`, etc. to the `2222` port of
 `proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`
 
 ### 3.2. Ordinary secondary UDP proxy  
-![3.2](/doc/images/udp-2.png)  
+![3.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 Local execution:  
 `proxy udp -p ":5353" -T tcp -P "22.22.22.33:33080"`  
 Then access the local UDP: 5353 port is through the TCP tunnel, through the VPS access 8.8.8.8 UDP: 53 port.  
-    
+  
 ### 3.3. Ordinary three-level UDP proxy  
-![3.3](/doc/images/udp-3.png)  
+![3.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -850,17 +850,17 @@ Secondary TCP proxy VPS_02, IP: 33.33.33.33
 Level 3 TCP proxy (local)  
 `proxy udp -p ":5353" -T tcp -P "33.33.33.33:28080"`  
 Then access to the local 5353 port is through the TCP tunnel, through the VPS to access port 8.8.8.8.  
-    
+  
 ### 3.4. Encrypting secondary UDP proxy  
-![3.4](/doc/images/udp-tls-2.png)  
+![3.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 Local execution:  
 `proxy udp -p ":5353" -T tls -P "22.22.22.33:33080" -C proxy.crt -K proxy.key`  
 Then access the local UDP: 5353 port is through the encrypted TCP tunnel, through the VPS access 8.8.8.8 UDP: 53 port.  
-    
+  
 ### 3.5. Encryption Level 3 UDP Agent  
-![3.5](/doc/images/udp-tls-3.png)  
+![3.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -897,17 +897,17 @@ Background:
 
 Demand:  
 At home, you can access the port 80 of company machine A by accessing port 28080 of the VPS.  
-    
+  
 Steps:  
 Execute on vps  
-    `proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
-    
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":28080@:80" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+  
 1. Execute on company machine A  
-    `proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 Complete  
-    
+  
 ### 4.3 WeChat interface local development  
 Background:  
 - Your own notebook provides nginx service port 80  
@@ -919,95 +919,95 @@ Then you can access the calback.php under the 80 port of the notebook. If you ne
 For example: wx-dev.xxx.com resolves to 22.22.22.22, and then in your own notebook nginx  
 Configure the domain name wx-dev.xxx.com to the specific directory.  
 
-    
+  
 Steps:  
 1. Execute on vps to ensure that port 80 of vps is not occupied by other programs.  
-    `proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":80@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 1. Execute on your laptop  
-    `proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 Complete  
-    
+  
 ### 4.4 UDP common usage  
 Background:  
 - Company Machine A provides DNS resolution service, UDP: port 53  
 - There is a VPS, public network IP: 22.22.22.22  
-    
+  
 Demand:  
 At home, you can use the company machine A to perform domain name resolution services by setting the local dns to 22.22.22.22.  
-    
+  
 Steps:  
 Execute on vps  
-    `proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server --udp -r ":53@:53" -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. Execute on company machine A  
-    `proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 Complete  
-    
+  
 ### 4.5 advanced usage one  
 Background:  
 - Company Machine A provides web service port 80  
 - There is a VPS, public network IP: 22.22.22.22  
-    
+  
 Demand:  
 In order to be safe, I don't want to have access to the company machine A on the VPS, and I can access the port 28080 of the machine at home.  
 Access to port 80 of company machine A via an encrypted tunnel.  
-    
+  
 Steps:  
 Execute on vps  
-    `proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-    
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+  
 1. Execute on company machine A  
-    `proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-    
+`proxy client -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+  
 1. Execute on your home computer  
-    `proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
-    
+`proxy server -r ":28080@:80" -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+  
 Complete  
-    
+  
 ### 4.6 Advanced Usage II  
 Tip:  
 If multiple clients are connected to the same bridge at the same time, you need to specify a different key, which can be set by the --k parameter, and --k can be any unique string.  
 Just be the only one on the same bridge.  
 When the server is connected to the bridge, if there are multiple clients connecting to the same bridge at the same time, you need to use the --k parameter to select the client.  
 Expose multiple ports by repeating the -r parameter. The format of -r is: "local IP: local port @clientHOST:client port".  
-    
+  
 Background:  
 - Company Machine A provides web service port 80, ftp service port 21  
 - There is a VPS, public network IP: 22.22.22.22  
-    
+  
 Demand:  
 At home, you can access the port 80 of company machine A by accessing port 28080 of the VPS.  
 At home, I can access the 21 port of company machine A by accessing port 29090 of the VPS.  
-    
+  
 Steps:  
 Execute on vps  
-    `proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
-    `proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
+`proxy bridge -p ":33080" -C proxy.crt -K proxy.key`  
+`proxy server -r ":28080@:80" -r ":29090@:21" --k test -P "127.0.0.1:33080" -C proxy.crt -K proxy.key`  
 
 1. Execute on company machine A  
-    `proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
+`proxy client --k test -P "22.22.22.22:33080" -C proxy.crt -K proxy.key`  
 
 Complete  
-    
+  
 ### 4.7.server -r parameter  
-  The full format of -r is: `PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
-    
-  4.7.1. Protocol PROTOCOL: tcp or udp.  
-  For example: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
-  If the --udp parameter is specified, PROTOCOL defaults to udp, then:`-r ":8080@:80"` defaults to udp;  
-  If the --udp parameter is not specified, PROTOCOL defaults to tcp, then: `-r ":8080@:80"` defaults to tcp;  
-    
-  4.7.2. CLIENT_KEY: The default is default.  
-  For example: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
-  If the --k parameter is specified, such as --k test, then: `-r ":8080@:80"`CLIENT_KEY defaults to test;  
-  If the --k parameter is not specified, then: `-r ":8080@:80"`CLIENT_KEY defaults to default;  
-    
-  4.7.3. LOCAL_IP is empty. The default is: `0.0.0.0`, CLIENT_LOCAL_HOST is empty. The default is: `127.0.0.1`;  
+The full format of -r is: `PROTOCOL://LOCAL_IP:LOCAL_PORT@[CLIENT_KEY]CLIENT_LOCAL_HOST:CLIENT_LOCAL_PORT`  
+  
+4.7.1. Protocol PROTOCOL: tcp or udp.  
+For example: `-r "udp://:10053@:53" -r "tcp://:10800@:1080" -r ":8080@:80"`  
+If the --udp parameter is specified, PROTOCOL defaults to udp, then:`-r ":8080@:80"` defaults to udp;  
+If the --udp parameter is not specified, PROTOCOL defaults to tcp, then: `-r ":8080@:80"` defaults to tcp;  
+  
+4.7.2. CLIENT_KEY: The default is default.  
+For example: -r "udp://:10053@[test1]:53" -r "tcp://:10800@[test2]:1080" -r ":8080@:80"  
+If the --k parameter is specified, such as --k test, then: `-r ":8080@:80"`CLIENT_KEY defaults to test;  
+If the --k parameter is not specified, then: `-r ":8080@:80"`CLIENT_KEY defaults to default;  
+  
+4.7.3. LOCAL_IP is empty. The default is: `0.0.0.0`, CLIENT_LOCAL_HOST is empty. The default is: `127.0.0.1`;  
 
 ### 4.8.server and client connect bridge through proxy  
 Sometimes the network where the server or client is located cannot directly access the external network. You need to use an https or socks5 proxy to access the Internet. Then this time  
@@ -1031,7 +1031,7 @@ Port: the port of the proxy
 
 ### 4.9. Expose HTTP service  
 
-Usually the HTTP request client will use the server's ip and port to set the HOST field, but it is not the same as the expected backend actual HOST, which causes tcp to be passed.However, the backend relies on the HOST field to locate the virtual host and it will not work. Now use the `--http-host` parameter to force the HOST field value of the http header to be the actual value of the backend.Domain names and ports can be easily solved. After using the `--http-host` parameter, two headers will be added to the header of each HTTP request. The `X-Forwarded-For` and `X-Real-IP` values ​​are the client IP, so the backend http service can easily obtain the real IP address of the client.
+Usually the HTTP request client will use the server's ip and port to set the HOST field, but it is not the same as the expected backend actual HOST, which causes tcp to be passed.However, the backend relies on the HOST field to locate the virtual host and it will not work. Now use the `--http-host` parameter to force the HOST field value of the http header to be the actual value of the backend.Domain names and ports can be easily solved. After using the `--http-host` parameter, two headers will be added to the header of each HTTP request. The `X-Forwarded-For` and `X-Real-IP` values are the client IP, so the backend http service can easily obtain the real IP address of the client.
 
 The format of the `server`-http-host parameter is as follows:  
 
@@ -1107,27 +1107,27 @@ Listen port argument `-p` can be:
 ```
 
 ### 5.2. Ordinary secondary SOCKS5 agent  
-![5.2](/doc/images/socks-2.png)  
+![5.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-2.png)  
 Use local port 8090, assuming the upstream SOCKS5 proxy is `22.22.22.22:8080`  
 `proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 We can also specify the black and white list file of the website domain name, one domain name and one domain name, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name domain name goes directly to the upstream agent, white The domain name of the list does not go to the upstream agent; if the domain name is in the blacklist and in the whitelist, the blacklist works.  
 `proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -b blocked.txt -d direct.txt`  
-    
+  
 ### 5.3. SOCKS Level 2 Agent (Encryption)  
-![5.3](/doc/images/socks-tls-2.png)  
+![5.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-2.png)  
 Level 1 SOCKS proxy (VPS, IP: 22.22.22.22)  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
-    
+  
 Secondary SOCKS proxy (local Linux)  
 `proxy socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS.  
-    
+  
 Secondary SOCKS proxy (local windows)  
 `proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 Then set your windos system, the proxy that needs to go through the proxy Internet program is the socks5 mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.  
-    
+  
 ### 5.4. SOCKS Level 3 Agent (Encryption)  
-![5.4](/doc/images/socks-tls-3.png)  
+![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-3.png)  
 Level 1 SOCKS proxy VPS_01, IP: 22.22.22.22  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 Secondary SOCKS proxy VPS_02, IP: 33.33.33.33  
@@ -1135,13 +1135,13 @@ Secondary SOCKS proxy VPS_02, IP: 33.33.33.33
 Level 3 SOCKS proxy (local)  
 `proxy socks -t tcp -p ":8080" -T tls -P "33.33.33.33:28080" -C proxy.crt -K proxy.key`  
 Then accessing the local port 8080 is to access the proxy port 38080 on the first-level SOCKS proxy.  
-    
+  
 ### 5.5. SOCKS proxy traffic is forced to go to the upper level SOCKS proxy  
 By default, the proxy will intelligently determine whether a website domain name is inaccessible. If it is not accessible, it will go to the upstream SOCKS proxy. With --always, all SOCKS proxy traffic can be forced to go to the upper SOCKS proxy.  
 `proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-    
+  
 ### 5.6. SOCKS via SSH relay  
-![5.6](/doc/images/socks-ssh.png)  
+![5.6](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-ssh.png)  
 Description: The principle of ssh transfer is to use the forwarding function of ssh, that is, after you connect to ssh, you can access the target address through ssh proxy.  
 Suppose there is: vps  
 - IP is 2.2.2.2, ssh port is 22, ssh username is: user, ssh user password is: demo  
@@ -1183,7 +1183,7 @@ The KCP protocol requires the --kcp-key parameter to set a password for encrypti
 
 Level 1 HTTP proxy (VPS, IP: 22.22.22.22)  
 `proxy socks -t kcp -p ":38080" --kcp-key mypassword`  
-    
+  
 Secondary HTTP proxy (local Linux)  
 `proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS, the data is transmitted through the kcp protocol.  
@@ -1270,7 +1270,7 @@ The SOCKS proxy supports the upper-level load balancing, and multiple upstream r
 
 `proxy socks --lb-hashtarget --lb-method=hash -T tcp -P 1.1.1.1:33080 -P 2.1.1.1:33080 -P 3.1.1.1:33080 -p :33080 -t tcp`  
 
-### 5.13 Speed ​​limit  
+### 5.13 Speed limit  
 
 The speed limit is 100K, which can be specified by the `-l` parameter, for example: 100K 2000K 1M . 0 means no limit.  
 
@@ -1376,7 +1376,7 @@ The command is as follows:
 `proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
 
 ### 6.5 Chained connection  
-![6.4](/doc/images/sps-tls.png)  
+![6.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/sps-tls.png)  
 The above mentioned multiple sps nodes can be connected to build encrypted channels in a hierarchical connection, assuming the following vps and the home PC.  
 Vps01:2.2.2.2  
 Vps02:3.3.3.3  
@@ -1645,11 +1645,11 @@ Therefore, the KCP configuration parameters are introduced here.
 ### 7.2 Detailed configuration  
 There are a total of 17 KCP configuration parameters, you can not set them, they have default values, if for the best effect,  
 You need to configure the parameters according to your own network conditions. Because the kcp configuration is complex, it requires a certain network basics.  
-If you want to get more detailed configuration and explanation of kcp parameters, please search for yourself. The command line name for each parameter, along with the default values ​​and simple function descriptions are as follows:  
+If you want to get more detailed configuration and explanation of kcp parameters, please search for yourself. The command line name for each parameter, along with the default values and simple function descriptions are as follows:  
 ```  
 --kcp-key="secrect" pre-shared secret between client and server  
 --kcp-method="aes" encrypt/decrypt method, can be: aes, aes-128, aes-192, salsa20, blowfish,  
-                           Twofish, cast5, 3des, tea, xtea, xor, sm4, none  
+ Twofish, cast5, 3des, tea, xtea, xor, sm4, none  
 --kcp-mode="fast" profiles: fast3, fast2, fast, normal, manual  
 --kcp-mtu=1350 set maximum transmission unit for UDP packets  
 --kcp-sndwnd=1024 set send window size(num of packets)  
@@ -1682,17 +1682,17 @@ DNS is known as the service provided by UDP port 53, but with the development of
 Dns resolution order:  
 1. Use the parameter --hosts to parse.  
 2. If the domain name to be resolved is not found in 1, it is parsed using the parameter --forward rule.  
-3. The domain name to be resolved is not found in 1 and 2, and the default --default parsing is used. The default default behavior parameter values ​​are three: proxy, direct, and system.  
-    The three parameter values ​​are explained as follows:  
-    Proxy: The domain name is resolved by the dns server specified by the -q parameter.  
-    Direct: Connect to the dns server specified by the -q parameter to resolve the domain name through the local network.  
-    System: resolves the domain name through the system dns.  
+3. The domain name to be resolved is not found in 1 and 2, and the default --default parsing is used. The default default behavior parameter values are three: proxy, direct, and system.  
+The three parameter values are explained as follows:  
+Proxy: The domain name is resolved by the dns server specified by the -q parameter.  
+Direct: Connect to the dns server specified by the -q parameter to resolve the domain name through the local network.  
+System: resolves the domain name through the system dns.  
 
 Tip:  
 The host file format specified by the --hosts parameter is the same as the system hosts file, and the domain name supports wildcards. You can refer to the hosts file.  
 The parsing forwarding rule file specified by the --forward parameter can be referenced to the resolve.rules file. The domain name supports wildcards. It supports multiple dns servers for each domain name to be parsed concurrently. Whoever resolves the fastest resolution will use the resolution result.  
 The -q parameter can specify multiple remote dns servers to perform concurrent parsing. Whoever resolves the fastest parsing success, the default is: 1.1.1.1, 8.8.8.8, 9.9.9.9, multiple comma-separated,  
-           For example, you can also bring ports: 1.1.1.1, 8.8.8.8#53, 9.9.9.9  
+ For example, you can also bring ports: 1.1.1.1, 8.8.8.8#53, 9.9.9.9  
 
 If you are a standalone service, you don't need a upstream:  
 Can perform:  
@@ -1857,24 +1857,24 @@ Upstream: The upstream used, not empty, or not set this header.
 
 1. When the parameter `sps` is 0.  
 When the service is http, upstream only supports http(s) proxy, and does not support authentication. If authentication is required, it can be replaced by sps. Format:  
-  `http://127.0.0.1:3100?argk=argv`  
+`http://127.0.0.1:3100?argk=argv`  
 When the service is a socks, the upstream only supports the socks5 proxy. The format is:  
-  `socks5://127.0.0.1:3100?argk=argv`  
+`socks5://127.0.0.1:3100?argk=argv`  
 
 Explanation: `http://`,`socks5://` is fixed, `127.0.0.1:3100` is the address of the upstream  
 
 2. When `sps` is 1.  
 Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple upstreams** , the description of the `-P` parameter.  
 3. Parameters, `?` followed by `argk=argv` are parameters: parameter name = parameter value, multiple parameters are connected with `&`.  
-  All the supported parameters are as follows, and the meaning of the command line with the same name is the same.  
-  1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
-  2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
-  3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
-  4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
-  5. timeout : timeout for establishing tcp connection, number, in milliseconds  
-  6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
-  7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
-  8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
+All the supported parameters are as follows, and the meaning of the command line with the same name is the same.  
+1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
+2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
+3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
+4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
+5. timeout : timeout for establishing tcp connection, number, in milliseconds  
+6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
+7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
+8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
 
 ### Traffic report / Traffic limit / Traffic statistics
 
@@ -1909,7 +1909,7 @@ The `--traffic-url` URL must response the HTTP status code` 204`. Only when the 
 
 #### traffic flow
 
-![traffic](/doc/images/traffic.png)
+![traffic](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/traffic.png)
 
 
 ###  Disconnect the user's connection
