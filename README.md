@@ -14,10 +14,9 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 ---
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
-- [中文介绍（必看）](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
+- [使用必读](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
+- [参考手册](https://snail007.host900.com/goproxy/manual/zh/)
 - [下载地址](https://github.com/snail007/goproxy/releases)
-- [官方手册（国外）](https://snail007.github.io/goproxy/manual/zh/)
-- [官方手册（国内）](https://snail007.host900.com/goproxy/manual/zh/)
 - [Download](https://github.com/snail007/goproxy/releases)
 - [Desktop Edition, Web Console : ProxyAdmin](https://github.com/snail007/proxy_admin_free)
 - [Android Global Proxy Edition](https://github.com/snail007/goproxy-ss-plugin-android) 

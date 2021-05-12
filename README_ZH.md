@@ -14,9 +14,9 @@
 ---
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [下载地址](https://github.com/snail007/goproxy/releases)
-- [官方手册（国外）](https://snail007.github.io/goproxy/manual/zh/)
-- [官方手册（国内）](https://snail007.host900.com/goproxy/manual/zh/)
-- [桌面版，控制面板ProxyAdmin](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
+- [使用必读](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
+- [参考手册](https://snail007.host900.com/goproxy/manual/zh/)
+- [桌面版](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
 - [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android) 
 - [安卓全能代理版](https://github.com/snail007/goproxy-android) 
 - [安卓内网穿透客户端](https://github.com/snail007/lanass) 
@@ -91,10 +91,9 @@
 本页手册适用于最新版goproxy，其他版本可能有的地方不再适用，请自己根据命令帮助使用。  
  
 
-### 加入组织  
-[点击加入交流组织gitter](https://gitter.im/go-proxy/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  
+### 加入组织
 
-[点击加入交流组织TG](https://t.me/snail007_goproxy)  
+[点击加入 Telegram 交流群](https://t.me/snail007_goproxy)  
 
 ## 下载安装 goproxy
 
@@ -174,8 +173,8 @@ Proxy is licensed under GPLv3 license。
 
 ## Donation  
 如果proxy帮助你解决了很多问题，你可以通过下面的捐赠更好的支持proxy。  
-<img src="/doc/images/alipay.jpg" width="200"  height="auto"/>  
-<img src="/doc/images/wxpay.jpg" width="200"  height="auto"/>  
+<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/alipay.jpg" width="200"  height="auto"/>  
+<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/wxpay.jpg" width="200"  height="auto"/>  
 
 ### 源代码申明
 
