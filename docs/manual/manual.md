@@ -248,7 +248,7 @@ The format is: `-p 0.0.0.0:80,0.0.0.0:443,.0.0.0.0:8000-9000,:5000-6000`, more T
 
 ### 1.1. Ordinary level HTTP proxy  
 
-![1.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-1.png)  
+![1.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-1.png)  
 
 `proxy http -t tcp -p "0.0.0.0:38080"`  
   
@@ -262,7 +262,7 @@ Listen port argument `-p` can be:
 
 ### 1.2. Ordinary secondary HTTP proxy  
 
-![1.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-2.png)  
+![1.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-2.png)  
 
 Use local port 8090, assuming the upstream HTTP proxy is `22.22.22.22:8080`  
 
@@ -276,7 +276,7 @@ We can also specify the black and white list file of the website domain name, on
 
 > Note: The `proxy.crt` and `proxy.key` used by the secondary proxy should be consistent with the primary proxy.  
 
-![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-tls-2.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-2.png)  
 Level 1 HTTP proxy (VPS, IP: 22.22.22.22)  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -289,7 +289,7 @@ Secondary HTTP proxy (local windows)
 Then set your windos system, the proxy that needs to go through the proxy Internet program is http mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.  
   
 ### 1.4.HTTP Level 3 Agent (Encryption)  
-![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-tls-3.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-3.png)  
 Level 1 HTTP proxy VPS_01, IP: 22.22.22.22  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 Secondary HTTP proxy VPS_02, IP: 33.33.33.33  
@@ -326,7 +326,7 @@ By default, the proxy will intelligently determine whether a website domain name
 `proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 ### 1.7.HTTP(S) via SSH relay  
-![1.7](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-ssh-1.png)  
+![1.7](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-ssh-1.png)  
 Description: The principle of ssh transfer is to use the forwarding function of ssh, that is, after you connect to ssh, you can access the target address through ssh proxy.  
 Suppose there is: vps  
 - IP is 2.2.2.2, ssh port is 22, ssh username is: user, ssh user password is: demo  
@@ -340,7 +340,7 @@ Local HTTP(S) proxy port 28080, executing:
 `proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 ### 1.8.KCP protocol transmission  
-![1.8](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/http-kcp.png)  
+![1.8](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-kcp.png)  
 The KCP protocol requires the --kcp-key parameter to set a password for encrypting and decrypting data.  
 
 Level 1 HTTP proxy (VPS, IP: 22.22.22.22)  
@@ -351,7 +351,7 @@ Secondary HTTP proxy (local Linux)
 Then access the local port 8080 is to access the proxy port 38080 on the VPS, the data is transmitted through the kcp protocol, note that the kcp is the udp protocol, so the firewall needs to release the 380p udp protocol.  
 
 ### 1.9 HTTP(S) Reverse Proxy  
-![1.9](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/fxdl.png)  
+![1.9](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/fxdl.png)  
 The proxy not only supports the proxy setting in other software, but also provides proxy services for other software. It also supports directly parsing the requested website domain name to the proxy listening ip, and then the proxy listens to the 80 and 443 ports, then the proxy will automatically You proxy access to the HTTP(S) website you need to access.  
 
 How to use:  
@@ -517,7 +517,7 @@ The meaning of each value is as follows:
 ## 2.TCP Proxies  
   
 ### 2.1. Ordinary level TCP proxy  
-![2.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-1.png)  
+![2.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-1.png)  
 Local execution:  
 `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 Then access the local port 33080 is to access port 22 of 192.168.22.33.  
@@ -545,7 +545,7 @@ If you want to connect the ports of `33080`, `33081`, etc. to the `22` port of 1
 `proxy tcp -p ":33080-33085" -T tcp -P "192.168.22.33:22" --lock-port`
 
 ### 2.2. Ordinary secondary TCP proxy  
-![2.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-2.png)  
+![2.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 Local execution:  
@@ -553,7 +553,7 @@ Local execution:
 Then access the local port 23080 is to access port 8020 of 22.22.22.33.  
   
 ### 2.3. Ordinary three-level TCP proxy  
-![2.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-3.png)  
+![2.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -563,7 +563,7 @@ Level 3 TCP proxy (local)
 Then access the local port 8080 is to access the port 8080 of 66.66.66.66 through the encrypted TCP tunnel.  
   
 ### 2.4. Encrypting secondary TCP proxy  
-![2.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-tls-2.png)  
+![2.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 Local execution:  
@@ -571,7 +571,7 @@ Local execution:
 Then access the local port 23080 is to access the port 8080 of 22.22.22.33 through the encrypted TCP tunnel.  
   
 ### 2.5.Encrypting Level 3 TCP Agent  
-![2.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/tcp-tls-3.png)  
+![2.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -631,7 +631,7 @@ Local execution:
 ## 3.UDP Proxies  
   
 ### 3.1. Ordinary UDP proxy  
-![3.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-1.png)  
+![3.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-1.png)  
 Local execution:  
 `proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 Then access the local UDP: 5353 port is to access 8.8.8.8 UDP: 53 port.  
@@ -659,7 +659,7 @@ If you want to connect the ports of `33080`, `33081`, etc. to the `2222` port of
 `proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`
 
 ### 3.2. Ordinary secondary UDP proxy  
-![3.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-2.png)  
+![3.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 Local execution:  
@@ -667,7 +667,7 @@ Local execution:
 Then access the local UDP: 5353 port is through the TCP tunnel, through the VPS access 8.8.8.8 UDP: 53 port.  
   
 ### 3.3. Ordinary three-level UDP proxy  
-![3.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-3.png)  
+![3.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -677,7 +677,7 @@ Level 3 TCP proxy (local)
 Then access to the local 5353 port is through the TCP tunnel, through the VPS to access port 8.8.8.8.  
   
 ### 3.4. Encrypting secondary UDP proxy  
-![3.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-tls-2.png)  
+![3.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-2.png)  
 VPS (IP: 22.22.2.33) is executed:  
 `proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 Local execution:  
@@ -685,7 +685,7 @@ Local execution:
 Then access the local UDP: 5353 port is through the encrypted TCP tunnel, through the VPS access 8.8.8.8 UDP: 53 port.  
   
 ### 3.5. Encryption Level 3 UDP Agent  
-![3.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/udp-tls-3.png)  
+![3.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-3.png)  
 Primary TCP proxy VPS_01, IP: 22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 Secondary TCP proxy VPS_02, IP: 33.33.33.33  
@@ -932,14 +932,14 @@ Listen port argument `-p` can be:
 ```
 
 ### 5.2. Ordinary secondary SOCKS5 agent  
-![5.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-2.png)  
+![5.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-2.png)  
 Use local port 8090, assuming the upstream SOCKS5 proxy is `22.22.22.22:8080`  
 `proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" `  
 We can also specify the black and white list file of the website domain name, one domain name and one domain name, the matching rule is the rightmost match, for example: baidu.com, the match is *.*.baidu.com, the blacklist domain name domain name goes directly to the upstream agent, white The domain name of the list does not go to the upstream agent; if the domain name is in the blacklist and in the whitelist, the blacklist works.  
 `proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080" -b blocked.txt -d direct.txt`  
   
 ### 5.3. SOCKS Level 2 Agent (Encryption)  
-![5.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-tls-2.png)  
+![5.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-2.png)  
 Level 1 SOCKS proxy (VPS, IP: 22.22.22.22)  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
   
@@ -952,7 +952,7 @@ Secondary SOCKS proxy (local windows)
 Then set your windos system, the proxy that needs to go through the proxy Internet program is the socks5 mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.  
   
 ### 5.4. SOCKS Level 3 Agent (Encryption)  
-![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-tls-3.png)  
+![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-3.png)  
 Level 1 SOCKS proxy VPS_01, IP: 22.22.22.22  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 Secondary SOCKS proxy VPS_02, IP: 33.33.33.33  
@@ -966,7 +966,7 @@ By default, the proxy will intelligently determine whether a website domain name
 `proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
   
 ### 5.6. SOCKS via SSH relay  
-![5.6](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/socks-ssh.png)  
+![5.6](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-ssh.png)  
 Description: The principle of ssh transfer is to use the forwarding function of ssh, that is, after you connect to ssh, you can access the target address through ssh proxy.  
 Suppose there is: vps  
 - IP is 2.2.2.2, ssh port is 22, ssh username is: user, ssh user password is: demo  
@@ -1201,7 +1201,7 @@ The command is as follows:
 `proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`.  
 
 ### 6.5 Chained connection  
-![6.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/sps-tls.png)  
+![6.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/sps-tls.png)  
 The above mentioned multiple sps nodes can be connected to build encrypted channels in a hierarchical connection, assuming the following vps and the home PC.  
 Vps01:2.2.2.2  
 Vps02:3.3.3.3  
@@ -1734,7 +1734,7 @@ The `--traffic-url` URL must response the HTTP status code` 204`. Only when the 
 
 #### traffic flow
 
-![traffic](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://raw.githubusercontent.com/snail007/goproxy/master/doc/images/traffic.png)
+![traffic](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/traffic.png)
 
 
 ###  Disconnect the user's connection

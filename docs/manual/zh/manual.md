@@ -274,7 +274,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 ### 1.1.普通一级HTTP代理  
 
-![1.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-1.png)  
+![1.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-1.png)  
 
 `proxy http -t tcp -p "0.0.0.0:38080"`  
 
@@ -288,7 +288,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 ### 1.2.普通二级HTTP代理  
 
-![1.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-2.png)  
+![1.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-2.png)  
 
 使用本地端口8090，假设上级HTTP代理是`22.22.22.22:8080`  
 
@@ -302,7 +302,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 > 注意: 后面二级代理使用的`proxy.crt`和`proxy.key`应与一级代理一致  
 
-![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-tls-2.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-2.png)  
 一级HTTP代理(VPS，IP:22.22.22.22)  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 
@@ -315,7 +315,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 然后设置你的windos系统中，需要通过代理上网的程序的代理为http模式，地址为：127.0.0.1，端口为：8080，程序即可通过加密通道通过vps上网。  
 
 ### 1.4.HTTP三级代理(加密)  
-![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-tls-3.png)  
+![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-3.png)  
 一级HTTP代理VPS_01，IP:22.22.22.22  
 `proxy http -t tls -p ":38080" -C proxy.crt -K proxy.key`  
 二级HTTP代理VPS_02，IP:33.33.33.33  
@@ -333,7 +333,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 `proxy http --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
 
 ### 1.7.HTTP(S)通过SSH中转  
-![1.7](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-ssh-1.png)  
+![1.7](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-ssh-1.png)  
 说明:ssh中转的原理是利用了ssh的转发功能，就是你连接上ssh之后，可以通过ssh代理访问目标地址。  
 假设有:vps  
 - IP是2.2.2.2， ssh端口是22， ssh用户名是:user， ssh用户密码是:demo  
@@ -347,7 +347,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 `proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
 
 ### 1.8.KCP协议传输  
-![1.8](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/http-kcp.png)  
+![1.8](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-kcp.png)  
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据  
 
 一级HTTP代理(VPS，IP:22.22.22.22)  
@@ -358,7 +358,7 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 那么访问本地的8080端口就是访问VPS上面的代理端口38080，数据通过kcp协议传输，注意kcp走的是udp协议协议，所以防火墙需放开38080的udp协议。  
 
 ### 1.9 HTTP(S)反向代理  
-![1.9](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/fxdl.png)  
+![1.9](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/fxdl.png)  
 proxy不仅支持在其他软件里面通过设置代理的方式，为其他软件提供代理服务，而且支持直接把请求的网站域名解析到proxy监听的ip上，然后proxy监听80和443端口，那么proxy就会自动为你代理访问需要访问的HTTP(S)网站。  
 
 使用方式:  
@@ -549,7 +549,7 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 ## 2.TCP代理  
 
 ### 2.1 普通一级TCP代理  
-![2.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/tcp-1.png)  
+![2.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-1.png)  
 本地执行:  
 `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22"`  
 那么访问本地33080端口就是访问192.168.22.33的22端口。  
@@ -578,7 +578,7 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 
 
 ### 2.2 普通二级TCP代理  
-![2.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/tcp-2.png)  
+![2.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `proxy tcp -p ":33080" -T tcp -P "127.0.0.1:8080"`  
 本地执行:  
@@ -586,7 +586,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是访问22.22.22.33的8080端口。  
 
 ### 2.3 普通三级TCP代理  
-![2.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/tcp-3.png)  
+![2.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
 `proxy tcp -p ":38080" -T tcp -P "66.66.66.66:8080"`  
 二级TCP代理VPS_02，IP:33.33.33.33  
@@ -596,7 +596,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地8080端口就是通过加密TCP隧道访问66.66.66.66的8080端口。  
 
 ### 2.4 加密二级TCP代理  
-![2.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/tcp-tls-2.png)  
+![2.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `proxy tcp -t tls -p ":33080" -T tcp -P "127.0.0.1:8080" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -604,7 +604,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地23080端口就是通过加密TCP隧道访问22.22.22.33的8080端口。  
 
 ### 2.5 加密三级TCP代理  
-![2.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/tcp-tls-3.png)  
+![2.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/tcp-tls-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T tcp -P "66.66.66.66:8080" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02，IP:33.33.33.33  
@@ -690,7 +690,7 @@ VPS(IP:22.22.22.33)执行:
 ## 3.UDP代理  
 
 ### 3.1.普通一级UDP代理  
-![3.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/udp-1.png)  
+![3.1](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-1.png)  
 本地执行:  
 `proxy udp -p ":5353" -T udp -P "8.8.8.8:53"`  
 那么访问本地UDP:5353端口就是访问8.8.8.8的UDP:53端口。  
@@ -718,7 +718,7 @@ VPS(IP:22.22.22.33)执行:
 `proxy udp -p ":33080-33085" -T udp -P "192.168.22.33:2222" --lock-port`  
 
 ### 3.2.普通二级UDP代理  
-![3.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/udp-2.png)  
+![3.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `proxy tcp -p ":33080" -T udp -P "8.8.8.8:53"`  
 本地执行:  
@@ -726,7 +726,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过TCP隧道，通过VPS访问8.8.8.8的UDP:53端口。  
 
 ### 3.3.普通三级UDP代理  
-![3.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/udp-3.png)  
+![3.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
 `proxy tcp -p ":38080" -T udp -P "8.8.8.8:53"`  
 二级TCP代理VPS_02，IP:33.33.33.33  
@@ -736,7 +736,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地5353端口就是通过TCP隧道，通过VPS访问8.8.8.8的53端口。  
 
 ### 3.4.加密二级UDP代理  
-![3.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/udp-tls-2.png)  
+![3.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-2.png)  
 VPS(IP:22.22.22.33)执行:  
 `proxy tcp -t tls -p ":33080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 本地执行:  
@@ -744,7 +744,7 @@ VPS(IP:22.22.22.33)执行:
 那么访问本地UDP:5353端口就是通过加密TCP隧道，通过VPS访问8.8.8.8的UDP:53端口。  
 
 ### 3.5.加密三级UDP代理  
-![3.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/udp-tls-3.png)  
+![3.5](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/udp-tls-3.png)  
 一级TCP代理VPS_01，IP:22.22.22.22  
 `proxy tcp -t tls -p ":38080" -T udp -P "8.8.8.8:53" -C proxy.crt -K proxy.key`  
 二级TCP代理VPS_02，IP:33.33.33.33  
@@ -995,14 +995,14 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 ```
 
 ### 5.2.普通二级SOCKS5代理  
-![5.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/socks-2.png)  
+![5.2](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-2.png)  
 使用本地端口8090，假设上级SOCKS5代理是`22.22.22.22:8080`  
 `proxy socks -t tcp -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  --udp-port 0 --udp`  
 我们还可以指定网站域名的黑白名单文件，一行一个域名，匹配规则是最右匹配，比如:baidu.com，匹配的是*.*.baidu.com，黑名单的域名域名直接走上级代理，白名单的域名不走上级代理;如果域名即在黑名单又在白名单中，那么黑名单起作用。  
 `proxy socks -p "0.0.0.0:8090" -T tcp -P "22.22.22.22:8080"  -b blocked.txt -d direct.txt  --udp-port 0 --udp`  
 
 ### 5.3.SOCKS二级代理(加密)  
-![5.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/socks-tls-2.png)  
+![5.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-2.png)  
 一级SOCKS代理(VPS，IP:22.22.22.22)  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key  --udp-port 0 --udp`  
 
@@ -1015,7 +1015,7 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 然后设置你的windos系统中，需要通过代理上网的程序的代理为socks5模式，地址为：127.0.0.1，端口为：8080，程序即可通过加密通道通过vps上网。  
 
 ### 5.4.SOCKS三级代理(加密)  
-![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/socks-tls-3.png)  
+![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-3.png)  
 一级SOCKS代理VPS_01，IP:22.22.22.22  
 `proxy socks -t tls -p ":38080" -C proxy.crt -K proxy.key  --udp-port 0 --udp`  
 二级SOCKS代理VPS_02，IP:33.33.33.33  
@@ -1029,7 +1029,7 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 `proxy socks --always -t tls -p ":28080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key  --udp-port 0 --udp`  
 
 ### 5.6.SOCKS通过SSH中转  
-![5.6](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/socks-ssh.png)  
+![5.6](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-ssh.png)  
 说明:ssh中转的原理是利用了ssh的转发功能，就是你连接上ssh之后，可以通过ssh代理访问目标地址。  
 假设有:vps  
 - IP是2.2.2.2， ssh端口是22， ssh用户名是:user， ssh用户密码是:demo  
@@ -1277,7 +1277,7 @@ SPS上级和本地支持ss协议，上级可以是SPS或者标准的ss服务，�
 `proxy sps -S ss -H aes-256-cfb -J pass -T tcp -P 127.0.0.1:8080 -t tcp -p :18080 -h aes-192-cfb -j pass`。  
 
 ### 6.5 链式连接  
-![6.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/sps-tls.png)  
+![6.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/sps-tls.png)  
 上面提过多个sps结点可以层级连接构建加密通道，假设有如下vps和家里的pc电脑。  
 vps01：2.2.2.2  
 vps02：3.3.3.3  
@@ -1826,7 +1826,7 @@ bytes: 此次使用的流量字节数.
 
 #### 流量上报原理
 
-![traffic](https://cdn.jsdelivr.net/gh/snail007/goproxy@masterhttps://gitee.com/snail/proxy/raw/master/doc/images/traffic.png)
+![traffic](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/traffic.png)
 
 ### 主动断开用户连接
 
