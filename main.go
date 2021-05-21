@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/snail007/goproxy/services"
 	"log"
 	"os"
 	"os/signal"
-	"proxy/services"
 	"syscall"
 )
 

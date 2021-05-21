@@ -8,7 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
-	"proxy/utils"
+	"github.com/snail007/goproxy/utils"
 	"time"
 )
 
