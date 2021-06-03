@@ -140,6 +140,38 @@ chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
 
+## UPDATE
+
+### Linux
+
+```shell
+proxy update
+```
+
+Force update.
+
+```shell
+proxy update -f
+```
+
+### Windows
+
+For example `proxy` placed in `c:\gp\proxy`.
+
+```bat
+c:\
+cd gp
+proxy update
+```
+
+Force update.
+
+```shell
+c:\
+cd gp
+proxy update -f
+```
+
 ## TODO
 - http,socks proxy multiple upstream load balancing?
 - http(s) proxy to increase pac support?
