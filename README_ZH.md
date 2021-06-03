@@ -160,6 +160,40 @@ chmod +x install_commercial.sh
 ./install_commercial.sh  
 ```  
 
+## 升级更新
+
+### Linux
+用`root`打开一个终端，如果proxy不再系统PATH里面，需要cd进入proxy目录执行`./proxy`。
+下面假设proxy在/usr/bin/proxy，执行用的是`proxy`。
+
+```shell
+proxy update
+```
+
+已经安装了最新的版本，默认不会更新，如果想强制更新加上 -f 参数即可。
+
+```shell
+proxy update -f
+```
+
+### Windows
+用`管理员`权限打开命令提示符窗口，如果proxy不再系统PATH里面，需要cd进入proxy目录执行。
+这里假设proxy在c:\gp\proxy,根据你的情况调整命令。
+
+```bat
+c:\
+cd gp
+proxy update
+```
+
+已经安装了最新的版本，默认不会更新，如果想强制更新加上 -f 参数即可。
+
+```shell
+c:\
+cd gp
+proxy update -f
+```
+
 ## TODO  
 - http，socks代理多个上级负载均衡?
 - http(s)代理增加pac支持?
