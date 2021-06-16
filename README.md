@@ -36,7 +36,7 @@ And ProxyAdmin is a powerful web console of snail007/goproxy .
 - Communication encryption, if the program is not a level one proxies, and the upper level proxies is also the program, then the communication between the upper level proxies and the upper level proxies can be encrypted, and the underlying tls high-intensity encryption is used, and the security is featureless.
 - Smart HTTP, SOCKS5 proxy, will automatically determine whether the visited website is blocked. If it is blocked, it will use the upstream proxies (provided that the upstream proxies is configured) to access the website; if the visited website is not blocked, in order to speed up the access, the proxies will Direct access to the website without using a upstream proxies.
 - Domain name black and white list, more free to control the way the website is accessed.
-- Cross-platform, whether you are widows, linux, mac, or even raspberry pie, you can run the proxy very well.
+- Cross-platform, whether you are windows, linux, mac, or even raspberry pie, you can run the proxy very well.
 - Multi-protocol support, support for HTTP(S), TCP, UDP, Websocket, SOCKS5 proxy.
 - TCP/UDP port forwarding.
 - Support intranet penetration, protocol supports TCP and UDP.
