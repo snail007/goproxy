@@ -537,7 +537,7 @@ HTTP(S)代理支持上级负载均衡，多个上级重复-P参数即可。
 
 ### 1.18 智能模式  
 智能模式设置，可以是intelligent|direct|parent三者之一。  
-默认是:intelligent。  
+默认是:parent。  
 每个值的含义如下:  
 `--intelligent=direct`，不在blocked里面的目标都直连。  
 `--intelligent=parent`，不在direct里面的目标都走上级。  
@@ -1203,7 +1203,7 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 
 ### 5.17 智能模式  
 智能模式设置，可以是intelligent|direct|parent三者之一。  
-默认是:intelligent。  
+默认是:parent。  
 每个值的含义如下:  
 `--intelligent=direct`，不在blocked里面的目标都直连。  
 `--intelligent=parent`，不在direct里面的目标都走上级。  

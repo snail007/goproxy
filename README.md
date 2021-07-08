@@ -705,7 +705,7 @@ If it is the beginning of base64://, then the latter data is considered to be ba
 
 ### 1.18 Intelligent mode  
 Intelligent mode setting, can be one of intelligent|direct|parent.  
-The default is: intelligent.  
+The default is: parent.  
 The meaning of each value is as follows:  
 `--intelligent=direct`, the targets in the blocked are not directly connected.  
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
@@ -1328,7 +1328,7 @@ If it is the beginning of base64://, then the latter data is considered to be ba
 
 ### 5.17 Intelligent mode  
 Intelligent mode setting, can be one of intelligent|direct|parent.  
-The default is: intelligent.  
+The default is: parent.  
 The meaning of each value is as follows:  
 `--intelligent=direct`, the targets in the blocked are not directly connected.  
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
