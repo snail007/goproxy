@@ -1727,6 +1727,9 @@ client_addr: client address, format: IP: port.
 target_addr: target address, format: "IP: port", when tcp / udp proxy, this is empty.
 User name: proxy authentication user name, this is empty when tcp / udp proxy.
 bytes: the number of traffic bytes used by the user.
+out_local_addr: outgoing tcp connection's local address,format: IP: port.
+out_remote_addr: outgoing tcp connection's remote address,format: IP: port.
+upstream: upstream used by outgoing tcp connection, if none upstream be used, it's empty.
 
 #### Tips
 

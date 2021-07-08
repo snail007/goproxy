@@ -18,12 +18,6 @@
   </url>
   
   <url>
-    <loc>https://snail007.host900.com/goproxy/tags/cdn/</loc>
-    <lastmod>2019-07-05T08:20:48+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://snail007.host900.com/goproxy/categories/</loc>
     <lastmod>2019-07-05T08:20:48+08:00</lastmod>
     <priority>0</priority>
@@ -43,6 +37,12 @@
   
   <url>
     <loc>https://snail007.host900.com/goproxy/tags/</loc>
+    <lastmod>2019-07-05T08:20:48+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://snail007.host900.com/goproxy/tags/cdn/</loc>
     <lastmod>2019-07-05T08:20:48+08:00</lastmod>
     <priority>0</priority>
   </url>
