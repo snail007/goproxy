@@ -2038,8 +2038,8 @@ client_addr: 客户端地址,格式: `IP:端口`。
 target_addr: 目标地址,格式: `IP:端口`,tcp/udp代理时,这个是空。  
 username: 代理认证用户名,tcp/udp代理时,这个是空。  
 bytes: 此次使用的流量字节数。  
-out_local_addr: 代理对外建立的TCP连接的本地地址，,格式: `IP:端口`。  
-out_remote_addr: 代理对外建立的TCP连接的远程地址，,格式: `IP:端口`。  
+out_local_addr: 代理对外建立的TCP连接的本地地址，格式: `IP:端口`。  
+out_remote_addr: 代理对外建立的TCP连接的远程地址，格式: `IP:端口`。  
 upstream: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。  
 
 #### 提示  
