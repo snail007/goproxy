@@ -2065,3 +2065,18 @@ Client service parameters can use placeholders: `{AGENT_ID}` to refer to the age
 For example, client service parameters:
 
 `client -T tcp -P 1.1.1.1:30000 --k {AGENT_ID}`
+
+## 12. http, https website reverse proxy
+
+The proxy can reverse proxy http and https websites.
+
+The supported features are as follows:
+- http and https are converted to each other.
+- multiple upstream.
+- upstream load balance.
+- upstream high available.
+- path mapping.
+- path protection.
+- alias names of bindings.
+
+For detail usage, please refer to the configuration file [rhttp.toml](https://github.com/snail007/goproxy/blob/master/rhttp.toml), which has a complete configuration description.

@@ -2179,7 +2179,18 @@ client服务参数里面可以通过使用占位符：`{AGENT_ID}`引用agent的
 2.如果使用了代理参数`-u`,务必设置唯一标示参数`-i`,不然cluster无法区分不同的agent，agent将不能正常工作。
 
 
+## http、https 网站反向代理
 
+proxy可以对 http 和 https 网站进行反向代理。
 
+支持特性如下：
+- http和https相互转换。
+- 多个后端。
+- 多个后端负载均衡。
+- 多个后端高可用。 
+- 目录映射转发。
+- 路径保护。
+- 绑定的域名，可以另外指定别名。
 
+具体使用可以参考配置文件 [rhttp.toml](https://github.com/snail007/goproxy/blob/master/rhttp.toml) ，里面有完整配置说明。
 
