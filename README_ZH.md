@@ -2192,5 +2192,11 @@ proxy可以对 http 和 https 网站进行反向代理。
 - 路径保护。
 - 绑定的域名，可以另外指定别名。
 
+使用示例，配置文件`rhttp.toml`。
+
+```shell
+proxy rhttp -c rhttp.toml
+```
+
 具体使用可以参考配置文件 [rhttp.toml](https://github.com/snail007/goproxy/blob/master/rhttp.toml) ，里面有完整配置说明。
 

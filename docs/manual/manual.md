@@ -1879,4 +1879,10 @@ The supported features are as follows:
 - path protection.
 - alias names of bindings.
 
+Example, configure file:`rhttp.toml`。
+
+```shell
+proxy rhttp -c rhttp.toml
+```
+
 For detail usage, please refer to the configuration file [rhttp.toml](https://github.com/snail007/goproxy/blob/master/rhttp.toml), which has a complete configuration description.
