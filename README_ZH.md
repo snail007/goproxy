@@ -2179,7 +2179,7 @@ client服务参数里面可以通过使用占位符：`{AGENT_ID}`引用agent的
 2.如果使用了代理参数`-u`,务必设置唯一标示参数`-i`,不然cluster无法区分不同的agent，agent将不能正常工作。
 
 
-## http、https 网站反向代理
+## 12.http、https 网站反向代理
 
 proxy可以对 http 和 https 网站进行反向代理。
 
