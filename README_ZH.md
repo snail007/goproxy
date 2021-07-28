@@ -1,6 +1,6 @@
 ## 稳定优质IP代理商推荐
 <a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="/doc/images/brightdata.png"/>
+<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
 </a>
 
 ## GOPROXY简介
