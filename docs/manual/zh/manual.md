@@ -346,7 +346,7 @@ socks5\sps\http代理,控制客户端并发连接数参数是:`--max-conns-rate`
 
 #### *1.7.1 ssh用户名和密码的方式*  
 本地HTTP(S)代理28080端口，执行:  
-`proxy http -T ssh -P "2.2.2.2:22" -u user -D demo -t tcp -p ":28080"`  
+`proxy http -T ssh -P "2.2.2.2:22" -u user -A demo -t tcp -p ":28080"`  
 #### *1.7.2 ssh用户名和密钥的方式*  
 本地HTTP(S)代理28080端口，执行:  
 `proxy http -T ssh -P "2.2.2.2:22" -u user -S user.key -t tcp -p ":28080"`  
