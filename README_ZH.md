@@ -2384,7 +2384,7 @@ proxy rhttp -c rhttp.toml
 
 操作步骤：
 
-1. vps执行`proxy sps -p :7777 --bind-ip eth0::7777 -a user1:password1 -a user2:password2 `。
+1. vps执行`proxy sps -p :7777 --bind-ip eth0:*:7777 -a user1:password1 -a user2:password2 `。
 2. 命令中`-a`是设置`代理认证用户`，多个用户，可以重复`-a`参数，格式是：`用户名:密码`。
 3. 更多认证方式可以参考手册`API认证`，`认证`部分。
 
@@ -2405,7 +2405,7 @@ proxy rhttp -c rhttp.toml
 
 拨号VPS：
 
-1. 拨号的vps执行`proxy sps -p :7777 --bind-ip pppoe_:7777 `。
+1. 拨号的vps执行`proxy sps -p :7777 --bind-ip pppoe_*:7777 `。
 
 入口VPS:
 
