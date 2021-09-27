@@ -12,6 +12,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases) 
 
 ---
+## 中文用户请看中文说明，中文与英文内容的安装等资源链接是不一样的，谢谢合作！
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [使用必读](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
