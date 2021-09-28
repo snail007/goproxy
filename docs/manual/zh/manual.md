@@ -2229,3 +2229,27 @@ Luminati提供了高质量稳定的住宅IP可以做很多事情，但是价格�
 操作步骤：
 1. 1.1.1.1的VPS执行：`proxy sps -p :7777 -P http://abc:123@2.2.2.2:8888` 
 
+## 17.典型用法-镜像网站
+
+有时候访问GitHub很慢，导致学习困难，可以用proxy镜像GitHub加速访问。
+
+为了方便说明，假设背景情况如下：
+
+1. 有一个自己的VPS，IP是1.1.1.1，可以访问GitHub，而且速度还可以。
+
+实现的效果：
+
+1. 访问1.1.1.1的7777端口，就是访问GitHub。
+
+操作步骤：
+1. 准备配置文件github.toml，写入如下内容：
+```toml
+[[host]]
+bind="http://1.1.1.1:7777/"
+target="https://github.com/"
+upstream="github.com:443"
+timeout=5000
+```
+1. 在1.1.1.1的VPS执行：`proxy rhttp -c github.toml`  
+2. 访问`http://1.1.1.1:7777/snail007/`，如果一切正常，就把命令加上后台运行参数即可。
+3. 命令改成：`proxy rhttp -c github.toml --daemon --log /tmp/github.log`  
