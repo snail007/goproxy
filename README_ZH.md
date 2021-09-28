@@ -2474,3 +2474,4 @@ timeout=5000
 1. 在1.1.1.1的VPS执行：`proxy rhttp -c github.toml`  
 2. 访问 `http://1.1.1.1:7777/snail007/` ，如果一切正常，就把命令加上后台运行参数即可。
 3. 命令改成：`proxy rhttp -c github.toml --daemon --log /tmp/github.log`  
+4. 此功能需要`proxy`版本大于等于`v11.2`。
