@@ -182,7 +182,7 @@ proxy update -f
 Proxy is licensed under GPLv3 license.
 
 ## Contact
-Official QQ exchange group: 42805407
+Official QQ exchange group: 608062193
 
 ## Donation
 If the proxy helps you solve a lot of problems, you can better support the proxy through the donation below.
