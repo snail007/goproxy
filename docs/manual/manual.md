@@ -502,6 +502,27 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the outgoing IP, the `entry IP` and the `outgoing IP` cannot be referenced artificially. If you want the ingress IP and the egress IP to be different, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`, `[2000:0:0:0:0 :0:0:1]:8080`. For multiple binding requirements, the `--bind-ip` parameter can be repeated.
+
+For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`Proxy tcp -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888 -T tcp -P 2.2.2.2:3322`
+
+Then the client access port `7777`, the outgoing IP is `5.5.5.5`, access port `8888`, the outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
+
+- Specify the network card name, such as: `--bind-ip eth0:7777`, and then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
+- The network card name supports wildcards, such as: `--bind-ip eth0.*:7777`, then the client accesses the port `7777`, and the egress IP is randomly selected from the IP of the network card starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:777`, then the client accesses the `7777` port, the  outgoing IP is all the IPs of the machine, and matches the IP of `192.168.?.*` A randomly selected one.
+- It can also be several combinations of network card name and IP, and several selective divisions using half-width, such as: `-bind-ip pppoe??,192.168.?.*:7777`, and then the client accesses the `7777` port , The  outgoing IP is the machine's network card name matching `pppoe??`
+  It is randomly selected from the IP matching `192.168.?.*` in the machine IP.
+- The wildcard character `*` represents 0 to any character, `? `Represents 1 character.
+- If the IP of the network card changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+
 ### 1.17 Certificate parameters use base64 data  
 
 By default, the -C, -K parameter is the path to the crt certificate and the key file.  
@@ -609,6 +630,28 @@ Port: the port of the proxy
 When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified exit IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
 
 `proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
+
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and the ` outgoing IP` cannot be referenced artificially. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter identification.
+
+For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`Proxy tcp -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888 -T tcp -P 2.2.2.2:3322`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
+
+- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
+- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network card changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
 
 ### 2.8 Speed limit, connections limit
 
@@ -1112,6 +1155,28 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 `proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and ` outgoing IP` cannot be interfered by humans. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter.
+
+For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`proxy socks -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one. The details are as follows:
+
+- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
+- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network card changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+
 ### 5.15 Cascade Certification  
 
 SOCKS5 supports cascading authentication, and -A can set upstream authentication information.  
@@ -1374,6 +1439,28 @@ It can be specified by the `-l` parameter, for example: 100K 2000K 1M . 0 means 
 The `--bind-listen` parameter can be used to open the client connection with the portal IP, and use the portal IP as the outgoing IP to access the target website. If the ingress IP is an intranet IP, the egress IP does not use the ingress IP.  
 
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`  
+
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and ` outgoing IP` cannot be interfered by humans. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter.
+
+For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`proxy sps -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one. The details are as follows:
+
+- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
+- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network card changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
 
 ### 6.13 Certificate parameters use base64 data  
 
