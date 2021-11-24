@@ -2254,3 +2254,10 @@ timeout=5000
 2. 访问 `http://1.1.1.1:7777/snail007/` ，如果一切正常，就把命令加上后台运行参数即可。
 3. 命令改成：`proxy rhttp -c github.toml --daemon --log /tmp/github.log`  
 4. 此功能需要`proxy`版本大于等于`v11.2`。
+
+如果是想使用域名比如a.com，那么：
+1. 把a.com解析到IP 1.1.1.1。
+2. 把`bind="http://1.1.1.1:7777/"` 改成 `bind="http://a.com:7777/"`
+3. 访问 `http://a.com:7777/snail007/` 即可。
+4. 如果想使用默认80端口，配置bind为 `bind="http://a.com/"` 。
+5. 访问 `http://a.com/snail007/` 即可。
