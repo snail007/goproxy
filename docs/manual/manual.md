@@ -1679,7 +1679,6 @@ Local execution:
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.  
 
 #### 8.2.8 Custom encrypted SOCKS5 upstream agent  
-   
 Suppose there is a upstream agent: 2.2.2.2:33080  
 The commands executed by the upstream agent are:  
 `proxy socks -t kcp -p :33080 -z password`  
@@ -1783,15 +1782,17 @@ Explanation: `http://`,`socks5://` is fixed, `127.0.0.1:3100` is the address of 
 2. When `sps` is 1.  
 Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple upstreams** , the description of the `-P` parameter.  
 3. Parameters, `?` followed by `argk=argv` are parameters: parameter name = parameter value, multiple parameters are connected with `&`.  
-All the supported parameters are as follows, and the meaning of the command line with the same name is the same.  
-1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
-2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
-3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
-4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
-5. timeout : timeout for establishing tcp connection, number, in milliseconds  
-6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
-7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
-8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
+All the supported parameters are as follows, and the meaning of the command line with the same name is the same.
+
+   1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
+   2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
+   3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
+   4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
+   5. timeout : timeout for establishing tcp connection, number, in milliseconds  
+   6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
+   7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
+   8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
+   9. luminati:if upstram is luminati proxies，value can be: true or false。
 
 ### Traffic report / Traffic limit / Traffic statistics
 

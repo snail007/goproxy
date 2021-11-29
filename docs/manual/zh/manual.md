@@ -1938,6 +1938,7 @@ upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2
 6. ca : 上级底层tls传输类型的ca证书文件经过base64编码后的字符串。
 7. cert : 上级底层tls传输类型的证书文件经过base64编码后的字符串。
 8. key : 上级底层tls传输类型的证书密钥文件经过base64编码后的字符串。
+9. luminati:上级是否是luminati代理，可以是：true | false。
 
 ### 流量上报/流量统计/流量限制
 
@@ -2212,6 +2213,10 @@ Luminati提供了高质量稳定的住宅IP可以做很多事情，但是价格�
 2. 命令中`-a`是设置`代理认证用户`，多个用户，可以重复`-a`参数，格式是：`用户名:密码`。
 
 提醒，此种做法，有可能带来Luminati限制你的账号风险，VPS的IP也有可能被可能Luminati屏蔽导致转换不能工作，风险自负。
+
+另外上面只能把luminati的http代理转成自定义认证的二级http代理，那么如如果要把luminati的http代理转成http(s)+socks5代理可以使用参数`--luminati`。
+
+上面步骤 `1.` 执行的命令改为：`proxy sps -p :7777 --luminati --disable-ss -a user1:pass1 -a user2:pass2 -P http://username:password@xxx.com:8888`
 
 ## 17.典型用法-认证转为无认证
 
