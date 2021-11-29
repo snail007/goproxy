@@ -107,7 +107,7 @@ For example: `proxy http -p ":9090" --forever --log proxy.log --daemon`
 
 ### 8. Security advice  
 
-When the VPS is behind the nat device, the vps network card IP is the intranet IP. At this time, you can use the -g parameter to add the vps external network ip to prevent the infinite loop.  
+When the VPS is behind the nat device, the vps network interface IP is the intranet IP. At this time, you can use the -g parameter to add the vps external network ip to prevent the infinite loop.  
 
 Suppose your vps external network ip is 23.23.23.23. The following command sets 23.23.23.23 with the -g parameter.  
 
@@ -511,17 +511,17 @@ For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8
 `Proxy tcp -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888 -T tcp -P 2.2.2.2:3322`
 
 Then the client access port `7777`, the outgoing IP is `5.5.5.5`, access port `8888`, the outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+s
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
 
-In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
-
-- Specify the network card name, such as: `--bind-ip eth0:7777`, and then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
-- The network card name supports wildcards, such as: `--bind-ip eth0.*:7777`, then the client accesses the port `7777`, and the egress IP is randomly selected from the IP of the network card starting with `eth0.`.
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, and then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, such as: `--bind-ip eth0.*:7777`, then the client accesses the port `7777`, and the egress IP is randomly selected from the IP of the network interface starting with `eth0.`.
 - IP supports wildcards, such as: `--bind-ip 192.168.?.*:777`, then the client accesses the `7777` port, the  outgoing IP is all the IPs of the machine, and matches the IP of `192.168.?.*` A randomly selected one.
-- It can also be several combinations of network card name and IP, and several selective divisions using half-width, such as: `-bind-ip pppoe??,192.168.?.*:7777`, and then the client accesses the `7777` port , The  outgoing IP is the machine's network card name matching `pppoe??`
+- It can also be several combinations of network interface name and IP, and several selective divisions using half-width, such as: `-bind-ip pppoe??,192.168.?.*:7777`, and then the client accesses the `7777` port , The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is randomly selected from the IP matching `192.168.?.*` in the machine IP.
 - The wildcard character `*` represents 0 to any character, `? `Represents 1 character.
-- If the IP of the network card changes, it will take effect in real time.
-- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
 
 ### 1.17 Certificate parameters use base64 data  
 
@@ -642,16 +642,16 @@ For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8
 
 Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
 
-In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
 
-- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
-- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
 - IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
-- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
-- If the IP of the network card changes, it will take effect in real time.
-- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
 
 ### 2.8 Speed limit, connections limit
 
@@ -1166,16 +1166,16 @@ For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `88
 
 Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
 
-In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one. The details are as follows:
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one. The details are as follows:
 
-- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
-- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
 - IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
-- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
-- If the IP of the network card changes, it will take effect in real time.
-- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
 
 ### 5.15 Cascade Certification  
 
@@ -1451,16 +1451,16 @@ For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `88
 
 Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
 
-In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network card name`, `wildcards`, and more than one. The details are as follows:
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one. The details are as follows:
 
-- Specify the network card name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network card.
-- The network card name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network card IPs starting with `eth0.`.
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
 - IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
-- It can also be multiple combinations of network card name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network card name matching `pppoe??`
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
-- If the IP of the network card changes, it will take effect in real time.
-- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network card information, the default is `5`, the unit is second.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
 
 ### 6.13 Certificate parameters use base64 data  
 
