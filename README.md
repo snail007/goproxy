@@ -6,7 +6,7 @@
 ## GOPROXY Introduction
 
 <div align="center">
-<img src="https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/logo.jpg" width="200" height="auto"/>
+<img src="https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/logo.jpg?v=0.1" width="200" height="auto"/>
 
 ---
 
