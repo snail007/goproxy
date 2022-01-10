@@ -1962,17 +1962,19 @@ if($ok){
     header("ipconns:2000");  
     header("userrate:3000");  
     header("iprate:8000");  
-    header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
+    header("outgoing:http://127.0.0.1:3500?parent-type=tcp");  
+    header("outgoing:1.1.1.1");  
     header("HTTP/1.1 204 No Content");  
 }
 ```  
 
 #### Explanation  
-Userconns: The maximum number of connections for the user, not limited to 0 or not set this header.  
-Ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
-Userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.  
-Iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.  
-Upstream: The upstream used, not empty, or not set this header.  
+userconns: The maximum number of connections for the user, not limited to 0 or not set this header.  
+ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
+userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.  
+iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.  
+upstream: The upstream used, not empty, or not set this header.  
+outgoing: The outgoing ip，this option only working which upstream is empty. And the IP must belong to the machine running proxy。
 
 #### Tips  
 1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty when client didn't send username and password.  
