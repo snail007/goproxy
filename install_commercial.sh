@@ -1,6 +1,6 @@
 #!/bin/bash
 F="proxy-linux-amd64_commercial.tar.gz"
-manual="https://snail.gitee.io/proxy/manual/"
+manual="https://snail007.host900.com/goproxy/manual/"
 set -e
 WORKDIR="/tmp/proxy"
 rm -rf $WORKDIR
@@ -8,7 +8,7 @@ mkdir $WORKDIR
 cp $F $WORKDIR
 cd /tmp/proxy
 echo -e ">>> installing ... \n"
-tar zxvf $F >/dev/null
+tar zxvf $F >/dev/null 2>&1
 set +e
 killall -9 proxy >/dev/null 2>&1
 set -e

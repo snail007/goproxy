@@ -347,20 +347,35 @@
 <h4 id="商业版使用">商业版使用</h4>
 
 <ol>
-<li><p>去平台授权平台 <a href="https://gpm.host900.com/?lang=zh-CN">https://gpm.host900.com/?lang=zh-CN</a> 注册一个用户。</p></li>
+<li><p>去平台授权平台 <a href="https://gpm.host900.com/?lang=zh-CN">点击进入</a> 注册一个用户。</p></li>
 
-<li><p>如果使用<code>机器码</code>授权方式，首次执行：<code>proxy http</code>，控制面板执行<code>proxy-admin</code>， 并<strong>等待程序自己退出，不要手动结束程序</strong>，
-然后会在当前目录下面生成id.txt文件，控制面板 Linux: <code>/etc/gpa/id.txt</code>，Windows: <code>C:\gpa\id.txt</code>，里面是当前机器的机器码，
-然后在授权后台自助在线购买机器码。然后点击菜单<code>我的机器码</code>，点击列表操作列的<code>修改</code>,把id.txt内的机器码填入到机器码输入框里面，然后保存即可完成授权。
-或者联系 <code>arraykeys@gmail.com</code> 购买卡密，去授权平台后台点击菜单<code>添加机器码</code>输入<code>卡密</code>完成机器码购买。</p></li>
+<li><p>获取机器的机器码（<code>机器码</code>授权方式）：</p>
 
-<li><p>如果是<code>授权码</code>方式授权，首先购买授权码，然后会在授权平台里面看见自己的授权码。加上授权码参数<code>--authcode 授权码</code>启动程序即可，也可以设置环境变量<code>LIC_AUTHCODE</code>内容为授权码，如果没有使用参数<code>--authcode</code>，程序尝试从环境变量<code>LIC_AUTHCODE</code>获取授权码。如果是sdk，start方法有授权码参数，使用购买的授权码即可。</p></li>
+<ul>
+<li>如果是<code>goproxy商业版</code>，那么首次执行：<code>proxy http</code>， 并<strong>等待程序自己退出，不要手动结束程序</strong>，
+然后会在当前目录下面生成id.txt文件，里面是当前机器的机器码，另外命令行也会显示机器码<code>code:</code>后面的东西，注意不包含空格。</li>
+<li>如果是<code>proxy-admin 商业版 控制面板</code>和<code>proxy-admin vip 控制面板</code>，那么首次执行：<code>proxy-admin</code>不带任何参数， 并<strong>等待程序自己退出，不要手动结束程序</strong>，
+然后会在当前目录和下面的路径生成id.txt文件，Linux位于: <code>/etc/gpa/id.txt</code>，Windows位于: <code>C:\gpa\id.txt</code>，里面内容是当前机器的机器码。</li>
+<li>另外直接执行命<code>proxy-admin</code>不带任何参数，行也会显示机器码，即<code>code:</code>后面的东西，注意不包含空格。</li>
+<li>然后在授权后台，在线自助购买，购买机器码名额。然后点击菜单<code>我的机器码</code>，点击列表操作列的<code>修改</code>,把id.txt内的机器码填入到机器码输入框里面，然后保存即可完成授权。</li>
+<li>卡密方式，此方式可以大批量添加机器码，如需要此方式，可联系 <code>arraykeys@gmail.com</code> 购买卡密，去授权平台后台点击菜单<code>添加机器码</code>输入<code>卡密</code>完成机器码购买。</li>
+</ul></li>
 
-<li><p>商业版下载，打开下面下载地址后，下载文件列表中文件名后缀是：_commercial.tar.gz的为商业版。请根据自己系统情况下载。
-下载地址：<code>https://github.com/snail007/goproxy/releases</code></p></li>
+<li><p><code>授权码</code>方式授权，目前只有<code>goproxy商业版</code>有此授权方式。首先点击进入 <a href="https://gpm.host900.com/">授权后台</a> ，登录后，点击菜单，我的授权码<code>-&gt;</code>在线购买授权码，
+然后会在<code>我的授权码列表</code>看见购买的<code>授权码</code>。 然后就是启动<code>proxy</code>的时候加上授权码参数<code>--authcode 授权码</code>启动程序即可，也可以设置环境变量<code>LIC_AUTHCODE</code>内容为授权码，
+如果没有使用参数<code>--authcode</code>，程序尝试从环境变量<code>LIC_AUTHCODE</code>获取授权码。</p></li>
 
-<li><p>完全手册：<a href="https://github.com/snail007/goproxy/blob/master/README_ZH.md">https://github.com/snail007/goproxy/blob/master/README_ZH.md</a><br />
-新版手册：<a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</a></p></li>
+<li><p>商业版下载，进入对应项目的首页，点击中文介绍，有详细的下载安装说明。</p>
+
+<ul>
+<li>下载文件列表中文件名后缀是：_commercial.tar.gz的为商业版。请根据自己系统情况下载。</li>
+<li>所有软件项目地址：<a href="https://snail007.host900.com/goproxy/manual/zh/#/?id=%e5%85%8d%e8%b4%b9%e7%89%88%e3%80%81%e5%95%86%e4%b8%9a%e7%89%88%e8%af%b4%e6%98%8e">点击进入</a></li>
+</ul></li>
+
+<li><p>注意：不同名字的软件，是不同的软件，不同的软件需要各自购买授权，所以要确保购买的软件和安装的软件是一致的。</p></li>
+
+<li><p>完全手册：<a href="https://github.com/snail007/goproxy/blob/master/README_ZH.md">点击进入</a><br />
+新版手册：<a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">点击进入</a></p></li>
 </ol>
 
 <h4 id="提醒">提醒</h4>
@@ -382,9 +397,12 @@
 <li><p>购买商业版之前你可以免费试用7天，以用来确定GOPROXY商业版功能是否满足你的需求。</p></li>
 
 <li><p>试用步骤：登录<a href="https://gpm.host900.com/?lang=zh-CN">授权平台</a> -&gt; 机器码管理 -&gt; 在线购买 -&gt; 点击&rdquo;开始试用&rdquo;。</p></li>
-</ol>
 
-<h4 id="商业版用户须知">商业版用户须知</h4>
+<li><p>proxy-vip控制面板，proxy-admin控制面板商业版均不支持试用，因为它们和免费版proxy-vip界面和操作一样。
+proxy-admin控制面板功能和goproxy商业版功能一样，区别是</p>
+
+<h4 id="商业版用户须知">商业版用户须知</h4></li>
+</ol>
 
 <p>1、官方免费提供首次安装指导。</p>
 

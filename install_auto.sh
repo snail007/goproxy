@@ -8,13 +8,13 @@ mkdir /tmp/proxy
 cd /tmp/proxy
 
 echo -e "\n>>> downloading ... $F\n"
-manual="https://snail.gitee.io/proxy/manual/"
+manual="https://snail007.host900.com/goproxy/manual/zh/"
 LAST_VERSION=$(curl --silent "https://mirrors.host900.com/https://api.github.com/repos/snail007/goproxy/releases/latest" | grep -Po '"tag_name":"\K.*?(?=")')
 wget  -t 1 "https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/${LAST_VERSION}/$F"
 
 echo -e ">>> installing ... \n"
 # #install proxy
-tar zxvf $F >/dev/null
+tar zxvf $F >/dev/null 2>&1
 set +e
 killall -9 proxy >/dev/null 2>&1
 set -e

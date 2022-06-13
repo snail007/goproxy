@@ -1,21 +1,28 @@
-## Advertisement
-<a href="https://www.huobi.bi/zh-cn/topic/invited/?invite_code=qpi54">
-<img width="auto" height="100" src="/doc/images/zanzhu-1.png"/>
+## IP Proxies Recommendation
+<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
+<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
 </a>
 
 ## GOPROXY Introduction
-<img src="https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/logo.jpg" width="200" height="auto"/>
+
+<div align="center">
+<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/logo.jpg" width="500" height="auto"/>
+
+[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
+
+---
+
 The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss proxy, websocket proxies, tcp proxies, udp proxies,  game shield, game proxies. Support forward proxies, reverse proxy, transparent proxy, internet nat proxies, https proxy load balancing, http proxy load balancing , socks5 proxies load balancing, socket proxy load balancing, ss proxy load balancing, TCP / UDP port mapping, SSH transit, TLS encrypted transmission, protocol conversion, anti-pollution DNS proxy, API authentication, speed limit, limit connection. Reverse proxies to help you expose a local server behind a NAT or firewall to the internet so that you or your visitors can access it directly and easily. 
 
----
-
-[![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases) 
+</div>
 
 ---
+
+## 中文用户请看 *中文说明*，中文与英文内容的安装等资源链接是不一样的，谢谢合作！
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
-- [使用必读](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
-- [参考手册](https://snail007.host900.com/goproxy/manual/zh/)
+- [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
+- [使用手册](https://snail007.host900.com/goproxy/manual/zh/)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [Download](https://github.com/snail007/goproxy/releases)
 - [Desktop Edition](https://github.com/snail007/proxy_admin_free)
@@ -36,7 +43,7 @@ And ProxyAdmin is a powerful web console of snail007/goproxy .
 - Communication encryption, if the program is not a level one proxies, and the upper level proxies is also the program, then the communication between the upper level proxies and the upper level proxies can be encrypted, and the underlying tls high-intensity encryption is used, and the security is featureless.
 - Smart HTTP, SOCKS5 proxy, will automatically determine whether the visited website is blocked. If it is blocked, it will use the upstream proxies (provided that the upstream proxies is configured) to access the website; if the visited website is not blocked, in order to speed up the access, the proxies will Direct access to the website without using a upstream proxies.
 - Domain name black and white list, more free to control the way the website is accessed.
-- Cross-platform, whether you are widows, linux, mac, or even raspberry pie, you can run the proxy very well.
+- Cross-platform, whether you are windows, linux, mac, or even raspberry pie, you can run the proxy very well.
 - Multi-protocol support, support for HTTP(S), TCP, UDP, Websocket, SOCKS5 proxy.
 - TCP/UDP port forwarding.
 - Support intranet penetration, protocol supports TCP and UDP.
@@ -140,6 +147,38 @@ chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
 
+## UPDATE
+
+### Linux
+
+```shell
+proxy update
+```
+
+Force update.
+
+```shell
+proxy update -f
+```
+
+### Windows
+
+For example `proxy` placed in `c:\gp\proxy`.
+
+```bat
+c:\
+cd gp
+proxy update
+```
+
+Force update.
+
+```shell
+c:\
+cd gp
+proxy update -f
+```
+
 ## TODO
 - http,socks proxy multiple upstream load balancing?
 - http(s) proxy to increase pac support?
@@ -149,7 +188,7 @@ chmod +x install_commercial.sh
 Proxy is licensed under GPLv3 license.
 
 ## Contact
-Official QQ exchange group: 42805407
+Official QQ exchange group: 608062193
 
 ## Donation
 If the proxy helps you solve a lot of problems, you can better support the proxy through the donation below.
@@ -170,6 +209,11 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 ## Goproxy Manual
 
+
+### IP Proxies Recommendation
+<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
+<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
+</a>
 
 ## How to Install
   
@@ -275,7 +319,7 @@ For example: `proxy http -p ":9090" --forever --log proxy.log --daemon`
 
 ### 8. Security advice  
 
-When the VPS is behind the nat device, the vps network card IP is the intranet IP. At this time, you can use the -g parameter to add the vps external network ip to prevent the infinite loop.  
+When the VPS is behind the nat device, the vps network interface IP is the intranet IP. At this time, you can use the -g parameter to add the vps external network ip to prevent the infinite loop.  
 
 Suppose your vps external network ip is 23.23.23.23. The following command sets 23.23.23.23 with the -g parameter.  
 
@@ -670,6 +714,27 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 `proxy http -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the outgoing IP, the `entry IP` and the `outgoing IP` cannot be referenced artificially. If you want the ingress IP and the egress IP to be different, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`, `[2000:0:0:0:0 :0:0:1]:8080`. For multiple binding requirements, the `--bind-ip` parameter can be repeated.
+
+For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`Proxy tcp -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888 -T tcp -P 2.2.2.2:3322`
+
+Then the client access port `7777`, the outgoing IP is `5.5.5.5`, access port `8888`, the outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+s
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
+
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, and then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, such as: `--bind-ip eth0.*:7777`, then the client accesses the port `7777`, and the egress IP is randomly selected from the IP of the network interface starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:777`, then the client accesses the `7777` port, the  outgoing IP is all the IPs of the machine, and matches the IP of `192.168.?.*` A randomly selected one.
+- It can also be several combinations of network interface name and IP, and several selective divisions using half-width, such as: `-bind-ip pppoe??,192.168.?.*:7777`, and then the client accesses the `7777` port , The  outgoing IP is the machine's network interface name matching `pppoe??`
+  It is randomly selected from the IP matching `192.168.?.*` in the machine IP.
+- The wildcard character `*` represents 0 to any character, `? `Represents 1 character.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
+
 ### 1.17 Certificate parameters use base64 data  
 
 By default, the -C, -K parameter is the path to the crt certificate and the key file.  
@@ -678,7 +743,7 @@ If it is the beginning of base64://, then the latter data is considered to be ba
 
 ### 1.18 Intelligent mode  
 Intelligent mode setting, can be one of intelligent|direct|parent.  
-The default is: intelligent.  
+The default is: parent.  
 The meaning of each value is as follows:  
 `--intelligent=direct`, the targets in the blocked are not directly connected.  
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
@@ -777,6 +842,28 @@ Port: the port of the proxy
 When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified exit IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
 
 `proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
+
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and the ` outgoing IP` cannot be referenced artificially. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter identification.
+
+For example, this machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`Proxy tcp -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888 -T tcp -P 2.2.2.2:3322`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one can be specified. The detailed description is as follows:
+
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
 
 ### 2.8 Speed limit, connections limit
 
@@ -1280,6 +1367,28 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 `proxy socks -t tcp -p 2.2.2.2:33080 --bind-listen`  
 
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and ` outgoing IP` cannot be interfered by humans. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter.
+
+For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`proxy socks -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one. The details are as follows:
+
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
+
 ### 5.15 Cascade Certification  
 
 SOCKS5 supports cascading authentication, and -A can set upstream authentication information.  
@@ -1301,7 +1410,7 @@ If it is the beginning of base64://, then the latter data is considered to be ba
 
 ### 5.17 Intelligent mode  
 Intelligent mode setting, can be one of intelligent|direct|parent.  
-The default is: intelligent.  
+The default is: parent.  
 The meaning of each value is as follows:  
 `--intelligent=direct`, the targets in the blocked are not directly connected.  
 `--intelligent=parent`, the target that is not in the direct is going to the higher level.  
@@ -1543,6 +1652,28 @@ The `--bind-listen` parameter can be used to open the client connection with the
 
 `proxy sps -S socks -P 2.2.2.2:33080 -T tcp -Z password -l 100K -t tcp --bind-listen -p :33080`  
 
+#### Flexible Outgoing IP
+
+Although the above `--bind-listen` parameter can specify the  outgoing IP, the `entry IP` and ` outgoing IP` cannot be interfered by humans. If you want the ingress IP to be different from the egress IP, you can use the `--bind-ip` parameter, format: `IP:port`, for example: `1.1.1.1:8080`
+, `[2000:0:0:0:0:0:0:1]:8080`. For multiple binding requirements, you can repeat the `--bind-ip` parameter.
+
+For example, the machine has IP `5.5.5.5`, `6.6.6.6`, and monitors two ports `8888` and `7777`, the command is as follows:
+
+`proxy sps -t tcp -p :8888,:7777 --bind-ip 5.5.5.5:7777 --bind-ip 6.6.6.6:8888`
+
+Then the client access port `7777`, the  outgoing IP is `5.5.5.5`, access port `8888`, the  outgoing IP is `6.6.6.6`, if both `--bind-ip` and `--bind- are set at the same time listen`,`--bind-ip` has higher priority.
+
+In addition, the `IP` part of the `--bind-ip` parameter supports specifying the `network interface name`, `wildcards`, and more than one. The details are as follows:
+
+- Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
+- The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
+  It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
+- The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
+- If the IP of the network interface changes, it will take effect in real time.
+- You can use the `--bind-refresh` parameter to specify the interval to refresh the local network interface information, the default is `5`, the unit is second.
+
 ### 6.13 Certificate parameters use base64 data  
 
 By default, the -C, -K parameter is the path to the crt certificate and the key file.  
@@ -1760,7 +1891,6 @@ Local execution:
 Then the local UDP port 53 provides a secure anti-pollution DNS resolution function.  
 
 #### 8.2.8 Custom encrypted SOCKS5 upstream agent  
-   
 Suppose there is a upstream agent: 2.2.2.2:33080  
 The commands executed by the upstream agent are:  
 `proxy socks -t kcp -p :33080 -z password`  
@@ -1832,17 +1962,19 @@ if($ok){
     header("ipconns:2000");  
     header("userrate:3000");  
     header("iprate:8000");  
-    header("UPSTREAM:http://127.0.0.1:3500?parent-type=tcp");  
+    header("outgoing:http://127.0.0.1:3500?parent-type=tcp");  
+    header("outgoing:1.1.1.1");  
     header("HTTP/1.1 204 No Content");  
 }
 ```  
 
 #### Explanation  
-Userconns: The maximum number of connections for the user, not limited to 0 or not set this header.  
-Ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
-Userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.  
-Iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.  
-Upstream: The upstream used, not empty, or not set this header.  
+userconns: The maximum number of connections for the user, not limited to 0 or not set this header.  
+ipcons: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
+userrate: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.  
+iprate: The single TCP connection rate limit of the user IP, in bytes/second, not limited to 0 or not set this header.  
+upstream: The upstream used, not empty, or not set this header.  
+outgoing: The outgoing ip，this option only working which upstream is empty. And the IP must belong to the machine running proxy。
 
 #### Tips  
 1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty when client didn't send username and password.  
@@ -1864,15 +1996,17 @@ Explanation: `http://`,`socks5://` is fixed, `127.0.0.1:3100` is the address of 
 2. When `sps` is 1.  
 Upstream supports socks5, http(s) proxy, support authentication, format: `protocol://a:b@2.2.2.2:33080?argk=argv`, please refer to SPS chapter for details, **multiple upstreams** , the description of the `-P` parameter.  
 3. Parameters, `?` followed by `argk=argv` are parameters: parameter name = parameter value, multiple parameters are connected with `&`.  
-All the supported parameters are as follows, and the meaning of the command line with the same name is the same.  
-1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
-2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
-3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
-4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
-5. timeout : timeout for establishing tcp connection, number, in milliseconds  
-6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
-7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
-8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
+All the supported parameters are as follows, and the meaning of the command line with the same name is the same.
+
+   1. parent-type : upper-level transport type, support tcp, tls, ws, wss  
+   2. parent-ws-method: The encryption method of the upper-level ws transmission type, the supported value is the same as the value range supported by the command line.  
+   3. parent-ws-password: The upper-level ws transmission type encryption password, the alphanumeric password  
+   4. parent-tls-single : Whether the upper-level tls transport type is a one-way tls, which can be: true | false  
+   5. timeout : timeout for establishing tcp connection, number, in milliseconds  
+   6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.  
+   7. cert : The base64 encoded string of the higher level tls transport type certificate file.  
+   8. key : The base64 encoded string of the higher-level tls transport type certificate key file.  
+   9. luminati:if upstram is luminati proxies，value can be: true or false。
 
 ### Traffic report / Traffic limit / Traffic statistics
 
@@ -1894,12 +2028,15 @@ The following is a complete URL request example:
 `http://127.0.0.1:33088/user/traffic?bytes=337&client_addr=127.0.0.1%3A51035&id=http&server_addr =127.0.0.1%3A33088&target_addr=myip.ipip.net%3A80&username=a`
 
 Request parameter description:
-id: service id flag.
-server_addr: proxies's address requested by the client, format: IP: port.
-client_addr: client address, format: IP: port.
-target_addr: target address, format: "IP: port", when tcp / udp proxy, this is empty.
-User name: proxy authentication user name, this is empty when tcp / udp proxy.
-bytes: the number of traffic bytes used by the user.
+id: service id flag. 
+server_addr: proxies's address requested by the client, format: IP: port. 
+client_addr: client address, format: IP: port. 
+target_addr: target address, format: "IP: port", when tcp / udp proxy, this is empty. 
+User name: proxy authentication user name, this is empty when tcp / udp proxy. 
+bytes: the number of traffic bytes used by the user. 
+out_local_addr: outgoing tcp connection's local address,format: IP: port. 
+out_remote_addr: outgoing tcp connection's remote address,format: IP: port. 
+upstream: upstream used by outgoing tcp connection, if none upstream be used, it's empty. 
 
 #### Tips
 
@@ -2035,3 +2172,24 @@ Client service parameters can use placeholders: `{AGENT_ID}` to refer to the age
 For example, client service parameters:
 
 `client -T tcp -P 1.1.1.1:30000 --k {AGENT_ID}`
+
+## 12. http, https website reverse proxy
+
+The proxy can reverse proxy http and https websites.
+
+The supported features are as follows:
+- http and https are converted to each other.
+- multiple upstream.
+- upstream load balance.
+- upstream high available.
+- path mapping.
+- path protection.
+- alias names of bindings.
+
+Example, configure file:`rhttp.toml`。
+
+```shell
+proxy rhttp -c rhttp.toml
+```
+
+For detail usage, please refer to the configuration file [rhttp.toml](https://github.com/snail007/goproxy/blob/master/rhttp.toml), which has a complete configuration description.

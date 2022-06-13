@@ -1,0 +1,96 @@
+# minimal example
+[[host]]
+bind="http://demo.com/"
+target="https://127.0.0.1:9090/"
+upstream="127.0.0.1:9090"
+
+# example: http to https
+#[[host]]
+#bind="https://localhost"
+#tlscert="default"
+#target="http://www.baidu.com/"
+#upstream="www.baidu.com:80"
+#timeout=3000
+
+# example: http to http
+#[[host]]
+#bind="http://demo.com"
+#target="http://www.baidu.com/path/"
+#upstream="www.baidu.com:80"
+#timeout=3000
+
+# example: https to https
+#[[host]]
+#bind="https://demo.com"
+#tlscert="proxy.crt"
+#tlskey="proxy.key"
+#target="https://www.baidu.com/"
+#upstream="www.baidu.com:443"
+#timeout=3000
+
+######################################################################
+# All configuration keys of section [[host]].
+# A [[host]] is a section.
+# You can set multiple [[host]] for the different binding.
+######################################################################
+#[[host]]
+
+######################################################################
+# 1.listen on http or https port in url,
+#   default http port is 80, https defalt https port is 443.
+# 2.multiple binding elements split by space.
+######################################################################
+#bind="https://demo.com/ http://demo2.com/"
+
+######################################################################
+# 1.the binding is https, you can set the certificate and key file.
+# 2.tlscert is the https certificate file.
+# 3.tlskey is the https certificate key file.
+######################################################################
+#tlscert="proxy.crt"
+#tlskey="proxy.key"
+
+######################################################################
+# 1.all requests to binding url will send to the target url.
+# 2.you can set the target path FOO_PATH, or leave it empty.
+# 3.the finally path send to taget is "/FOO_PATH/PATH", PATH is
+#   bind-path, if not set, it is empty.
+# 4.the HOST HTTP header send to upstream is the host in target url.
+######################################################################
+#target="https://demo.com/FOO_PATH"
+
+######################################################################
+# 1.you can set multiple upstreams.
+# 2.proxy will select one upstream by the --lb-method rule.
+# 3.multiple upstreams separated by space.
+# 4.upstream host can be ip or domain, format is HOST:PORT.
+######################################################################
+#upstream="10.0.0.10:443 app.com:443"
+
+######################################################################
+# 1.you can set some path access forbidden.
+# 2."403 path" regex expression supported.
+# 3.you can set mutiple path, it is a path array.
+######################################################################
+#403=["/admin","/auth","^/user/.*html$"]
+
+######################################################################
+# 1.you can set the timeout milliseconds connect to target.
+# 2."403 path" regex expression supported.
+# 3.you can set mutiple path, it is a path array.
+######################################################################
+#timeout=3000
+
+##########################################################################
+# 1.you can set the alias name of binding.
+# 2.the first element is bind to, it should be one element of bind value.
+# 3.the else elements are alias host names, name format is HOST:PORT, it
+#   will be set in the HTTP header HOST send to the upstream.
+##########################################################################
+#bind-alias=["https://demo.com www.foo.com:443"]
+
+######################################################################
+# 1.the request's path must be has a prefix in the bind-path array.
+#bind-path=["/PATH"]
+
+
