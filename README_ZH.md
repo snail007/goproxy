@@ -1,8 +1,3 @@
-## 稳定优质IP代理商推荐
-<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
-</a>
-
 ## GOPROXY简介
 
 <div align="center">
@@ -223,12 +218,6 @@ Proxy is licensed under GPLv3 license。
 
 ## goproxy使用手册
 
-
-### 稳定优质IP代理商推荐
-
-<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
-</a>
 
 ## 如何安装
 

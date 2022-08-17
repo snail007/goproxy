@@ -1,8 +1,3 @@
-## IP Proxies Recommendation
-<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
-</a>
-
 ## GOPROXY Introduction
 
 <div align="center">
@@ -209,11 +204,6 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 ## Goproxy Manual
 
-
-### IP Proxies Recommendation
-<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
-</a>
 
 ## How to Install
   

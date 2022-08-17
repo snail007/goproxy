@@ -1,9 +1,3 @@
-### 稳定优质IP代理商推荐
-
-<a href="https://brightdata.grsm.io/9gnzdzgpvtmo">
-<img width="auto" height="100" src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/brightdata.png"/>
-</a>
-
 ## 如何安装
 
 ### 1. Linux安装
