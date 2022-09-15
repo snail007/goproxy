@@ -1,3 +1,8 @@
+## Advertisement
+<a href="https://www.lybg1688.com/join/GOPROXY">
+<img width="auto" height="100" src="/doc/images/zanzhu-2.jpg"/>
+</a>
+
 ## GOPROXY Introduction
 
 <div align="center">
