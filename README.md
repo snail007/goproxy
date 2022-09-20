@@ -1166,11 +1166,7 @@ Senat type judgment, easy to check whether the network supports p2p, you can exe
 ## 5.SOCKS5 Proxies  
 prompt:  
 
-SOCKS5 proxy, support CONNECT, UDP protocol, does not support BIND, supports username and password authentication.  
-
-*** If your VPS is Alibaba Cloud, Tencent Cloud is a VPS, if ifconfig can't see your public IP, you can only see the intranet IP, ***  
-
-*** Then you need to add the `-g VPS public network IP` parameter, the UDP function of the SOCKS5 proxy can work normally. ***  
+SOCKS5 proxy, support CONNECT, UDP protocol, does not support BIND, supports username and password authentication.
 
 ***The udp function of socks5 is turned off by default, and can be turned on by `--udp`. The default is a random port for handshake, and performance can be improved by fixing a port.
 Set by parameter `--udp-port 0`, `0` represents a free port is randomly selected, or you can manually specify a specific port. ***
@@ -1267,10 +1263,6 @@ Level 1 HTTP proxy (VPS, IP: 22.22.22.22)
 Secondary HTTP proxy (local Linux)  
 `proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 Then access the local port 8080 is to access the proxy port 38080 on the VPS, the data is transmitted through the kcp protocol.  
-
-notice:
-
-When using the kcp protocol locally, you need to specify the vps public network IP with -g, and the UDP function of socks5 is fully used. At this time, -g is the IP address in the UDP address returned to the client.
 
 ### 5.9. Custom DNS  
 --dns-address and --dns-ttl parameters, used to specify the dns (--dns-address) used by the proxy to access the domain name.  
@@ -1436,10 +1428,6 @@ Listen port argument `-p` can be:
   -p ":8081,:8082"  listen on 8081 and 8082
   -p ":8081,:8082,:9000-9999" listen on 8081 and 8082 and 9000 and 9001 to 9999, 1002 total ports  
 ```
-
-notice:
-
-When using the kcp protocol locally, you need to specify the vps public network IP with -g, and the UDP function of socks5 is fully used. At this time, -g is the IP address in the UDP address returned to the client.
 
 The udp function of ss is turned off by default and can be turned on by `--ssudp`. The udp function of socks5 is turned off by default and can be turned on by `--udp`, The default is a random port for handshake, and performance can be improved by fixing a port.
 Set by parameter `--udp-port 0`, `0` represents a free port is randomly selected, or you can manually specify a specific port.
@@ -2058,23 +2046,31 @@ Then this problem can be solved through the control interface. The control inter
 
 #### Request Description
 
-The proxy sends an HTTP POST request to the control interface URL. There are two fields in the form data: user and ip.
+An HTTP POST request will be sent to the control. The interface `form` has three fields: interface, ip, conns, and the `conns` field requires a user whose proxy version is greater than proxy `12.2`.
 
-user: the user name currently connected to the proxy, multiple are separated by commas, for example: user1, user2
+`user` The username currently connected to the agent, multiple separated by commas, for example: user1, user2
+ 
+`ip`  The client IP is connected to the proxy, and multiple clients using English are split addresses, for example: 1.1.1.1, 2.2.2.2
 
-ip: The IP address of the client currently connected to the proxy, multiple are separated by commas, for example: 1.1.1.1, 2.2.2.2
+`conns` The tcp connection information currently connecting to the proxy port to transmit data. The conns value is a json string, the format is a sequence of connections, the element is an object, the object contains the details of the connection,
+conns format: `[{"id":"ab7bf1f10501d6f7","client":"127.0.0.1:62112","server":"127.0.0.1:9092","user":""}]`
+Object field description: id: connection id, client: client's unique IP address and port, server: client's IP and no port access, user's connection authentication (null if any)
 
 #### Response Data Description
 
-The data returned by the control interface is invalid user and IP, the format is a json object data, there are two fields user and ip.
+The data returned by the control interface is invalid user and IP or connection. The format is a json object data. There are three fields user, ip, and conns. The `conns` field requires the proxy version greater than or equal to `12.2`.
+Format: `{"user":"a,b","ip":"",conns:["ab7bf1f10501d6f7","cb7bf1f10501d6f7"]}`
 
-For example: {"user": "a, b", "ip": ""}
+`user`: The username currently connected to the proxy, multiple separated by commas, not left blank, for example: user1, user2
 
-user: the user name currently connected to the proxy, multiple are separated by commas, not left blank, for example: user1, user2
+`ip`: The ip address of the client currently connected to the proxy, multiple separated by commas, not left blank, for example: 1.1.1.1, 2.2.2.2
 
-ip: The ip address of the client currently connected to the proxy. Multiple are separated by commas and not left blank.
+`conns`: is an array, the element is a connection id, this id is the id field of the connection object in conns in the above `Request Description`.
 
-The connection between the returned user and ip will be disconnected by proxy.
+Introduce:
+- The connection established by the returned user and ip will be disconnected by the proxy.
+- Connections matching the returned conns will be disconnected by the proxy.
+- If the returned data contains both: user or ip, and conns, then the user or ip will be ignored, and only the connection matching conns will be disconnected.
 
 #### Example
 Suppose --control-url `http://127.0.0.1:33088/user/control.php` points to a PHP interface address.
@@ -2093,7 +2089,7 @@ foreach ($userArr as $user) {
     //logic business, push invalid user into $badUsers
     $badUsers[]=$user;
 }  
-$data=["user"=>implode(","$badUsers),"ip"=>""];
+$data=["user"=>implode(","$badUsers),"ip"=>"","conns"=>[]];
 
 echo json_encode($data);
 ```  

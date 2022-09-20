@@ -1274,10 +1274,6 @@ nat类型判断,方便查看网络是否支持p2p，可以执行：`proxy tools 
 
 SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码认证。
 
-***如果你的VPS是阿里云，腾讯云这种VPS，就是ifconfig看不见你的公网IP，只能看见内网IP，***
-
-***那么需要加上`-g VPS公网IP`参数，SOCKS5代理的UDP功能才能正常工作。***
-
 ***socks5的udp功能默认关闭，可以通过--udp开启，默认是握手随机端口，可以通过固定一个端口提高性能， 通过参数--udp-port 0设置，0代表随机选择一个空闲端口，也可以手动指定一个具体端口。***
 
 ### 5.1 普通SOCKS5代理
@@ -1365,15 +1361,11 @@ SOCKS5代理，支持CONNECT，UDP协议，不支持BIND，支持用户名密码
 KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 
 一级HTTP代理(VPS，IP:22.22.22.22)  
-`proxy socks -t kcp -p ":38080" --kcp-key mypassword -g 22.22.22.22`
+`proxy socks -t kcp -p ":38080" --kcp-key mypassword`
 
 二级HTTP代理(本地Linux)  
 `proxy socks -t tcp -p ":8080" -T kcp -P "22.22.22.22:38080" --kcp-key mypassword`  
 那么访问本地的8080端口就是访问VPS上面的代理端口38080，数据通过kcp协议传输。
-
-提示:
-
-当本地使用kcp协议时,需要用-g指定vps公网IP,socks5的UDP功能才能正常使用.这时-g是返回给客户端的UDP地址中的IP地址.
 
 ### 5.9.自定义DNS
 
@@ -1561,8 +1553,6 @@ rc4-md5-6 ， salsa20 ， xchacha20
 ```
 
 提示:
-
-当本地使用kcp协议时,需要用-g指定vps公网IP,socks5的UDP功能才能正常使用.这时-g是返回给客户端的UDP地址中的IP地址.
 
 ss的udp功能默认关闭，可以通过--ssudp开启。socks5的udp功能默认关闭，可以通过--udp开启，默认是握手随机端口，可以通过固定一个端口提高性能， 通过参数--udp-port
 0设置，0代表随机选择一个空闲端口，也可以手动指定一个具体端口。
@@ -1816,6 +1806,11 @@ sps下级，限速100K
 - 通配符`*`代表0至任意多个字符，`?`代表1个字符。
 - 如果网卡IP发生变化，也会实时生效。
 - 可以通过`--bind-refresh`参数，指定刷新本地网卡信息的间隔，默认`5`，单位秒。
+
+#### 提示
+- sps提供的ss服务的udp功能不支持指定出口IP。
+- sps提供的http(s)/socks5/ss均支持指定出口ip。
+- sps提供的socks5的udp功能支持指定出口ip。
 
 ### 6.13 证书参数使用base64数据
 
@@ -2077,6 +2072,8 @@ proxy的http(s)/socks5/sps代理API功能，通过`--auth-url`和`--auth-nouser`
 `sps` 代理是否是sps提供的，1:是，0:否。  
 `target`  客户端要访问的目标，如果是http(s)代理，target是访问的具体url；如果是socks5代理，target是空。
 
+**客户端使用socks5的udp传输时，根据协议，服务端`proxy`会通过`--auth-url`认证两次，一次是tcp，一次是udp。**
+
 #### 示例
 
 假设--auth-url http://127.0.0.1:333/auth.php 指向了一个php接口地址.  
@@ -2212,23 +2209,31 @@ proxy的http(s)/socks5/sps代理功能支持`控制接口`,可以通过参数`--
 
 #### 控制接口请求说明
 
-proxy会向控制接口URL发送一个HTTP POST请求，表单数据中有两个字段：user和ip。
+proxy会向控制接口URL发送一个HTTP POST请求，`表单`数据中有三个字段：user、ip、conns，`conns`这个字段需要proxy版本大于等于`12.2`才有。
 
-user：当前连接到proxy的用户名，多个使用英文逗号分割，比如：user1,user2
+`user`：当前连接到proxy的用户名，多个使用英文逗号分割，比如：user1,user2
 
-ip：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，比如：1.1.1.1,2.2.2.2
+`ip`：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，比如：1.1.1.1,2.2.2.2
+
+`conns`: 当前所有正在连接到代理端口传输数据的tcp连接信息。conns值是一个json字符串，格式是一个数组，元素是一个对象，对象包含了连接的详细详细,  
+conns格式：`[{"id":"ab7bf1f10501d6f7","client":"127.0.0.1:62112","server":"127.0.0.1:9092","user":""}]`  
+对象字段说明：id：连接的唯一id，client：客户端IP地址和端口，server：客户端访问的代理IP和端口，user连接对应认证的用户名（如果有的话，没有为空）  
 
 #### 控制接口返回数据说明
 
-控制接口返回的数据是无效的用户和IP，格式是一个json对象数据，有两个字段user和ip。
+控制接口返回的数据是无效的用户和IP或者连接，格式是一个json对象数据，有三个字段user、ip、conns，`conns`这个字段需要proxy版本大于等于`12.2`才有。
+格式：`{"user":"a,b","ip":"",conns:["ab7bf1f10501d6f7","cb7bf1f10501d6f7"]}`
 
-比如：{"user":"a,b","ip":""}
+`user`：当前连接到proxy的用户名，多个使用英文逗号分割，没有留空，比如：user1,user2
 
-user：当前连接到proxy的用户名，多个使用英文逗号分割，没有留空，比如：user1,user2
+`ip`：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，没有留空，比如：1.1.1.1,2.2.2.2
 
-ip：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，没有留空，比如：1.1.1.1,2.2.2.2
+`conns`：是一个数组，元素是一个连接的id，这个id是上面`控制接口请求说明`里面的conns里面的连接对象的id字段。  
 
-返回的用户和ip已经建立的连接会被proxy断开。
+说明：  
+- 返回的用户和ip已经建立的连接会被proxy断开。
+- 返回的conns匹配的连接会被proxy断开。
+- 返回的数据，如果同时包含：user或者ip，和conns，那么user或者ip会被忽略，只会断开conns匹配的连接。
 
 #### 示例
 
@@ -2248,7 +2253,7 @@ foreach ($userArr as $user) {
     //逻辑判断用户$user是否无效,如果无效就放入$badUsers
     $badUsers[]=$user;
 }  
-$data=["user"=>implode(","$badUsers),"ip"=>""];
+$data=["user"=>implode(","$badUsers),"ip"=>"","conns"=>[]];
 
 echo json_encode($data);
 ```  
