@@ -2034,6 +2034,19 @@ $data=["user"=>implode(","$badUsers),"ip"=>"","conns"=>[]];
 echo json_encode($data);
 ```  
 
+如果代理连接数很大，代理control上报的POST的连接信息数据会比较大，此时可以使用参数`--control-gzip`开启gzip压缩POST的数据，
+但是服务端要解压对应的post的gzip数据，PHP示例代码如下：
+
+```php
+<?php
+parse_str(gzdecode(file_get_contents("php://input")),$query);
+$connsArr=json_decode($query["conns"]);
+$userArr=explode(",",$query["user"]);
+$ipArr=explode(",",$query["ip"]);
+$data=["user"=>"","ip"=>"","conns"=>[]];
+echo json_encode($data);
+```
+
 ### 使用代理
 
 http(s)/socks5/sps认证API(`--auth-url`)、控制API(`--control-url`)、流量上报API(`--traffic-url`)三个地址的访问，支持通过代理访问，参数是:`--auth-proxy`
