@@ -2244,7 +2244,8 @@ control.php内容如下：
 <?php  
 #接收proxy post过来的数据
 $userArr=explode(",",$_POST['user']);   
-$ipArr=$_GET['ip'];  
+$ipArr=$_POST['ip'];  
+$connsInfo=json_deocode($_POST['conns']);  
 
 //无效用户列表
 $badUsers=[]; 
