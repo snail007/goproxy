@@ -1859,6 +1859,7 @@ Introduce:
 - The connection established by the returned user and ip will be disconnected by the proxy.
 - Connections matching the returned conns will be disconnected by the proxy.
 - If the returned data contains both: user or ip, and conns, then the user or ip will be ignored, and only the connection matching conns will be disconnected.
+- When the connection is closed, if the authentication cache is enabled, the `user` or `IP` authentication cache will be cleared.
 
 #### Example
 Suppose --control-url `http://127.0.0.1:33088/user/control.php` points to a PHP interface address.
