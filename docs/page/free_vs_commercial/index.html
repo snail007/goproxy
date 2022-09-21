@@ -356,7 +356,7 @@
 然后会在当前目录下面生成id.txt文件，里面是当前机器的机器码，另外命令行也会显示机器码<code>code:</code>后面的东西，注意不包含空格。</li>
 <li>如果是<code>proxy-admin 商业版 控制面板</code>和<code>proxy-admin vip 控制面板</code>，那么首次执行：<code>proxy-admin</code>不带任何参数， 并<strong>等待程序自己退出，不要手动结束程序</strong>，
 然后会在当前目录和下面的路径生成id.txt文件，Linux位于: <code>/etc/gpa/id.txt</code>，Windows位于: <code>C:\gpa\id.txt</code>，里面内容是当前机器的机器码。</li>
-<li>另外直接执行命<code>proxy-admin</code>不带任何参数，行也会显示机器码，即<code>code:</code>后面的东西，注意不包含空格。</li>
+<li>另外直接执行命<code>proxy-admin</code>不带任何参数，也会显示机器码，即<code>code:</code>后面的东西，注意不包含空格。</li>
 <li>然后在授权后台，在线自助购买，购买机器码名额。然后点击菜单<code>我的机器码</code>，点击列表操作列的<code>修改</code>,把id.txt内的机器码填入到机器码输入框里面，然后保存即可完成授权。</li>
 <li>卡密方式，此方式可以大批量添加机器码，如需要此方式，可联系 <code>arraykeys@gmail.com</code> 购买卡密，去授权平台后台点击菜单<code>添加机器码</code>输入<code>卡密</code>完成机器码购买。</li>
 </ul></li>
@@ -377,6 +377,18 @@
 <li><p>完全手册：<a href="https://github.com/snail007/goproxy/blob/master/README_ZH.md">点击进入</a><br />
 新版手册：<a href="https://snail007.github.io/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/">点击进入</a></p></li>
 </ol>
+
+<h4 id="proxyadmin-授权码">proxyadmin 授权码</h4>
+
+<p><code>proxyadmin_coml</code>(商业版) 和 <code>proxyadmin_vip</code>(VIP版本)也支持<code>授权码</code>方式授权，但是授权码使用方式和goproxy不一样。</p>
+
+<p>安装<code>proxyadmin_coml</code>(商业版)或<code>proxyadmin_vip</code>(VIP版本)后，系统类型不一样，会在下面路径生成一个authcode.txt的空文件，只需要把购买的<code>授权码</code>写入该文件，然后执行<code>proxy-admin restart</code>重启程序即可。</p>
+
+<ul>
+<li>Linux：<code>/etc/gpa/authcode.txt</code></li>
+<li>macOS：<code>/etc/gpa/authcode.txt</code></li>
+<li>Windows：<code>C:\gpa\authcode.txt</code></li>
+</ul>
 
 <h4 id="提醒">提醒</h4>
 

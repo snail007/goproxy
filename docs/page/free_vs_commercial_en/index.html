@@ -354,6 +354,18 @@
 <li><p>If it is authorized by the <code>Authorization Code</code> method, first purchase the authorization code, and then you will see your authorization code in the authorization platform. Add the authorization code parameter <code>--authcode your_authorization_code</code> to start the program. You can also set the environment variable <code>LIC_AUTHCODE</code> as the authorization code. If the parameter <code>--authcode</code> is not used, the program tries to obtain the authorization from the environment variable <code>LIC_AUTHCODE</code>. code. If it is sdk, the start method has an authorization code parameter, and the purchased authorization code can be used.</p></li>
 </ol>
 
+<h4 id="proxyadmin-authorization-code">proxyadmin <code>Authorization Code</code></h4>
+
+<p><code>proxyadmin_coml</code> (commercial version) and <code>proxyadmin_vip</code> (VIP version) also support <code>authorization code</code> authorization, but the use of authorization code is different from goproxy.</p>
+
+<p>After <code>proxyadmin_coml</code> or <code>proxyadmin_vip</code> installed, the system type is different, an empty file of authcode.txt will be generated in the following path, just input the purchased <code>authorization code</code> to file authcode.txt, and then Execute <code>proxy-admin restart</code> to restart the program.</p>
+
+<ul>
+<li>Linux：<code>/etc/gpa/authcode.txt</code></li>
+<li>macOS：<code>/etc/gpa/authcode.txt</code></li>
+<li>Windows：<code>C:\gpa\authcode.txt</code></li>
+</ul>
+
 <h4 id="remind">Remind:</h4>
 
 <p>The commercial version will only check the authorization once online at the time of startup. It will not check the network again later. It will only be checked once the authorization code expires. If the authorization program cannot be successfully checked within 48 hours, it will exit.
