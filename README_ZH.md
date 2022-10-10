@@ -1,8 +1,3 @@
-## 赞助商广告
-<a href="https://www.lybg1688.com/join/GOPROXY">
-<img width="auto" height="100" src="/doc/images/zanzhu-2.jpg"/>
-</a>
-
 ## GOPROXY简介
 
 <div align="center">
