@@ -308,6 +308,8 @@ http
 
 比如: --log proxy.log，日志就会输出到proxy.log方便排除问题。
 
+默认会输出info和warn日志，如果只关注warn日志，可以使用`--warn`参数，只输出warn日志。
+
 ### 5. 生成加密通讯需要的证书文件
 
 http(s)代理、tcp代理、udp代理、socks5代理、内网穿透等功能和上级通讯的时候，为了安全我们采用TLS加密通讯，当然可以选择不加密通信通讯，本教程所有和上级通讯都采用加密，需要证书文件。
@@ -657,6 +659,8 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 比如：  
 `proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`
 
+`--dns-address` 支持设置多个dns地址，负载均衡，英文半角逗号分割。比如：--dns-address "1.1.1.1:53,8.8.8.8:53"
+
 ### 1.12 自定义加密
 
 proxy的http(s)代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据，除此之外还支持在tls和kcp之后进行自定义  
@@ -927,12 +931,24 @@ port:代理的端口
 
 ### 2.8 限速，限制连接数
 
-参数`--max-conns`可以限制每个端口的最大连接数。   
-比如限制每个端口最多1000个连接数：   
-`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --max-conns 1000`    
-参数`--rate-limit`可以限制每个tcp连接的速率。   
-比如限制每个tcp连接速率为100k/s：  
-`proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`
+- **限制连接数**   
+  参数`--max-conns`可以限制每个端口的最大连接数。   
+  比如限制每个端口最多1000个连接数：   
+  `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --max-conns 1000`
+- **限制tcp连接速率**   
+  参数`--rate-limit`可以限制每个tcp连接的速率。   
+  比如限制每个tcp连接速率为100k/s：  
+  `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --rate-limit 100k`
+- **限制客户端IP总速率**  
+  参数`--ip-rate`可以IP维度，限制每个客户端IP的总速率。
+  比如限制每个客户端IP总速率为1M/s：  
+  `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --ip-rate 1M`
+- **限制端口总速率**  
+  参数`--port-rate`可以在`服务IP:端口`维度，限制每个服务端口总速率。
+  比如限制每个端口总速率为10M/s：  
+  `proxy tcp -p ":33080" -T tcp -P "192.168.22.33:22" --port-rate 10M`
+- **联合限速**
+  `--rate-limit`和（`--ip-rate`或`--port-rate`）可以同时使用。既限制总速率，也限制单个tcp速率。
 
 ### 2.9 压缩传输
 
@@ -2049,6 +2065,7 @@ proxy的http(s)/socks5/sps代理功能，支持通过API控制用户对代理对
 - 动态上级，可以根据用户或者客户端IP，动态的从API获取其上级，支持http(s)/socks5/ss上级。
 - 认证每一个连接，无论是否要求客户端认证。
 - 缓存认证结果，时间可以设置，减轻API压力。
+- 用户维度、客户端IP维度、端口维度的总限速。
 
 #### 具体使用
 
@@ -2109,29 +2126,41 @@ if($ok){
     header("ipqps:2");
     header("upstream:http://127.0.0.1:3500?parent-type=tcp");  
     header("outgoing:1.1.1.1");  
+    header("userTotalRate:1024000");  
+    //header("ipTotalRate:10240");  
+    //header("portTotalRate:10240");  
     header("HTTP/1.1 204 No Content");  
 }
 ```  
 
 #### HTTP HEADER 头部字段解释
 
-`userconns`：用户的最大连接数，不限制为0或者不设置这个头部。  
-`ipconns`：IP的最大连接数，不限制为0或者不设置这个头部。   
-`userrate`：用户的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。  
-`iprate`：IP的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。  
-`userqps`：用户每秒可以建立的最大连接数，不限制为0或者不设置这个头部。  
-`ipqps`：IP每秒可以建立的最大连接数，不限制为0或者不设置这个头部。  
-`upstream`：使用的上级，没有为空，或者不设置这个头部。   
-`outgoing`: 使用的出口IP，这个设置，只有在upstream为空的的时候才有效，这里设置的IP必须是proxy所在机器具有的IP。  
+- `userconns`：用户的最大连接数，不限制为0或者不设置这个头部。
+- `ipconns`：IP的最大连接数，不限制为0或者不设置这个头部。
+- `userrate`：用户的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
+- `iprate`：IP的单个TCP连接速率限制，单位：字节/秒，不限制为0或者不设置这个头部。
+- `userqps`：用户每秒可以建立的最大连接数，不限制为0或者不设置这个头部。
+- `ipqps`：IP每秒可以建立的最大连接数，不限制为0或者不设置这个头部。
+- `upstream`：使用的上级，没有为空，或者不设置这个头部。
+- `outgoing`: 使用的出口IP，这个设置，只有在upstream为空的的时候才有效，这里设置的IP必须是proxy所在机器具有的IP。
+- `userTotalRate`：用户维度，限制用户的总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
+- `ipTotalRate`：客户端IP维度，限制客户端IP的总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
+- `portTotalRate`：带宽维度，限制一个带宽总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
+
+#### 限速详细说明
+1. 单个tcp限速（`userrate`、`iprate`）和总带宽速度（`userTotalRate`、`ipTotalRate`、`portTotalRate`）可以同时设置，
+   比如：设置用户总带宽速度是1M/s（`userTotalRate`设置1024000），还可以同时设置单个tcp速度是100K/s（`userrate`设置102400）
+2. 如果同时设置了`userTotalRate`、`ipTotalRate` 、`portTotalRate`，有效优先级是：`userTotalRate` -> `ipTotalRate` -> `portTotalRate`
+3. 如果同时设置了`userTotalRate`、`portTotalRate`，而且设置了`--auth-nouser`，那么所有没有发用户名的客户端会被认为是`同一个空用户名用户`，共用同一个限制。
 
 #### 提示
 
-1.默认情况下，设置了`--auth-url`是强制要求客户端提供用户名和密码的；如果不需要强制要求客户端提供用户名密码，并认证，可以加上`--auth-nouser`，每次访问仍然会访问认证地址`--auth-url`
-进行认证，当客户端没有发生认证信息当时候，php接口里面接收的$user认证用户名和$pass认证密码都为空。  
-2.连接数限制优先级：用户认证文件连接数限制-》文件ip.limit连接数限制-》API用户连接数限制-》API的IP连接数限制-》命令行全局连接数限制。  
-3.速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。  
-3.上级获取优先级：用户认证文件的upstream-》文件ip.limit的upstream-》API的upstream-》命令行指定的上级。  
-4.`--auth-cache`认证缓存，对认证结果缓存一定时间，提升性能，降低认证接口压力，--auth-cache 单位秒，默认0, 设置0是关闭缓存。
+1. 默认情况下，设置了`--auth-url`是强制要求客户端提供用户名和密码的；如果不需要强制要求客户端提供用户名密码，并认证，可以加上`--auth-nouser`，每次访问仍然会访问认证地址`--auth-url`
+   进行认证，当客户端没有发生认证信息当时候，php接口里面接收的$user认证用户名和$pass认证密码都为空。
+2. 连接数限制优先级：用户认证文件连接数限制-》文件ip.limit连接数限制-》API用户连接数限制-》API的IP连接数限制-》命令行全局连接数限制。
+3. 速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。
+4. 上级获取优先级：用户认证文件的upstream-》文件ip.limit的upstream-》API的upstream-》命令行指定的上级。
+5. `--auth-cache`认证缓存，对认证结果缓存一定时间，提升性能，降低认证接口压力，--auth-cache 单位秒，默认0, 设置0是关闭缓存。
 
 #### upstream详细说明
 
@@ -2223,9 +2252,9 @@ conns格式：`[{"id":"ab7bf1f10501d6f7","client":"127.0.0.1:62112","server":"12
 
 `ip`：当前连接到proxy的客户端ip地址，多个使用英文逗号分割，没有留空，比如：1.1.1.1,2.2.2.2
 
-`conns`：是一个数组，元素是一个连接的id，这个id是上面`控制接口请求说明`里面的conns里面的连接对象的id字段。  
+`conns`：是一个数组，元素是一个连接的id，这个id是上面`控制接口请求说明`里面的conns里面的连接对象的id字段。
 
-说明：  
+说明：
 - 返回的用户和ip已经建立的连接会被proxy断开。
 - 返回的conns匹配的连接会被proxy断开。
 - 返回的数据，如果同时包含：user或者ip，和conns，那么user或者ip会被忽略，只会断开conns匹配的连接。
@@ -2413,7 +2442,7 @@ proxy rhttp -c rhttp.toml
 
 为了方便说明，假设背景情况如下：
 
-1、有一批vps，它们每个都有一个主网卡配置了固定的IP：x.x.x.x，然后vps可以pppoe拨号，拨号建立的网卡名称前缀都是`pppoe_`。 
+1、有一批vps，它们每个都有一个主网卡配置了固定的IP：x.x.x.x，然后vps可以pppoe拨号，拨号建立的网卡名称前缀都是`pppoe_`。
 
 2、有一个VPS作为代理入口，它的ip是2.2.2.2。
 
@@ -2450,7 +2479,7 @@ Luminati提供了高质量稳定的住宅IP可以做很多事情，但是价格�
 2. 7777端口具有认证功能。
 
 操作步骤：
-1. 1.1.1.1的VPS执行：`proxy sps -p :7777 --disable-socks --disable-ss -a user1:pass1 -a user2:pass2 -P http://username:password@xxx.com:8888` 
+1. 1.1.1.1的VPS执行：`proxy sps -p :7777 --disable-socks --disable-ss -a user1:pass1 -a user2:pass2 -P http://username:password@xxx.com:8888`
 2. 命令中`-a`是设置`代理认证用户`，多个用户，可以重复`-a`参数，格式是：`用户名:密码`。
 
 提醒，此种做法，有可能带来Luminati限制你的账号风险，VPS的IP也有可能被可能Luminati屏蔽导致转换不能工作，风险自负。
@@ -2466,14 +2495,14 @@ Luminati提供了高质量稳定的住宅IP可以做很多事情，但是价格�
 为了方便说明，假设背景情况如下：
 
 1. 有一个http认证代理，地址是：2.2.2.2:8888，认证账号：abc，密码是：123。
-2. 有一个自己的VPS，IP是1.1.1.1。   
+2. 有一个自己的VPS，IP是1.1.1.1。
 
 实现的效果：
 
 1. 访问1.1.1.1的7777端口，无需认证，会转给2.2.2.2:8888代理。
 
 操作步骤：
-1. 1.1.1.1的VPS执行：`proxy sps -p :7777 -P http://abc:123@2.2.2.2:8888` 
+1. 1.1.1.1的VPS执行：`proxy sps -p :7777 -P http://abc:123@2.2.2.2:8888`
 
 ## 18.典型用法-镜像网站
 
@@ -2496,9 +2525,9 @@ target="https://github.com/"
 upstream="github.com:443"
 timeout=5000
 ```
-1. 在1.1.1.1的VPS执行：`proxy rhttp -c github.toml`  
+1. 在1.1.1.1的VPS执行：`proxy rhttp -c github.toml`
 2. 访问 `http://1.1.1.1:7777/snail007/` ，如果一切正常，就把命令加上后台运行参数即可。
-3. 命令改成：`proxy rhttp -c github.toml --daemon --log /tmp/github.log`  
+3. 命令改成：`proxy rhttp -c github.toml --daemon --log /tmp/github.log`
 4. 此功能需要`proxy`版本大于等于`v11.2`。
 
 如果是想使用域名比如a.com，那么：
