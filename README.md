@@ -174,27 +174,11 @@ cd gp
 proxy update -f
 ```
 
-## TODO
-- http,socks proxy multiple upstream load balancing?
-- http(s) proxy to increase pac support?
-- Welcome to add group feedback..
-
 ## License
 Proxy is licensed under GPLv3 license.
 
 ## Contact
-Official QQ exchange group: 608062193
-
-## Donation
-If the proxy helps you solve a lot of problems, you can better support the proxy through the donation below.
-
-BTC  ADDRESS: `1BJcBhGhREiz1q3VTYoiVPuAZy5PGxRG9z`
-
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/docs/img/btc.png" width="150" height="auto"/>  
-
-ETH  ADDRESS: `0x0fA4c567768d2E59E6221152EA52F4842866AFC8`
-
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/docs/img/eth.png" width="150" height="auto"/>  
+Official Telegram Group: [goproxy](https://t.me/snail007_goproxy)
 
 ### Source code declaration
 
