@@ -602,7 +602,7 @@ proxy不仅支持在其他软件里面通过设置代理的方式，为其他软
 `proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`
 
 注意:  
-proxy所在的服务器的DNS解析结果不能受到自定义的解析影响，不然就死循环了，proxy代理最好指定`--dns 8.8.8.8`参数。
+proxy所在的服务器的DNS解析结果不能受到自定义的解析影响，不然就死循环了，proxy代理最好指定`--dns-address 8.8.8.8`参数。
 
 ### 1.10 HTTP(S)透明代理
 

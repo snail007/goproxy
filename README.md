@@ -556,7 +556,7 @@ If there is a upstream agent, then refer to the above tutorial to set the upstre
 `proxy http -t tcp -p :80,:443 -T tls -P "2.2.2.2:33080" -C proxy.crt -K proxy.key`
 
 Note:  
-The DNS resolution result of the server where the proxy is located cannot be affected by the custom resolution, otherwise it will be infinite loop. The proxy proxy should specify the `--dns 8.8.8.8` parameter.
+The DNS resolution result of the server where the proxy is located cannot be affected by the custom resolution, otherwise it will be infinite loop. The proxy proxy should specify the `--dns-address 8.8.8.8` parameter.
 
 ### 1.10 HTTP(S) Transparent Proxy
 This mode needs to have a certain network foundation. If the related concepts are not understood, please search for it yourself.  
