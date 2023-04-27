@@ -1977,12 +1977,13 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 2. `fast`快速模式上报  
    对已经建立的每个连接，proxy会`定时`把这个连接产生的流量上报到这个这个`--traffic-url`地址.    
    `定时`默认是5秒，可以通过参数`--traffic-interval`修改`定时`为合适的秒数。  
-   默认情况下，快速上报是单个TCP链接维度，定时上报的，也就是说有1000个TCP链接，那么就会有1000的并发上报   
+   默认情况下，快速上报是单个TCP链接维度，定时上报的，也就是说有1000个TCP链接，那么就会有1000的并发上报
 3. `fast`快速模式全局上报   
    默认情况下，如果API接口处理并发能力不足，可以使用fast全局模式，  
    使用参数`--fast-global`开启，此参数只有`--traffic-mode=fast`的时候有效。fast全局模式，针对一个`--traffic-url`，  
    无论多少并发连接，只会开启一个定时上报，`定时`是5秒。  
-   此模式下，上报请求方式是`POST`,`Content-Type`是`application/json`,数据是`JSON 数组`,示例：`[{},{}]`，数组里面的对象字段和下面的`请求参数说明`里面一致。  
+   此模式下，上报请求方式是`POST`,`Content-Type`是`application/json`,数据是`JSON 数组`,示例：`[{},{}]`
+   ，数组里面的对象字段和下面的`请求参数说明`里面一致。
 4. 流量上报功能结合上面的API认证功能可以实现实时控制用户的流量使用,流量统计,流量限制;流量上报到接口,接口把流量数据写入数据库,然后认证API查询数据库判断用户或者IP流量使用情况,用来确定用户是否可以认证成功.
 
 下面是一个完整的URL请求实例:
@@ -1990,7 +1991,7 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 `http://127.0.0.1:8080/auth.php?act=traffic&bytes=7627&client_addr=127.0.0.1%3A63637
 &id=http&out_local_addr=127.0.0.1%3A63640&out_remote_addr=127.0.0.1%3A63639 &server_addr=127.0.0.1%3A33080&target_addr=www.baidu.com%3A443 &upstream=http%3A%2F%2F127.0.0.1%3A3100&username=a`
 
-请求参数说明:
+**请求参数说明**:  
 id: 服务id标志。  
 server_addr: 客户端请求的代理地址,格式: `IP:端口`。  
 client_addr: 客户端地址,格式: `IP:端口`。  
@@ -1998,8 +1999,8 @@ target_addr: 目标地址,格式: `IP:端口`,tcp/udp代理时,这个是空。
 username: 代理认证用户名,tcp/udp代理时,这个是空。  
 bytes: 此次使用的流量字节数。  
 out_local_addr: 代理对外建立的TCP连接的本地地址，格式: `IP:端口`。  
-out_remote_addr: 代理对外建立的TCP连接的远程地址，格式: `IP:端口`。  
-upstream: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。
+out_remote_addr: 代理对外建立的TCP连接的远程地址，格式: `IP:端口`。   
+upstream: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。  
 
 #### 提示
 
