@@ -2212,7 +2212,7 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 `http://127.0.0.1:8080/auth.php?act=traffic&bytes=7627&client_addr=127.0.0.1%3A63637
 &id=http&out_local_addr=127.0.0.1%3A63640&out_remote_addr=127.0.0.1%3A63639 &server_addr=127.0.0.1%3A33080&target_addr=www.baidu.com%3A443 &upstream=http%3A%2F%2F127.0.0.1%3A3100&username=a`
 
-**请求参数说明**:  
+**请求参数说明**:    
 `id`: 服务id标志。   
 `server_addr`: 客户端请求的代理地址,格式: `IP:端口`。  
 `client_addr`: 客户端地址,格式: `IP:端口`。  
