@@ -248,14 +248,14 @@ Proxy is licensed under GPLv3 license。
 
 以下软件都是相互独立使用，没有依赖关系，需要购买的也是分别单独购买使用。
 
-软件名称 | 免费版功能 | 商业版功能 | 购买使用 | 特点 | 传送门
-:----------- | :---: | :---: | :---: | :---: | :---:
-proxyadmin 免费版 |   √ |   x |   x| Web界面操作，支持Linux，Windows，macOS，免费使用，服务数量有限制，适合个人，小白和白嫖党 | [下载安装](https://github.com/snail007/proxy_admin_free)
-proxyadmin VIP版 |   √ |   x |   √| Web界面操作，支持更多平台，功能和免费版一样，服务数量无限制，适合个体户或者小集体 | [下载安装](https://github.com/snail007/proxy-admin-vip)
-proxyadmin 商业版 |   √ |   √ |   √|Web界面操作，支持更多平台，无限制，适合集体或公司对外提供服务 | [下载安装](https://github.com/snail007/proxy-admin-commercial)
-proxyadmin 集群版|   √ |   √ |   √|Web界面操作，支持Linux，Windows，macOS，无限制，配合`goproxy 商业版`,可以实现以组为单位，管理海量机器上的proxy服务，适合有大量机器的集体或公司对外提供服务 | [下载安装](https://github.com/snail007/proxy-admin-cluster)
-goproxy 免费版 |   √ |   x |   x|命令行操作，全平台支持，免费使用，稳定且灵活，适合一切熟悉命令行的大佬或集体或公司白嫖，自用或者大规模部署对外服务 | [下载安装](https://github.com/snail007/goproxy)
-goproxy 商业版|   √ |   √ |   √|命令行操作，全平台支持，稳定且灵活，适合集体或公司大规模部署对外提供服务 | [下载安装](https://github.com/snail007/goproxy)
+| 软件名称            | 免费版功能 | 商业版功能 | 购买使用 |                                               特点                                                |                            传送门                             |
+|:----------------|:-----:|:-----:|:----:|:-----------------------------------------------------------------------------------------------:|:----------------------------------------------------------:|
+| proxyadmin 免费版  |   √   |   x   |  x   |                     Web界面操作，支持Linux，Windows，macOS，免费使用，服务数量有限制，适合个人，小白和白嫖党                      |    [下载安装](https://github.com/snail007/proxy_admin_free)    |
+| proxyadmin VIP版 |   √   |   x   |  √   |                           Web界面操作，支持更多平台，功能和免费版一样，服务数量无限制，适合个体户或者小集体                            |    [下载安装](https://github.com/snail007/proxy-admin-vip)     |
+| proxyadmin 商业版  |   √   |   √   |  √   |                                Web界面操作，支持更多平台，无限制，适合集体或公司对外提供服务                                 | [下载安装](https://github.com/snail007/proxy-admin-commercial) |
+| proxyadmin 集群版  |   √   |   √   |  √   | Web界面操作，支持Linux，Windows，macOS，无限制，配合`goproxy 商业版`,可以实现以组为单位，管理海量机器上的proxy服务，适合有大量机器的集体或公司对外提供服务 |  [下载安装](https://github.com/snail007/proxy-admin-cluster)   |
+| goproxy 免费版     |   √   |   x   |  x   |                    命令行操作，全平台支持，免费使用，稳定且灵活，适合一切熟悉命令行的大佬或集体或公司白嫖，自用或者大规模部署对外服务                    |        [下载安装](https://github.com/snail007/goproxy)         |
+| goproxy 商业版     |   √   |   √   |  √   |                              命令行操作，全平台支持，稳定且灵活，适合集体或公司大规模部署对外提供服务                               |        [下载安装](https://github.com/snail007/goproxy)         |
 
 关于免费版功能和商业版功能对比请看这里,[`免费版`和`商业版`功能对比](https://snail007.host900.com/goproxy/page/free_vs_commercial/).
 
@@ -1640,13 +1640,13 @@ sps支持http(s)\socks5代理认证，可以级联认证，有四个重要的信
 4:最终发送给上级的认证信息`auth-info-to-parent`。  
 他们的情况关系如下:
 
-| user-auth | local-auth | parent-auth | auth-info-to-paren
-| ------ | ------ | ------ | ------  
-| 有/没有  | 有     |     有   |   来自parent-auth
-| 有/没有  | 没有    |    有    |   来自parent-auth
-| 有/没有  | 有     |     没有  |   无
-| 没有   | 没有    |   没有    |   无
-| 有    | 没有    |   没有    |   来自user-auth
+| user-auth | local-auth | parent-auth | auth-info-to-paren |
+|-----------|------------|-------------|--------------------|
+| 有/没有      | 有          | 有           | 来自parent-auth      |
+| 有/没有      | 没有         | 有           | 来自parent-auth      |
+| 有/没有      | 有          | 没有          | 无                  |
+| 没有        | 没有         | 没有          | 无                  |
+| 有         | 没有         | 没有          | 来自user-auth        |
 
 对于sps代理我们可以进行用户名密码认证，认证的用户名和密码可以在命令行指定  
 `proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0:"`  
@@ -2221,7 +2221,7 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 `bytes`: 此次使用的流量字节数。  
 `out_local_addr`: 代理对外建立的TCP连接的本地地址，格式: `IP:端口`。  
 `out_remote_addr`: 代理对外建立的TCP连接的远程地址，格式: `IP:端口`。   
-`upstream`: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。  
+`upstream`: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。
 
 #### 提示
 

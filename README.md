@@ -1489,13 +1489,13 @@ Sps supports http(s)\socks5 proxy authentication, which can be cascaded and has 
 4: The authentication information `auth-info-to-parent` that is finally sent to the upstream.  
 Their situation is as follows:
 
-| User-auth | local-auth | parent-auth | auth-info-to-paren  |
-|-----------| ------ | ------ |---------------------  |
-| Yes / No  | Yes | Yes | From parent-auth  |
-| Yes / No  | No | Yes | From parent-auth  |
-| Yes / No  | Yes | No | No   |
-| No        | No | No | No   |
-| Yes       | No | No | From user-auth  |
+| User-auth | local-auth | parent-auth | auth-info-to-paren |
+|-----------|------------|-------------|--------------------|
+| Yes / No  | Yes        | Yes         | From parent-auth   |
+| Yes / No  | No         | Yes         | From parent-auth   |
+| Yes / No  | Yes        | No          | No                 |
+| No        | No         | No          | No                 |
+| Yes       | No         | No          | From user-auth     |
 
 For the sps proxy we can perform username and password authentication. The authenticated username and password can be specified on the command line.  
 `proxy sps -S http -T tcp -P 127.0.0.1:8080 -t tcp -p ":33080" -a "user1:pass1:0:0:" -a "user2:pass2:0:0: "`  
@@ -1955,7 +1955,7 @@ if($ok){
 
 #### HTTP HEADER Explanation
 `userconns`: The maximum number of connections for the user, not limited to 0 or not set this header.  
-`ipcons`: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
+`ipconns`: The maximum number of connections for the user IP, not limited to 0 or not set this header.  
 `userrate`: User's single TCP connection rate limit, in bytes/second, is not limited to 0 or does not set this header.  
 `iprate`: The single TCP connection rate limit of the client IP, in bytes/second, not limited to 0 or not set this header.  
 `userqps`: The maximum number of connections per second (QPS) for the user, not limited to 0 or not set this header.  
@@ -2046,7 +2046,7 @@ The following is a complete URL request example:
 `bytes`: the number of traffic bytes used by the user.  
 `out_local_addr`: outgoing tcp connection's local address,format: IP: port.  
 `out_remote_addr`: outgoing tcp connection's remote address,format: IP: port.  
-`upstream`: upstream used by outgoing tcp connection, if none upstream be used, it's empty.  
+`upstream`: upstream used by outgoing tcp connection, if none upstream be used, it's empty.
 
 #### Tips
 
