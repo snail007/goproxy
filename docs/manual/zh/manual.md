@@ -1941,12 +1941,14 @@ if($ok){
   如果在间隔周期内，则使用上一次随机选择的IP。 如果API没有返回头部参数 RotationTime，或者RotationTime是0，
   那么每次客户端连接，proxy都随机选择一个outgoing网段里面的一个IP作为出口。
 
-
 #### 限速详细说明
+
 1. 单个tcp限速（`userrate`、`iprate`）和总带宽速度（`userTotalRate`、`ipTotalRate`、`portTotalRate`）可以同时设置，
    比如：设置用户总带宽速度是1M/s（`userTotalRate`设置1024000），还可以同时设置单个tcp速度是100K/s（`userrate`设置102400）
-2. 如果同时设置了`userTotalRate`、`ipTotalRate` 、`portTotalRate`，有效优先级是：`userTotalRate` -> `ipTotalRate` -> `portTotalRate`
-3. 如果同时设置了`userTotalRate`、`portTotalRate`，而且设置了`--auth-nouser`，那么所有没有发用户名的客户端会被认为是`同一个空用户名用户`，共用同一个限制。
+2. 如果同时设置了`userTotalRate`、`ipTotalRate` 、`portTotalRate`
+   ，有效优先级是：`userTotalRate` -> `ipTotalRate` -> `portTotalRate`
+3. 如果同时设置了`userTotalRate`、`portTotalRate`，而且设置了`--auth-nouser`
+   ，那么所有没有发用户名的客户端会被认为是`同一个空用户名用户`，共用同一个限制。
 
 #### 提示
 
