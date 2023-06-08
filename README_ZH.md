@@ -2129,6 +2129,7 @@ if($ok){
     header("userTotalRate:1024000");  
     //header("ipTotalRate:10240");  
     //header("portTotalRate:10240");  
+    //header("RotationTime:60");  
     header("HTTP/1.1 204 No Content");  
 }
 ```  
@@ -2142,10 +2143,25 @@ if($ok){
 - `userqps`：用户每秒可以建立的最大连接数，不限制为0或者不设置这个头部。
 - `ipqps`：IP每秒可以建立的最大连接数，不限制为0或者不设置这个头部。
 - `upstream`：使用的上级，没有为空，或者不设置这个头部。
-- `outgoing`: 使用的出口IP，这个设置，只有在upstream为空的的时候才有效，这里设置的IP必须是proxy所在机器具有的IP。
+- `outgoing`: 使用的出口IP，这个设置，只有在upstream为空的的时候才有效，这里设置的IP必须是proxy所在机器具拥有的IP，否则代理将不能正常工作。
+  `v13.2`版本起，`outgoing` 支持多`网段`写法，逗号分割的多个`网段`，proxy会随机选择`网段`里面的一个IP作为出口。认证缓存开启后也会保持这个随机性。
+  `网段`支持下面几种写法：
+  1. 格式：`192.168.1.1`，说明：单个IP, IPv4
+  1. 格式：`3001:cb2::`，说明：单个IP, IPv6
+  1. 格式：`192.168.1.1/24`，说明：CIDR格式网段，IPv4
+  1. 格式：`3001:cb2::/126`，说明：CIDR格式网段，IPv6
+  1. 格式：`192.168.1.1-192.168.1.200`，说明：IP范围，IPv4
+  1. 格式：`3001:cb2::/126`，说明：IP范围，IPv6
+
+  示例: `192.16.1.1,192.161.1.2,192.168.1.2-192.168.1.255`
 - `userTotalRate`：用户维度，限制用户的总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
 - `ipTotalRate`：客户端IP维度，限制客户端IP的总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
 - `portTotalRate`：带宽维度，限制一个带宽总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
+- `RotationTime`：`（要求版本>=v13.2）`，控制随机选择outgoing出口IP的时间间隔，单位是秒，没有留空，或者不设置这个头部。
+  当API返回的outgoing是网段的时候，每次客户端连接，如果不想让proxy每次都随机选择一个IP，可以使用这个参数控制随机选择IP的时间间隔。
+  如果在间隔周期内，则使用上一次随机选择的IP。 如果API没有返回头部参数 RotationTime，或者RotationTime是0，
+  那么每次客户端连接，proxy都随机选择一个outgoing网段里面的一个IP作为出口。
+
 
 #### 限速详细说明
 1. 单个tcp限速（`userrate`、`iprate`）和总带宽速度（`userTotalRate`、`ipTotalRate`、`portTotalRate`）可以同时设置，

@@ -817,7 +817,7 @@ Host: the IP or domain name of the proxy
 Port: the port of the proxy
 
 ### 2.7 Specify Outgoing IP
-When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified exit IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
+When the TCP proxy is a superior type (parameter: -T) is tcp, it supports the specified outgoing IP. Using the `--bind-listen` parameter, you can open the client to connect with the portal IP, and use the portal IP as the outgoing IP to access the target website. If an incorrect IP is bound, the proxy will not work, the proxy will try to bind the target without binding the IP, and the log will prompt.
 
 `proxy tcp -p ":33080" -T tcp -P" 192.168.22.33:22" -B`
 
@@ -836,7 +836,7 @@ In addition, the `IP` part of the `--bind-ip` parameter supports specifying the 
 
 - Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
 - The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
-- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the outgoing IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
 - It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
@@ -1365,7 +1365,7 @@ In addition, the `IP` part of the `--bind-ip` parameter supports specifying the 
 
 - Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
 - The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
-- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the outgoing IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
 - It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
@@ -1646,7 +1646,7 @@ In addition, the `IP` part of the `--bind-ip` parameter supports specifying the 
 
 - Specify the network interface name, such as: `--bind-ip eth0:7777`, then the client accesses the `7777` port, and the egress IP is the IP of the eth0 network interface.
 - The network interface name supports wildcards, for example: `--bind-ip eth0.*:7777`, then the client accesses the `7777` port, and the egress IP is a randomly selected one of the network interface IPs starting with `eth0.`.
-- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the exit IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
+- IP supports wildcards, such as: `--bind-ip 192.168.?.*:7777`, then the client accesses the `7777` port, and the outgoing IP is all the IPs of the machine, matching the IP of `192.168.?.*` A randomly selected one.
 - It can also be multiple combinations of network interface name and IP, separated by half-width commas, such as: `--bind-ip pppoe??,192.168.?.*:7777`, then the client accesses the port `7777`, The  outgoing IP is the machine's network interface name matching `pppoe??`
   It is a randomly selected one among all IPs of the machine that matches `192.168.?.*`.
 - The wildcard character `*` represents 0 to any number of characters, and `?` represents 1 character.
@@ -1949,6 +1949,7 @@ if($ok){
     header("userTotalRate:1024000");  
     //header("ipTotalRate:10240");  
     //header("portTotalRate:10240");  
+    //header("RotationTime:60");  
     header("HTTP/1.1 204 No Content");  
 }
 ```  
@@ -1961,10 +1962,28 @@ if($ok){
 `userqps`: The maximum number of connections per second (QPS) for the user, not limited to 0 or not set this header.  
 `ipqps`: The maximum number of connections per second (QPS) for the client IP, not limited to 0 or not set this header.  
 `upstream`: The upstream used, not empty, or not set this header.  
-`outgoing`: The outgoing ip，this option only working which upstream is empty. And the IP must belong to the machine running proxy。
+`outgoing`: The outgoing IP used. This setting is only effective when the upstream is empty. 
+  The IP set here must be owned by the machine where the proxy is located, otherwise, the proxy will not function properly. 
+  Starting from version `v13.2`, `outgoing` supports multiple subnet formats separated by commas. The proxy will randomly 
+  select an IP from the subnet as the outgoing IP. This randomness will also be maintained when authentication cache is enabled.
+  The following formats are supported for subnets:  
+  1. Format: `192.168.1.1`, Description: Single IP, IPv4
+  1. Format: `3001:cb2::`, Description: Single IP, IPv6
+  1. Format: `192.168.1.1/24`, Description: CIDR format subnet, IPv4
+  1. Format: `3001:cb2::/126`, Description: CIDR format subnet, IPv6
+  1. Format: `192.168.1.1-192.168.1.200`, Description: IP range, IPv4
+  1. Format: `3001:cb2::/126`, Description: IP range, IPv6
+
+  Example: `192.16.1.1,192.161.1.2,192.168.1.2-192.168.1.255`
+
 `userTotalRate`： Limit the `user` total bandwidth speed (bytes per second), unit is byte, not limited to 0 or not set this header.  
 `ipTotalRate`：Limit the `client ip` total bandwidth speed (bytes per second), unit is byte, not limited to 0 or not set this header.    
-`portTotalRate`：Limit the `server port` total bandwidth speed (bytes per second), unit is byte, not limited to 0 or not set this header.
+`portTotalRate`：Limit the `server port` total bandwidth speed (bytes per second), unit is byte, not limited to 0 or not set this header.  
+`RotationTime`: `(requires version >= v13.2)` Controls the time interval, in seconds, for randomly selecting the outgoing IP. 
+  Leave it blank or unset this header if not needed.When the outgoing returned by the API is a subnet, and if you don't want the proxy 
+  to randomly select a new IP for each client connection, you can use this parameter to control the time interval for random IP selection.
+  If within the interval period, the previously selected IP will be used. If the API does not return the `RotationTime` header 
+  or if `RotationTime` is set to 0, the proxy will randomly select an IP from the outgoing subnet as the outgoing IP for each client connection.
 
 #### Details of total bandwidth speed limitation
 1. `userrate`、`iprate` and `userTotalRate`、`ipTotalRate`、`portTotalRate` can be set at same time,
