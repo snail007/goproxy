@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>全局代理 on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/</link>
     <description>Recent content in 全局代理 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Thu, 04 Jul 2019 17:54:31 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/tags/%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>在windows下实现基于dns的自动全局代理</title>
-      <link>https://snail007.host900.com/goproxy/posts/windows-global-proxy-using-dns/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/posts/windows-global-proxy-using-dns/</link>
       <pubDate>Thu, 04 Jul 2019 17:54:31 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/posts/windows-global-proxy-using-dns/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/posts/windows-global-proxy-using-dns/</guid>
       <description>在windows下实现基于dns的自动全局代理。 本方法需要监听本地80和443端口，所以如果你有程序占用了这两个端口，请关闭相应的程序。 本文</description>
     </item>
     

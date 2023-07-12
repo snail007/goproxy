@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>内网穿透 on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/</link>
     <description>Recent content in 内网穿透 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Fri, 28 Jun 2019 17:02:57 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>内网穿透也能用CDN？？？！</title>
-      <link>https://snail007.host900.com/goproxy/posts/http-nat-cdn/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/posts/http-nat-cdn/</link>
       <pubDate>Fri, 28 Jun 2019 17:02:57 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/posts/http-nat-cdn/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/posts/http-nat-cdn/</guid>
       <description>内网穿透之套CDN 好处就不用说了吧，两个字稳！ 假如在windows上配置了可以访问的连接 http://127.0.0.1:801/abc/index.php , 如何能使用VPS+CDN做内网穿透呢？ 配置如下：</description>
     </item>
     

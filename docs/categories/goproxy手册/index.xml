@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>GOPROXY手册 on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</link>
     <description>Recent content in GOPROXY手册 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Thu, 04 Jul 2019 11:00:50 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>手册前言（使用必读）</title>
-      <link>https://snail007.host900.com/goproxy/usage/first/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/usage/first/</link>
       <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/usage/first/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/usage/first/</guid>
       <description>前言 GOPROXY使用必读 手册和项目中使用了一部分的名词，它们本身的含义和在goproxy的专有含义是不一样的，所以前言中对这些名词做了解释</description>
     </item>
     
     <item>
       <title>TCP代理</title>
-      <link>https://snail007.host900.com/goproxy/usage/tcp/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/usage/tcp/</link>
       <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/usage/tcp/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/usage/tcp/</guid>
       <description>工作原理 tcp代理，也称为tcp端口转发，工作原理就是，把proxy监听端口进来的tcp连接的数据原样转发到上级监听的一个端口。 上级可以是p</description>
     </item>
     

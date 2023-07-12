@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>domain on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/tags/domain/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/tags/domain/</link>
     <description>Recent content in domain on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Fri, 05 Jul 2019 08:20:48 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/tags/domain/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/tags/domain/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>域名解析 域名控制台&#43;极客&#43;cloudflare 的配置方法</title>
-      <link>https://snail007.host900.com/goproxy/posts/domain-cf/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/posts/domain-cf/</link>
       <pubDate>Fri, 05 Jul 2019 08:20:48 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/posts/domain-cf/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/posts/domain-cf/</guid>
       <description>准备工作 本文综合的介绍了cloudflare注册使用，从域名解析到回源，完成了一个二级域使用cloudflare的CDN加速的配置过程。 首先</description>
     </item>
     

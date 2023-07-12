@@ -2,48 +2,48 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/categories/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/categories/</link>
     <description>Recent content in Categories on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Fri, 05 Jul 2019 08:20:48 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>默认分类</title>
-      <link>https://snail007.host900.com/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</link>
       <pubDate>Fri, 05 Jul 2019 08:20:48 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/categories/%E9%BB%98%E8%AE%A4%E5%88%86%E7%B1%BB/</guid>
       <description></description>
     </item>
     
     <item>
       <title>GOPROXY手册</title>
-      <link>https://snail007.host900.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</link>
       <pubDate>Thu, 04 Jul 2019 11:00:50 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/categories/goproxy%E6%89%8B%E5%86%8C/</guid>
       <description></description>
     </item>
     
     <item>
       <title>架构解说</title>
-      <link>https://snail007.host900.com/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/</link>
       <pubDate>Fri, 14 Jun 2019 15:29:47 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/categories/%E6%9E%B6%E6%9E%84%E8%A7%A3%E8%AF%B4/</guid>
       <description></description>
     </item>
     
     <item>
       <title>细说层级</title>
-      <link>https://snail007.host900.com/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/</link>
       <pubDate>Fri, 14 Jun 2019 15:29:47 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/categories/%E7%BB%86%E8%AF%B4%E5%B1%82%E7%BA%A7/</guid>
       <description></description>
     </item>
     

@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>商业版 on GOPROXY IN ACTION</title>
-    <link>https://snail007.host900.com/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/</link>
+    <link>https://snail007.goproxyauth.com/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/</link>
     <description>Recent content in 商业版 on GOPROXY IN ACTION</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <lastBuildDate>Wed, 26 Jun 2019 13:19:15 +0800</lastBuildDate>
     
-	<atom:link href="https://snail007.host900.com/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://snail007.goproxyauth.com/goproxy/tags/%E5%95%86%E4%B8%9A%E7%89%88/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>GOPROXY免费版VS商业版</title>
-      <link>https://snail007.host900.com/goproxy/page/free_vs_commercial/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/</link>
       <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/page/free_vs_commercial/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/</guid>
       <description>目前，GOPROXY 和 SDK 提供免费版和商业版，功能对比如下。 免费版 商业版 TCP转发 √ √ UDP转发 √ √ HTTP(S)代理 √ √ Socks5代理 √ √</description>
     </item>
     
     <item>
       <title>GOPROXY Free Version VS Commercial Version</title>
-      <link>https://snail007.host900.com/goproxy/page/free_vs_commercial_en/</link>
+      <link>https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial_en/</link>
       <pubDate>Wed, 26 Jun 2019 13:19:15 +0800</pubDate>
       
-      <guid>https://snail007.host900.com/goproxy/page/free_vs_commercial_en/</guid>
+      <guid>https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial_en/</guid>
       <description>Currently, GOPROXY and SDK are available in both free and commercial versions. Function Free |Commercial TCP forwarding √ √ UDP forwarding √ √ HTTP(S)Agent √ √ Socks5 Agent √ √ Socks5 proxy UDP support √ √ SPS Integrated Agent √ √ SPS superior certification √ √ Intranet penetration √ √ DNS proxy, anti-pollution, independent DNS service √ √ HTTP(S) proxy authentication, authentication API, load balancing × √ SOCKS5 proxy authentication,</description>
     </item>
     

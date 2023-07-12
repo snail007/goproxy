@@ -1,7 +1,7 @@
 ## GOPROXY简介
 
 <div align="center">
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/logo.jpg" width="500" height="auto"/>
+<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/logo.jpg" width="500" height="auto"/>
 
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
 
@@ -15,18 +15,18 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [下载地址](https://github.com/snail007/goproxy/releases)
-- [参考手册](https://snail007.host900.com/goproxy/manual/zh/)
+- [参考手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [桌面版](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
 - [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android) 
 - [安卓全能代理版](https://github.com/snail007/goproxy-android) 
 - [安卓内网穿透客户端](https://github.com/snail007/lanass) 
 - [SDK](https://github.com/snail007/goproxy-sdk)
-- [GORPOXY实战教程](https://snail007.host900.com/goproxy/)
-- [免费版VS商业版(安装、激活)](https://snail007.host900.com/goproxy/page/free_vs_commercial/)
+- [GORPOXY实战教程](https://snail007.goproxyauth.com/goproxy/)
+- [免费版VS商业版(安装、激活)](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/)
 
 ## 国内下载
 
-请在github的下载链接前面加上: `https://mirrors.host900.com/` 。
+请在github的下载链接前面加上: `https://mirrors.goproxyauth.com/` 。
 
 比如`v10.4`的github下载链接是：
 
@@ -34,14 +34,14 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 
 那么国内下载地址就是：
 
-`https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64.tar.gz`
+`https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64.tar.gz`
 
 此地址也适用于wget，curl直接命令行下载。
 
 ## ProxyAdmin介绍预览（这不是goproxy，是控制面板友情链接；安装使用goproxy请往下看，谢谢！）
 `ProxyAdmin` 是强大的代理服务工具 snail007/goproxy 的控制面板，运行了它，一秒让你的服务器变为强大的代理服务器，友好的交互界面，小白也能轻松上手，让你用起来得心应手，心情舒畅。
 
-![](https://mirrors.host900.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_cn.gif)
+![](https://mirrors.goproxyauth.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_cn.gif)
 
 ### goproxy能干什么？
 - 链式代理，程序本身可以作为一级代理，如果设置了上级代理那么可以作为二级代理，乃至N级代理。  
@@ -106,13 +106,13 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 免费版执行这个：  
 
 ```shell  
-curl -L https://mirrors.host900.com/https://github.com/snail007/goproxy/blob/master/install_auto.sh | bash  
+curl -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto.sh | bash  
 ```  
 
 商业版执行这个：  
 
 ```shell  
-curl -L https://mirrors.host900.com/https://github.com/snail007/goproxy/blob/master/install_auto_commercial.sh | bash  
+curl -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto_commercial.sh | bash  
 ```  
 
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
@@ -130,14 +130,14 @@ curl -L https://mirrors.host900.com/https://github.com/snail007/goproxy/blob/mas
 
 ```shell  
 cd /root/proxy/  
-wget https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64.tar.gz  
+wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64.tar.gz  
 ```  
 
 商业版执行这个：  
 
 ```shell  
 cd /root/proxy/  
-wget https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64_commercial.tar.gz  
+wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v10.4/proxy-linux-amd64_commercial.tar.gz  
 ```  
 
 2.下载自动安装脚本
@@ -146,7 +146,7 @@ wget https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/do
 
 ```shell  
 cd /root/proxy/  
-wget https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
+wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install.sh  
 chmod +x install.sh  
 ./install.sh  
 ```  
@@ -155,7 +155,7 @@ chmod +x install.sh
 
 ```shell  
 cd /root/proxy/  
-wget https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh  
+wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh  
 chmod +x install_commercial.sh  
 ./install_commercial.sh  
 ```  
@@ -207,8 +207,8 @@ Proxy is licensed under GPLv3 license。
 
 ## Donation  
 如果proxy帮助你解决了很多问题，你可以通过下面的捐赠更好的支持proxy。  
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/alipay.jpg" width="200"  height="auto"/>  
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/wxpay.jpg" width="200"  height="auto"/>  
+<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/alipay.jpg" width="200"  height="auto"/>  
+<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/wxpay.jpg" width="200"  height="auto"/>  
 
 ### 源代码申明
 
@@ -257,9 +257,9 @@ Proxy is licensed under GPLv3 license。
 | goproxy 免费版     |   √   |   x   |  x   |                    命令行操作，全平台支持，免费使用，稳定且灵活，适合一切熟悉命令行的大佬或集体或公司白嫖，自用或者大规模部署对外服务                    |        [下载安装](https://github.com/snail007/goproxy)         |
 | goproxy 商业版     |   √   |   √   |  √   |                              命令行操作，全平台支持，稳定且灵活，适合集体或公司大规模部署对外提供服务                               |        [下载安装](https://github.com/snail007/goproxy)         |
 
-关于免费版功能和商业版功能对比请看这里,[`免费版`和`商业版`功能对比](https://snail007.host900.com/goproxy/page/free_vs_commercial/).
+关于免费版功能和商业版功能对比请看这里,[`免费版`和`商业版`功能对比](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/).
 
-[商业版激活绑定教程](https://snail007.host900.com/goproxy/page/free_vs_commercial/)
+[商业版激活绑定教程](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/)
 
 提示：
 
@@ -267,7 +267,7 @@ Proxy is licensed under GPLv3 license。
 
 ## FAQ
 
-[别点我](https://snail007.host900.com/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/)
+[别点我](https://snail007.goproxyauth.com/goproxy/page/faq/goproxy%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E8%A7%A3%E7%AD%94/)
 
 ## 首次使用必看,谢谢!!！
 

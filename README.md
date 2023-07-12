@@ -1,7 +1,7 @@
 ## GOPROXY Introduction
 
 <div align="center">
-<img src="https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/logo.jpg" width="500" height="auto"/>
+<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/logo.jpg" width="500" height="auto"/>
 
 [![stable](https://img.shields.io/badge/stable-stable-green.svg)](https://github.com/snail007/goproxy/) [![license](https://img.shields.io/github/license/snail007/goproxy.svg?style=plastic)]() [![download_count](https://img.shields.io/github/downloads/snail007/goproxy/total.svg?style=plastic)](https://github.com/snail007/goproxy/releases) [![download](https://img.shields.io/github/release/snail007/goproxy.svg?style=plastic)](https://github.com/snail007/goproxy/releases)
 
@@ -17,7 +17,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
-- [使用手册](https://snail007.host900.com/goproxy/manual/zh/)
+- [使用手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [Download](https://github.com/snail007/goproxy/releases)
 - [Desktop Edition](https://github.com/snail007/proxy_admin_free)
@@ -31,7 +31,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 ### ProxyAdmin Demo
 And ProxyAdmin is a powerful web console of snail007/goproxy .
 
-![](https://mirrors.host900.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_en.gif)
+![](https://mirrors.goproxyauth.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_en.gif)
 
 ### What can it do?
 - Chained proxies, the program itself can be used as an proxies, and if it is set up, it can be used as a secondary proxies or even an N-level proxies.
@@ -88,13 +88,13 @@ Tip: All operations require root privileges.
 The free version performs this:
 
 ```shell
-curl -L https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash
+curl -L https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash
 ```
 
 The commercial version performs this:
 
 ```shell
-curl -L https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash
+curl -L https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash
 ```
 
 The installation is complete, the configuration directory is /etc/proxy. For more detailed usage, please refer to the manual directory above to learn more about the features you want to use.
@@ -112,14 +112,14 @@ The free version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
+wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
 ```
 
 The commercial version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
+wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
 ```
 
 2. Download the automatic installation script
@@ -128,7 +128,7 @@ The free version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
+wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh
 ./install.sh
 ```
@@ -137,7 +137,7 @@ The commercial version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.host900.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
+wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
 chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
@@ -212,7 +212,7 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 This manual describes the functions, all of which are included in the commercial version; the free version of advanced functional parameters such as authentication is not included;  
 If you encounter some commands when you use the free version to execute some commands, a prompt similar to the following xxx parameter does not exist, indicating that this parameter is a function of the commercial version.   
 `err: unknown long flag '-a'`   
-Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view](https://snail007.host900.com/goproxy/page/free_vs_commercial_en/)
+Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial_en/)
 
 ## First Start
 
