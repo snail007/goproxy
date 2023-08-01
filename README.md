@@ -16,6 +16,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 ## 中文用户请看 *中文说明*，中文与英文内容的安装等资源链接是不一样的，谢谢合作！
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
+
 - [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [使用手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [下载地址](https://github.com/snail007/goproxy/releases)
@@ -29,6 +30,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 - [Free version VS commercial version](https://snail007.github.io/goproxy/page/free_vs_commercial/)
 
 ### ProxyAdmin Demo
+
 And ProxyAdmin is a powerful web console of snail007/goproxy .
 
 ![](https://mirrors.goproxyauth.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_en.gif)
@@ -209,10 +211,14 @@ If you have customized, business needs, please send an email to `arraykeys@gmail
 
 ## Purchase Commercial Edition
 
-This manual describes the functions, all of which are included in the commercial version; the free version of advanced functional parameters such as authentication is not included;  
-If you encounter some commands when you use the free version to execute some commands, a prompt similar to the following xxx parameter does not exist, indicating that this parameter is a function of the commercial version.   
+This manual describes the functions, all of which are included in the commercial version; the free version of advanced
+functional parameters such as authentication is not included;  
+If you encounter some commands when you use the free version to execute some commands, a prompt similar to the following
+xxx parameter does not exist, indicating that this parameter is a function of the commercial version.   
 `err: unknown long flag '-a'`   
-Comparison between the features of the free version and the commercial version, detailed operations on how to purchase and use the commercial version [please click here to view](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial_en/)
+Comparison between the features of the free version and the commercial version, detailed operations on how to purchase
+and use the commercial
+version [please click here to view](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial_en/)
 
 ## First Start
 
@@ -1993,7 +1999,7 @@ The following formats are supported for subnets:
 1. Format: `192.168.1.1/24`, Description: CIDR format subnet, IPv4
 1. Format: `3001:cb2::/126`, Description: CIDR format subnet, IPv6
 1. Format: `192.168.1.1-192.168.1.200`, Description: IP range, IPv4
-1. Format: `3001:cb2::/126`, Description: IP range, IPv6
+1. Format: `2311:ca2::-2311:ca2::10`, Description: IP range, IPv6
 
 Example: `192.16.1.1,192.161.1.2,192.168.1.2-192.168.1.255`
 

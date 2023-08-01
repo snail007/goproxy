@@ -14,12 +14,13 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 ---
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
+
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [参考手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [桌面版](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)
-- [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android) 
-- [安卓全能代理版](https://github.com/snail007/goproxy-android) 
-- [安卓内网穿透客户端](https://github.com/snail007/lanass) 
+- [安卓全局代理版](https://github.com/snail007/goproxy-ss-plugin-android)
+- [安卓全能代理版](https://github.com/snail007/goproxy-android)
+- [安卓内网穿透客户端](https://github.com/snail007/lanass)
 - [SDK](https://github.com/snail007/goproxy-sdk)
 - [GORPOXY实战教程](https://snail007.goproxyauth.com/goproxy/)
 - [免费版VS商业版(安装、激活)](https://snail007.goproxyauth.com/goproxy/page/free_vs_commercial/)
@@ -39,6 +40,7 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 此地址也适用于wget，curl直接命令行下载。
 
 ## ProxyAdmin介绍预览（这不是goproxy，是控制面板友情链接；安装使用goproxy请往下看，谢谢！）
+
 `ProxyAdmin` 是强大的代理服务工具 snail007/goproxy 的控制面板，运行了它，一秒让你的服务器变为强大的代理服务器，友好的交互界面，小白也能轻松上手，让你用起来得心应手，心情舒畅。
 
 ![](https://mirrors.goproxyauth.com/https://github.com/snail007/proxy_admin_free/blob/master/res/images/socks5_cn.gif)
@@ -206,9 +208,10 @@ Proxy is licensed under GPLv3 license。
 官方QQ交流群: 608062193  
 
 ## Donation  
+
 如果proxy帮助你解决了很多问题，你可以通过下面的捐赠更好的支持proxy。  
 <img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/alipay.jpg" width="200"  height="auto"/>  
-<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/wxpay.jpg" width="200"  height="auto"/>  
+<img src="https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/doc/images/wxpay.jpg" width="200"  height="auto"/>
 
 ### 源代码申明
 
@@ -2151,7 +2154,7 @@ if($ok){
   1. 格式：`192.168.1.1/24`，说明：CIDR格式网段，IPv4
   1. 格式：`3001:cb2::/126`，说明：CIDR格式网段，IPv6
   1. 格式：`192.168.1.1-192.168.1.200`，说明：IP范围，IPv4
-  1. 格式：`3001:cb2::/126`，说明：IP范围，IPv6
+  1. 格式：`2311:ca2::-2311:ca2::10`，说明：IP范围，IPv6
 
   示例: `192.16.1.1,192.161.1.2,192.168.1.2-192.168.1.255`
 - `userTotalRate`：用户维度，限制用户的总带宽速度（byte/s），单位是字节byte，没有留空，或者不设置这个头部。
