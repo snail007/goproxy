@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ "$1" == "cn" ]; then
+  MIRROR="https://mirrors.goproxyauth.com/"
+fi
 F="proxy-linux-amd64.tar.gz"
 set -e
 if [ -e /tmp/proxy ]; then
@@ -8,9 +11,9 @@ mkdir /tmp/proxy
 cd /tmp/proxy
 
 echo -e "\n>>> downloading ... $F\n"
-manual="https://snail007.host900.com/goproxy/manual/zh/"
-LAST_VERSION=$(curl --silent "https://mirrors.host900.com/https://api.github.com/repos/snail007/goproxy/releases/latest" | grep -Po '"tag_name":"\K.*?(?=")')
-wget  -t 1 "https://mirrors.host900.com/https://github.com/snail007/goproxy/releases/download/${LAST_VERSION}/$F"
+manual="https://snail007.goproxyauth.com/goproxy/manual/zh/"
+LAST_VERSION=$(curl --silent "${MIRROR}https://api.github.com/repos/snail007/goproxy/releases/latest" | grep -Po '"tag_name": *"\K.*?(?=")')
+wget  -t 1 "${MIRROR}https://github.com/snail007/goproxy/releases/download/${LAST_VERSION}/$F"
 
 echo -e ">>> installing ... \n"
 # #install proxy
