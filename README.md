@@ -90,13 +90,13 @@ Tip: All operations require root privileges.
 The free version performs this:
 
 ```shell
-curl -L https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh | bash
+bash -c "$(curl -s -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh)"
 ```
 
 The commercial version performs this:
 
 ```shell
-curl -L https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh | bash
+bash -c "$(curl -s -L https://raw.githubusercontent.com/snail007/goproxy/master/install_auto_commercial.sh)"
 ```
 
 The installation is complete, the configuration directory is /etc/proxy. For more detailed usage, please refer to the manual directory above to learn more about the features you want to use.
@@ -114,14 +114,14 @@ The free version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64.tar.gz
 ```
 
 The commercial version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
+wget https://github.com/snail007/goproxy/releases/download/v7.9/proxy-linux-amd64_commercial.tar.gz
 ```
 
 2. Download the automatic installation script
@@ -130,7 +130,7 @@ The free version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install.sh
 chmod +x install.sh
 ./install.sh
 ```
@@ -139,12 +139,15 @@ The commercial version performs this:
 
 ```shell
 cd /root/proxy/
-wget https://mirrors.goproxyauth.com/https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
+wget https://raw.githubusercontent.com/snail007/goproxy/master/install_commercial.sh
 chmod +x install_commercial.sh
 ./install_commercial.sh
 ```
 
 ## UPDATE
+proxy update use mirror to download, if your update has error with mirror, you can set an environment variable `UPDATE_MIRROR=false`  
+Windows: `set UPDATE_MIRROR=false` then `proxy update`  
+Linux: `export UPDATE_MIRROR=false`  then `proxy update`  
 
 ### Linux
 

@@ -108,13 +108,13 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 免费版执行这个：  
 
 ```shell  
-curl -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto.sh | bash  
+bash -c "$(curl -s -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto.sh)" @ cn  
 ```  
 
 商业版执行这个：  
 
 ```shell  
-curl -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto_commercial.sh | bash  
+bash -c "$(curl -s -L https://mirrors.goproxyauth.com/https://github.com/snail007/goproxy/blob/master/install_auto_commercial.sh)" @ cn  
 ```  
 
 安装完成，配置目录是/etc/proxy，更详细的使用方法请参考上面的手册目录，进一步了解你想要使用的功能。  
@@ -163,6 +163,9 @@ chmod +x install_commercial.sh
 ```  
 
 ## 升级更新
+更新默认使用镜像地址下载，如果使用镜像无法更新，可以设置环境变量：`UPDATE_MIRROR=false`，禁用镜像下载。  
+Windows: 先执行 `set UPDATE_MIRROR=false` 然后执行 `proxy update`    
+Linux: 先执行 `export UPDATE_MIRROR=false`  然后执行 `proxy update`  
 
 ### Linux
 用`root`打开一个终端，如果proxy不再系统PATH里面，需要cd进入proxy目录执行`./proxy`。
