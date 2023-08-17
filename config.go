@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/utils"
 	"io/ioutil"
 	"log"
 	"os"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -86,8 +86,6 @@ func initConfig() (err error) {
 	//########tunnel-bridge#########
 	tunnelBridge := app.Command("tbridge", "proxy on tunnel bridge mode")
 	tunnelBridgeArgs.Timeout = tunnelBridge.Flag("timeout", "tcp timeout with milliseconds").Short('t').Default("2000").Int()
-
-	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	if *certTLS != "" && *keyTLS != "" {
 		args.CertBytes, args.KeyBytes = tlsBytes(*certTLS, *keyTLS)
