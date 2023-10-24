@@ -1,4 +1,5 @@
-<!--- Provide a general summary of the issue in the Title above -->
+# 为避免浪费时间，一切不按着issue模版填写的问题，一律默认忽略处理，谢谢合作！
+# Avoid waste time, any report not match the issue template will be ignored.
 
 ## Expected Behavior
 <!--- Tell us what should happen -->
