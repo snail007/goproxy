@@ -13,6 +13,17 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 
 ---
 
+## 赞助者/Sponsors
+
+<a target="_blank" href="https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy">
+<img src="/doc/images/zanzhu_capsolver.jpg.jpg" height="300">
+</a>
+
+[Capsolver.com](https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy)是一家基于人工智能，提供自动验证码解决功能的服务商。
+支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。Capsolver可配合EasySpider进行验证码识别。
+
+---
+
 ## 中文用户请看 *中文说明*，中文与英文内容的安装等资源链接是不一样的，谢谢合作！
 
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
