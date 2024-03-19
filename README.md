@@ -16,7 +16,7 @@ The GoProxy is a high-performance http proxy, https proxy, socks5 proxy, ss prox
 ## 赞助者/Sponsors
 
 <a target="_blank" href="https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy">
-<img src="/doc/images/zanzhu_capsolver.jpg.jpg" height="300">
+<img src="/doc/images/zanzhu_capsolver.jpg" height="300">
 </a>
 
 [Capsolver.com](https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy)是一家基于人工智能，提供自动验证码解决功能的服务商。
