@@ -19,8 +19,9 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 <img src="/doc/images/zanzhu_capsolver.jpg" height="200">
 </a>
 
-[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy_github)是一家基于人工智能，提供自动验证码解决功能的服务商。 支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、
-AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。Capsolver可配合EasySpider进行验证码识别。
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy_github)是一家基于人工智能，提供自动验证码解决功能的服务商。支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、
+hCaptcha Enterprise, FunCaptcha Enterprise, Cloudflare Challenge 5s / Turnstile Captcha, DataDome Captcha / Interstinial ,
+AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。
 
 ---
 
