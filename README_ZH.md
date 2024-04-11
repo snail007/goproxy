@@ -13,6 +13,18 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 
 ---
 
+## 赞助者/Sponsors
+
+<a target="_blank" href="https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy">
+<img src="/doc/images/zanzhu_capsolver.jpg" height="200">
+</a>
+
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy_github)是一家基于人工智能，提供自动验证码解决功能的服务商。支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、
+hCaptcha Enterprise, FunCaptcha Enterprise, Cloudflare Challenge 5s / Turnstile Captcha, DataDome Captcha / Interstinial ,
+AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。
+
+---
+
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 
 - [下载地址](https://github.com/snail007/goproxy/releases)
@@ -666,6 +678,8 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 `proxy http -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`
 
 `--dns-address` 支持设置多个dns地址，负载均衡，英文半角逗号分割。比如：--dns-address "1.1.1.1:53,8.8.8.8:53"
+
+还可以用参数`--dns-interface`指定dns解析使用的网卡，比如：`--dns-interface eth0`，dns解析就会走eth0网卡，此参数必须设置`--dns-address`才有效。  
 
 ### 1.12 自定义加密
 
@@ -1391,6 +1405,8 @@ KCP协议需要--kcp-key参数设置一个密码用于加密解密数据
 比如：  
 `proxy socks -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`
 
+还可以用参数`--dns-interface`指定dns解析使用的网卡，比如：`--dns-interface eth0`，dns解析就会走eth0网卡，此参数必须设置`--dns-address`才有效。  
+
 ### 5.10 自定义加密
 
 proxy的socks代理在tcp之上可以通过tls标准加密以及kcp协议加密tcp数据，除此之外还支持在tls和kcp之后进行自定义加密，也就是说自定义加密和tls|kcp是可以联合使用的，内部采用AES256加密，使用的时候只需要自己定义一个密码即可，  
@@ -1546,7 +1562,14 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 
 `proxy socks -t tcp -p "0.0.0.0:38080" --udp-port 38080`
 
-### 5.19 查看帮助
+### 5.19 UDP兼容模式
+
+默认情况下，proxy的socks5代理的UDP功能是按着socks5 RFC 1928 规范实现的，但是存在某些不遵守规范的socks5客户端，
+为了兼容这些客户端，可以加上--udp-compat参数，用于打开socks5 udp功能的兼容模式。
+
+另外可以：使用-udp-gc参数，用来设置UDP最大空闲时间，超过这个时间，UDP会被释放。
+
+### 5.20 查看帮助
 
 `proxy help socks`
 
@@ -1554,8 +1577,10 @@ SOCKS5支持级联认证，-A可以设置上级认证信息。
 
 ### 6.1 功能介绍
 
-代理协议转换使用的是sps子命令，sps可以把已经存在的http(s)代理或者socks5代理或ss代理转换为一个端口同时支持http(s)和socks5和ss的代理，而且http(s)代理支持正向代理和反向代理(SNI)
-，当上级是SOCKS5时,转换后的SOCKS5或者SS代理仍然支持UDP功能；另外对于已经存在的http(s)代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
+代理协议转换使用的是sps子命令，sps可以把已经存在的http(s)代理或者socks5代理或ss代理转换为一个端口同时支持http(s)
+和socks5和ss的代理，而且http(s)代理支持正向代理和反向代理(SNI)
+，当上级是SOCKS5时,转换后的SOCKS5或者SS代理仍然支持UDP功能；另外对于已经存在的http(s)
+代理或者socks5代理，支持tls、tcp、kcp三种模式，支持链式连接，也就是可以多个sps结点层级连接构建加密通道。
 
 `ss`功能支持的加密方法为:aes-128-cfb ， aes-128-ctr ， aes-128-gcm ， aes-192-cfb ， aes-192-ctr ， aes-192-gcm ， aes-256-cfb ，
 aes-256-ctr ， aes-256-gcm ， bf-cfb ， cast5-cfb ， chacha20 ， chacha20-ietf ， chacha20-ietf-poly1305 ， des-cfb ， rc4-md5 ，
@@ -1917,7 +1942,23 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 - 删除指定的用户自定义链 iptables -X 链名 比如 iptables -t nat -X PROXY
 - 从所选链中删除规则 iptables -D 链名 规则详情 比如 iptables -t nat -D PROXY -d 223.223.192.0/255.255.240.0 -j RETURN
 
-### 6.18 查看帮助
+### 6.19 UDP兼容模式
+
+默认情况下，proxy的socks5代理的UDP功能是按着socks5 RFC 1928 规范实现的，但是存在某些不遵守规范的socks5客户端，
+为了兼容这些客户端，可以加上--udp-compat参数，用于打开socks5 udp功能的兼容模式。
+
+另外可以：使用-udp-gc参数，用来设置UDP最大空闲时间，超过这个时间，UDP会被释放。
+
+### 6.20 自定义DNS
+
+--dns-address和--dns-ttl参数，用于自己指定proxy访问域名的时候使用的dns（--dns-address）  
+以及解析结果缓存时间（--dns-ttl）秒数，避免系统dns对proxy的干扰，另外缓存功能还能减少dns解析时间提高访问速度。  
+比如：  
+`proxy sps -p ":33080" --dns-address "8.8.8.8:53" --dns-ttl 300`
+
+还可以用参数`--dns-interface`指定dns解析使用的网卡，比如：`--dns-interface eth0`，dns解析就会走eth0网卡，此参数必须设置`--dns-address`才有效。  
+
+### 6.21 查看帮助
 
 `proxy help sps`
 
@@ -2210,6 +2251,21 @@ upstream支持socks5、http(s)代理，支持认证，格式：`protocol://a:b@2
 7. cert : 上级底层tls传输类型的证书文件经过base64编码后的字符串。
 8. key : 上级底层tls传输类型的证书密钥文件经过base64编码后的字符串。
 9. luminati:上级是否是luminati代理，可以是：true | false。
+
+4.upstream支持多个，无论sps是1还是0，都支持多个upstream，写法是多个用分号;分隔。
+当连接上级的时候默认是随机选择一个upstream。 但是支持通过weight参数设置每个upstream的权重，
+如果设置了权重全部的upstream都必须设置weight参数，weight必须大于0， 否则权重视为无效，做随机选择处理。
+认证缓存开启后也会保持这个选择逻辑。
+
+多个upstream示例：
+
+1. 不设置权重示例：`http://127.0.0.1:3100?argk=argv;http://127.0.0.2:3100?argk=argv`
+1. 设置权重示例：`http://127.0.0.1:3100?argk=argv&weight=10;http://127.0.0.2:3100?argk=argv&weight=20`
+
+权重选择逻辑：  
+当upstream设置了权重，会按着upstream顺序，设置每个upstream的数值范围。
+比如有两upstream，第一个权重是10，第二个权重是20，那么总数值是30，第1个upstream的数值范围是1-10，第2个upstream的数值范围是11-30，
+更多个upstream依次类推。然后每次选择的时候在1-30内随机一个数，然后选择这个数所在范围的那个upstream。
 
 ### 流量上报/流量统计/流量限制
 
