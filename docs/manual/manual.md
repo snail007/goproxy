@@ -1890,13 +1890,16 @@ each client connection.
 1. By default, `--auth-url` is required to provide the user name and password. If you do not need the client to provide the username and password, and authenticate, you can add `--auth-nouser`. The visit will still access the authentication address `--auth-url` for authentication. Only the $user authentication username and the $pass authentication password received in the php interface are empty when client didn't send username and password.
 2. Connection limit priority: User authentication file limit - "File ip.limit limit -" API user limit - "API IP limit -" command line global connection limit.
 3. Rate Limit Priority: User Authentication File Rate Limit - "File ip.limit Rate Limit -" API User Rate Limit - "API IP Rate Limit - "Command Line Global Rate Limit.
-3. The upstream obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the upstream.  
-   4.`--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 0, set 0 to close the cache.
+4. The upstream obtains the priority: the upstream of the user authentication file - the file ip.limit upstream-"API upstream-" command line specifies the upstream.  
+5. `--auth-cache` authentication cache, cache the authentication result for a certain period of time, improve performance, reduce the pressure on the authentication interface, --auth-cache unit seconds, default 0, set 0 to close the cache. 
+6. By default, `--auth-cache` only caches the results of successful authentication and does not cache the results of failed authentication. If you need to cache the failed authentication results for a certain period of time,
+   It can be set through the parameter `-auth-fail-cache` to improve performance and reduce the pressure on the authentication interface. The unit of --auth-fail-cache is seconds. The default is 0. Setting 0 turns off the cache.
 
 #### upstream detailed description
 
 1. When the parameter `sps` is 0.  
-   When the service is http, upstream only supports http(s) proxy, and does not support authentication. If authentication is required, it can be replaced by sps. Format:  
+   When the service is http, upstream only supports http(s) proxy, and does not support authentication.
+   If authentication is required, it can be replaced by sps. Format:  
    `http://127.0.0.1:3100?argk=argv`  
    When the service is a socks, the upstream only supports the socks5 proxy. The format is:  
    `socks5://127.0.0.1:3100?argk=argv`
