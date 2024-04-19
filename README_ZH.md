@@ -13,18 +13,6 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 
 ---
 
-## 赞助者/Sponsors
-
-<a target="_blank" href="https://www.capsolver.com/zh?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy">
-<img src="/doc/images/zanzhu_capsolver.jpg" height="200">
-</a>
-
-[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy_github)是一家基于人工智能，提供自动验证码解决功能的服务商。支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、
-hCaptcha Enterprise, FunCaptcha Enterprise, Cloudflare Challenge 5s / Turnstile Captcha, DataDome Captcha / Interstinial ,
-AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。
-
----
-
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 
 - [下载地址](https://github.com/snail007/goproxy/releases)
@@ -2220,7 +2208,8 @@ if($ok){
 
 #### 提示
 
-1. 默认情况下，设置了`--auth-url`是强制要求客户端提供用户名和密码的；如果不需要强制要求客户端提供用户名密码，并认证，可以加上`--auth-nouser`，
+1. 默认情况下，设置了`--auth-url`
+   是强制要求客户端提供用户名和密码的；如果不需要强制要求客户端提供用户名密码，并认证，可以加上`--auth-nouser`，
    每次访问仍然会访问认证地址`--auth-url`进行认证，当客户端没有发生认证信息当时候，php接口里面接收的$user认证用户名和$pass认证密码都为空。
 2. 连接数限制优先级：用户认证文件连接数限制-》文件ip.limit连接数限制-》API用户连接数限制-》API的IP连接数限制-》命令行全局连接数限制。
 3. 速率限制优先级：用户认证文件速率限制-》文件ip.limit速率限制-》API用户速率限制-》API的IP速率限制-》命令行全局速率限制。
