@@ -19,9 +19,26 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 <img src="/doc/images/zanzhu_capsolver.jpg" height="200">
 </a>
 
-[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy_github)是一家基于人工智能，提供自动验证码解决功能的服务商。支持的验证码类型包括reCAPTCHA、hCaptcha和FunCaptcha、
-hCaptcha Enterprise, FunCaptcha Enterprise, Cloudflare Challenge 5s / Turnstile Captcha, DataDome Captcha / Interstinial ,
-AWS captcha、Geetest、Akamai Web、BMP、Imperva/Incapsula、captcha图像识别等。
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy) is an
+AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as
+[reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy) /
+[Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+[Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy), among others.
+
+For developers, Capsolver offers API integration options detailed in their
+[documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=goproxy),
+facilitating the integration of captcha solving into applications. They also provide browser extensions for
+[Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and
+[Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/),
+making it easy to use their service directly within a browser. Different pricing packages are available to accommodate
+varying needs, ensuring flexibility for users.
 
 ---
 
