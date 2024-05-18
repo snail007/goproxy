@@ -41,9 +41,8 @@ making it easy to use their service directly within a browser. Different pricing
 varying needs, ensuring flexibility for users.
 
 ---
-
+### [官方网站](https://www.goproxy.win/?lang=zh-CN)
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
-
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [参考手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [桌面版](https://github.com/snail007/proxy_admin_free/blob/master/README_ZH.md)

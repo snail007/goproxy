@@ -44,9 +44,11 @@ varying needs, ensuring flexibility for users.
 
 ## 中文用户请看 *中文说明*，中文与英文内容的安装等资源链接是不一样的，谢谢合作！
 
+### [Official Website](https://www.goproxy.win/?lang=en-US)
+### [官方网站](https://www.goproxy.win/?lang=zh-CN)
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 
-- [中文说明](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
+- [中文 README ](https://github.com/snail007/goproxy/blob/master/README_ZH.md)
 - [使用手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [Download](https://github.com/snail007/goproxy/releases)
