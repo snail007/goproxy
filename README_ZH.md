@@ -13,7 +13,7 @@ GoProxy是一款轻量级、功能强大、高性能的http代理、https代理�
 
 ---
 
-### [官方网站](https://www.goproxy.win/?lang=zh-CN)
+### [官方网站](https://www.goproxy.win/)
 ### [点击我观看视频教程](https://space.bilibili.com/472844633)
 - [下载地址](https://github.com/snail007/goproxy/releases)
 - [参考手册](https://snail007.goproxyauth.com/goproxy/manual/zh/)
