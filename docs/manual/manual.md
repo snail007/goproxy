@@ -202,7 +202,24 @@ Description:
 
 5.`#` at the beginning of the comment.
 
-### 12. Client IP Blacklist and Whitelist
+### 12. Port Black List 
+
+socks/http(s)/sps proxy all support port blacklist. 
+
+Use the `--stop-port` parameter to specify a port blacklist file, then when the user connects to the ports in the file, the connection can be made. 
+
+The port blacklist file content format is as follows: 
+
+```text 
+3306  
+22 
+``` 
+
+Note: 
+1. One port per line. 
+2. The ones starting with `#` are comments.
+
+### 13. Client IP Blacklist and Whitelist
 
 socks/http(s)/sps/tcp/udp/dns/ intranet penetration bridge/intranet penetration tbridge, support client IP black and white list.
 
@@ -226,7 +243,7 @@ Description:
 
 2.`#` at the beginning of the comment.
 
-### 13. Protocol loading file
+### 14. Protocol loading file
 
 There are many places in the proxy's various proxy functions to set a file. For example: --blocked Specifies a domain name list file that goes directly to the upper level. The parameter value is the path of the file.
 
@@ -239,11 +256,11 @@ b. "str://" at the beginning of the English comma separated multiple, such as: s
 The proxy's blocked, direct, stop, only, hosts, resolve.rules, rewriter.rules, ip.allow, ip.deny files support protocol loading.
 
 
-### 14.Concurrent client connections
+### 15. Concurrent client connections
 
 socks5\sps\http proxies, the parameter that controls the number of concurrent client connections is: `--max-conns-rate`, which controls the maximum number of client connections per second, default: 20, 0 is unlimited
 
-### 15 Listen on multiple ports
+### 16. Listen on multiple ports
 
 "tcp / http / socks / sps" supports listen on multiple ports and range ports.
 Under normal circumstances, it is sufficient to listen on one port, but if you need to listen on multiple ports, the -p parameter is supported.
