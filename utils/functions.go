@@ -162,6 +162,17 @@ func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listene
 		ServerName:   "proxy",
 		Certificates: []tls.Certificate{cert},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
+                CipherSuites: []uint16{
+                    tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+                    tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+                    tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+                    tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+                    tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                    tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                    tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                    tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+                    tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+                    },
 	}
 	_ln, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), config)
 	if err == nil {
