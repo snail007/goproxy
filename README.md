@@ -506,7 +506,7 @@ Then access the local port 8080 is to access the proxy port 38080 on the VPS.
 
 Secondary HTTP proxy (local windows)  
 `proxy.exe http -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-Then set your windos system, the proxy that needs to go through the proxy Internet program is http mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.
+Then set your windows system, the proxy that needs to go through the proxy Internet program is http mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.
 
 ### 1.4.HTTP Level 3 Agent (Encryption)
 ![1.3](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/http-tls-3.png)  
@@ -1234,7 +1234,7 @@ Then access the local port 8080 is to access the proxy port 38080 on the VPS.
 
 Secondary SOCKS proxy (local windows)  
 `proxy.exe socks -t tcp -p ":8080" -T tls -P "22.22.22.22:38080" -C proxy.crt -K proxy.key`  
-Then set your windos system, the proxy that needs to go through the proxy Internet program is the socks5 mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.
+Then set your windows system, the proxy that needs to go through the proxy Internet program is the socks5 mode, the address is: 127.0.0.1, the port is: 8080, the program can access the Internet through vps through the encrypted channel.
 
 ### 5.4. SOCKS Level 3 Agent (Encryption)
 ![5.4](https://cdn.jsdelivr.net/gh/snail007/goproxy@master/doc/images/socks-tls-3.png)  
@@ -2139,7 +2139,7 @@ Explanation: `http://`,`socks5://` is fixed, `127.0.0.1:3100` is the address of 
    6. ca : The base64-encoded string of the upper-level tls transport type ca certificate file.
    7. cert : The base64 encoded string of the higher level tls transport type certificate file.
    8. key : The base64 encoded string of the higher-level tls transport type certificate key file.
-   9. luminati:if upstram is luminati proxies，value can be: true or false。
+   9. luminati:if upstream is luminati proxies，value can be: true or false。
 
 4.Upstream supports multiple instances, regardless of whether SPS is 1 or 0, and they are separated by semicolons ;.
 When connecting to an upstream, by default, one upstream is randomly chosen. However, it supports setting the weight
@@ -2184,7 +2184,7 @@ There are two reporting modes, which can be specified by the `--traffic-mode` pa
    no matter how many concurrent connections there are, only have one reporter, and the reporting interval is 5 seconds.
    In this mode, the reporting request method is `POST`, `Content-Type` is `application/json`, the post body data
    is `JSON Array`, example: `[{},{}]`, the keys of object in the array are same with the
-   following `Reqeust parameter description`.
+   following `Request parameter description`.
 4. The traffic reporting function combined with the above API authentication function can control the user's traffic
    usage in real time. The traffic is reported to the interface. The interface writes the traffic data to the database,
    and then the authentication API queries the database to determine the traffic usage and determine whether the user
@@ -2259,7 +2259,7 @@ The content of control.php is as follows:
 
 ```php  
 <?php  
-#revcieve proxy post data
+#receive proxy post data
 $userArr=explode(",",$_POST['user']);   
 $ipArr=$_GET['ip'];  
 
