@@ -2217,7 +2217,7 @@ The following is a complete URL request example:
 `bytes`: the number of traffic bytes used by the user.  
 `out_local_addr`: outgoing tcp connection's local address,format: IP: port.  
 `out_remote_addr`: outgoing tcp connection's remote address,format: IP: port.  
-`upstream`: upstream used by outgoing tcp connection, if none upstream be used, it's empty.
+`upstream`: upstream used by outgoing tcp connection, if none upstream be used, it's empty.   
 `sniff_domain`: This parameter is only available when the SPS function is enabled and the `--sniff-domain` option is used. The "sniff_domain" parameter is the sniffed domain name, in the format: domain or domain:port; this parameter only has a value when the client accesses an http/https URL, otherwise it is empty.
 
 #### Tips
