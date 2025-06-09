@@ -1648,6 +1648,8 @@ through "HTTP proxy" or "SOCKS5 proxy", if the client accesses an http or https 
 from the transmitted data. The sniffed domain name will be placed in the `sniff_domain` parameter of the "traffic reporting" 
 API, so the domain name can be obtained through the "traffic reporting" API.
 
+To enable domain name sniffing, you can use the `--sniff-domain` parameter.
+
 ### 6.22 Help
 
 `proxy help sps`

@@ -1743,6 +1743,8 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 为了避免这种情况，proxy提供了一个域名嗅探功能，当客户端连接SPS代理的时候，无论是通过 “HTTP代理” 还是 “SOCKS5代理”，当客户端访问的是 http 
 或 https 网址的时候，proxy 都会嗅探传输数据中的域名，嗅探到的域名会放在“流量上报”接口的`sniff_domain`参数里面，这样就可以在“流量上报”接口获取域名。
 
+默认情况下，sps的域名嗅探功能是关闭的，如果需要开启，可以通过参数`--sniff-domain`开启。
+
 ### 6.22 查看帮助
 
 `proxy help sps`
