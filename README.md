@@ -1834,7 +1834,19 @@ Translation:
 You can also use the parameter `--dns-interface` to specify the bandwidth used for dns resolution, 
 for example: `--dns-interface eth0`, dns resolution will use the eth0 bandwidth, this parameter must be set to `--dns-address` to be effective.
 
-### 6.21 Help
+### 6.21 Domain Name Sniffing
+
+When a user client connects to the proxy using the SOCKS5 or HTTP proxy protocol, if the client connects with a domain name,
+the client can choose to resolve the domain name locally or through the proxy. If the client resolves the domain name locally 
+and lets the proxy connect to the resolved IP, then the connection target obtained in the "API authentication" parameters will 
+be the IP or empty.
+
+To avoid this situation, proxy provides a domain name sniffing feature. When the client connects to the SPS proxy, whether 
+through "HTTP proxy" or "SOCKS5 proxy", if the client accesses an http or https website, proxy will sniff the domain name 
+from the transmitted data. The sniffed domain name will be placed in the `sniff_domain` parameter of the "traffic reporting" 
+API, so the domain name can be obtained through the "traffic reporting" API.
+
+### 6.22 Help
 
 `proxy help sps`
 
@@ -2192,7 +2204,7 @@ There are two reporting modes, which can be specified by the `--traffic-mode` pa
 
 The following is a complete URL request example:
 
-`http://127.0.0.1:33088/user/traffic?bytes=337&client_addr=127.0.0.1%3A51035&id=http&server_addr =127.0.0.1%3A33088&target_addr=myip.ipip.net%3A80&username=a`
+`http://127.0.0.1:33088/user/traffic?bytes=337&client_addr=127.0.0.1%3A51035&id=http&server_addr =127.0.0.1%3A33088&target_addr=myip.ipip.net%3A80&username=a&sniff_domain=myip.ipip.net`
 
 **Request parameter description:**  
 `id`: service id flag.  
@@ -2204,6 +2216,7 @@ The following is a complete URL request example:
 `out_local_addr`: outgoing tcp connection's local address,format: IP: port.  
 `out_remote_addr`: outgoing tcp connection's remote address,format: IP: port.  
 `upstream`: upstream used by outgoing tcp connection, if none upstream be used, it's empty.
+`sniff_domain`: This parameter is only available when the SPS function is enabled and the `--sniff-domain` option is used. The "sniff_domain" parameter is the sniffed domain name, in the format: domain or domain:port; this parameter only has a value when the client accesses an http/https URL, otherwise it is empty.
 
 #### Tips
 

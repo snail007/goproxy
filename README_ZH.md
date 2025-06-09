@@ -1964,7 +1964,13 @@ iptables -t nat -A OUTPUT -p tcp -j PROXY
 
 还可以用参数`--dns-interface`指定dns解析使用的网卡，比如：`--dns-interface eth0`，dns解析就会走eth0网卡，此参数必须设置`--dns-address`才有效。  
 
-### 6.21 查看帮助
+### 6.21 嗅探域名
+当用户客户端使用socks5代理或http代理协议连接代理的时候，客户端如果连接的是域名，这个时候客户端可以决定是本地解析域名还是通过代理解析域名，
+如果客户端使用本地解析域名，然后让代理连接解析后的IP，那么“API认证”的参数里面拿到的连接目标就是IP或者空；
+为了避免这种情况，proxy提供了一个域名嗅探功能，当客户端连接SPS代理的时候，无论是通过 “HTTP代理” 还是 “SOCKS5代理”，当客户端访问的是 http 
+或 https 网址的时候，proxy 都会嗅探传输数据中的域名，嗅探到的域名会放在“流量上报”接口的`sniff_domain`参数里面，这样就可以在“流量上报”接口获取域名。
+
+### 6.22 查看帮助
 
 `proxy help sps`
 
@@ -2299,7 +2305,7 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 下面是一个完整的URL请求实例:
 
 `http://127.0.0.1:8080/auth.php?act=traffic&bytes=7627&client_addr=127.0.0.1%3A63637
-&id=http&out_local_addr=127.0.0.1%3A63640&out_remote_addr=127.0.0.1%3A63639 &server_addr=127.0.0.1%3A33080&target_addr=www.baidu.com%3A443 &upstream=http%3A%2F%2F127.0.0.1%3A3100&username=a`
+&id=http&out_local_addr=127.0.0.1%3A63640&out_remote_addr=127.0.0.1%3A63639&server_addr=127.0.0.1%3A33080&target_addr=www.baidu.com%3A443&upstream=http%3A%2F%2F127.0.0.1%3A3100&username=a&sniff_domain=www.baidu.com`
 
 **请求参数说明**:    
 `id`: 服务id标志。   
@@ -2311,6 +2317,7 @@ proxy会把连接使用的流量上报到这个地址,具体情况是,proxy发�
 `out_local_addr`: 代理对外建立的TCP连接的本地地址，格式: `IP:端口`。  
 `out_remote_addr`: 代理对外建立的TCP连接的远程地址，格式: `IP:端口`。   
 `upstream`: 使用的上级，格式是标准URL格式，如果没有使用上级，这里是空。
+`sniff_domain`: 只有当 sps 功能，使用参数 `--sniff-domain` 开启了嗅探功能 ，才会有这个参数。参数“sniff_domain”是嗅探到的域名，格式：域名，或者： 域名:端口；只有在客户端访问的是 http/https 网址的时候这个参数才有值，其它情况为空。
 
 #### 提示
 
