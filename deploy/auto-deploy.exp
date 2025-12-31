@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set server_ip "194.233.73.36"
+set server_user "root"
+set server_pass "JVxgREA3hbe6"
+
+spawn ssh -o StrictHostKeyChecking=no ${server_user}@${server_ip}
+
+expect {
+    "password:" {
+        send "${server_pass}\r"
+        exp_continue
+    }
+    "# " {
+        send "echo 'Connected successfully'\r"
+        expect "# "
+        
+        # Update system
+        send "apt-get update -qq && apt-get install -y wget curl git ufw iptables net-tools 2>&1 | tail -3\r"
+        expect "# "
+        
+        # Install Go
+        send "if ! command -v go &> /dev/null; then wget -q https://go.dev/dl/go1.21.5.linux-amd64.tar.gz -O /tmp/go.tar.gz && tar -C /usr/local -xzf /tmp/go.tar.gz && rm /tmp/go.tar.gz && echo 'export PATH=\\$PATH:/usr/local/go/bin' >> /root/.bashrc; fi\r"
+        expect "# "
+        send "export PATH=\\$PATH:/usr/local/go/bin\r"
+        expect "# "
+        send "/usr/local/go/bin/go version 2>/dev/null || go version\r"
+        expect "# "
+        
+        # Create directories
+        send "mkdir -p /opt/game-proxy/{bin,config,logs}\r"
+        expect "# "
+        
+        send "exit\r"
+    }
+    timeout {
+        puts "Connection timeout"
+        exit 1
+    }
+}
+expect eof
