@@ -1,0 +1,49 @@
+{
+  "server": {
+    "ipv4": "194.233.73.36",
+    "ipv6": "2407:3640:2299:7804::1",
+    "ports": {
+      "http": 8080,
+      "socks5": 1080,
+      "udp": 5353
+    }
+  },
+  "proxy": {
+    "mode": "game-http",
+    "protocol": "tcp",
+    "listen": ":8080",
+    "stealth": {
+      "enabled": true,
+      "header_randomization": true,
+      "tls_fingerprint_masking": true,
+      "traffic_obfuscation": true
+    },
+    "game": {
+      "enabled": true,
+      "low_latency": true,
+      "udp_support": true,
+      "connection_pooling": true
+    }
+  },
+  "security": {
+    "auth": {
+      "enabled": false,
+      "users": []
+    },
+    "ip_whitelist": {
+      "enabled": false,
+      "ips": []
+    },
+    "rate_limit": {
+      "enabled": false,
+      "max_connections": 1000,
+      "max_bandwidth": "100M"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "/opt/game-proxy/logs/proxy.log",
+    "max_size": "100MB",
+    "rotate": true
+  }
+}

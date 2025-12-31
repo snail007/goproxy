@@ -1,0 +1,40 @@
+[Unit]
+Description=Game Proxy Server with Stealth Features
+Documentation=https://github.com/snail007/goproxy
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/game-proxy
+ExecStart=/opt/game-proxy/bin/proxy game-http \
+    -t tcp \
+    -p :8080 \
+    --forever \
+    --log /opt/game-proxy/logs/proxy.log
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitInterval=0
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/game-proxy/logs
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+# Logging
+StandardOutput=append:/opt/game-proxy/logs/proxy.log
+StandardError=append:/opt/game-proxy/logs/proxy-error.log
+SyslogIdentifier=game-proxy
+
+[Install]
+WantedBy=multi-user.target
