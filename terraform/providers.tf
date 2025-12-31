@@ -1,7 +1,9 @@
 # Provider configuration
-# Using null and local providers for deployment automation
+# Using null, local, and archive providers for deployment automation
 
 terraform {
+  required_version = ">= 1.0"
+  
   required_providers {
     null = {
       source  = "hashicorp/null"
