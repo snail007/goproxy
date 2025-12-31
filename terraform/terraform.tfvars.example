@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and update with your values
+
+server_ip       = "194.233.73.36"
+server_user     = "root"
+server_password = "your-password-here"
+server_ipv6     = "2407:3640:2299:7804::1"
+proxy_port      = 8080
+proxy_mode      = "game-http"
+enable_stealth  = true
+enable_game_optimizations = true
