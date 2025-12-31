@@ -1,0 +1,36 @@
+# Test Environment Configuration
+# This file is for testing purposes only
+
+# Server Configuration
+SERVER_IP=194.233.73.36
+SERVER_USER=root
+SERVER_PASSWORD=JVxgREA3hbe6
+SERVER_IPV6=2407:3640:2299:7804::1
+
+# Proxy Configuration
+PROXY_PORT=8080
+PROXY_MODE=game-http
+PROXY_HOST=194.233.73.36
+
+# Stealth Features
+ENABLE_STEALTH=true
+ENABLE_HEADER_RANDOMIZATION=true
+ENABLE_TLS_FINGERPRINT_MASKING=true
+ENABLE_TRAFFIC_OBFUSCATION=true
+
+# Game Optimizations
+ENABLE_GAME_OPTIMIZATIONS=true
+ENABLE_LOW_LATENCY=true
+ENABLE_UDP_SUPPORT=true
+
+# Logging
+LOG_LEVEL=info
+LOG_FILE=/opt/game-proxy/logs/proxy.log
+
+# Security
+ALLOWED_IPS=0.0.0.0/0
+BLOCKED_IPS=
+
+# Mac App Configuration
+MAC_APP_PROXY_URL=http://194.233.73.36:8080
+MAC_APP_AUTO_CONNECT=false

@@ -17,3 +17,8 @@ terraform.rc
 # Deployment artifacts
 proxy-deploy.tar.gz
 *.tar.gz
+
+# Environment files
+.env
+.env.local
+.env.*.local

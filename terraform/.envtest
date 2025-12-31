@@ -1,0 +1,18 @@
+# Terraform Test Environment Configuration
+
+# Server Configuration
+TF_VAR_server_ip=194.233.73.36
+TF_VAR_server_user=root
+TF_VAR_server_password=JVxgREA3hbe6
+TF_VAR_server_ipv6=2407:3640:2299:7804::1
+
+# Proxy Configuration
+TF_VAR_proxy_port=8080
+TF_VAR_proxy_mode=game-http
+TF_VAR_enable_stealth=true
+TF_VAR_enable_game_optimizations=true
+
+# Usage:
+# source .envtest
+# terraform plan
+# terraform apply

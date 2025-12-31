@@ -10,3 +10,8 @@ proxy
 *.swp
 *.swo
 *~
+
+# Environment files
+.env
+.env.local
+.env.*.local
