@@ -1,0 +1,7 @@
+# Git attributes for proper line endings
+*.go text eol=lf
+*.swift text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.service text eol=lf
